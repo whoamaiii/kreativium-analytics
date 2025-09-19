@@ -25,7 +25,7 @@ export function StudentProfileSidebar({
   activeSection, 
   onSectionChange 
 }: StudentProfileSidebarProps) {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const { tStudent, tCommon } = useTranslation();
 
   const menuItems = [
@@ -117,6 +117,10 @@ export function StudentProfileSidebar({
                     onClick={() => {
                       try { logger.debug('[UI] Sidebar nav click', { section: item.section }); } catch {}
                       onSectionChange(item.section);
+                      // Close mobile drawer after selection to reveal content
+                      if (isMobile) {
+                        try { setOpenMobile(false); } catch {}
+                      }
                     }}
                     className={`cursor-pointer mx-2 rounded-lg transition-all duration-200 ${
                       isActive(item.section) 
@@ -148,6 +152,9 @@ export function StudentProfileSidebar({
                     onClick={() => {
                       try { logger.debug('[UI] Sidebar tools click', { section: item.section }); } catch {}
                       onSectionChange(item.section);
+                      if (isMobile) {
+                        try { setOpenMobile(false); } catch {}
+                      }
                     }}
                     className={`cursor-pointer mx-2 rounded-lg transition-all duration-200 ${
                       isActive(item.section) 

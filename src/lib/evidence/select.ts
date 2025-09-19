@@ -175,7 +175,7 @@ export function filterAndBreakTies(
 
   // Optional: bump UDL/HLP to ensure one framework item is likely included
   if (ensureFramework) {
-    let hasFramework = filtered.some(({ source }) => source.tags?.some((t) => t === DomainTag.UDL || t === DomainTag.HLP));
+    const hasFramework = filtered.some(({ source }) => source.tags?.some((t) => t === DomainTag.UDL || t === DomainTag.HLP));
     if (!hasFramework) {
       filtered = filtered.map((it) => {
         const isFramework = it.source.tags?.some((t) => t === DomainTag.UDL || t === DomainTag.HLP) ?? false;

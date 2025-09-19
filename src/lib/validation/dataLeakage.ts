@@ -313,7 +313,7 @@ export class DataLeakageDetector {
         issues.push({
           type: 'FUTURE_NAMED_FEATURE',
           severity: 'high',
-          message: `Feature "${f}" name suggests potential leakage (future/label-related).` ,
+          message: `Feature ${f} name suggests potential leakage (future/label-related).`,
           details: { feature: f },
         });
       }
@@ -326,7 +326,7 @@ export class DataLeakageDetector {
       issues.push({
         type: 'TARGET_IN_FEATURES',
         severity: 'high',
-        message: `Target key "${targetKey}" is present among features.`,
+        message: `Target key ${targetKey} is present among features.`,
         details: { targetKey },
       });
     }
@@ -345,7 +345,7 @@ export class DataLeakageDetector {
         issues.push({
           type: 'NEAR_IDENTITY_FEATURE',
           severity: 'high',
-          message: `Feature \"${f}\" matches target in ~${Math.round(fracEq * 100)}% of rows.`,
+          message: `Feature ${f} matches target in ~${Math.round(fracEq * 100)}% of rows.`,
           details: { feature: f, fractionEqual: fracEq },
         });
         // Do not short-circuit; still compute correlation so reports can include both signals when applicable
@@ -383,4 +383,3 @@ export class DataLeakageDetector {
     return issues;
   }
 }
-

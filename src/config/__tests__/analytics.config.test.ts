@@ -107,7 +107,8 @@ describe('analytics.loader: environment variable parsing and profile application
     const { loadAnalyticsConfig } = await import('@/config/loaders/analytics.loader');
 
     // Mock runtime to an empty/default to control base
-    const spy = vi.spyOn(require('@/config/analytics.config'), 'getRuntimeAnalyticsConfig');
+    const runtimeModule = await import('@/config/analytics.config');
+    const spy = vi.spyOn(runtimeModule, 'getRuntimeAnalyticsConfig');
     spy.mockReturnValue({
       version: '1',
       thresholds: {},
@@ -135,7 +136,8 @@ describe('analytics.loader: environment variable parsing and profile application
     (import.meta as any).env = { VITE_USE_MOCK: 'true' };
     const { loadAnalyticsConfig } = await import('@/config/loaders/analytics.loader');
 
-    const spy = vi.spyOn(require('@/config/analytics.config'), 'getRuntimeAnalyticsConfig');
+    const runtimeModule = await import('@/config/analytics.config');
+    const spy = vi.spyOn(runtimeModule, 'getRuntimeAnalyticsConfig');
     spy.mockReturnValue({
       ...makeValidConfig(),
       charts: makeValidConfig().charts,

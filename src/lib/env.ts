@@ -96,6 +96,19 @@ export const AI_LOCAL_ONLY: boolean = (() => {
 })();
 
 /**
+ * UI flag: enable the redesigned explanation interface (tabs + composer v2).
+ * Set VITE_EXPLANATION_V2 to '1' | 'true' | 'yes' to enable.
+ */
+export const EXPLANATION_V2_ENABLED: boolean = (() => {
+  try {
+    const v = ((import.meta as any)?.env?.VITE_EXPLANATION_V2 ?? '').toString().toLowerCase();
+    return v === '1' || v === 'true' || v === 'yes';
+  } catch {
+    return false;
+  }
+})();
+
+/**
  * Evidence injection toggle for AI analysis.
  * Set VITE_AI_EVIDENCE_DISABLED to '1' | 'true' | 'yes' to disable injecting external evidence context.
  * Defaults to false (evidence enabled).

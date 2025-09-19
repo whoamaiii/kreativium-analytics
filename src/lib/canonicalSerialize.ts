@@ -94,7 +94,7 @@ export function canonicalSerialize(value: unknown): string {
       }
       case 'function': {
         // Functions typically have no enumerable own props; include name for stability
-        const fn = v as Function;
+        const fn = v as (...args: unknown[]) => unknown;
         const name = fn.name || 'anonymous';
         return `x:[object Function]${serializeMaybeProps(fn)}`.replace('[object Function]', `[object Function ${name}]`);
       }

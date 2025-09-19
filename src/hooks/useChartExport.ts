@@ -27,9 +27,9 @@ export function useChartExport(ref: React.RefObject<ReactECharts>) {
       // Some ECharts builds expose renderToSVGString; if unavailable, return undefined
       // @ts-expect-error echarts instance type is provided by echarts-for-react at runtime
       const inst = ref.current?.getEchartsInstance?.();
-      // @ts-ignore optional API
+      // @ts-expect-error ECharts runtime optionally adds renderToSVGString when SVG renderer bundle is present
       if (inst?.renderToSVGString) {
-        // @ts-ignore optional API
+        // @ts-expect-error Method injected only in SVG builds, safe to guard by runtime check
         return inst.renderToSVGString();
       }
       return undefined;

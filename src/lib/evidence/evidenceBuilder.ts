@@ -125,18 +125,17 @@ export function buildEvidenceForPattern(args: {
 }
 
 export function sanitizePlainNorwegian(text: string, allowed: AllowedContexts): string {
-  const noMarkdown = text.replace(/[\*`_#>]+/g, '');
+  const noMarkdown = text.replace(/[*`_#>]+/g, '');
   const forbiddenTokens = [
     'klasserom', 'skolen', 'skole', 'hjemme', 'huset', 'ute', 'barnehage', 'SFO', 'AKS',
   ].filter((tok) => !allowed.places.includes(tok));
   let sanitized = noMarkdown;
   for (const tok of forbiddenTokens) {
-    const re = new RegExp(`(^|\s)${tok}(en|et|et|)`, 'ig');
+    const re = new RegExp(`(^|\\s)${tok}(en|et|et|)`, 'ig');
     sanitized = sanitized.replace(re, '$1ikke logget sted');
   }
   // Collapse multiple spaces/newlines and normalize bullets to hyphens
   sanitized = sanitized.replace(/[•·]/g, '-').replace(/\s{2,}/g, ' ').replace(/\n{3,}/g, '\n\n');
   return sanitized.trim();
 }
-
 

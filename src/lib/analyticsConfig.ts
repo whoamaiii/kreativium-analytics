@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { AI_ANALYSIS_ENABLED } from '@/lib/env';
+import { AI_ANALYSIS_ENABLED, EXPLANATION_V2_ENABLED } from '@/lib/env';
 
 // Centralized storage keys and prefixes
 export const STORAGE_KEYS = {
@@ -18,6 +18,7 @@ export interface AnalyticsConfiguration {
     enableStructuredInsights?: boolean;
     enableSummaryFacade?: boolean;
     aiAnalysisEnabled?: boolean;
+    explanationV2?: boolean;
   };
 
   // Feature Engineering Settings
@@ -152,6 +153,7 @@ export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfiguration = {
     enableStructuredInsights: false,
     enableSummaryFacade: true,
     aiAnalysisEnabled: AI_ANALYSIS_ENABLED,
+    explanationV2: EXPLANATION_V2_ENABLED,
   },
   
   featureEngineering: {
@@ -347,8 +349,9 @@ export class AnalyticsConfigManager {
         return s === '1' || s === 'true' || s === 'yes';
       };
       const envAi = toBool(env.VITE_AI_ANALYSIS_ENABLED);
+      const envExplV2 = toBool(env.VITE_EXPLANATION_V2);
       const next: AnalyticsConfiguration = { ...this.config } as AnalyticsConfiguration;
-      next.features = { ...(next.features || {}), aiAnalysisEnabled: envAi } as AnalyticsConfiguration['features'];
+      next.features = { ...(next.features || {}), aiAnalysisEnabled: envAi, explanationV2: envExplV2 } as AnalyticsConfiguration['features'];
       return next;
     } catch {
       // On any error, return a shallow copy

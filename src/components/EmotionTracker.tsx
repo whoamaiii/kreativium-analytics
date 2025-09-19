@@ -269,6 +269,7 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
               onChange={(e) => setNewTrigger(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddTrigger()}
               placeholder="Legg til en utløser..."
+              aria-label="Legg til ny utløser"
               className="flex-1 px-3 py-2 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent"
             />
             <Button onClick={handleAddTrigger} size="sm" variant="outline">

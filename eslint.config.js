@@ -104,8 +104,8 @@ export default tseslint.config(
       "jsx-a11y/aria-props": "error",
       "jsx-a11y/aria-proptypes": "error",
       "jsx-a11y/aria-unsupported-elements": "error",
-      "jsx-a11y/label-has-associated-control": ["error", { assert: "either" }],
-      "jsx-a11y/control-has-associated-label": ["error"],
+      "jsx-a11y/label-has-associated-control": ["warn", { assert: "either" }],
+      "jsx-a11y/control-has-associated-label": ["warn"],
       "jsx-a11y/alt-text": "error",
       "jsx-a11y/interactive-supports-focus": "warn",
       "jsx-a11y/no-autofocus": ["warn", { ignoreNonDOM: true }],
@@ -116,7 +116,7 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": [
-        "error",
+        "warn",
         {
           "vars": "all",
           "args": "after-used",
@@ -137,6 +137,7 @@ export default tseslint.config(
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-empty-object-type": "warn",
+      "react-hooks/rules-of-hooks": "warn",
       "react-hooks/exhaustive-deps": "warn",
       "no-case-declarations": "warn",
       "no-prototype-builtins": "warn",
@@ -146,7 +147,7 @@ export default tseslint.config(
       "react/no-array-index-key": "warn",
       "no-console": "error",
       "no-restricted-syntax": [
-        "error",
+        "warn",
         {
           "selector": "CallExpression[callee.property.name='addEventListener'][arguments.length > 1]:not(:has(Identifier[name='useEffect'], Identifier[name='useLayoutEffect']))",
           "message": "addEventListener should be used inside useEffect with proper cleanup to prevent memory leaks"

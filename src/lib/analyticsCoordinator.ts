@@ -20,3 +20,4 @@ export class AnalyticsWorkerCoordinator {
 }
 
 export const analyticsCoordinator = AnalyticsWorkerCoordinator;
+

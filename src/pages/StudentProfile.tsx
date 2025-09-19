@@ -7,7 +7,7 @@ import { DashboardSection } from "@/components/profile-sections/DashboardSection
 import { AnalyticsSection } from "@/components/profile-sections/AnalyticsSection";
 import { ToolsSection } from "@/components/profile-sections/ToolsSection";
 import { GoalManager } from "@/components/GoalManager";
-import React, { memo, lazy } from 'react';
+import { lazy } from 'react';
 const ProgressDashboard = lazy(() => import("@/components/ProgressDashboard").then(m => ({ default: m.ProgressDashboard })));
 import { LazyReportBuilder } from "@/components/lazy/LazyReportBuilder";
 import { ErrorBoundary } from "@/components/ErrorBoundary";

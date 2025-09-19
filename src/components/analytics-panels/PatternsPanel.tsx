@@ -20,6 +20,8 @@ import { toast } from 'sonner';
 import { ExplanationDock } from './ExplanationDock';
 import { ExplanationSheet } from './ExplanationSheet';
 import type { SourceItem } from '@/types/analytics';
+import { ResizableSplitLayout } from '@/components/layouts/ResizableSplitLayout';
+import { analyticsConfig } from '@/lib/analyticsConfig';
 
 export interface PatternsPanelProps {
   filteredData: {
@@ -505,9 +507,11 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
     });
   }, [sourcesRich]);
 
-  return (
-    <>
-      <div className="lg:grid lg:grid-cols-[1fr_minmax(380px,520px)] 2xl:grid-cols-[1fr_minmax(420px,560px)] lg:gap-4">
+  const enableSplit = React.useMemo(() => {
+    try { return !!analyticsConfig.getConfig().features?.explanationV2 && !isSmallViewport; } catch { return !isSmallViewport; }
+  }, [isSmallViewport]);
+
+  const leftContent = (
         <div className="space-y-4">
       <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -596,8 +600,10 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
         </CardContent>
       </Card>
         </div>
-        {/* Right column: persistent dock on large screens */}
-        <div className="hidden lg:block sticky top-4 self-start" ref={dockRef}>
+  );
+
+  const rightContent = (
+        <div className="h-full" ref={dockRef}>
           <ExplanationDock
             patternTitle={selectedTitle}
             status={currentStatus}
@@ -619,7 +625,45 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
             sourcesRich={sourcesRich}
           />
         </div>
-      </div>
+  );
+
+  return (
+    <>
+      {enableSplit ? (
+        <ResizableSplitLayout
+          storageKey={`split:${student?.id || 'unknown'}`}
+          left={leftContent}
+          right={rightContent}
+          className="lg:gap-4"
+        />
+      ) : (
+        <div className="lg:grid lg:grid-cols-[1fr_minmax(380px,520px)] 2xl:grid-cols-[1fr_minmax(420px,560px)] lg:gap-4">
+          {leftContent}
+          {/* Right column: persistent dock on large screens */}
+          <div className="hidden lg:block sticky top-4 self-start" ref={dockRef}>
+            <ExplanationDock
+              patternTitle={selectedTitle}
+              status={currentStatus}
+              text={currentText}
+              error={currentError}
+              onCopy={handleCopy}
+              onAddToReport={handleAddToReport}
+              aiEnabled={aiKeyPresent}
+              systemPrompt={[
+                buildSystemPrompt(),
+                '',
+                'Bruk kildehenvisninger [S1], [S2], ... når du refererer til konkrete eksempler. Henvis KUN til S-listen under. Ikke bruk tekniske ID-er.',
+                citationsSeed.length ? 'Kildehenvisninger (S1..Sn):' : '',
+                ...citationsSeed,
+              ].filter(Boolean).join('\n')}
+              chatMessages={chatMessages}
+              onChatChange={updateChat}
+              dataset={{ entries: filteredData.entries, emotions: filteredData.emotions, sensoryInputs: filteredData.sensoryInputs }}
+              sourcesRich={sourcesRich}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Mobile sheet */}
       <ExplanationSheet

@@ -6,7 +6,7 @@ test.describe('CSV export smoke (POC)', () => {
     await page.addInitScript(() => {
       const orig = URL.createObjectURL;
       (window as any).__exportHook = { urls: [] as string[] };
-      // @ts-ignore
+      // @ts-expect-error Override URL.createObjectURL in test context to capture blob URLs
       URL.createObjectURL = function(blob: Blob) {
         const url = orig.call(URL, blob);
         (window as any).__exportHook.urls.push(url);
@@ -29,5 +29,4 @@ test.describe('CSV export smoke (POC)', () => {
     }, { timeout: 5000, intervals: [200, 300, 500, 1000, 3000] }).toBeGreaterThan(0);
   });
 });
-
 

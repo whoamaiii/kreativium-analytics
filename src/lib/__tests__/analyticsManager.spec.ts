@@ -69,7 +69,7 @@ import { logger } from '@/lib/logger';
 // Minimal localStorage polyfill for profile persistence in tests
 function setupLocalStorage() {
   const store = new Map<string, string>();
-  // @ts-ignore
+  // @ts-expect-error Test installs minimal localStorage polyfill for browser-like behavior
   global.localStorage = {
     getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
     setItem: (k: string, v: string) => { store.set(k, String(v)); },

@@ -17,6 +17,7 @@ vi.mock('@/workers/analytics.worker?worker', () => {
     postMessage = mockPostMessage;
     terminate = mockTerminate;
     constructor() {
+      // eslint-disable-next-line @typescript-eslint/no-this-alias -- store instance so tests can inspect mocked worker
       lastWorker = this;
     }
   }
@@ -138,4 +139,3 @@ describe('useAnalyticsWorker', () => {
     });
   });
 });
-

@@ -27,3 +27,4 @@ describe('sanitizePlainNorwegian', () => {
     expect(out).toContain('kantine');
   });
 });
+

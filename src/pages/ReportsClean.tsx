@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useId } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -30,6 +30,8 @@ const Reports = () => {
   const [customEnd, setCustomEnd] = useState<string>('');
   const [anonymize, setAnonymize] = useState<boolean>(false);
   const [backupUseFilters, setBackupUseFilters] = useState<boolean>(false);
+  const customStartId = useId();
+  const customEndId = useId();
 
   useEffect(() => {
     try {
@@ -233,21 +235,25 @@ const Reports = () => {
               {preset === 'custom' && (
                 <div className="grid grid-cols-2 gap-2 md:col-span-2">
                   <div>
-                    <Label className="text-sm">{tCommon('reports.exportFilters.start')}</Label>
+                    <label className="text-sm" htmlFor={customStartId}>{tCommon('reports.exportFilters.start')}</label>
                     <input
+                      id={customStartId}
                       className={`w-full h-9 rounded-md border bg-background px-3 text-sm ${customRangeInvalid ? 'border-destructive' : ''}`}
                       type="date"
                       aria-invalid={customRangeInvalid}
+                      aria-label={tCommon('reports.exportFilters.start')}
                       value={customStart}
                       onChange={(e) => setCustomStart(e.target.value)}
                     />
                   </div>
                   <div>
-                    <Label className="text-sm">{tCommon('reports.exportFilters.end')}</Label>
+                    <label className="text-sm" htmlFor={customEndId}>{tCommon('reports.exportFilters.end')}</label>
                     <input
+                      id={customEndId}
                       className={`w-full h-9 rounded-md border bg-background px-3 text-sm ${customRangeInvalid ? 'border-destructive' : ''}`}
                       type="date"
                       aria-invalid={customRangeInvalid}
+                      aria-label={tCommon('reports.exportFilters.end')}
                       value={customEnd}
                       onChange={(e) => setCustomEnd(e.target.value)}
                     />
@@ -346,4 +352,3 @@ const Reports = () => {
 };
 
 export default Reports;
-

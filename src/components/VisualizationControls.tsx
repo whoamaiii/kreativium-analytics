@@ -94,6 +94,11 @@ export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
     visualizationState.setProjectionMode('2d');
   }
 
+  const chartTypeLabelId = React.useId();
+  const chartTypeTriggerId = React.useId();
+  const timeRangeLabelId = React.useId();
+  const timeRangeTriggerId = React.useId();
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -301,9 +306,15 @@ export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
       <CardContent>
         <div className="flex flex-wrap gap-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Chart Type</label>
+            <label
+              id={chartTypeLabelId}
+              className="text-sm font-medium"
+              htmlFor={chartTypeTriggerId}
+            >
+              Chart Type
+            </label>
             <Select value={selectedChartType} onValueChange={(value: ChartType) => setSelectedChartType(value)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger id={chartTypeTriggerId} className="w-32" aria-labelledby={chartTypeLabelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -316,7 +327,7 @@ export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Emotions</label>
+            <p className="text-sm font-medium">Select Emotions</p>
             <div className="grid grid-cols-2 gap-2 w-64 p-2 border rounded-md">
               {availableEmotions.map(emotion => {
                 const checked = selectedEmotions.includes(emotion);
@@ -340,9 +351,15 @@ export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Time Range</label>
+            <label
+              id={timeRangeLabelId}
+              className="text-sm font-medium"
+              htmlFor={timeRangeTriggerId}
+            >
+              Time Range
+            </label>
             <Select value={selectedTimeRange} onValueChange={(value: TimeRange) => setSelectedTimeRange(value)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger id={timeRangeTriggerId} className="w-32" aria-labelledby={timeRangeLabelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

@@ -7,7 +7,7 @@ import type { SessionData, AnalyticsResult } from '@/types';
 // Mock worker module
 vi.mock('@/workers/analytics.worker', () => ({
   default: class MockWorker {
-    private listeners: Map<string, Function> = new Map();
+    private listeners: Map<string, (...args: unknown[]) => unknown> = new Map();
     
     postMessage(data: any) {
       // Simulate worker processing
@@ -20,7 +20,7 @@ vi.mock('@/workers/analytics.worker', () => ({
       }, 10);
     }
     
-    addEventListener(event: string, handler: Function) {
+    addEventListener(event: string, handler: (...args: unknown[]) => unknown) {
       this.listeners.set(event, handler);
     }
     

@@ -20,3 +20,4 @@ export function createInsightsCacheKey(inputs: ComputeInsightsInputs, options?: 
 
 // Re-export types for convenience
 export type { ComputeInsightsInputs } from '@/lib/insights/unified';
+

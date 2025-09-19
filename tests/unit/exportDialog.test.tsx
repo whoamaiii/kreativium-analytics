@@ -2,6 +2,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExportDialog } from '@/components/ExportDialog';
+import analyticsEn from '@/locales/en/analytics.json';
+
+const escapeRegExp = (value: string): string => value.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+const leadingLabel = (label: string): RegExp => new RegExp(`^${escapeRegExp(label)}`, 'i');
+const leadingText = (value: string): RegExp => new RegExp(`^${escapeRegExp(value)}`, 'i');
 
 describe('ExportDialog', () => {
   it('allows selecting options and confirms', async () => {
@@ -9,23 +14,25 @@ describe('ExportDialog', () => {
     const user = userEvent.setup();
     render(<ExportDialog open={true} onOpenChange={() => {}} onConfirm={onConfirm} defaultFormat="pdf" />);
 
+    const copy = analyticsEn['export'];
+
     // open selects and pick values
-    await user.click(screen.getByLabelText('Format'));
-    await user.click(await screen.findByText('PDF'));
+    await user.click(screen.getByLabelText(leadingLabel(copy.options.format)));
+    await user.click(await screen.findByRole('option', { name: 'PDF' }));
 
-    await user.click(screen.getByLabelText('Template'));
-    await user.click(await screen.findByText('Detailed (full)'));
+    await user.click(screen.getByLabelText(leadingLabel(copy.options.template)));
+    await user.click(await screen.findByRole('option', { name: copy.templates.detailed }));
 
-    await user.click(screen.getByLabelText('Chart quality'));
-    await user.click(await screen.findByText('High'));
+    await user.click(screen.getByLabelText(leadingLabel(copy.options.quality)));
+    await user.click(await screen.findByRole('option', { name: copy.quality.high }));
 
-    await user.click(screen.getByLabelText('Color scheme'));
-    await user.click(await screen.findByText('Default'));
+    await user.click(screen.getByLabelText(leadingLabel(copy.options.colorScheme)));
+    await user.click(await screen.findByRole('option', { name: copy.schemes.default }));
 
     // toggle include raw data
-    await user.click(screen.getByLabelText('Include raw data appendix'));
+    await user.click(screen.getByLabelText(leadingLabel(copy.options.includeRawData)));
 
-    await user.click(screen.getByRole('button', { name: 'Export' }));
+    await user.click(screen.getByRole('button', { name: leadingText(copy.button) }));
     expect(onConfirm).toHaveBeenCalled();
   });
 });

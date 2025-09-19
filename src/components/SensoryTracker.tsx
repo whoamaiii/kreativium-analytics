@@ -227,6 +227,7 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
                 onChange={(e) => setNewCopingStrategy(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddCopingStrategy()}
                 placeholder="Add a coping strategy..."
+                aria-label="Legg til mestringsstrategi"
                 className="flex-1 px-3 py-2 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               <Button onClick={handleAddCopingStrategy} size="sm" variant="outline">
@@ -272,6 +273,7 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
             value={environment}
             onChange={(e) => setEnvironment(e.target.value)}
             placeholder="f.eks. Klasserom, Lekeplass, Bibliotek..."
+            aria-label="Beskriv miljøet"
             className="w-full px-3 py-2 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent"
           />
         </div>

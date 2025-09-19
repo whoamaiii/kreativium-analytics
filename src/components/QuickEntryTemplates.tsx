@@ -181,6 +181,11 @@ export const QuickEntryTemplates: React.FC<QuickEntryTemplatesProps> = ({
     usageCount: 0
   });
 
+  const templateNameId = React.useId();
+  const templateDescriptionId = React.useId();
+  const templateCategoryTriggerId = React.useId();
+  const templateCategoryLabelId = React.useId();
+
   /**
    * Save templates to localStorage with error handling.
    * Logs errors but doesn't crash the application if saving fails.
@@ -313,28 +318,39 @@ export const QuickEntryTemplates: React.FC<QuickEntryTemplatesProps> = ({
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium">Template Name</label>
+                  <label className="text-sm font-medium" htmlFor={templateNameId}>Template Name</label>
                   <Input
+                    id={templateNameId}
                     placeholder="e.g., Sensory Overload Response"
                     value={newTemplate.name || ''}
                     onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Description</label>
+                  <label className="text-sm font-medium" htmlFor={templateDescriptionId}>Description</label>
                   <Textarea
+                    id={templateDescriptionId}
                     placeholder="Brief description of when to use this template"
                     value={newTemplate.description || ''}
                     onChange={(e) => setNewTemplate(prev => ({ ...prev, description: e.target.value }))}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Category</label>
+                  <label
+                    id={templateCategoryLabelId}
+                    className="text-sm font-medium"
+                    htmlFor={templateCategoryTriggerId}
+                  >
+                    Category
+                  </label>
                   <Select
                     value={newTemplate.category}
                     onValueChange={(value) => setNewTemplate(prev => ({ ...prev, category: value as "morning" | "transition" | "learning" | "break" | "afternoon" | "custom" }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      id={templateCategoryTriggerId}
+                      aria-labelledby={templateCategoryLabelId}
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

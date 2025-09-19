@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ interface EnvironmentalTrackerProps {
 
 export const EnvironmentalTracker = ({ onEnvironmentalAdd, studentId }: EnvironmentalTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
+  const specialEventInputId = useId();
   const [roomTemperature, setRoomTemperature] = useState<number>(22);
   const [lighting, setLighting] = useState<string>('');
   const [noiseLevel, setNoiseLevel] = useState<number>(3);
@@ -221,15 +222,17 @@ export const EnvironmentalTracker = ({ onEnvironmentalAdd, studentId }: Environm
 
         {/* Special Events */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-foreground">
+          <label className="text-sm font-medium text-foreground" htmlFor={specialEventInputId}>
             {String(tTracking('environmental.specialEvents'))}
-          </Label>
+          </label>
           <div className="flex gap-2">
             <input
+              id={specialEventInputId}
               type="text"
               value={newEvent}
               onChange={(e) => setNewEvent(e.target.value)}
               placeholder={String(tTracking('environmental.specialEventsPlaceholder'))}
+              aria-label={String(tTracking('environmental.specialEvents'))}
               className="flex-1 px-3 py-2 border border-border rounded-md bg-input text-sm"
               onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialEvent()}
             />

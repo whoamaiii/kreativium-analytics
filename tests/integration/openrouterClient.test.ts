@@ -23,7 +23,7 @@ describe('OpenRouterClient integration (mocked fetch)', () => {
 
   beforeEach(() => {
     vi.useFakeTimers();
-    // @ts-expect-error
+    // @ts-expect-error Mock global fetch with vi.fn for integration harness
     global.fetch = vi.fn();
   });
   afterEach(() => {
@@ -65,4 +65,3 @@ describe('OpenRouterClient integration (mocked fetch)', () => {
     await expect(client.chatJSON('{"user":"hi"}')).rejects.toBeTruthy();
   });
 });
-

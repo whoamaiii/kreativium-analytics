@@ -223,6 +223,17 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
   const [colorBy, setColorBy] = useState<string>('category');
   const [pointSize, setPointSize] = useState<number>(0.2);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const xAxisLabelId = React.useId();
+  const xAxisTriggerId = React.useId();
+  const yAxisLabelId = React.useId();
+  const yAxisTriggerId = React.useId();
+  const zAxisLabelId = React.useId();
+  const zAxisTriggerId = React.useId();
+  const colorByLabelId = React.useId();
+  const colorByTriggerId = React.useId();
+  const filterCategoryLabelId = React.useId();
+  const filterCategoryTriggerId = React.useId();
+  const pointSizeLabelId = React.useId();
 
   // Process data into 3D points
   const dataPoints = useMemo((): DataPoint3D[] => {
@@ -354,9 +365,15 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
         <div className="mb-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">X Axis</label>
+              <label
+                id={xAxisLabelId}
+                className="text-sm font-medium mb-1 block"
+                htmlFor={xAxisTriggerId}
+              >
+                X Axis
+              </label>
               <Select value={xAxis} onValueChange={setXAxis}>
-                <SelectTrigger>
+                <SelectTrigger id={xAxisTriggerId} aria-labelledby={xAxisLabelId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -370,9 +387,15 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
             </div>
             
             <div>
-              <label className="text-sm font-medium mb-1 block">Y Axis</label>
+              <label
+                id={yAxisLabelId}
+                className="text-sm font-medium mb-1 block"
+                htmlFor={yAxisTriggerId}
+              >
+                Y Axis
+              </label>
               <Select value={yAxis} onValueChange={setYAxis}>
-                <SelectTrigger>
+                <SelectTrigger id={yAxisTriggerId} aria-labelledby={yAxisLabelId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -386,9 +409,15 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
             </div>
             
             <div>
-              <label className="text-sm font-medium mb-1 block">Z Axis</label>
+              <label
+                id={zAxisLabelId}
+                className="text-sm font-medium mb-1 block"
+                htmlFor={zAxisTriggerId}
+              >
+                Z Axis
+              </label>
               <Select value={zAxis} onValueChange={setZAxis}>
-                <SelectTrigger>
+                <SelectTrigger id={zAxisTriggerId} aria-labelledby={zAxisLabelId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -404,9 +433,15 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">Color By</label>
+              <label
+                id={colorByLabelId}
+                className="text-sm font-medium mb-1 block"
+                htmlFor={colorByTriggerId}
+              >
+                Color By
+              </label>
               <Select value={colorBy} onValueChange={setColorBy}>
-                <SelectTrigger>
+                <SelectTrigger id={colorByTriggerId} aria-labelledby={colorByLabelId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -417,9 +452,15 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
             </div>
             
             <div>
-              <label className="text-sm font-medium mb-1 block">Filter Category</label>
+              <label
+                id={filterCategoryLabelId}
+                className="text-sm font-medium mb-1 block"
+                htmlFor={filterCategoryTriggerId}
+              >
+                Filter Category
+              </label>
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger>
+                <SelectTrigger id={filterCategoryTriggerId} aria-labelledby={filterCategoryLabelId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -432,9 +473,9 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
             </div>
             
             <div>
-              <label className="text-sm font-medium mb-1 block">
+              <p id={pointSizeLabelId} className="text-sm font-medium mb-1 block">
                 Point Size: {pointSize.toFixed(2)}
-              </label>
+              </p>
               <Slider
                 value={[pointSize]}
                 onValueChange={([value]) => setPointSize(value)}
@@ -442,6 +483,7 @@ export const Visualization3D: React.FC<Visualization3DProps> = ({
                 max={0.5}
                 step={0.05}
                 className="mt-2"
+                aria-labelledby={pointSizeLabelId}
               />
             </div>
           </div>

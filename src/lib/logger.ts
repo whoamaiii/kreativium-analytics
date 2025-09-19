@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Logger intentionally proxies to console when enabled */
 import { LOG_LEVEL_NAME, DEBUG_MODE } from '@/lib/env';
 export enum LogLevel {
   DEBUG = 0,

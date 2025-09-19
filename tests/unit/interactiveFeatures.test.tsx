@@ -167,11 +167,11 @@ describe('Interactive Features', () => {
       return (
         <form onSubmit={handleSubmit}>
           <div>
-            <input name="name" placeholder="Name" />
+            <input name="name" placeholder="Name" aria-label="Name" />
             {errors.name && <span role="alert">{errors.name}</span>}
           </div>
           <div>
-            <input name="grade" placeholder="Grade" />
+            <input name="grade" placeholder="Grade" aria-label="Grade" />
             {errors.grade && <span role="alert">{errors.grade}</span>}
           </div>
           <button type="submit">Submit</button>

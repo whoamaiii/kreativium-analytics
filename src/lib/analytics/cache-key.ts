@@ -120,7 +120,10 @@ function toStableJSONSafe(value: unknown, normalizeArrays: boolean): unknown {
   if (t === "string" || t === "number" || t === "boolean") return value;
   if (t === "bigint") return { $type: "BigInt", value: (value as bigint).toString() };
   if (t === "symbol") return { $type: "Symbol", value: String(value as symbol) };
-  if (t === "function") return { $type: "Function", value: (value as Function).name || "anonymous" };
+  if (t === "function") {
+    const fn = value as (...args: unknown[]) => unknown;
+    return { $type: "Function", value: fn.name || "anonymous" };
+  }
 
   if (isDate(value)) {
     return { $type: "Date", value: value.toISOString() };
@@ -353,4 +356,3 @@ export function createCacheKey<TInput = unknown>(options: CacheKeyOptions<TInput
 
   return parts.join(":");
 }
-

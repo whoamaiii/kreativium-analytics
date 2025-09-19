@@ -119,3 +119,4 @@ export function getChartA11yDescription(chartType: string, data: any): string {
     return 'Data visualization';
   }
 }
+

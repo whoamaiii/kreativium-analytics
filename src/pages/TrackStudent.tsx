@@ -203,6 +203,7 @@ const TrackStudent = () => {
             value={generalNotes}
             onChange={(e) => setGeneralNotes(e.target.value)}
             placeholder={String(tTracking('session.generalNotesPlaceholder'))}
+            aria-label={String(tTracking('session.generalNotes'))}
             className="w-full p-4 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
             rows={4}
           />

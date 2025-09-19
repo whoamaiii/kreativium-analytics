@@ -397,7 +397,7 @@ private analyticsProfiles: AnalyticsProfileMap;
 
       // Always include lightweight AI metadata for lineage/traceability
       const opts: AnalysisOptions = { includeAiMetadata: true };
-      let results = await engine.analyzeStudent(student.id, undefined, opts);
+      const results = await engine.analyzeStudent(student.id, undefined, opts);
 
       // Edge case: if useAI was requested but heuristic was used, add caveat
       if (useAI === true && engine instanceof HeuristicAnalysisEngine && opts.includeAiMetadata) {

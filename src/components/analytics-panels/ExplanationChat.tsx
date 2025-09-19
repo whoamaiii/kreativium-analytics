@@ -7,6 +7,7 @@ import type { ChatMessage } from '@/lib/ai/types';
 import { toast } from 'sonner';
 import { Copy, ChevronDown } from 'lucide-react';
 import type { SourceItem } from '@/types/analytics';
+import { buildCitationList, type CitationListItem } from './citation-utils';
 import { sanitizePlainNorwegian, type AllowedContexts } from '@/lib/evidence/evidenceBuilder';
 import { EntryDetailsDrawer } from './EntryDetailsDrawer';
 
@@ -20,6 +21,8 @@ export interface ExplanationChatProps {
   sourcesRich?: SourceItem[];
   allowed?: AllowedContexts;
 }
+
+// Citation list helpers moved to a small shared utility to avoid HMR export shape issues.
 
 export function ExplanationChat({
   aiEnabled,
@@ -97,15 +100,26 @@ export function ExplanationChat({
     try { const v = sessionStorage.getItem('explanationChat.sourcesCollapsed'); return v ? v === '1' : false; } catch { return false; }
   });
   React.useEffect(() => {
+    function handleCollapseAll() {
+      try { setSourcesCollapsed(true); setShowAllSources(false); } catch {}
+    }
+    function handleExpandAll() {
+      try { setSourcesCollapsed(false); setShowAllSources(true); } catch {}
+    }
+    window.addEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
+    window.addEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
+    return () => {
+      window.removeEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
+      window.removeEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
+    };
+  }, []);
+  React.useEffect(() => {
     try { sessionStorage.setItem(STORAGE_KEYS.showAll, showAllSources ? '1' : '0'); } catch {}
   }, [showAllSources, STORAGE_KEYS.showAll]);
   React.useEffect(() => {
     try { sessionStorage.setItem(STORAGE_KEYS.collapsed, sourcesCollapsed ? '1' : '0'); } catch {}
   }, [sourcesCollapsed, STORAGE_KEYS.collapsed]);
-  const sList = React.useMemo(() => {
-    const arr = (sourcesRich || []).slice(-10);
-    return arr.map((s, idx) => ({ key: `S${idx + 1}`, source: s }));
-  }, [sourcesRich]);
+  const sList = React.useMemo<CitationListItem[]>(() => buildCitationList(sourcesRich), [sourcesRich]);
 
   const usedCitationKeys = React.useMemo(() => {
     const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
@@ -273,5 +287,3 @@ export function ExplanationChat({
     </div>
   );
 }
-
-

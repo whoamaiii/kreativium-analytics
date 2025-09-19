@@ -335,6 +335,17 @@ export const OptimizedVisualization3D = memo<Visualization3DProps>(({
   const [colorBy, setColorBy] = useState<string>('category');
   const [pointSize, setPointSize] = useState<number>(0.2);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const xAxisLabelId = React.useId();
+  const xAxisTriggerId = React.useId();
+  const yAxisLabelId = React.useId();
+  const yAxisTriggerId = React.useId();
+  const zAxisLabelId = React.useId();
+  const zAxisTriggerId = React.useId();
+  const colorByLabelId = React.useId();
+  const colorByTriggerId = React.useId();
+  const filterLabelId = React.useId();
+  const filterTriggerId = React.useId();
+  const pointSizeLabelId = React.useId();
 
   // Memoize data processing
   const dataPoints = useMemo(() => {
@@ -410,9 +421,15 @@ export const OptimizedVisualization3D = memo<Visualization3DProps>(({
         {/* Controls */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <div>
-            <label className="text-sm font-medium mb-1 block">X Axis</label>
+            <label
+              id={xAxisLabelId}
+              className="text-sm font-medium mb-1 block"
+              htmlFor={xAxisTriggerId}
+            >
+              X Axis
+            </label>
             <Select value={xAxis} onValueChange={handleXAxisChange}>
-              <SelectTrigger>
+              <SelectTrigger id={xAxisTriggerId} aria-labelledby={xAxisLabelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -424,9 +441,15 @@ export const OptimizedVisualization3D = memo<Visualization3DProps>(({
           </div>
           
           <div>
-            <label className="text-sm font-medium mb-1 block">Y Axis</label>
+            <label
+              id={yAxisLabelId}
+              className="text-sm font-medium mb-1 block"
+              htmlFor={yAxisTriggerId}
+            >
+              Y Axis
+            </label>
             <Select value={yAxis} onValueChange={handleYAxisChange}>
-              <SelectTrigger>
+              <SelectTrigger id={yAxisTriggerId} aria-labelledby={yAxisLabelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -438,9 +461,15 @@ export const OptimizedVisualization3D = memo<Visualization3DProps>(({
           </div>
           
           <div>
-            <label className="text-sm font-medium mb-1 block">Z Axis</label>
+            <label
+              id={zAxisLabelId}
+              className="text-sm font-medium mb-1 block"
+              htmlFor={zAxisTriggerId}
+            >
+              Z Axis
+            </label>
             <Select value={zAxis} onValueChange={handleZAxisChange}>
-              <SelectTrigger>
+              <SelectTrigger id={zAxisTriggerId} aria-labelledby={zAxisLabelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -452,9 +481,15 @@ export const OptimizedVisualization3D = memo<Visualization3DProps>(({
           </div>
           
           <div>
-            <label className="text-sm font-medium mb-1 block">Color By</label>
+            <label
+              id={colorByLabelId}
+              className="text-sm font-medium mb-1 block"
+              htmlFor={colorByTriggerId}
+            >
+              Color By
+            </label>
             <Select value={colorBy} onValueChange={handleColorByChange}>
-              <SelectTrigger>
+              <SelectTrigger id={colorByTriggerId} aria-labelledby={colorByLabelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -467,7 +502,7 @@ export const OptimizedVisualization3D = memo<Visualization3DProps>(({
 
         <div className="flex gap-4 mb-4">
           <div className="flex-1">
-            <label className="text-sm font-medium mb-1 block">Point Size</label>
+            <p id={pointSizeLabelId} className="text-sm font-medium mb-1 block">Point Size</p>
             <Slider
               value={[pointSize]}
               onValueChange={handlePointSizeChange}
@@ -475,13 +510,20 @@ export const OptimizedVisualization3D = memo<Visualization3DProps>(({
               max={0.5}
               step={0.05}
               className="w-full"
+              aria-labelledby={pointSizeLabelId}
             />
           </div>
           
           <div className="flex-1">
-            <label className="text-sm font-medium mb-1 block">Filter</label>
+            <label
+              id={filterLabelId}
+              className="text-sm font-medium mb-1 block"
+              htmlFor={filterTriggerId}
+            >
+              Filter
+            </label>
             <Select value={filterCategory} onValueChange={handleFilterChange}>
-              <SelectTrigger>
+              <SelectTrigger id={filterTriggerId} aria-labelledby={filterLabelId}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

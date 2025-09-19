@@ -44,3 +44,4 @@ describe('chartRegistry', () => {
     expect(chartRegistry.get('c4')).toBeUndefined();
   });
 });
+

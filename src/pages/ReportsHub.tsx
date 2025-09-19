@@ -63,16 +63,16 @@ const ReportsHub = (): JSX.Element => {
                     {tCommon(`reports.templates.${card.id}.description`)}
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-center justify-between">
+                <CardContent className="flex items-center justify-between gap-2">
                   <span className="text-xs text-muted-foreground">
                     {tCommon('reports.sectionsCount', { count: card.sections })}
                   </span>
-                  Link to={`/reports/builder?template=${card.id}`} className="inline-block">
-                    Button>
-                      FileText className="h-4 w-4 mr-2" /
+                  <Link to={`/reports/builder?template=${card.id}`} className="inline-block">
+                    <Button>
+                      <FileText className="h-4 w-4 mr-2" />
                       {tCommon('reports.createReport')}
-                    /Button
-                  /Link
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}

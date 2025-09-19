@@ -10,9 +10,10 @@ const hslToRgba = (hsl: string, alpha = 1) => {
     return `rgba(0,0,0,${alpha})`;
   }
 
-  let [h, s, l] = hslValues.map(parseFloat);
-  s /= 100;
-  l /= 100;
+  const [rawH, rawS, rawL] = hslValues.map(parseFloat);
+  const h = rawH;
+  const s = rawS / 100;
+  const l = rawL / 100;
 
   const k = (n: number) => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
