@@ -274,7 +274,7 @@ describe('useAnalyticsWorker (unit)', () => {
     processAnalyticsSpy.mockResolvedValue(emptyResults);
     const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
     await act(async () => {
-      await result.current.runAnalysis(createAnalyticsData({ entries: [createTrackingEntry('sx', { id: 't4' })] }));
+      await result.current.runAnalysis(createAnalyticsData({ entries: [createTrackingEntry('sx', { id: 't4' })] }), { student: createStudent('sx'), useAI: false });
     });
     expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
   });

@@ -1,23 +1,19 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { POC_MODE } from '@/lib/env';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
+// Badge and correlations elements removed to avoid duplicate correlation tabs
 import {
   TrendingUp,
-  Target,
-  Zap,
   Eye,
   Clock,
   Brain,
   Activity,
 } from 'lucide-react';
-import { CorrelationMatrix } from '@/lib/enhancedPatternAnalysis';
+// Removed correlation utilities since correlations tab was removed here
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface DashboardLayoutProps {
   renderTrendsChart: () => React.ReactNode;
-  renderCorrelationHeatmap: () => React.ReactNode;
   renderPatternAnalysis: () => React.ReactNode;
   render3dVisualization: () => React.ReactNode;
   renderTimeline: () => React.ReactNode;
@@ -25,40 +21,27 @@ interface DashboardLayoutProps {
     emotions: { intensity: number; emotion: string }[];
     sensoryInputs: { response?: string }[];
   };
-  correlationMatrix: CorrelationMatrix | null;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   renderTrendsChart,
-  renderCorrelationHeatmap,
-  renderPatternAnalysis,
+  renderPatternAnalysis: _renderPatternAnalysis,
   render3dVisualization,
   renderTimeline,
   filteredData,
-  correlationMatrix,
 }) => {
   const { tAnalytics } = useTranslation();
   return (
     <Tabs defaultValue="trends" className="w-full">
-      <TabsList className="grid w-full grid-cols-5" aria-label={tAnalytics('aria.tabs.charts')}>
+      <TabsList className="grid w-full grid-cols-3" aria-label={tAnalytics('aria.tabs.charts')}>
         <TabsTrigger value="trends" className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4" />
           {String(tAnalytics('tabs.charts'))}
         </TabsTrigger>
-        <TabsTrigger value="correlations" className="flex items-center gap-2">
-          <Target className="h-4 w-4" />
-          {String(tAnalytics('tabs.correlations'))}
+        <TabsTrigger value="3d" className="flex items-center gap-2">
+          <Eye className="h-4 w-4" />
+          {String(tAnalytics('visualization3d.tooltip.intensity'))}
         </TabsTrigger>
-        <TabsTrigger value="patterns" className="flex items-center gap-2">
-          <Zap className="h-4 w-4" />
-          {String(tAnalytics('tabs.patterns'))}
-        </TabsTrigger>
-        {!POC_MODE && (
-          <TabsTrigger value="3d" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            {String(tAnalytics('visualization3d.tooltip.intensity'))}
-          </TabsTrigger>
-        )}
         <TabsTrigger value="timeline" className="flex items-center gap-2">
           <Clock className="h-4 w-4" />
           {String(tAnalytics('charts.dailyActivity'))}
@@ -123,46 +106,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
       </TabsContent>
 
-      <TabsContent value="correlations" className="space-y-6">
-        {renderCorrelationHeatmap()}
-        {correlationMatrix && correlationMatrix.significantPairs.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>{String(tAnalytics('correlations.title'))}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {correlationMatrix.significantPairs.slice(0, 5).map((pair, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <p className="font-medium">
-                        {pair.factor1.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())} ↔{' '}
-                        {pair.factor2.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {pair.correlation > 0 ? String(tAnalytics('correlations.legend.positive')) : String(tAnalytics('correlations.legend.negative'))} {String(tAnalytics('correlations.labels.rPrefix'))}{pair.correlation.toFixed(3)}
-                      </p>
-                    </div>
-                    <Badge variant={pair.significance === 'high' ? 'default' : 'outline'}>
-                      {pair.significance}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      <TabsContent value="3d">
+        {render3dVisualization()}
       </TabsContent>
-
-      <TabsContent value="patterns" className="space-y-6">
-        {renderPatternAnalysis()}
-      </TabsContent>
-
-      {!POC_MODE && (
-        <TabsContent value="3d">
-          {render3dVisualization()}
-        </TabsContent>
-      )}
 
       <TabsContent value="timeline">
         {renderTimeline()}

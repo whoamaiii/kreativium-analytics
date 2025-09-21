@@ -1,10 +1,19 @@
 # Unused Exports Report
 
-Generated: 2025-09-21T09:48:39.283Z
-Files scanned: 360
-Total exports: 885
-Unused exports: 114
+Generated: 2025-09-21T14:55:13.372Z
+Files scanned: 359
+Total exports: 884
+Unused exports: 81
 
+
+## src/components/analytics-panels/AlertsPanel.tsx
+- const: AlertsPanel
+
+## src/components/analytics-panels/ChatComposer.tsx
+- function: ChatComposer
+
+## src/components/analytics-panels/citation-utils.ts
+- const: CHAT_CITATION_LIMIT
 
 ## src/components/ComparisonSummary.tsx
 - default: default
@@ -14,15 +23,6 @@ Unused exports: 114
 
 ## src/components/ui/sidebar.tsx
 - re-export: SidebarInset
-
-## src/config/schemas/analytics.schema.ts
-- const: featureFlagsSchema
-- const: insightRuleSchema
-- const: workerSettingsSchema
-- function: parseAnalyticsConfig
-
-## src/config/validators/analytics.validator.ts
-- function: formatZodError
 
 ## src/contexts/TrackingContext.tsx
 - const: TrackingProvider
@@ -74,19 +74,6 @@ Unused exports: 114
 ## src/lib/cacheManager.ts
 - const: cacheManager
 
-## src/lib/chartBuilders.ts
-- function: buildAreaOption
-- function: buildComposedOption
-- function: buildCorrelationHeatmapOption
-- function: buildEmotionTrendsOption
-- function: buildScatterOption
-
-## src/lib/chartUtils.ts
-- const: ChartEmotionRowSchema
-- const: EMOTION_EMOJIS
-- const: EMOTION_TYPES
-- function: processEmotionData
-
 ## src/lib/DataFilter.ts
 - const: applyFilters
 - const: initialFilterCriteria
@@ -100,23 +87,12 @@ Unused exports: 114
 
 ## src/lib/deviceConstraints.ts
 - function: canPrecompute
-- function: estimateCpuBusy
-- function: getBatteryStatus
-- function: getNetworkInfo
-- function: isMemoryPressureHigh
-- function: isNetworkSlow
-- function: isUserIdle
 
 ## src/lib/echartsUtils.ts
 - function: bindChartEvents
 - function: initEChart
 - function: resizeChart
 - function: updateChartOption
-
-## src/lib/errorHandler.ts
-- const: handleAnalyticsError
-- const: handleStorageError
-- const: handleValidationError
 
 ## src/lib/evidence/select.ts
 - function: filterAndBreakTies
@@ -139,19 +115,7 @@ Unused exports: 114
 - function: getLayoutConfig
 
 ## src/lib/formValidation.ts
-- const: emotionEntrySchema
-- const: environmentalEntrySchema
-- const: sensoryEntrySchema
 - const: studentSchema
-- function: sanitizeObject
-- function: validateEnvironmentalEntry
-
-## src/lib/hash.ts
-- function: hashStringToHex64
-
-## src/lib/key.ts
-- function: hashOfObject
-- function: stableKeyFromObject
 
 ## src/lib/mlModels.ts
 - class: MLModels
@@ -199,12 +163,17 @@ Unused exports: 114
 ## src/lib/validation/dataLeakage.ts
 - class: DataLeakageDetector
 
-## src/types/analytics.ts
-- const: ANALYTICS_CONFIG_MIGRATION_NOTES
-- const: EXAMPLE_CONFIG_BALANCED
-- const: EXAMPLE_CONFIG_CONSERVATIVE
-- const: EXAMPLE_CONFIG_SENSITIVE
-- const: EXAMPLE_CONFIG_SHORT_TERM
+## src/pages/EnhancedTrackStudent.tsx
+- re-export: EnhancedTrackStudent
+
+## src/pages/ReportsHub.tsx
+- default: default
+
+## src/pages/StudentProfile.original.tsx
+- re-export: StudentProfile
+
+## src/pages/StudentProfileOptimized.tsx
+- re-export: StudentProfile
 
 ## src/types/errors.ts
 - const: createAnalyticsError
@@ -213,9 +182,3 @@ Unused exports: 114
 
 ## src/types/filters.ts
 - const: LIGHTING_CONDITION_TOKENS
-
-## src/utils/accessibility.ts
-- function: getFocusableElements
-- function: isFocusable
-- function: moveFocusTo
-- function: trapFocus

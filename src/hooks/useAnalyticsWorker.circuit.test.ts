@@ -25,7 +25,7 @@ function Host({ trigger }: { trigger?: boolean }) {
   const { runAnalysis } = useAnalyticsWorker();
   React.useEffect(() => {
     if (trigger) {
-      void runAnalysis(makeData());
+      void runAnalysis(makeData(), { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
     }
   }, [trigger, runAnalysis]);
   return null;
@@ -59,7 +59,7 @@ describe('useAnalyticsWorker: circuit and notifications', () => {
     function HostInner({ trigger }: { trigger?: boolean }) {
       const { runAnalysis } = Hook();
       React.useEffect(() => {
-        if (trigger) void runAnalysis(makeData());
+        if (trigger) void runAnalysis(makeData(), { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
       }, [trigger, runAnalysis]);
       return null;
     }
@@ -110,7 +110,7 @@ describe('useAnalyticsWorker: circuit and notifications', () => {
     function HostInner({ trigger }: { trigger?: boolean }) {
       const { runAnalysis } = Hook();
       React.useEffect(() => {
-        if (trigger) void runAnalysis(makeData());
+        if (trigger) void runAnalysis(makeData(), { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
       }, [trigger, runAnalysis]);
       return null;
     }

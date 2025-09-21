@@ -11,7 +11,7 @@ import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { dataStorage } from '@/lib/dataStorage';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 // ---------------------------------------------------------------------------
 // Mocks & Test Worker Harness
@@ -27,7 +27,7 @@ vi.mock('@/hooks/useTranslation', () => ({
   }),
 }));
 
-vi.mock('@/hooks/use-toast', () => ({
+vi.mock('sonner', () => ({
   toast: vi.fn(),
 }));
 
@@ -165,7 +165,7 @@ const getGoalsSpy = vi.spyOn(dataStorage, 'getGoalsForStudent');
 function Harness({ data, options, onUpdate }: { data: AnalyticsData; options?: { useAI?: boolean; student?: Student }; onUpdate?: (payload: { error: string | null }) => void }) {
   const { runAnalysis, error } = useAnalyticsWorker({ precomputeOnIdle: false });
   useEffect(() => {
-    runAnalysis(data, options);
+    runAnalysis(data, options || { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(data), JSON.stringify(options)]);
   useEffect(() => { onUpdate?.({ error }); }, [error, onUpdate]);

@@ -22,6 +22,7 @@ import { ExplanationSheet } from './ExplanationSheet';
 import type { SourceItem } from '@/types/analytics';
 import { ResizableSplitLayout } from '@/components/layouts/ResizableSplitLayout';
 import { analyticsConfig } from '@/lib/analyticsConfig';
+import { useSyncedPatternParams } from '@/hooks/useSyncedPatternParams';
 
 export interface PatternsPanelProps {
   filteredData: {
@@ -60,6 +61,7 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
   const [selectedTitle, setSelectedTitle] = React.useState<string>('');
   const [isSheetOpen, setIsSheetOpen] = React.useState<boolean>(false);
   const dockRef = React.useRef<HTMLDivElement>(null);
+  const { patternId, explain, setPatternId, setExplain, clearPatternParams } = useSyncedPatternParams();
 
   // Track viewport to decide dock vs sheet
   const [isSmallViewport, setIsSmallViewport] = React.useState<boolean>(false);
@@ -261,6 +263,11 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
     const key = explainKey(p);
     setSelectedKey(key);
     setSelectedTitle(String((p as any).pattern ?? (p as any).name ?? 'Mønster'));
+    // Sync URL params for deep-linking
+    try {
+      setPatternId(key);
+      setExplain(true);
+    } catch {}
     const st = explanations[key]?.status;
     if (!st || st === 'idle') {
       void requestExplanation(p);
@@ -384,7 +391,7 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
     });
     const correlations = (results as any)?.correlations as Array<{ factor1: string; factor2: string; correlation?: number }> | undefined;
     const correlationSummary = Array.isArray(correlations)
-      ? correlations.slice(0, 8).map((c) => `- ${c.factor1} ↔ ${c.factor2}${typeof c.correlation === 'number' ? ` (r=${c.correlation.toFixed(2)})` : ''}`)
+      ? correlations.slice(0, 8).map((c) => `- ${c.factor1} <-> ${c.factor2}${typeof c.correlation === 'number' ? ` (r=${c.correlation.toFixed(2)})` : ''}`)
       : [];
 
     const summary = [
@@ -623,9 +630,42 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
             onChatChange={updateChat}
             dataset={{ entries: filteredData.entries, emotions: filteredData.emotions, sensoryInputs: filteredData.sensoryInputs }}
             sourcesRich={sourcesRich}
+            onClose={() => {
+              try { clearPatternParams(); } catch {}
+              setSelectedKey(null);
+              setSelectedTitle('');
+            }}
           />
         </div>
   );
+
+  // Auto-select from URL when patterns are loaded and params present
+  useEffect(() => {
+    try {
+      if (!explain || !patternId) return;
+      const all = results?.patterns || [];
+      if (!all.length) return;
+      if (selectedKey === patternId) return;
+      const match = all.find((p: PatternResult) => stableKeyFromPattern(p) === patternId);
+      if (match) {
+        // Inline open without re-writing identical URL params to avoid redundant writes
+        const key = stableKeyFromPattern(match);
+        setSelectedKey(key);
+        setSelectedTitle(String((match as any).pattern ?? (match as any).name ?? 'Mønster'));
+        const st = explanations[key]?.status;
+        if (!st || st === 'idle') {
+          void requestExplanation(match);
+        }
+        if (isSmallViewport) setIsSheetOpen(true);
+      } else {
+        // If patterns are loaded and no match, optionally clear params or show a light toast
+        try {
+          toast.message(String(tAnalytics('insights.patternNotFound', { defaultValue: 'Mønster ikke funnet for dette utvalget.' })));
+        } catch {}
+        try { clearPatternParams(); } catch {}
+      }
+    } catch {}
+  }, [results?.patterns, explain, patternId, selectedKey, isSmallViewport, explanations]);
 
   return (
     <>
@@ -659,7 +699,13 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
               chatMessages={chatMessages}
               onChatChange={updateChat}
               dataset={{ entries: filteredData.entries, emotions: filteredData.emotions, sensoryInputs: filteredData.sensoryInputs }}
-              sourcesRich={sourcesRich}
+            sourcesRich={sourcesRich}
+            onClose={() => {
+              // The desktop dock is typically persistent; if closed, also clear URL params
+              try { clearPatternParams(); } catch {}
+              setSelectedKey(null);
+              setSelectedTitle('');
+            }}
             />
           </div>
         </div>
@@ -668,7 +714,14 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
       {/* Mobile sheet */}
       <ExplanationSheet
         open={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
+        onOpenChange={(open) => {
+          setIsSheetOpen(open);
+          if (!open) {
+            try { clearPatternParams(); } catch {}
+            setSelectedKey(null);
+            setSelectedTitle('');
+          }
+        }}
         patternTitle={selectedTitle}
         status={currentStatus}
         text={currentText}

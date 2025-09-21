@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
-import { TrendingUp, AlertTriangle, Target, Lightbulb } from 'lucide-react';
+import { TrendingUp, AlertTriangle, Target, Lightbulb, ArrowLeftRight } from 'lucide-react';
 
 type AnalysisBundle = {
   patterns?: Array<{ pattern?: string; description?: string; confidence?: number; type?: string; dataPoints?: number }>;
@@ -94,7 +94,12 @@ export const TeacherInsightsPanel: React.FC<Props> = ({
         {topCorr && (
           <div className="p-3 rounded-lg border">
             <div className="font-medium">Correlation</div>
-            <div className="text-sm mt-1">{topCorr.factor1} ↔ {topCorr.factor2}</div>
+            <div className="text-sm mt-1 flex items-center gap-2">
+              <span>{topCorr.factor1}</span>
+              <ArrowLeftRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <span className="sr-only">correlates with</span>
+              <span>{topCorr.factor2}</span>
+            </div>
             <div className="text-xs text-muted-foreground">r = {topCorr.correlation.toFixed(2)} ({topCorr.significance})</div>
           </div>
         )}

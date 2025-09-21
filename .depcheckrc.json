@@ -1,0 +1,45 @@
+{
+  "ignoreMatches": [
+    "@types/node",
+    "@types/react",
+    "@types/react-dom",
+    "@types/three",
+    "@vitejs/*",
+    "@testing-library/*",
+    "@playwright/test",
+    "@axe-core/playwright",
+    "husky",
+    "lint-staged",
+    "markdownlint",
+    "markdownlint-cli",
+    "rollup-plugin-visualizer",
+    "tailwindcss-animate",
+    "tailwindcss",
+    "postcss",
+    "autoprefixer"
+  ],
+  "parsers": {
+    "*.ts": "typescript",
+    "*.tsx": "typescript",
+    "*.js": "babel",
+    "*.jsx": "babel"
+  },
+  "detectors": [
+    "importDeclaration",
+    "requireCallExpression",
+    "dynamicImport",
+    "typescriptImportEqualsDeclaration",
+    "typescriptTypeImport"
+  ],
+  "specials": [
+    "bin",
+    "eslint",
+    "prettier",
+    "vitest",
+    "playwright",
+    "vite",
+    "tsconfig",
+    "babel"
+  ],
+  "skipMissing": true
+}

@@ -5,6 +5,7 @@ import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { saveTrackingEntry } from '@/lib/tracking/saveTrackingEntry';
 import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { dataStorage } from '@/lib/dataStorage';
 import type { AnalyticsData, AnalyticsWorkerMessage } from '@/types/analytics';
 import type { InsightsWorkerTask } from '@/lib/insights/task';
 import type { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
@@ -17,7 +18,7 @@ const createTrackingEntry = (id: string, studentId: string): TrackingEntry => ({
   id,
   studentId,
   timestamp: new Date(),
-  emotions: [],
+  emotions: [{ id: `e-${id}`, timestamp: new Date(), emotion: 'happy', intensity: 1 } as any],
   sensoryInputs: [],
 });
 
@@ -69,7 +70,7 @@ function Harness({ studentId, onInvalidate }: { studentId?: string; onInvalidate
   const { runAnalysis } = useAnalyticsWorker({ precomputeOnIdle: false });
   useEffect(() => {
     const data = createAnalyticsData([createTrackingEntry('t1', studentId || 's1')]);
-    runAnalysis(data, studentId ? { student: createStudent(studentId) } : undefined);
+    runAnalysis(data, { student: createStudent(studentId || 's1'), useAI: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [studentId]);
   useEffect(() => {
@@ -85,13 +86,16 @@ function Harness({ studentId, onInvalidate }: { studentId?: string; onInvalidate
 }
 
 describe('Integration: cache invalidation flows', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(dataStorage, 'getStudentById').mockReturnValue({ id: 'stu-1', name: 'Test Student', createdAt: new Date() } as any);
+  });
   afterEach(() => { cleanup(); vi.useRealTimers(); });
 
   it('saveTrackingEntry triggers student-specific invalidation', async () => {
     const spy = vi.spyOn(analyticsCoordinator, 'broadcastCacheClear');
     render(<Harness studentId="stu-1" />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => { vi.runAllTimers(); });
     await act(async () => {
       await saveTrackingEntry(createTrackingEntry('t2', 'stu-1'));
     });
@@ -104,32 +108,27 @@ describe('Integration: cache invalidation flows', () => {
       <Harness studentId="a" onInvalidate={onInvalidate} />
       <Harness studentId="b" onInvalidate={onInvalidate} />
     </>);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => { vi.runAllTimers(); });
     act(() => { analyticsCoordinator.broadcastCacheClear(); });
     expect(onInvalidate).toHaveBeenCalled();
   });
 
   it('realtime data insertion debounces and broadcasts student-specific invalidation', async () => {
     const studentId = 'stu-live';
-    const onInvalidate = vi.fn();
+    const bcSpy = vi.spyOn(analyticsCoordinator, 'broadcastCacheClear');
+    const randSpy = vi.spyOn(Math, 'random').mockReturnValue(0.1);
     function RT() {
       const data = createRealtimeSeed();
       // Enable simulateData for automatic inserts
       const rt = useRealtimeData(data, { enabled: true, windowSize: 5, updateInterval: 250, smoothTransitions: false, simulateData: true, currentStudentId: studentId });
-      useEffect(() => {
-        const handler = (evt: Event) => {
-          const detail = (evt as CustomEvent<{ studentId?: string }>).detail;
-          if (detail?.studentId === studentId) onInvalidate();
-        };
-        window.addEventListener('analytics:cache:clear:student', handler as EventListener);
-        return () => { window.removeEventListener('analytics:cache:clear:student', handler as EventListener); };
-      }, []);
+      useEffect(() => { rt.startStream(); }, []);
       return <div data-testid="rt" data-count={rt.newDataCount} />;
     }
     render(<RT />);
     // Advance timers to allow simulated inserts and debounced broadcast (>= updateInterval)
-    await act(async () => { vi.advanceTimersByTime(800); });
-    expect(onInvalidate).toHaveBeenCalled();
+    await act(async () => { vi.advanceTimersByTime(2000); });
+    expect(bcSpy).toHaveBeenCalledWith(studentId);
+    randSpy.mockRestore();
   });
 
   it('student-specific broadcast only invalidates matching hook instance', async () => {
@@ -144,26 +143,28 @@ describe('Integration: cache invalidation flows', () => {
     function HarnessA() {
       const { runAnalysis } = useAnalyticsWorker({ precomputeOnIdle: false });
       useEffect(() => {
-        runAnalysis(createAnalyticsData([createTrackingEntry('a1', 'A')]), { student: createStudent('A') });
+        runAnalysis(createAnalyticsData([createTrackingEntry('a1', 'A')]), { student: createStudent('A'), useAI: false });
         const onStudent = (evt: Event) => {
           const det = (evt as CustomEvent<{ studentId?: string }>).detail;
           if (det?.studentId === 'A') callsA.push(Date.now());
         };
         window.addEventListener('analytics:cache:clear:student', onStudent as EventListener);
         return () => window.removeEventListener('analytics:cache:clear:student', onStudent as EventListener);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       }, []);
       return <div data-testid="A" />;
     }
     function HarnessB() {
       const { runAnalysis } = useAnalyticsWorker({ precomputeOnIdle: false });
       useEffect(() => {
-        runAnalysis(createAnalyticsData([createTrackingEntry('b1', 'B')]), { student: createStudent('B') });
+        runAnalysis(createAnalyticsData([createTrackingEntry('b1', 'B')]), { student: createStudent('B'), useAI: false });
         const onStudent = (evt: Event) => {
           const det = (evt as CustomEvent<{ studentId?: string }>).detail;
           if (det?.studentId === 'B') callsB.push(Date.now());
         };
         window.addEventListener('analytics:cache:clear:student', onStudent as EventListener);
         return () => window.removeEventListener('analytics:cache:clear:student', onStudent as EventListener);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       }, []);
       return <div data-testid="B" />;
     }

@@ -1,10 +1,25 @@
 {
-  "generatedAt": "2025-09-21T09:48:39.283Z",
+  "generatedAt": "2025-09-21T14:55:13.372Z",
   "root": "/Users/quentinthiessen/Desktop/kreativiummedgemma",
-  "totalFilesScanned": 360,
-  "totalExports": 885,
-  "unusedExportsCount": 114,
+  "totalFilesScanned": 359,
+  "totalExports": 884,
+  "unusedExportsCount": 81,
   "unusedExports": [
+    {
+      "file": "src/components/analytics-panels/AlertsPanel.tsx",
+      "exportName": "AlertsPanel",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/analytics-panels/ChatComposer.tsx",
+      "exportName": "ChatComposer",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/components/analytics-panels/citation-utils.ts",
+      "exportName": "CHAT_CITATION_LIMIT",
+      "exportKind": "const"
+    },
     {
       "file": "src/components/ComparisonSummary.tsx",
       "exportName": "default",
@@ -19,31 +34,6 @@
       "file": "src/components/ui/sidebar.tsx",
       "exportName": "SidebarInset",
       "exportKind": "re-export"
-    },
-    {
-      "file": "src/config/schemas/analytics.schema.ts",
-      "exportName": "featureFlagsSchema",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/config/schemas/analytics.schema.ts",
-      "exportName": "insightRuleSchema",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/config/schemas/analytics.schema.ts",
-      "exportName": "workerSettingsSchema",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/config/schemas/analytics.schema.ts",
-      "exportName": "parseAnalyticsConfig",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/config/validators/analytics.validator.ts",
-      "exportName": "formatZodError",
-      "exportKind": "function"
     },
     {
       "file": "src/contexts/TrackingContext.tsx",
@@ -156,51 +146,6 @@
       "exportKind": "const"
     },
     {
-      "file": "src/lib/chartBuilders.ts",
-      "exportName": "buildAreaOption",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/chartBuilders.ts",
-      "exportName": "buildComposedOption",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/chartBuilders.ts",
-      "exportName": "buildCorrelationHeatmapOption",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/chartBuilders.ts",
-      "exportName": "buildEmotionTrendsOption",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/chartBuilders.ts",
-      "exportName": "buildScatterOption",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/chartUtils.ts",
-      "exportName": "ChartEmotionRowSchema",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/chartUtils.ts",
-      "exportName": "EMOTION_EMOJIS",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/chartUtils.ts",
-      "exportName": "EMOTION_TYPES",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/chartUtils.ts",
-      "exportName": "processEmotionData",
-      "exportKind": "function"
-    },
-    {
       "file": "src/lib/DataFilter.ts",
       "exportName": "applyFilters",
       "exportKind": "const"
@@ -231,36 +176,6 @@
       "exportKind": "function"
     },
     {
-      "file": "src/lib/deviceConstraints.ts",
-      "exportName": "estimateCpuBusy",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/deviceConstraints.ts",
-      "exportName": "getBatteryStatus",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/deviceConstraints.ts",
-      "exportName": "getNetworkInfo",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/deviceConstraints.ts",
-      "exportName": "isMemoryPressureHigh",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/deviceConstraints.ts",
-      "exportName": "isNetworkSlow",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/deviceConstraints.ts",
-      "exportName": "isUserIdle",
-      "exportKind": "function"
-    },
-    {
       "file": "src/lib/echartsUtils.ts",
       "exportName": "bindChartEvents",
       "exportKind": "function"
@@ -279,21 +194,6 @@
       "file": "src/lib/echartsUtils.ts",
       "exportName": "updateChartOption",
       "exportKind": "function"
-    },
-    {
-      "file": "src/lib/errorHandler.ts",
-      "exportName": "handleAnalyticsError",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/errorHandler.ts",
-      "exportName": "handleStorageError",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/errorHandler.ts",
-      "exportName": "handleValidationError",
-      "exportKind": "const"
     },
     {
       "file": "src/lib/evidence/select.ts",
@@ -357,48 +257,8 @@
     },
     {
       "file": "src/lib/formValidation.ts",
-      "exportName": "emotionEntrySchema",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/formValidation.ts",
-      "exportName": "environmentalEntrySchema",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/formValidation.ts",
-      "exportName": "sensoryEntrySchema",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/formValidation.ts",
       "exportName": "studentSchema",
       "exportKind": "const"
-    },
-    {
-      "file": "src/lib/formValidation.ts",
-      "exportName": "sanitizeObject",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/formValidation.ts",
-      "exportName": "validateEnvironmentalEntry",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/hash.ts",
-      "exportName": "hashStringToHex64",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/key.ts",
-      "exportName": "hashOfObject",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/key.ts",
-      "exportName": "stableKeyFromObject",
-      "exportKind": "function"
     },
     {
       "file": "src/lib/mlModels.ts",
@@ -511,29 +371,24 @@
       "exportKind": "class"
     },
     {
-      "file": "src/types/analytics.ts",
-      "exportName": "ANALYTICS_CONFIG_MIGRATION_NOTES",
-      "exportKind": "const"
+      "file": "src/pages/EnhancedTrackStudent.tsx",
+      "exportName": "EnhancedTrackStudent",
+      "exportKind": "re-export"
     },
     {
-      "file": "src/types/analytics.ts",
-      "exportName": "EXAMPLE_CONFIG_BALANCED",
-      "exportKind": "const"
+      "file": "src/pages/ReportsHub.tsx",
+      "exportName": "default",
+      "exportKind": "default"
     },
     {
-      "file": "src/types/analytics.ts",
-      "exportName": "EXAMPLE_CONFIG_CONSERVATIVE",
-      "exportKind": "const"
+      "file": "src/pages/StudentProfile.original.tsx",
+      "exportName": "StudentProfile",
+      "exportKind": "re-export"
     },
     {
-      "file": "src/types/analytics.ts",
-      "exportName": "EXAMPLE_CONFIG_SENSITIVE",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/types/analytics.ts",
-      "exportName": "EXAMPLE_CONFIG_SHORT_TERM",
-      "exportKind": "const"
+      "file": "src/pages/StudentProfileOptimized.tsx",
+      "exportName": "StudentProfile",
+      "exportKind": "re-export"
     },
     {
       "file": "src/types/errors.ts",
@@ -554,29 +409,36 @@
       "file": "src/types/filters.ts",
       "exportName": "LIGHTING_CONDITION_TOKENS",
       "exportKind": "const"
-    },
-    {
-      "file": "src/utils/accessibility.ts",
-      "exportName": "getFocusableElements",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/utils/accessibility.ts",
-      "exportName": "isFocusable",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/utils/accessibility.ts",
-      "exportName": "moveFocusTo",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/utils/accessibility.ts",
-      "exportName": "trapFocus",
-      "exportKind": "function"
     }
   ],
   "summaryByFile": {
+    "src/components/analytics-panels/AlertsPanel.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "AlertsPanel",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/analytics-panels/ChatComposer.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ChatComposer",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/components/analytics-panels/citation-utils.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "CHAT_CITATION_LIMIT",
+          "kind": "const"
+        }
+      ]
+    },
     "src/components/ComparisonSummary.tsx": {
       "count": 1,
       "exports": [
@@ -601,36 +463,6 @@
         {
           "name": "SidebarInset",
           "kind": "re-export"
-        }
-      ]
-    },
-    "src/config/schemas/analytics.schema.ts": {
-      "count": 4,
-      "exports": [
-        {
-          "name": "featureFlagsSchema",
-          "kind": "const"
-        },
-        {
-          "name": "insightRuleSchema",
-          "kind": "const"
-        },
-        {
-          "name": "workerSettingsSchema",
-          "kind": "const"
-        },
-        {
-          "name": "parseAnalyticsConfig",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/config/validators/analytics.validator.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "formatZodError",
-          "kind": "function"
         }
       ]
     },
@@ -792,52 +624,6 @@
         }
       ]
     },
-    "src/lib/chartBuilders.ts": {
-      "count": 5,
-      "exports": [
-        {
-          "name": "buildAreaOption",
-          "kind": "function"
-        },
-        {
-          "name": "buildComposedOption",
-          "kind": "function"
-        },
-        {
-          "name": "buildCorrelationHeatmapOption",
-          "kind": "function"
-        },
-        {
-          "name": "buildEmotionTrendsOption",
-          "kind": "function"
-        },
-        {
-          "name": "buildScatterOption",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/lib/chartUtils.ts": {
-      "count": 4,
-      "exports": [
-        {
-          "name": "ChartEmotionRowSchema",
-          "kind": "const"
-        },
-        {
-          "name": "EMOTION_EMOJIS",
-          "kind": "const"
-        },
-        {
-          "name": "EMOTION_TYPES",
-          "kind": "const"
-        },
-        {
-          "name": "processEmotionData",
-          "kind": "function"
-        }
-      ]
-    },
     "src/lib/DataFilter.ts": {
       "count": 2,
       "exports": [
@@ -874,34 +660,10 @@
       ]
     },
     "src/lib/deviceConstraints.ts": {
-      "count": 7,
+      "count": 1,
       "exports": [
         {
           "name": "canPrecompute",
-          "kind": "function"
-        },
-        {
-          "name": "estimateCpuBusy",
-          "kind": "function"
-        },
-        {
-          "name": "getBatteryStatus",
-          "kind": "function"
-        },
-        {
-          "name": "getNetworkInfo",
-          "kind": "function"
-        },
-        {
-          "name": "isMemoryPressureHigh",
-          "kind": "function"
-        },
-        {
-          "name": "isNetworkSlow",
-          "kind": "function"
-        },
-        {
-          "name": "isUserIdle",
           "kind": "function"
         }
       ]
@@ -924,23 +686,6 @@
         {
           "name": "updateChartOption",
           "kind": "function"
-        }
-      ]
-    },
-    "src/lib/errorHandler.ts": {
-      "count": 3,
-      "exports": [
-        {
-          "name": "handleAnalyticsError",
-          "kind": "const"
-        },
-        {
-          "name": "handleStorageError",
-          "kind": "const"
-        },
-        {
-          "name": "handleValidationError",
-          "kind": "const"
         }
       ]
     },
@@ -1013,53 +758,11 @@
       ]
     },
     "src/lib/formValidation.ts": {
-      "count": 6,
-      "exports": [
-        {
-          "name": "emotionEntrySchema",
-          "kind": "const"
-        },
-        {
-          "name": "environmentalEntrySchema",
-          "kind": "const"
-        },
-        {
-          "name": "sensoryEntrySchema",
-          "kind": "const"
-        },
-        {
-          "name": "studentSchema",
-          "kind": "const"
-        },
-        {
-          "name": "sanitizeObject",
-          "kind": "function"
-        },
-        {
-          "name": "validateEnvironmentalEntry",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/lib/hash.ts": {
       "count": 1,
       "exports": [
         {
-          "name": "hashStringToHex64",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/lib/key.ts": {
-      "count": 2,
-      "exports": [
-        {
-          "name": "hashOfObject",
-          "kind": "function"
-        },
-        {
-          "name": "stableKeyFromObject",
-          "kind": "function"
+          "name": "studentSchema",
+          "kind": "const"
         }
       ]
     },
@@ -1211,28 +914,39 @@
         }
       ]
     },
-    "src/types/analytics.ts": {
-      "count": 5,
+    "src/pages/EnhancedTrackStudent.tsx": {
+      "count": 1,
       "exports": [
         {
-          "name": "ANALYTICS_CONFIG_MIGRATION_NOTES",
-          "kind": "const"
-        },
+          "name": "EnhancedTrackStudent",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/pages/ReportsHub.tsx": {
+      "count": 1,
+      "exports": [
         {
-          "name": "EXAMPLE_CONFIG_BALANCED",
-          "kind": "const"
-        },
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/pages/StudentProfile.original.tsx": {
+      "count": 1,
+      "exports": [
         {
-          "name": "EXAMPLE_CONFIG_CONSERVATIVE",
-          "kind": "const"
-        },
+          "name": "StudentProfile",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/pages/StudentProfileOptimized.tsx": {
+      "count": 1,
+      "exports": [
         {
-          "name": "EXAMPLE_CONFIG_SENSITIVE",
-          "kind": "const"
-        },
-        {
-          "name": "EXAMPLE_CONFIG_SHORT_TERM",
-          "kind": "const"
+          "name": "StudentProfile",
+          "kind": "re-export"
         }
       ]
     },
@@ -1259,27 +973,6 @@
         {
           "name": "LIGHTING_CONDITION_TOKENS",
           "kind": "const"
-        }
-      ]
-    },
-    "src/utils/accessibility.ts": {
-      "count": 4,
-      "exports": [
-        {
-          "name": "getFocusableElements",
-          "kind": "function"
-        },
-        {
-          "name": "isFocusable",
-          "kind": "function"
-        },
-        {
-          "name": "moveFocusTo",
-          "kind": "function"
-        },
-        {
-          "name": "trapFocus",
-          "kind": "function"
         }
       ]
     }

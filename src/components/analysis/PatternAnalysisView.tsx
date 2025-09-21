@@ -25,6 +25,7 @@ import { ConfidenceIndicator } from '@/components/ConfidenceIndicator';
 import { cn } from '@/lib/utils';
 import { format, differenceInDays } from 'date-fns';
 import { HighlightState } from '@/hooks/useVisualizationState';
+import { DEV_VIZ_ENABLED } from '@/lib/env';
 
 interface PatternAnalysisViewProps {
   patterns: PatternResult[];
@@ -48,6 +49,13 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
   handleHighlight,
   filteredData,
 }) => {
+  if (!DEV_VIZ_ENABLED) {
+    return (
+      <div className="p-4 border rounded-md text-muted-foreground" role="note" aria-live="polite">
+        This legacy patterns view is available in development only. Please use the Patterns preset for the modern experience.
+      </div>
+    );
+  }
   const getPatternIcon = (type: string) => {
     switch (type.toLowerCase()) {
       case 'emotion': return <Brain className="h-4 w-4" />;

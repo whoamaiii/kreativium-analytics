@@ -63,11 +63,17 @@ describe('useAnalyticsWorker - Fallback Mode', () => {
 
     // Run analysis which should use the fallback
     await act(async () => {
-      await result.current.runAnalysis(testData);
+      await result.current.runAnalysis(testData, { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
     });
 
     // Verify fallback was called
-    expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledWith(testData);
+    expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledWith(
+      expect.objectContaining(testData),
+      expect.objectContaining({
+        student: expect.objectContaining({ id: 's1' }),
+        useAI: expect.any(Boolean),
+      })
+    );
     
     // Should get results from fallback
     expect(result.current.results).toEqual({

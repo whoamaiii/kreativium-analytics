@@ -57,7 +57,7 @@ describe('useAnalyticsWorker', () => {
     worker.onmessage({ data: { type: 'progress', progress: { stage: 'ready', percent: 1 } } });
 
     await act(async () => {
-      await result.current.runAnalysis(testData);
+      await result.current.runAnalysis(testData, { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
     });
 
     await waitFor(() => {

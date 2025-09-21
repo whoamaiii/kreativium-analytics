@@ -4,7 +4,7 @@ import { EmotionEntry, SensoryEntry, TrackingEntry, Student } from "@/types/stud
 import { ErrorBoundary } from "./ErrorBoundary";
 import { TeacherInsightsPanel } from '@/components/analysis/TeacherInsightsPanel';
 import { LazyVisualization3D } from '@/components/lazy/LazyVisualization3D';
-import { POC_MODE } from '@/lib/env';
+import { DEV_VIZ_ENABLED } from '@/lib/env';
 import { TimelineVisualization } from './TimelineVisualization';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { useVisualizationState, VisualizationType } from '@/hooks/useVisualizationState';
@@ -19,6 +19,7 @@ const CorrelationHeatmapLazy = lazy(() => import('./analysis/CorrelationHeatmap'
 const PatternAnalysisViewLazy = lazy(() => import('./analysis/PatternAnalysisView').then(m => ({ default: m.PatternAnalysisView })));
 const EChartContainerLazy = lazy(() => import('@/components/charts/EChartContainer').then(m => ({ default: m.EChartContainer })));
 import { analyticsExport, ExportFormat } from "@/lib/analyticsExport";
+import type { AnalyticsExportData } from "@/lib/analyticsExport";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
@@ -298,13 +299,20 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
           </Suspense>
         );
       case 'patterns':
+        if (!DEV_VIZ_ENABLED) {
+          return (
+            <div className="p-4 border rounded-md text-muted-foreground" role="note" aria-live="polite">
+              {String(tAnalytics('patterns.usePatternsPresetMessage', { defaultValue: 'For pattern analysis, please use the Patterns preset.' }))}
+            </div>
+          );
+        }
         return (
           <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label="Loading patterns" />}> 
             <PatternAnalysisViewLazy {...analysisData} highlightState={highlightState} handleHighlight={() => {}} filteredData={filteredData} />
           </Suspense>
         );
       case '3d':
-        if (POC_MODE) return null;
+        if (DEV_VIZ_ENABLED) return null;
         return <LazyVisualization3D emotions={filteredData.emotions} sensoryInputs={filteredData.sensoryInputs} trackingEntries={filteredData.trackingEntries} />;
       case 'timeline':
         return <TimelineVisualization emotions={filteredData.emotions} sensoryInputs={filteredData.sensoryInputs} trackingEntries={filteredData.trackingEntries} anomalies={analysisData.anomalies.map(a => ({ timestamp: a.timestamp, type: a.type, severity: a.severity }))} onTimeRangeChange={(start, end) => visualizationState.setFilterCriteria(prev => ({ ...prev, dateRange: { start, end } }))} realtime={filterCriteria.realtime} />;

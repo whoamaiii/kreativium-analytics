@@ -1,11 +1,11 @@
 {
-  "totalSrcFiles": 360,
-  "totalSrcLoc": 67484,
-  "unusedFilesCount": 0,
-  "unusedFilesLoc": 0,
-  "deadCodePercentByFiles": 0,
-  "unusedExportsCount": 114,
-  "unusedExportsFiles": 50,
+  "totalSrcFiles": 359,
+  "totalSrcLoc": 66504,
+  "unusedFilesCount": 4,
+  "unusedFilesLoc": 1304,
+  "deadCodePercentByFiles": 1.11,
+  "unusedExportsCount": 81,
+  "unusedExportsFiles": 48,
   "unusedDependencies": [
     "@types/three",
     "tailwindcss-animate",
@@ -13,21 +13,31 @@
   ],
   "unusedDevDependencies": [
     "@browser-echo/vite",
-    "@testing-library/dom",
     "@types/jest",
     "@types/node",
     "@types/react",
     "@types/react-dom",
-    "autoprefixer",
-    "eslint",
     "husky",
-    "jsdom",
     "lint-staged",
     "markdownlint",
-    "markdownlint-cli",
-    "postcss",
-    "prettier",
-    "tsx"
+    "markdownlint-cli"
   ],
-  "unusedFiles": []
+  "unusedFiles": [
+    {
+      "file": "src/pages/EnhancedTrackStudent.tsx",
+      "loc": 359
+    },
+    {
+      "file": "src/pages/ReportsHub.tsx",
+      "loc": 87
+    },
+    {
+      "file": "src/pages/StudentProfile.original.tsx",
+      "loc": 556
+    },
+    {
+      "file": "src/pages/StudentProfileOptimized.tsx",
+      "loc": 302
+    }
+  ]
 }

@@ -11,7 +11,7 @@ import { canonicalSerialize } from '@/lib/canonicalSerialize';
  * Compute 64-bit FNV-1a hash of a string and return a 16-char, zero-padded lowercase hex.
  * Uses BigInt for exact 64-bit arithmetic.
  */
-export function hashStringToHex64(input: string): string {
+function hashStringToHex64(input: string): string {
   const FNV_OFFSET: bigint = 14695981039346656037n; // 0xcbf29ce484222325
   const FNV_PRIME: bigint = 1099511628211n;         // 0x100000001b3
   const MASK64: bigint = (1n << 64n) - 1n;          // 2^64 - 1

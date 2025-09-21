@@ -235,7 +235,7 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       };
 
       await act(async () => {
-        await result.current.runAnalysis(mockData);
+        await result.current.runAnalysis(mockData, { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
       });
 
       // The function should have been called at least once

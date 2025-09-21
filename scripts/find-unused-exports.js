@@ -39,8 +39,7 @@ const EXCLUDE_EXPORT_FILE_PATTERNS = [
   /\.d\.(ts|cts|mts)$/i,
   /\.(js|jsx|ts|tsx)\.map$/i,
   // Allowlist directories with dynamic imports or dev-only components
-  /(^|\/)src\/pages\//i,
-  /(^|\/)src\/components\/analytics-panels\//i,
+  // NOTE: Do not exclude all pages or analytics-panels globally; keep dev and lazy stubs excluded only
   /(^|\/)src\/components\/dev\//i,
   /(^|\/)src\/components\/lazy\//i,
 ];
@@ -139,7 +138,7 @@ function hasExportModifier(node) {
 }
 
 function tryResolveModule(fromFile, moduleSpecifier) {
-  // Returns absolute path of the module file (without extension normalization), or null for external deps
+  // Returns absolute path of the module file if it exists, otherwise null
   let spec = moduleSpecifier;
   if (!spec) return null;
 
@@ -174,7 +173,7 @@ function tryResolveModule(fromFile, moduleSpecifier) {
       // ignore
     }
   }
-  return path.resolve(spec); // fallback to path; may not exist, but keeps grouping consistent
+  return null; // no candidate exists
 }
 
 /**
@@ -225,13 +224,13 @@ async function analyze(files) {
 
               // Mark original module's export as used when re-exporting
               if (moduleSpecifier) {
-                const resolved = tryResolveModule(file, moduleSpecifier);
-                if (resolved) {
+              const resolved = tryResolveModule(file, moduleSpecifier);
+              if (resolved) {
                   if (fileToUsedExports[resolved] !== 'ALL') {
                     const set = (fileToUsedExports[resolved] ??= new Set());
                     set.add(el.propertyName ? el.propertyName.getText(sf) : exportedName);
                   }
-                }
+              }
               }
             }
           } else if (!node.exportClause && moduleSpecifier) {
@@ -350,12 +349,12 @@ async function analyze(files) {
         const [arg] = node.arguments;
         if (arg && ts.isStringLiteral(arg)) {
           const mod = arg.text;
-          const resolved = tryResolveModule(file, mod);
-          if (!resolved) {
+        const resolved = tryResolveModule(file, mod);
+        if (!resolved) {
             const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
             usedExternalModules.add(topLevel);
-          } else {
-            fileToUsedExports[resolved] = 'ALL';
+        } else {
+          fileToUsedExports[resolved] = 'ALL';
           }
         }
       }
@@ -484,13 +483,92 @@ async function writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, us
   // Compute used deps from collected external imports
   const usedDeps = new Set(usedExternalModules);
 
+  // Heuristics: mark runner-only/dev-only deps as used based on config and scripts
+  try {
+    // Vitest environment detection: include jsdom if configured
+    const vitestConfigPath = path.join(projectRoot, 'vitest.config.ts');
+    const vitestConfigJsPath = path.join(projectRoot, 'vitest.config.js');
+    const vitestConfigTsxPath = path.join(projectRoot, 'vitest.config.tsx');
+    const vitestConfigCandidates = [vitestConfigPath, vitestConfigJsPath, vitestConfigTsxPath];
+    for (const candidate of vitestConfigCandidates) {
+      try {
+        const content = fs.readFileSync(candidate, 'utf8');
+        if (/environment\s*:\s*['"]jsdom['"]/i.test(content)) {
+          usedDeps.add('jsdom');
+          break;
+        }
+      } catch { /* ignore */ }
+    }
+
+    // Allowlist runner-only devDeps often used without direct imports
+    const runnerOnlyAllowlist = ['@testing-library/dom'];
+    for (const name of runnerOnlyAllowlist) usedDeps.add(name);
+
+    // Include tools referenced in npm scripts as used devDeps
+    try {
+      const pkgText = await fsp.readFile(pkgJsonPath, 'utf8');
+      const pkgFull = JSON.parse(pkgText);
+      const scriptsSection = pkgFull.scripts || {};
+      const joined = Object.values(scriptsSection).join('\n');
+      const toolToPkg = [
+        { pattern: /eslint\b/, name: 'eslint' },
+        { pattern: /prettier\b/, name: 'prettier' },
+        { pattern: /tsx\b/, name: 'tsx' },
+        { pattern: /postcss\b/, name: 'postcss' },
+      ];
+      for (const { pattern, name } of toolToPkg) {
+        if (pattern.test(joined)) usedDeps.add(name);
+      }
+
+      // Config-file implied tools
+      const postcssConfigCandidates = ['postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'].map((f) => path.join(projectRoot, f));
+      if (postcssConfigCandidates.some((p) => fs.existsSync(p))) {
+        usedDeps.add('postcss');
+        usedDeps.add('autoprefixer');
+      }
+    } catch { /* ignore */ }
+  } catch { /* ignore */ }
+
   // Unused dependencies present in package.json but never imported anywhere
   const unusedDependencies = depNames.filter((d) => !usedDeps.has(d));
 
   // For devDependencies, scan non-source project files as well for import usage
   const projectFiles = await readAllProjectFiles(projectRoot);
   const devUsed = await collectExternalModuleUsage(projectFiles);
-  const unusedDevDependencies = devDepNames.filter((d) => !devUsed.has(d));
+  const devRunnerUsed = new Set(devUsed);
+  // Vitest jsdom environment
+  try {
+    const candidates = ['vitest.config.ts','vitest.config.js','vitest.config.tsx'].map(f => path.join(projectRoot, f));
+    for (const c of candidates) {
+      try {
+        const content = fs.readFileSync(c, 'utf8');
+        if (/environment\s*:\s*['\"]jsdom['\"]/i.test(content)) {
+          devRunnerUsed.add('jsdom');
+          break;
+        }
+      } catch {}
+    }
+  } catch {}
+  // Runner allowlist
+  ['@testing-library/dom'].forEach((name) => devRunnerUsed.add(name));
+  // Tools inferred from scripts/configs
+  try {
+    const pkgFull = JSON.parse(fs.readFileSync(path.join(projectRoot, 'package.json'), 'utf8'));
+    const joined = Object.values(pkgFull.scripts || {}).join('\n');
+    const toolPatterns = [
+      [/eslint\b/i, 'eslint'],
+      [/prettier\b/i, 'prettier'],
+      [/postcss\b/i, 'postcss'],
+      [/tsx\b/i, 'tsx'],
+    ];
+    for (const [pattern, name] of toolPatterns) if (pattern.test(joined)) devRunnerUsed.add(name);
+    const postcssConfigs = ['postcss.config.js','postcss.config.cjs','postcss.config.ts'].map(f => path.join(projectRoot, f));
+    if (postcssConfigs.some((p) => fs.existsSync(p))) {
+      devRunnerUsed.add('postcss');
+      devRunnerUsed.add('autoprefixer');
+    }
+  } catch {}
+  const unusedDevDependencies = devDepNames.filter((d) => !devRunnerUsed.has(d));
 
   // Approximate unused files as those whose every export is unused
   /** @type {Array<{file: string, loc: number}>} */
@@ -583,11 +661,11 @@ async function collectExternalModuleUsage(files) {
         if (ts.isImportDeclaration(node)) {
           const mod = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier) ? node.moduleSpecifier.text : null;
           if (!mod) return;
-          const resolved = tryResolveModule(file, mod);
-          if (!resolved) {
+        const resolved = tryResolveModule(file, mod);
+        if (!resolved) {
             const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
             used.add(topLevel);
-          }
+        }
         }
         if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
           const [arg] = node.arguments;

@@ -284,59 +284,7 @@ export const handleError = (
   return errorHandler.handle(error, options);
 };
 
-export const handleValidationError = (
-  field: string,
-  value: unknown,
-  reason: string,
-  options?: ErrorHandlerOptions
-): Promise<void> => {
-  const error = new SensoryCompassError(
-    ErrorType.DATA_VALIDATION,
-    `Validation failed for ${field}: ${reason}`,
-    {
-      code: 'VALIDATION_ERROR',
-      details: { field, value, reason },
-      userMessage: `Invalid ${field}: ${reason}`,
-      recoverable: true,
-    }
-  );
-  return errorHandler.handle(error, options);
-};
-
-export const handleStorageError = (
-  operation: string,
-  cause?: Error,
-  options?: ErrorHandlerOptions
-): Promise<void> => {
-  const isQuotaError = cause?.name === 'QuotaExceededError';
-  const error = new SensoryCompassError(
-    isQuotaError ? ErrorType.STORAGE_QUOTA_EXCEEDED : ErrorType.STORAGE_UNAVAILABLE,
-    `Storage operation '${operation}' failed`,
-    {
-      code: isQuotaError ? 'QUOTA_EXCEEDED' : 'STORAGE_ERROR',
-      cause,
-      recoverable: isQuotaError,
-    }
-  );
-  return errorHandler.handle(error, options);
-};
-
-export const handleAnalyticsError = (
-  message: string,
-  details?: unknown,
-  options?: ErrorHandlerOptions
-): Promise<void> => {
-  const error = new SensoryCompassError(
-    ErrorType.ANALYTICS_PROCESSING_ERROR,
-    message,
-    {
-      code: 'ANALYTICS_ERROR',
-      details,
-      recoverable: true,
-    }
-  );
-  return errorHandler.handle(error, options);
-};
+ 
 
 // React error boundary integration
 export const handleErrorBoundaryError = (

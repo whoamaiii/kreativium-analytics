@@ -3,6 +3,15 @@ import { render, screen } from '@testing-library/react';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 
+// Use local i18n identity mock so expectations match key-based labels
+vi.mock('@/hooks/useTranslation', () => ({
+  useTranslation: () => ({
+    tCommon: (k: string) => k,
+    tStudent: (k: string) => k,
+    tAnalytics: (k: string) => k,
+  }),
+}));
+
 vi.mock('@/hooks/useAnalyticsWorker', () => ({
   useAnalyticsWorker: vi.fn(),
 }));
@@ -51,7 +60,13 @@ describe('AnalyticsDashboard', () => {
     const student = { id: 's1', name: 'Test Student' } as unknown as import('@/types/student').Student;
     render(<AnalyticsDashboard student={student} filteredData={filteredData} />);
 
-    expect(mockRunAnalysis).toHaveBeenCalledWith(filteredData);
+    expect(mockRunAnalysis).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        student: expect.objectContaining({ id: 's1' }),
+        useAI: expect.any(Boolean),
+      })
+    );
   });
 });
 

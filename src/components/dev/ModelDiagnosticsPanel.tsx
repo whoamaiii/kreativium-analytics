@@ -172,8 +172,9 @@ export function ModelDiagnosticsPanel(props: ModelDiagnosticsPanelProps): React.
 
       // Cleanup tensors
       tf.dispose([features, labels]);
-    } catch (error) {
-      logger.error('[ModelDiagnosticsPanel] Failed to run time-series CV', error);
+    } catch (e: unknown) {
+      const err = e instanceof Error ? e : new Error(String(e));
+      logger.error('[ModelDiagnosticsPanel] Failed to run time-series CV', { error: err });
       announce(tAnalytics('dev.modelDiagnostics.announced.cvFailed'), 'assertive');
     } finally {
       setIsRunning(false);

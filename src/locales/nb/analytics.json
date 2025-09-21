@@ -59,7 +59,8 @@
     "overview": {
       "heroChart": "Oversiktsdiagram som viser nøkkeltall",
       "insights": "Viktige innsikter fra dataanalyse",
-      "insightLink": "Vis detaljert analyse i utforsk-fanen"
+      "insightLink": "Vis detaljert analyse i utforsk-fanen",
+      "openPattern": "Åpne mønsterforklaring"
     },
     "filters": {
       "drawer": "Avanserte filtre skuff",
@@ -146,7 +147,10 @@
     "insights": "Viktige innsikter",
     "noInsights": "Ingen innsikter tilgjengelig ennå. Mer data vil forbedre analysen.",
     "viewInExplore": "Vis i Utforsk",
-    "loadingChart": "Laster oversiktsdiagram..."
+    "loadingChart": "Laster oversiktsdiagram...",
+    "detectedPatterns": "Oppdagede mønstre",
+    "noPatternsYet": "Ingen mønstre oppdaget ennå.",
+    "patternType": "Type"
   },
   "explore": {
     "title": "Utforsk",

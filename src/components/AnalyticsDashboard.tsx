@@ -213,17 +213,21 @@ export const AnalyticsDashboard = memo(({
         });
     }
     // Ensure student analytics exists for all students, including new and mock
-    analyticsManager.initializeStudentAnalytics(student.id);
-  }, [student.id, dataSignature, useAI, analyticsStudent, normalizedData]);
+    if (student && typeof student.id === 'string') {
+      analyticsManager.initializeStudentAnalytics(student.id);
+    }
+  }, [student?.id, dataSignature, useAI, analyticsStudent, normalizedData]);
 
   const handleCacheClear = useCallback((event: Event) => {
     const customEvent = event as CustomEvent<{ studentId?: string } | undefined>;
     const targetStudentId = customEvent.detail?.studentId;
-    if (targetStudentId && targetStudentId !== student.id) {
-      return;
+    if (targetStudentId) {
+      if (!student || targetStudentId !== student.id) {
+        return;
+      }
     }
     setHasNewInsights(true);
-  }, [student.id]);
+  }, [student?.id]);
 
   // Listen for global/student cache clear events and surface a "new insights" indicator
   useEffect(() => {
@@ -428,7 +432,7 @@ export const AnalyticsDashboard = memo(({
       const label = String(tAnalytics(current.labelKey));
       setLiveMessage(label);
     }
-  }, [activeTab, tAnalytics, student.id]);
+  }, [activeTab, tAnalytics, student?.id]);
 
   return (
     <ErrorBoundary>
@@ -739,7 +743,7 @@ export const AnalyticsDashboard = memo(({
         <TabsContent value="alerts" className="space-y-6">
           <ErrorBoundary showToast={false}>
             <Suspense fallback={<div className="h-[200px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
-              <LazyAlertsPanel filteredData={filteredData} studentId={student.id} />
+              <LazyAlertsPanel filteredData={filteredData} studentId={student?.id ?? ''} />
             </Suspense>
           </ErrorBoundary>
         </TabsContent>
@@ -768,23 +772,25 @@ export const AnalyticsDashboard = memo(({
         initialFilters={filters}
       />
       </section>
-      <ExportDialog
-        open={exportDialogOpen}
-        onOpenChange={setExportDialogOpen}
-        defaultFormat="pdf"
-        onConfirm={(opts) => { setExportDialogOpen(true); void doExport(opts.format, opts); }}
-        inProgress={isExporting}
-        progressPercent={exportProgress}
-        onCancel={() => { setIsExporting(false); setExportDialogOpen(false); }}
-        closeOnConfirm={false}
-      />
+      {exportDialogOpen && (
+        <ExportDialog
+          open={exportDialogOpen}
+          onOpenChange={setExportDialogOpen}
+          defaultFormat="pdf"
+          onConfirm={(opts) => { setExportDialogOpen(true); void doExport(opts.format, opts); }}
+          inProgress={isExporting}
+          progressPercent={exportProgress}
+          onCancel={() => { setIsExporting(false); setExportDialogOpen(false); }}
+          closeOnConfirm={false}
+        />
+      )}
     </ErrorBoundary>
   );
 }, (prevProps, nextProps) => {
   // Custom comparison for React.memo to prevent unnecessary re-renders
   return (
-    prevProps.student.id === nextProps.student.id &&
-    prevProps.student.name === nextProps.student.name &&
+    (prevProps.student?.id ?? '') === (nextProps.student?.id ?? '') &&
+    (prevProps.student?.name ?? '') === (nextProps.student?.name ?? '') &&
     prevProps.filteredData.entries.length === nextProps.filteredData.entries.length &&
     prevProps.filteredData.emotions.length === nextProps.filteredData.emotions.length &&
     prevProps.filteredData.sensoryInputs.length === nextProps.filteredData.sensoryInputs.length &&

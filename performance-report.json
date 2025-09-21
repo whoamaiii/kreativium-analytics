@@ -1,23 +1,326 @@
 {
-  "timestamp": "2025-08-19T07:32:53.779Z",
+  "timestamp": "2025-09-21T12:11:12.904Z",
   "summary": {
-    "componentsAnalyzed": 57,
-    "totalIssues": 142,
-    "critical": 29,
-    "high": 41,
-    "medium": 72,
+    "componentsAnalyzed": 62,
+    "totalIssues": 270,
+    "critical": 38,
+    "high": 60,
+    "medium": 172,
     "low": 0
   },
   "components": [
     {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "name": "PatternsPanel",
+      "linesOfCode": 715,
+      "complexityScore": 253,
+      "issues": [
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 213,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const render = [\n        data.summary,\n        '',\n        data.causes?.length ?"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 338,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const socialFromTimeline = allEntries\n      .map((t) => ({\n        id: `tracking"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 371,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const topPlaces = agg([ ...allEntries.map((e) => e.environmentalData?.location),"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 605,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const rightContent = (\n        <div className=\"h-full\" ref={dockRef}>\n          "
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 544,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((pattern: PatternResult) => (\n                <Card key={stableKeyFromPatte"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 575,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((rec) => (\n                                  <li key={hashOfString(rec)} cl"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 703,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((msg, idx) => (\n                <div key={idx} className=\"p-3 bg-muted/50 r"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 704,
+          "type": "index-as-key",
+          "severity": "medium",
+          "message": "Using array index as React key (causes re-renders)",
+          "code": "key={idx}"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 318,
+          "type": "large-list",
+          "severity": "high",
+          "message": "Rendering 80+ items without virtualization",
+          "code": ".slice(0, 80)"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 359,
+          "type": "large-list",
+          "severity": "high",
+          "message": "Rendering 60+ items without virtualization",
+          "code": ".slice(0, 60)"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 425,
+          "type": "large-list",
+          "severity": "high",
+          "message": "Rendering 60+ items without virtualization",
+          "code": ".slice(0, 60)"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 431,
+          "type": "large-list",
+          "severity": "high",
+          "message": "Rendering 60+ items without virtualization",
+          "code": ".slice(0, 60)"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 434,
+          "type": "large-list",
+          "severity": "high",
+          "message": "Rendering 60+ items without virtualization",
+          "code": ".slice(0, 60)"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 506,
+          "type": "large-list",
+          "severity": "high",
+          "message": "Rendering 80+ items without virtualization",
+          "code": ".slice(0, 80)"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 254,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "forklaring. Prøv igjen.');\n        setExplanations("
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 370,
+          "type": "nested-maps",
+          "severity": "critical",
+          "message": "Nested map operations detected (O(n²) complexity)",
+          "code": ".map((e) => e.environmentalData?.classroom?.activity?.toString()));\n    const to"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 428,
+          "type": "nested-maps",
+          "severity": "critical",
+          "message": "Nested map operations detected (O(n²) complexity)",
+          "code": ".map(fmtEntry).slice(0, 40),\n      '',\n      'Emosjoner (seneste):',\n      ...em"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 447,
+          "type": "nested-maps",
+          "severity": "critical",
+          "message": "Nested map operations detected (O(n²) complexity)",
+          "code": ".map((t) => {\n          const ts = new Date(t.timestamp).toISOString().replace('"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 81,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.getItem",
+          "code": "localStorage.getItem"
+        },
+        {
+          "file": "src/components/analytics-panels/PatternsPanel.tsx",
+          "line": 81,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.getItem",
+          "code": "localStorage.getItem"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 3,
+      "memoizationScore": 0
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "name": "AnalyticsDashboard",
+      "linesOfCode": 814,
+      "complexityScore": 117,
+      "issues": [
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 335,
+          "type": "heavy-computation",
+          "severity": "high",
+          "message": "Heavy computation detected in render path: filter(chart => !chart.studentId || chart.studentI...",
+          "code": "filter(chart => !chart.studentId || chart.studentId === student.id)\n              .filter"
+        },
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 334,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const overlappingCharts = registrations\n              .filter(chart => !chart.st"
+        },
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 1,
+          "type": "excessive-effects",
+          "severity": "medium",
+          "message": "Component has 9 useEffect hooks (consider consolidation)"
+        },
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 709,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map(({ key, labelKey, testId, ariaLabelKey }) => (\n            <TabsTrigger\n   "
+        },
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 257,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "for shared logic\n  const handleManualRefresh = useCallback(() => {\n    setPendin"
+        },
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 293,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "while analysis updates other tabs.\n\n  // Export handler with useCallback for per"
+        },
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 389,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "format, exportData, pdfOptions);\n\n        setExportProgress("
+        },
+        {
+          "file": "src/components/AnalyticsDashboard.tsx",
+          "line": 408,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "format: ExportFormat) => {\n    if (format === 'pdf') {\n      setExportDialogOpen"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 9,
+      "memoizationScore": 85
+    },
+    {
+      "file": "src/components/InteractiveDataVisualization.tsx",
+      "name": "InteractiveDataVisualization",
+      "linesOfCode": 423,
+      "complexityScore": 107,
+      "issues": [
+        {
+          "file": "src/components/InteractiveDataVisualization.tsx",
+          "line": 241,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const allTimestamps = [...filteredData.emotions.map(e => e.timestamp), ...filter"
+        },
+        {
+          "file": "src/components/InteractiveDataVisualization.tsx",
+          "line": 277,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const data = chartData.map(map"
+        },
+        {
+          "file": "src/components/InteractiveDataVisualization.tsx",
+          "line": 1,
+          "type": "excessive-effects",
+          "severity": "medium",
+          "message": "Component has 7 useEffect hooks (consider consolidation)"
+        },
+        {
+          "file": "src/components/InteractiveDataVisualization.tsx",
+          "line": 117,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "for cache invalidations\n  useEffect(() => {\n    if (typeof window === 'undefined"
+        },
+        {
+          "file": "src/components/InteractiveDataVisualization.tsx",
+          "line": 237,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "format: ExportFormat) => {\n    // This logic could be moved to a hook or helper\n"
+        },
+        {
+          "file": "src/components/InteractiveDataVisualization.tsx",
+          "line": 241,
+          "type": "nested-maps",
+          "severity": "critical",
+          "message": "Nested map operations detected (O(n²) complexity)",
+          "code": ".map(e => e.timestamp), ...filteredData.sensoryInputs.map(s => s.timestamp), ..."
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 7,
+      "memoizationScore": 44
+    },
+    {
       "file": "src/components/TimelineVisualization.tsx",
       "name": "TimelineVisualization",
-      "linesOfCode": 843,
-      "complexityScore": 118,
+      "linesOfCode": 784,
+      "complexityScore": 103,
       "issues": [
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 468,
+          "line": 409,
           "type": "heavy-computation",
           "severity": "high",
           "message": "Heavy computation detected in render path: filter(stream => stream.visible).map...",
@@ -25,7 +328,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 817,
+          "line": 758,
           "type": "heavy-computation",
           "severity": "high",
           "message": "Heavy computation detected in render path: filter(s => s.visible).map...",
@@ -33,7 +336,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 803,
+          "line": 744,
           "type": "heavy-computation",
           "severity": "high",
           "message": "Heavy computation detected in render path: Object.entries(hoveredEvent.metadata).map...",
@@ -41,7 +344,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 205,
+          "line": 185,
           "type": "unmemoized-calculation",
           "severity": "high",
           "message": "Expensive calculation without useMemo",
@@ -49,7 +352,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 241,
+          "line": 221,
           "type": "unmemoized-calculation",
           "severity": "high",
           "message": "Expensive calculation without useMemo",
@@ -57,7 +360,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 467,
+          "line": 408,
           "type": "unmemoized-calculation",
           "severity": "high",
           "message": "Expensive calculation without useMemo",
@@ -65,14 +368,14 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 301,
+          "line": 281,
           "type": "heavy-effect-deps",
           "severity": "high",
           "message": "useEffect with many dependencies detected"
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 467,
+          "line": 408,
           "type": "inline-array-chains",
           "severity": "high",
           "message": "Chained array operations in render method",
@@ -80,7 +383,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 817,
+          "line": 758,
           "type": "inline-array-chains",
           "severity": "high",
           "message": "Chained array operations in render method",
@@ -88,7 +391,23 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 300,
+          "line": 433,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((point, i) => {\n            const x = timeScale(point.timestamp);\n         "
+        },
+        {
+          "file": "src/components/TimelineVisualization.tsx",
+          "line": 744,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map(([key, value]) => (\n                    <p key={key} className=\"text-xs tex"
+        },
+        {
+          "file": "src/components/TimelineVisualization.tsx",
+          "line": 280,
           "type": "setState-in-loop",
           "severity": "critical",
           "message": "setState called inside a loop (causes multiple re-renders)",
@@ -96,7 +415,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 609,
+          "line": 550,
           "type": "unbatched-updates",
           "severity": "high",
           "message": "Multiple setState calls without batching",
@@ -104,7 +423,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 608,
+          "line": 549,
           "type": "large-inline-function",
           "severity": "medium",
           "message": "Large inline function in JSX (recreated on each render)",
@@ -112,7 +431,7 @@
         },
         {
           "file": "src/components/TimelineVisualization.tsx",
-          "line": 249,
+          "line": 229,
           "type": "nested-maps",
           "severity": "critical",
           "message": "Nested map operations detected (O(n²) complexity)",
@@ -121,7 +440,7 @@
       ],
       "renderComplexity": 0,
       "effectsCount": 5,
-      "memoizationScore": 35
+      "memoizationScore": 25
     },
     {
       "file": "src/components/AdvancedFilterPanel.tsx",
@@ -160,6 +479,22 @@
           "severity": "high",
           "message": "Expensive calculation without useMemo",
           "code": "const uniqueLocations = [...new Set(\n    trackingEntries.map(t => t.environmenta"
+        },
+        {
+          "file": "src/components/AdvancedFilterPanel.tsx",
+          "line": 671,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((preset) => (\n                <Card key={preset.name} className=\"cursor-poi"
+        },
+        {
+          "file": "src/components/AdvancedFilterPanel.tsx",
+          "line": 717,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((filter) => (\n                  <Card key={filter.id}"
         },
         {
           "file": "src/components/AdvancedFilterPanel.tsx",
@@ -209,12 +544,12 @@
     {
       "file": "src/components/ProgressDashboard.tsx",
       "name": "ProgressDashboard",
-      "linesOfCode": 524,
+      "linesOfCode": 537,
       "complexityScore": 64,
       "issues": [
         {
           "file": "src/components/ProgressDashboard.tsx",
-          "line": 203,
+          "line": 204,
           "type": "heavy-computation",
           "severity": "high",
           "message": "Heavy computation detected in render path: filter(g => g.status === 'active')\n      .map...",
@@ -222,7 +557,7 @@
         },
         {
           "file": "src/components/ProgressDashboard.tsx",
-          "line": 338,
+          "line": 343,
           "type": "heavy-computation",
           "severity": "high",
           "message": "Heavy computation detected in render path: filter(goal => goal.dataPoints.length > 1)\n       ...",
@@ -230,7 +565,7 @@
         },
         {
           "file": "src/components/ProgressDashboard.tsx",
-          "line": 200,
+          "line": 201,
           "type": "inline-array-chains",
           "severity": "high",
           "message": "Chained array operations in render method",
@@ -238,7 +573,31 @@
         },
         {
           "file": "src/components/ProgressDashboard.tsx",
-          "line": 154,
+          "line": 350,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map(goal => {\n                    const latestPoint = goal.dataPoints.sort((a, "
+        },
+        {
+          "file": "src/components/ProgressDashboard.tsx",
+          "line": 465,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((category, index) => (\n                    <div key={category.category} cla"
+        },
+        {
+          "file": "src/components/ProgressDashboard.tsx",
+          "line": 491,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((goal, index) => (\n                  <div key={goal.id} className=\"p-4 bord"
+        },
+        {
+          "file": "src/components/ProgressDashboard.tsx",
+          "line": 155,
           "type": "setState-in-loop",
           "severity": "critical",
           "message": "setState called inside a loop (causes multiple re-renders)",
@@ -246,7 +605,7 @@
         },
         {
           "file": "src/components/ProgressDashboard.tsx",
-          "line": 340,
+          "line": 345,
           "type": "nested-maps",
           "severity": "critical",
           "message": "Nested map operations detected (O(n²) complexity)",
@@ -258,54 +617,51 @@
       "memoizationScore": 2
     },
     {
-      "file": "src/components/InteractiveDataVisualization.tsx",
-      "name": "InteractiveDataVisualization",
-      "linesOfCode": 276,
-      "complexityScore": 78,
-      "issues": [
-        {
-          "file": "src/components/InteractiveDataVisualization.tsx",
-          "line": 154,
-          "type": "unmemoized-calculation",
-          "severity": "high",
-          "message": "Expensive calculation without useMemo",
-          "code": "const allTimestamps = [...filteredData.emotions.map(e => e.timestamp), ...filter"
-        },
-        {
-          "file": "src/components/InteractiveDataVisualization.tsx",
-          "line": 190,
-          "type": "unmemoized-calculation",
-          "severity": "high",
-          "message": "Expensive calculation without useMemo",
-          "code": "const data = chartData.map(map"
-        },
-        {
-          "file": "src/components/InteractiveDataVisualization.tsx",
-          "line": 150,
-          "type": "setState-in-loop",
-          "severity": "critical",
-          "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "format: ExportFormat) => {\n    // This logic could be moved to a hook or helper\n"
-        },
-        {
-          "file": "src/components/InteractiveDataVisualization.tsx",
-          "line": 154,
-          "type": "nested-maps",
-          "severity": "critical",
-          "message": "Nested map operations detected (O(n²) complexity)",
-          "code": ".map(e => e.timestamp), ...filteredData.sensoryInputs.map(s => s.timestamp), ..."
-        }
-      ],
-      "renderComplexity": 1,
-      "effectsCount": 0,
-      "memoizationScore": 29
-    },
-    {
       "file": "src/components/EmotionTracker.tsx",
       "name": "EmotionTracker",
-      "linesOfCode": 314,
+      "linesOfCode": 316,
       "complexityScore": 42,
       "issues": [
+        {
+          "file": "src/components/EmotionTracker.tsx",
+          "line": 105,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((emotion) => {\n              const Icon = emotion.icon;\n              retur"
+        },
+        {
+          "file": "src/components/EmotionTracker.tsx",
+          "line": 133,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((subEmotion) => (\n                <Badge\n                  key={subEmotion}"
+        },
+        {
+          "file": "src/components/EmotionTracker.tsx",
+          "line": 164,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((level) => (\n                <Button\n                  key={level}\n        "
+        },
+        {
+          "file": "src/components/EmotionTracker.tsx",
+          "line": 213,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((minutes) => (\n                  <Button\n                    key={minutes}\n"
+        },
+        {
+          "file": "src/components/EmotionTracker.tsx",
+          "line": 280,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((trigger) => (\n              <Badge\n                key={trigger}\n         "
+        },
         {
           "file": "src/components/EmotionTracker.tsx",
           "line": 85,
@@ -344,31 +700,95 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/MockDataLoader.tsx",
-      "name": "MockDataLoader",
-      "linesOfCode": 256,
-      "complexityScore": 16,
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "name": "OverviewPanel",
+      "linesOfCode": 130,
+      "complexityScore": 60,
       "issues": [
         {
-          "file": "src/components/MockDataLoader.tsx",
-          "line": 47,
-          "type": "setState-in-loop",
-          "severity": "critical",
-          "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "for better UX\n      setLoadingProgress(25);\n      \n      // Generate and load th"
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 31,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const emotionTypes = new Set<string>(filteredData.emotions.map(e => (e?.emotion "
         },
         {
-          "file": "src/components/MockDataLoader.tsx",
-          "line": 68,
-          "type": "setState-in-loop",
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 32,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const sensoryTypes = new Set<string>(filteredData.sensoryInputs.map(s => (s?.sen"
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 108,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const prevFirstTs = prev.filteredData.entries[0]?.timestamp?.getTime() || prev.f"
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 109,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const nextFirstTs = next.filteredData.entries[0]?.timestamp?.getTime() || next.f"
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 110,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const prevLastTs = prev.filteredData.entries[prev.filteredData.entries.length - "
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 111,
+          "type": "unmemoized-calculation",
+          "severity": "high",
+          "message": "Expensive calculation without useMemo",
+          "code": "const nextLastTs = next.filteredData.entries[next.filteredData.entries.length - "
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 80,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((insight, idx) => (\n                <li key={idx} className=\"text-sm\""
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 81,
+          "type": "index-as-key",
+          "severity": "medium",
+          "message": "Using array index as React key (causes re-renders)",
+          "code": "key={idx}"
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 85,
+          "type": "large-inline-function",
+          "severity": "medium",
+          "message": "Large inline function in JSX (recreated on each render)",
+          "code": "onClick={() => {\n                      try {\n     ..."
+        },
+        {
+          "file": "src/components/analytics/panels/OverviewPanel.tsx",
+          "line": 31,
+          "type": "nested-maps",
           "severity": "critical",
-          "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "fore setting final progress\n      stopLoadingTimers();\n      \n      setLoadingPr"
+          "message": "Nested map operations detected (O(n²) complexity)",
+          "code": ".map(e => (e?.emotion || '').toLowerCase()).filter(Boolean));\n  const sensoryTyp"
         }
       ],
       "renderComplexity": 0,
-      "effectsCount": 2,
-      "memoizationScore": 38
+      "effectsCount": 0,
+      "memoizationScore": 9
     },
     {
       "file": "src/components/ReportBuilder.tsx",
@@ -425,6 +845,22 @@
         },
         {
           "file": "src/components/ReportBuilder.tsx",
+          "line": 309,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map(([emotion, count]) => `\n                <p><strong"
+        },
+        {
+          "file": "src/components/ReportBuilder.tsx",
+          "line": 328,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map(([type, count]) => `\n                <p><strong"
+        },
+        {
+          "file": "src/components/ReportBuilder.tsx",
           "line": 645,
           "type": "large-inline-function",
           "severity": "medium",
@@ -460,6 +896,30 @@
         },
         {
           "file": "src/components/DataQualityFeedback.tsx",
+          "line": 246,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((metric) => (\n            <div key={metric.id} className={`p-4 rounded-lg $"
+        },
+        {
+          "file": "src/components/DataQualityFeedback.tsx",
+          "line": 265,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((rec) => (\n                    <p key={`${metric.id}-${rec}`} className=\"te"
+        },
+        {
+          "file": "src/components/DataQualityFeedback.tsx",
+          "line": 293,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((metric, index) => (\n                  <div key={metric.id} className=\"text"
+        },
+        {
+          "file": "src/components/DataQualityFeedback.tsx",
           "line": 58,
           "type": "nested-maps",
           "severity": "critical",
@@ -474,9 +934,57 @@
     {
       "file": "src/components/SensoryTracker.tsx",
       "name": "SensoryTracker",
-      "linesOfCode": 301,
+      "linesOfCode": 304,
       "complexityScore": 38,
       "issues": [
+        {
+          "file": "src/components/SensoryTracker.tsx",
+          "line": 104,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((type) => {\n              const Icon = type.icon;\n              return (\n  "
+        },
+        {
+          "file": "src/components/SensoryTracker.tsx",
+          "line": 134,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((response) => (\n                <Button\n                  key={response.typ"
+        },
+        {
+          "file": "src/components/SensoryTracker.tsx",
+          "line": 161,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((level) => (\n                <Button\n                  key={level}\n        "
+        },
+        {
+          "file": "src/components/SensoryTracker.tsx",
+          "line": 195,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((loc) => (\n                <Badge\n                  key={loc}\n             "
+        },
+        {
+          "file": "src/components/SensoryTracker.tsx",
+          "line": 238,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((strategy) => (\n                <Badge\n                  key={strategy}\n   "
+        },
+        {
+          "file": "src/components/SensoryTracker.tsx",
+          "line": 254,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((strategy) => (\n                <Badge\n                  key={strategy}\n   "
+        },
         {
           "file": "src/components/SensoryTracker.tsx",
           "line": 84,
@@ -495,7 +1003,7 @@
         },
         {
           "file": "src/components/SensoryTracker.tsx",
-          "line": 242,
+          "line": 243,
           "type": "large-inline-function",
           "severity": "medium",
           "message": "Large inline function in JSX (recreated on each render)",
@@ -509,12 +1017,20 @@
     {
       "file": "src/components/AnalyticsSettings.tsx",
       "name": "AnalyticsSettings",
-      "linesOfCode": 851,
-      "complexityScore": 33,
+      "linesOfCode": 866,
+      "complexityScore": 38,
       "issues": [
         {
           "file": "src/components/AnalyticsSettings.tsx",
-          "line": 159,
+          "line": 603,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((modelType) => {\n                    const model = modelStatus.get(modelTyp"
+        },
+        {
+          "file": "src/components/AnalyticsSettings.tsx",
+          "line": 175,
           "type": "setState-in-loop",
           "severity": "critical",
           "message": "setState called inside a loop (causes multiple re-renders)",
@@ -534,49 +1050,22 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/AnalyticsConfigTest.tsx",
-      "name": "AnalyticsConfigTest.tsx",
-      "linesOfCode": 331,
-      "complexityScore": 21,
-      "issues": [
-        {
-          "file": "src/components/AnalyticsConfigTest.tsx",
-          "line": 139,
-          "type": "heavy-computation",
-          "severity": "high",
-          "message": "Heavy computation detected in render path: JSON.parse(exported)...",
-          "code": "JSON.parse(exported)"
-        },
-        {
-          "file": "src/components/AnalyticsConfigTest.tsx",
-          "line": 293,
-          "type": "setState-in-loop",
-          "severity": "critical",
-          "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "foreground mb-2\">Quick Actions</p>\n          <div className=\"flex flex-wrap gap-"
-        },
-        {
-          "file": "src/components/AnalyticsConfigTest.tsx",
-          "line": 144,
-          "type": "sync-io",
-          "severity": "medium",
-          "message": "Synchronous I/O operation in render path: JSON.stringify(parsed)",
-          "code": "JSON.stringify(parsed)"
-        }
-      ],
-      "renderComplexity": 4,
-      "effectsCount": 2,
-      "memoizationScore": 13
-    },
-    {
       "file": "src/components/EnvironmentalTracker.tsx",
       "name": "EnvironmentalTracker",
-      "linesOfCode": 266,
+      "linesOfCode": 270,
       "complexityScore": 13,
       "issues": [
         {
           "file": "src/components/EnvironmentalTracker.tsx",
-          "line": 243,
+          "line": 245,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((event, index) => (\n                <Badge key={index} variant=\"secondary\" "
+        },
+        {
+          "file": "src/components/EnvironmentalTracker.tsx",
+          "line": 246,
           "type": "index-as-key",
           "severity": "medium",
           "message": "Using array index as React key (causes re-renders)",
@@ -584,7 +1073,7 @@
         },
         {
           "file": "src/components/EnvironmentalTracker.tsx",
-          "line": 74,
+          "line": 75,
           "type": "setState-in-loop",
           "severity": "critical",
           "message": "setState called inside a loop (causes multiple re-renders)",
@@ -592,7 +1081,7 @@
         },
         {
           "file": "src/components/EnvironmentalTracker.tsx",
-          "line": 75,
+          "line": 76,
           "type": "unbatched-updates",
           "severity": "high",
           "message": "Multiple setState calls without batching",
@@ -604,67 +1093,22 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/CorrelationHeatmap.tsx",
-      "name": "CorrelationHeatmap",
-      "linesOfCode": 68,
-      "complexityScore": 7,
-      "issues": [
-        {
-          "file": "src/components/CorrelationHeatmap.tsx",
-          "line": 1,
-          "type": "missing-memoization",
-          "severity": "medium",
-          "message": "Component with complex props lacks memoization"
-        },
-        {
-          "file": "src/components/CorrelationHeatmap.tsx",
-          "line": 12,
-          "type": "unmemoized-calculation",
-          "severity": "high",
-          "message": "Expensive calculation without useMemo",
-          "code": "const chartData = factors.map(factor1 => ({\n    id: factor1,\n    data: factors.m"
-        },
-        {
-          "file": "src/components/CorrelationHeatmap.tsx",
-          "line": 12,
-          "type": "nested-maps",
-          "severity": "critical",
-          "message": "Nested map operations detected (O(n²) complexity)",
-          "code": ".map(factor1 => ({\n    id: factor1,\n    data: factors.map("
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 0,
-      "memoizationScore": 0
-    },
-    {
-      "file": "src/components/AnalyticsDashboard.tsx",
-      "name": "AnalyticsDashboard",
-      "linesOfCode": 531,
-      "complexityScore": 75,
-      "issues": [
-        {
-          "file": "src/components/AnalyticsDashboard.tsx",
-          "line": 173,
-          "type": "setState-in-loop",
-          "severity": "critical",
-          "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "while analysis updates other tabs.\n\n  // Export handler with useCallback for per"
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 4,
-      "memoizationScore": 50
-    },
-    {
       "file": "src/components/Visualization3D.tsx",
       "name": "Visualization3D",
-      "linesOfCode": 552,
-      "complexityScore": 62,
+      "linesOfCode": 615,
+      "complexityScore": 65,
       "issues": [
         {
           "file": "src/components/Visualization3D.tsx",
-          "line": 185,
+          "line": 529,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((point) => (\n              <DataPoint\n                key={point.id}\n      "
+        },
+        {
+          "file": "src/components/Visualization3D.tsx",
+          "line": 198,
           "type": "large-inline-function",
           "severity": "medium",
           "message": "Large inline function in JSX (recreated on each render)",
@@ -672,7 +1116,7 @@
         },
         {
           "file": "src/components/Visualization3D.tsx",
-          "line": 285,
+          "line": 310,
           "type": "nested-maps",
           "severity": "critical",
           "message": "Nested map operations detected (O(n²) complexity)",
@@ -684,11 +1128,109 @@
       "memoizationScore": 0
     },
     {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "name": "ExplanationChat",
+      "linesOfCode": 290,
+      "complexityScore": 63,
+      "issues": [
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 1,
+          "type": "excessive-effects",
+          "severity": "medium",
+          "message": "Component has 6 useEffect hooks (consider consolidation)"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 151,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((m, idx) => (\n          <div key={idx} className={m.role === 'user' ? 'text"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 246,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((s, i) => (\n                <li key={i}"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 258,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map(({ key, source }, idx) => (\n              <button\n                key={key}"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 152,
+          "type": "index-as-key",
+          "severity": "medium",
+          "message": "Using array index as React key (causes re-renders)",
+          "code": "key={idx}"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 247,
+          "type": "index-as-key",
+          "severity": "medium",
+          "message": "Using array index as React key (causes re-renders)",
+          "code": "key={i}"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 200,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "foreground\">\n              <button\n                type=\"button\"\n               "
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 97,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+          "code": "sessionStorage.getItem"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationChat.tsx",
+          "line": 100,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+          "code": "sessionStorage.getItem"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 6,
+      "memoizationScore": 3
+    },
+    {
       "file": "src/components/GoalManager.tsx",
       "name": "GoalManager",
       "linesOfCode": 543,
       "complexityScore": 60,
       "issues": [
+        {
+          "file": "src/components/GoalManager.tsx",
+          "line": 409,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((goal) => (\n            <Card key={goal.id} className=\"bg-gradient-card bor"
+        },
+        {
+          "file": "src/components/GoalManager.tsx",
+          "line": 492,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((milestone) => (\n                        <div key={milestone.id} className="
+        },
         {
           "file": "src/components/GoalManager.tsx",
           "line": 58,
@@ -719,9 +1261,103 @@
       "memoizationScore": 4
     },
     {
+      "file": "src/components/analytics-panels/ExplanationDock.tsx",
+      "name": "ExplanationDock",
+      "linesOfCode": 180,
+      "complexityScore": 48,
+      "issues": [
+        {
+          "file": "src/components/analytics-panels/ExplanationDock.tsx",
+          "line": 91,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((r, i) => (<li key={i}"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationDock.tsx",
+          "line": 91,
+          "type": "index-as-key",
+          "severity": "medium",
+          "message": "Using array index as React key (causes re-renders)",
+          "code": "key={i}"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationDock.tsx",
+          "line": 157,
+          "type": "nested-maps",
+          "severity": "critical",
+          "message": "Nested map operations detected (O(n²) complexity)",
+          "code": ".map((t: any) => {\n                      const ts = new Date(t.timestamp).toISOS"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 1,
+      "memoizationScore": 2
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+      "name": "ExplanationTabs",
+      "linesOfCode": 232,
+      "complexityScore": 47,
+      "issues": [
+        {
+          "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+          "line": 215,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map(({ key }) => (\n                  <span\n                    key={key}\n      "
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+          "line": 173,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "foreground hover:bg-accent/40\"\n                  onClick={() => { setShowAllKild"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+          "line": 120,
+          "type": "large-inline-function",
+          "severity": "medium",
+          "message": "Large inline function in JSX (recreated on each render)",
+          "code": "onClick={() => {\n                try { window.disp..."
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+          "line": 131,
+          "type": "large-inline-function",
+          "severity": "medium",
+          "message": "Large inline function in JSX (recreated on each render)",
+          "code": "onClick={() => {\n                try { window.disp..."
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+          "line": 52,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.getItem",
+          "code": "localStorage.getItem"
+        },
+        {
+          "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+          "line": 55,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.setItem",
+          "code": "localStorage.setItem"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 0,
+      "memoizationScore": 12
+    },
+    {
       "file": "src/components/ui/sidebar.tsx",
       "name": "SidebarProvider",
-      "linesOfCode": 763,
+      "linesOfCode": 751,
       "complexityScore": 34,
       "issues": [
         {
@@ -738,38 +1374,19 @@
       "memoizationScore": 20
     },
     {
-      "file": "src/components/InteractiveDataVisualization.diagnosis.tsx",
-      "name": "InteractiveDataVisualizationDiagnosis",
-      "linesOfCode": 145,
-      "complexityScore": 33,
-      "issues": [
-        {
-          "file": "src/components/InteractiveDataVisualization.diagnosis.tsx",
-          "line": 109,
-          "type": "index-as-key",
-          "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        },
-        {
-          "file": "src/components/InteractiveDataVisualization.diagnosis.tsx",
-          "line": 79,
-          "type": "setState-in-loop",
-          "severity": "critical",
-          "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "for (let i = 0; i < tests.length; i++) {\n        await runTest(i);\n        await"
-        }
-      ],
-      "renderComplexity": 3,
-      "effectsCount": 2,
-      "memoizationScore": 0
-    },
-    {
       "file": "src/components/DataRequirementsCalculator.tsx",
       "name": "DataRequirementsCalculator",
       "linesOfCode": 297,
       "complexityScore": 31,
       "issues": [
+        {
+          "file": "src/components/DataRequirementsCalculator.tsx",
+          "line": 244,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((calc) => (\n            <div \n              key={calc.requirement.level}\n  "
+        },
         {
           "file": "src/components/DataRequirementsCalculator.tsx",
           "line": 71,
@@ -791,6 +1408,14 @@
       "issues": [
         {
           "file": "src/components/DataCollectionRoadmap.tsx",
+          "line": 233,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((milestone) => (\n              <div key={milestone.id} className=\"relative "
+        },
+        {
+          "file": "src/components/DataCollectionRoadmap.tsx",
           "line": 43,
           "type": "nested-maps",
           "severity": "critical",
@@ -803,14 +1428,33 @@
       "memoizationScore": 7
     },
     {
+      "file": "src/components/MockDataLoader.tsx",
+      "name": "MockDataLoader",
+      "linesOfCode": 260,
+      "complexityScore": 24,
+      "issues": [
+        {
+          "file": "src/components/MockDataLoader.tsx",
+          "line": 40,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "for better UX\n      setLoadingProgress(25);\n      \n      // Generate and load th"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 2,
+      "memoizationScore": 33
+    },
+    {
       "file": "src/components/EnhancedDataVisualization.tsx",
       "name": "EnhancedDataVisualization",
-      "linesOfCode": 120,
-      "complexityScore": 28,
+      "linesOfCode": 96,
+      "complexityScore": 23,
       "issues": [
         {
           "file": "src/components/EnhancedDataVisualization.tsx",
-          "line": 27,
+          "line": 25,
           "type": "setState-in-loop",
           "severity": "critical",
           "message": "setState called inside a loop (causes multiple re-renders)",
@@ -819,52 +1463,60 @@
       ],
       "renderComplexity": 0,
       "effectsCount": 2,
-      "memoizationScore": 9
+      "memoizationScore": 13
     },
     {
-      "file": "src/components/VirtualScrollArea.tsx",
-      "name": "VirtualScrollArea",
-      "linesOfCode": 289,
-      "complexityScore": 12,
+      "file": "src/components/analytics/QuickQuestions.tsx",
+      "name": "QuickQuestions",
+      "linesOfCode": 274,
+      "complexityScore": 20,
       "issues": [
         {
-          "file": "src/components/VirtualScrollArea.tsx",
-          "line": 56,
-          "type": "index-as-key",
-          "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        },
-        {
-          "file": "src/components/VirtualScrollArea.tsx",
-          "line": 93,
+          "file": "src/components/analytics/QuickQuestions.tsx",
+          "line": 81,
           "type": "setState-in-loop",
           "severity": "critical",
           "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "for smoother scrolling\n *   />\n * );\n * ```\n * \n * @example\n * // Usage with dyn"
+          "code": "for better keyboard flow\n  useEffect(() => {\n    if (open) {\n      setFocusedInd"
         }
       ],
       "renderComplexity": 0,
-      "effectsCount": 3,
-      "memoizationScore": 43
+      "effectsCount": 2,
+      "memoizationScore": 28
     },
     {
-      "file": "src/components/optimized/OptimizedAnimatedCounter.tsx",
-      "name": "OptimizedAnimatedCounter",
-      "linesOfCode": 74,
-      "complexityScore": 9,
+      "file": "src/components/dev/EnvDebug.tsx",
+      "name": "EnvDebug",
+      "linesOfCode": 81,
+      "complexityScore": 15,
       "issues": [
         {
-          "file": "src/components/optimized/OptimizedAnimatedCounter.tsx",
-          "line": 33,
+          "file": "src/components/dev/EnvDebug.tsx",
+          "line": 48,
           "type": "setState-in-loop",
           "severity": "critical",
           "message": "setState called inside a loop (causes multiple re-renders)",
-          "code": "for smoother animation\n      const easeOutQuart = 1 - Math.pow(1 - progress, 4);"
+          "code": "foreground\">Tip: set with <code>localStorage.setItem("
         },
         {
-          "file": "src/components/optimized/OptimizedAnimatedCounter.tsx",
-          "line": 62,
+          "file": "src/components/dev/EnvDebug.tsx",
+          "line": 23,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.getItem",
+          "code": "localStorage.getItem"
+        },
+        {
+          "file": "src/components/dev/EnvDebug.tsx",
+          "line": 48,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.setItem",
+          "code": "localStorage.setItem"
+        },
+        {
+          "file": "src/components/dev/EnvDebug.tsx",
+          "line": 69,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: .toLocaleString()",
@@ -872,13 +1524,237 @@
         }
       ],
       "renderComplexity": 0,
-      "effectsCount": 2,
-      "memoizationScore": 10
+      "effectsCount": 0,
+      "memoizationScore": 0
+    },
+    {
+      "file": "src/components/ExportDialog.tsx",
+      "name": "ExportDialog",
+      "linesOfCode": 159,
+      "complexityScore": 7,
+      "issues": [
+        {
+          "file": "src/components/ExportDialog.tsx",
+          "line": 37,
+          "type": "setState-in-loop",
+          "severity": "critical",
+          "message": "setState called inside a loop (causes multiple re-renders)",
+          "code": "format, setFormat] = React.useState<'pdf' | 'csv' | 'json'>(defaultFormat);\n  co"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 1,
+      "memoizationScore": 0
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "name": "ComparisonSummary",
+      "linesOfCode": 624,
+      "complexityScore": 123,
+      "issues": [
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 182,
+          "type": "heavy-computation",
+          "severity": "high",
+          "message": "Heavy computation detected in render path: JSON.parse(raw)...",
+          "code": "JSON.parse(raw)"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 216,
+          "type": "heavy-computation",
+          "severity": "high",
+          "message": "Heavy computation detected in render path: JSON.parse(raw)...",
+          "code": "JSON.parse(raw)"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 1,
+          "type": "excessive-effects",
+          "severity": "medium",
+          "message": "Component has 6 useEffect hooks (consider consolidation)"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 346,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((c) => (\n                  <div key={c.key} className=\"rounded-md border p-"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 431,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((c) => (\n                          <div key={c.key} className=\"rounded-md b"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 475,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((c) => (\n                          <div key={c.key} className=\"rounded-md b"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 525,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((i) => (\n                                <li key={i.title} className=\"flex "
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 545,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((i) => (\n                                <li key={i.title} className=\"flex "
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 564,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((c: any) => (\n                              <li key={c.title}"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 595,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((s) => (\n                      <li key={`added-${s}`} className=\"text-emera"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 598,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((s) => (\n                      <li key={`removed-${s}`} className=\"text-ros"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 408,
+          "type": "unbatched-updates",
+          "severity": "high",
+          "message": "Multiple setState calls without batching",
+          "code": "setPatLimit(6); setCorrLimit(6); setIntAddedLimit(8); setIntRemovedLimit(8); setLastExport({ type: n"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 407,
+          "type": "large-inline-function",
+          "severity": "medium",
+          "message": "Large inline function in JSX (recreated on each render)",
+          "code": "onClick={() => {\n                      setPatLimit..."
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 180,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+          "code": "sessionStorage.getItem"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 201,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: sessionStorage.setItem",
+          "code": "sessionStorage.setItem"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 214,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+          "code": "sessionStorage.getItem"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 231,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: sessionStorage.setItem",
+          "code": "sessionStorage.setItem"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 133,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: JSON.stringify({\n      patterns: content.patterns,\n      correlations: content.correlations,\n      interventions: content.interventions,\n    }, null, 2)",
+          "code": "JSON.stringify({\n      patterns: content.patterns,\n      correlations: content.correlations,\n      interventions: content.interventions,\n    }, null, 2)"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 201,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: JSON.stringify(data)",
+          "code": "JSON.stringify(data)"
+        },
+        {
+          "file": "src/components/ComparisonSummary.tsx",
+          "line": 231,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: JSON.stringify(lastExport)",
+          "code": "JSON.stringify(lastExport)"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 6,
+      "memoizationScore": 0
+    },
+    {
+      "file": "src/components/analytics/FiltersDrawer.tsx",
+      "name": "FiltersDrawer",
+      "linesOfCode": 647,
+      "complexityScore": 78,
+      "issues": [
+        {
+          "file": "src/components/analytics/FiltersDrawer.tsx",
+          "line": 78,
+          "type": "heavy-computation",
+          "severity": "high",
+          "message": "Heavy computation detected in render path: filter(p => !p.criteria.dateRange).map...",
+          "code": "filter(p => !p.criteria.dateRange).map"
+        },
+        {
+          "file": "src/components/analytics/FiltersDrawer.tsx",
+          "line": 78,
+          "type": "inline-array-chains",
+          "severity": "high",
+          "message": "Chained array operations in render method",
+          "code": "{FILTER_PRESETS.filter(p => !p.criteria.dateRange).map"
+        },
+        {
+          "file": "src/components/analytics/FiltersDrawer.tsx",
+          "line": 79,
+          "type": "large-inline-function",
+          "severity": "medium",
+          "message": "Large inline function in JSX (recreated on each render)",
+          "code": "onClick={() => {\n                  const clampRang..."
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 0,
+      "memoizationScore": 0
     },
     {
       "file": "src/components/VisualizationControls.tsx",
       "name": "VisualizationControls",
-      "linesOfCode": 416,
+      "linesOfCode": 433,
       "complexityScore": 41,
       "issues": [
         {
@@ -890,7 +1766,15 @@
         },
         {
           "file": "src/components/VisualizationControls.tsx",
-          "line": 126,
+          "line": 122,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((p) => (\n              <Button\n                key={p.id}\n                v"
+        },
+        {
+          "file": "src/components/VisualizationControls.tsx",
+          "line": 131,
           "type": "unbatched-updates",
           "severity": "high",
           "message": "Multiple setState calls without batching",
@@ -898,7 +1782,7 @@
         },
         {
           "file": "src/components/VisualizationControls.tsx",
-          "line": 134,
+          "line": 139,
           "type": "unbatched-updates",
           "severity": "high",
           "message": "Multiple setState calls without batching",
@@ -906,7 +1790,7 @@
         },
         {
           "file": "src/components/VisualizationControls.tsx",
-          "line": 122,
+          "line": 127,
           "type": "large-inline-function",
           "severity": "medium",
           "message": "Large inline function in JSX (recreated on each render)",
@@ -914,7 +1798,7 @@
         },
         {
           "file": "src/components/VisualizationControls.tsx",
-          "line": 151,
+          "line": 156,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: JSON.stringify(filterCriteria[k as keyof typeof filterCriteria])",
@@ -922,7 +1806,7 @@
         },
         {
           "file": "src/components/VisualizationControls.tsx",
-          "line": 152,
+          "line": 157,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: JSON.stringify({\n                    dateRange: { start: null, end: null },\n                    emotions: { types: [], intensityRange: [0, 10], includeTriggers: [], excludeTriggers: [] },\n                    sensory: { types: [], responses: [], intensityRange: [0, 10] },\n                    environmental: {\n                      locations: [],\n                      activities: [],\n                      conditions: { noiseLevel: [0, 10], temperature: [15, 30], lighting: [] },\n                      weather: [],\n                      timeOfDay: []\n                    },\n                    patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },\n                    realtime: false\n                  }[k as keyof typeof filterCriteria])",
@@ -954,6 +1838,14 @@
           "severity": "high",
           "message": "Expensive calculation without useMemo",
           "code": "const studentsWithData = students.filter(student => {\n        const studentEntri"
+        },
+        {
+          "file": "src/components/TestingDebugPanel.tsx",
+          "line": 289,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((result) => (\n                <div key={result.name} className=\"flex items-"
         }
       ],
       "renderComplexity": 0,
@@ -961,164 +1853,60 @@
       "memoizationScore": 23
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "name": "OptimizedEnhancedPersonalizedInsights",
-      "linesOfCode": 508,
-      "complexityScore": 91,
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "name": "AlertsPanel",
+      "linesOfCode": 368,
+      "complexityScore": 45,
       "issues": [
         {
-          "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-          "line": 1,
-          "type": "missing-memoization",
-          "severity": "medium",
-          "message": "Component with complex props lacks memoization"
-        },
-        {
-          "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-          "line": 32,
+          "file": "src/components/analytics/panels/AlertsPanel.tsx",
+          "line": 105,
           "type": "unmemoized-calculation",
           "severity": "high",
           "message": "Expensive calculation without useMemo",
-          "code": "const avgEmotionIntensity = filteredData.emotions.reduce((sum, e) => sum + e.int"
+          "code": "const counts = useMemo(() => {\n    return {\n      totalUnresolved: alerts.filter"
         },
         {
-          "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-          "line": 241,
-          "type": "index-as-key",
+          "file": "src/components/analytics/panels/AlertsPanel.tsx",
+          "line": 162,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((sev) => (\n                <Collapsible key={sev} open={!collapsed[sev]} on"
         },
         {
-          "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-          "line": 309,
-          "type": "index-as-key",
+          "file": "src/components/analytics/panels/AlertsPanel.tsx",
+          "line": 182,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((entry) => (\n                          <li key={entry.alert.id} className=\""
         },
         {
-          "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-          "line": 341,
-          "type": "index-as-key",
+          "file": "src/components/analytics/panels/AlertsPanel.tsx",
+          "line": 266,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((entry) => (\n                      <li key={entry.alert.id} className=\"roun"
         },
         {
-          "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-          "line": 454,
-          "type": "index-as-key",
+          "file": "src/components/analytics/panels/AlertsPanel.tsx",
+          "line": 239,
+          "type": "large-inline-function",
           "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 0,
-      "memoizationScore": 0
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "name": "EnhancedPersonalizedInsights",
-      "linesOfCode": 526,
-      "complexityScore": 89,
-      "issues": [
-        {
-          "file": "src/components/EnhancedPersonalizedInsights.tsx",
-          "line": 161,
-          "type": "unmemoized-calculation",
-          "severity": "high",
-          "message": "Expensive calculation without useMemo",
-          "code": "const avgEmotionIntensity = filteredData.emotions.reduce((sum, e) => sum + e.int"
-        },
-        {
-          "file": "src/components/EnhancedPersonalizedInsights.tsx",
-          "line": 259,
-          "type": "index-as-key",
-          "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        },
-        {
-          "file": "src/components/EnhancedPersonalizedInsights.tsx",
-          "line": 327,
-          "type": "index-as-key",
-          "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        },
-        {
-          "file": "src/components/EnhancedPersonalizedInsights.tsx",
-          "line": 359,
-          "type": "index-as-key",
-          "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        },
-        {
-          "file": "src/components/EnhancedPersonalizedInsights.tsx",
-          "line": 472,
-          "type": "index-as-key",
-          "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 0,
-      "memoizationScore": 10
-    },
-    {
-      "file": "src/components/optimized/OptimizedDataVisualization.tsx",
-      "name": "OptimizedDataVisualization",
-      "linesOfCode": 262,
-      "complexityScore": 47,
-      "issues": [
-        {
-          "file": "src/components/optimized/OptimizedDataVisualization.tsx",
-          "line": 130,
-          "type": "unmemoized-calculation",
-          "severity": "high",
-          "message": "Expensive calculation without useMemo",
-          "code": "const rows = Array.from(byDate.values())\n                  .sort((a, b) => a.dat"
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 0,
-      "memoizationScore": 11
-    },
-    {
-      "file": "src/components/settings/AnalyticsConfig.tsx",
-      "name": "AnalyticsConfig",
-      "linesOfCode": 397,
-      "complexityScore": 46,
-      "issues": [
-        {
-          "file": "src/components/settings/AnalyticsConfig.tsx",
-          "line": 48,
-          "type": "heavy-computation",
-          "severity": "high",
-          "message": "Heavy computation detected in render path: JSON.parse(JSON.stringify(prev)...",
-          "code": "JSON.parse(JSON.stringify(prev)"
-        },
-        {
-          "file": "src/components/settings/AnalyticsConfig.tsx",
-          "line": 48,
-          "type": "sync-io",
-          "severity": "medium",
-          "message": "Synchronous I/O operation in render path: JSON.stringify(prev)",
-          "code": "JSON.stringify(prev)"
+          "message": "Large inline function in JSX (recreated on each render)",
+          "code": "onClick={() => {\n                            clear..."
         }
       ],
       "renderComplexity": 0,
       "effectsCount": 3,
-      "memoizationScore": 55
+      "memoizationScore": 44
     },
     {
       "file": "src/components/QuickEntryTemplates.tsx",
       "name": "QuickEntryTemplates",
-      "linesOfCode": 456,
+      "linesOfCode": 473,
       "complexityScore": 44,
       "issues": [
         {
@@ -1138,7 +1926,23 @@
         },
         {
           "file": "src/components/QuickEntryTemplates.tsx",
-          "line": 396,
+          "line": 382,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((template) => (\n            <Card key={template.id} className=\"relative ove"
+        },
+        {
+          "file": "src/components/QuickEntryTemplates.tsx",
+          "line": 411,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((emotion, idx) => (\n                        <Badge key={idx} variant=\"secon"
+        },
+        {
+          "file": "src/components/QuickEntryTemplates.tsx",
+          "line": 412,
           "type": "index-as-key",
           "severity": "medium",
           "message": "Using array index as React key (causes re-renders)",
@@ -1154,7 +1958,7 @@
         },
         {
           "file": "src/components/QuickEntryTemplates.tsx",
-          "line": 193,
+          "line": 198,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: localStorage.setItem",
@@ -1162,7 +1966,7 @@
         },
         {
           "file": "src/components/QuickEntryTemplates.tsx",
-          "line": 193,
+          "line": 198,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: JSON.stringify(updatedTemplates)",
@@ -1186,6 +1990,14 @@
           "severity": "high",
           "message": "Expensive calculation without useMemo",
           "code": "const avgIntensity = filteredEmotions.length > 0 \n      ? filteredEmotions.reduc"
+        },
+        {
+          "file": "src/components/PeriodComparison.tsx",
+          "line": 184,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((metric) => (\n            <div key={metric.label} className=\"text-center\""
         }
       ],
       "renderComplexity": 0,
@@ -1193,24 +2005,49 @@
       "memoizationScore": 3
     },
     {
-      "file": "src/components/AdvancedSearch.tsx",
-      "name": "AdvancedSearch",
-      "linesOfCode": 477,
-      "complexityScore": 112,
-      "issues": [],
+      "file": "src/components/AnalyticsConfigTest.tsx",
+      "name": "AnalyticsConfigTest.tsx",
+      "linesOfCode": 333,
+      "complexityScore": 21,
+      "issues": [
+        {
+          "file": "src/components/AnalyticsConfigTest.tsx",
+          "line": 141,
+          "type": "heavy-computation",
+          "severity": "high",
+          "message": "Heavy computation detected in render path: JSON.parse(exported)...",
+          "code": "JSON.parse(exported)"
+        },
+        {
+          "file": "src/components/AnalyticsConfigTest.tsx",
+          "line": 276,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((result) => (\n              <div\n                key={`${result.name}-${res"
+        },
+        {
+          "file": "src/components/AnalyticsConfigTest.tsx",
+          "line": 146,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: JSON.stringify(parsed)",
+          "code": "JSON.stringify(parsed)"
+        }
+      ],
       "renderComplexity": 0,
       "effectsCount": 2,
-      "memoizationScore": 0
+      "memoizationScore": 13
     },
     {
       "file": "src/components/charts/EChartContainer.tsx",
       "name": "EChartContainer",
-      "linesOfCode": 517,
-      "complexityScore": 108,
+      "linesOfCode": 569,
+      "complexityScore": 119,
       "issues": [
         {
           "file": "src/components/charts/EChartContainer.tsx",
-          "line": 419,
+          "line": 462,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: JSON.stringify(safeOption, (_k, v)",
@@ -1218,7 +2055,7 @@
         },
         {
           "file": "src/components/charts/EChartContainer.tsx",
-          "line": 447,
+          "line": 490,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: JSON.stringify({ seriesKinds, yAxes })",
@@ -1228,6 +2065,122 @@
       "renderComplexity": 0,
       "effectsCount": 1,
       "memoizationScore": 10
+    },
+    {
+      "file": "src/components/AdvancedSearch.tsx",
+      "name": "AdvancedSearch",
+      "linesOfCode": 506,
+      "complexityScore": 113,
+      "issues": [
+        {
+          "file": "src/components/AdvancedSearch.tsx",
+          "line": 371,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((emotion) => (\n                    <div key={emotion} className=\"flex items"
+        },
+        {
+          "file": "src/components/AdvancedSearch.tsx",
+          "line": 396,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((sensory) => (\n                    <div key={sensory} className=\"flex items"
+        },
+        {
+          "file": "src/components/AdvancedSearch.tsx",
+          "line": 421,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((status) => (\n                    <div key={status} className=\"flex items-c"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 2,
+      "memoizationScore": 14
+    },
+    {
+      "file": "src/components/analytics-panels/EntryDetailsDrawer.tsx",
+      "name": "EntryDetailsDrawer",
+      "linesOfCode": 118,
+      "complexityScore": 63,
+      "issues": [
+        {
+          "file": "src/components/analytics-panels/EntryDetailsDrawer.tsx",
+          "line": 72,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((e) => (\n                    <li key={e.id}"
+        },
+        {
+          "file": "src/components/analytics-panels/EntryDetailsDrawer.tsx",
+          "line": 82,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((s) => (\n                    <li key={s.id}"
+        }
+      ],
+      "renderComplexity": 1,
+      "effectsCount": 0,
+      "memoizationScore": 0
+    },
+    {
+      "file": "src/components/AnalyticsStatusIndicator.tsx",
+      "name": "AnalyticsStatusIndicator",
+      "linesOfCode": 270,
+      "complexityScore": 48,
+      "issues": [
+        {
+          "file": "src/components/AnalyticsStatusIndicator.tsx",
+          "line": 193,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((status) => (\n              <div key={status.studentId} className=\"flex ite"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 2,
+      "memoizationScore": 8
+    },
+    {
+      "file": "src/components/AlertManager.tsx",
+      "name": "AlertManager",
+      "linesOfCode": 290,
+      "complexityScore": 35,
+      "issues": [
+        {
+          "file": "src/components/AlertManager.tsx",
+          "line": 129,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((alertEntry) => (\n        <Card key={alertEntry.alert.id} className={`trans"
+        },
+        {
+          "file": "src/components/AlertManager.tsx",
+          "line": 213,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((rec) => (\n                                  <li key={`${selectedAlert.aler"
+        },
+        {
+          "file": "src/components/AlertManager.tsx",
+          "line": 263,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((recommendation) => (\n                    <li key={`${alertEntry.alert.id}-"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 2,
+      "memoizationScore": 4
     },
     {
       "file": "src/components/analysis/PatternAnalysisView.tsx",
@@ -1241,6 +2194,46 @@
           "type": "missing-memoization",
           "severity": "medium",
           "message": "Component with complex props lacks memoization"
+        },
+        {
+          "file": "src/components/analysis/PatternAnalysisView.tsx",
+          "line": 95,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((pattern, index) => (\n              <Card\n                key={index}\n     "
+        },
+        {
+          "file": "src/components/analysis/PatternAnalysisView.tsx",
+          "line": 120,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((rec, i) => (\n                            <p key={i} className=\"text-xs tex"
+        },
+        {
+          "file": "src/components/analysis/PatternAnalysisView.tsx",
+          "line": 144,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((insight, index) => (\n              <Card key={index} className=\"bg-gradien"
+        },
+        {
+          "file": "src/components/analysis/PatternAnalysisView.tsx",
+          "line": 196,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((rec, i) => (\n                            <p key={i} className=\"text-xs tex"
+        },
+        {
+          "file": "src/components/analysis/PatternAnalysisView.tsx",
+          "line": 229,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((anomaly, index) => (\n              <Card\n                key={index}\n     "
         },
         {
           "file": "src/components/analysis/PatternAnalysisView.tsx",
@@ -1288,52 +2281,45 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/analytics-panels/PatternsPanel.tsx",
-      "name": "PatternsPanel",
-      "linesOfCode": 186,
-      "complexityScore": 31,
+      "file": "src/components/dev/ModelDiagnosticsPanel.tsx",
+      "name": "ModelDiagnosticsPanel",
+      "linesOfCode": 356,
+      "complexityScore": 33,
       "issues": [
         {
-          "file": "src/components/analytics-panels/PatternsPanel.tsx",
-          "line": 1,
-          "type": "missing-memoization",
+          "file": "src/components/dev/ModelDiagnosticsPanel.tsx",
+          "line": 242,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Component with complex props lacks memoization"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((mt) => (\n                      <SelectItem key={mt} value={mt}"
         },
         {
-          "file": "src/components/analytics-panels/PatternsPanel.tsx",
-          "line": 175,
-          "type": "index-as-key",
+          "file": "src/components/dev/ModelDiagnosticsPanel.tsx",
+          "line": 331,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={idx}"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((a) => (\n                  <li key={a.id} aria-live={a.tone}"
         }
       ],
       "renderComplexity": 0,
       "effectsCount": 2,
-      "memoizationScore": 0
+      "memoizationScore": 54
     },
     {
-      "file": "src/components/DetailedConfidenceExplanation.tsx",
-      "name": "DetailedConfidenceExplanation",
-      "linesOfCode": 439,
-      "complexityScore": 30,
+      "file": "src/components/ConfidenceIndicator.tsx",
+      "name": "ConfidenceIndicator",
+      "linesOfCode": 119,
+      "complexityScore": 27,
       "issues": [
         {
-          "file": "src/components/DetailedConfidenceExplanation.tsx",
-          "line": 393,
-          "type": "index-as-key",
+          "file": "src/components/ConfidenceIndicator.tsx",
+          "line": 102,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
-        },
-        {
-          "file": "src/components/DetailedConfidenceExplanation.tsx",
-          "line": 410,
-          "type": "index-as-key",
-          "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((explanation) => (\n                <div key={explanation} className=\"text-x"
         }
       ],
       "renderComplexity": 0,
@@ -1341,14 +2327,57 @@
       "memoizationScore": 0
     },
     {
+      "file": "src/components/layouts/ResizableSplitLayout.tsx",
+      "name": "ResizableSplitLayout",
+      "linesOfCode": 169,
+      "complexityScore": 27,
+      "issues": [
+        {
+          "file": "src/components/layouts/ResizableSplitLayout.tsx",
+          "line": 43,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.getItem",
+          "code": "localStorage.getItem"
+        },
+        {
+          "file": "src/components/layouts/ResizableSplitLayout.tsx",
+          "line": 47,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.getItem",
+          "code": "localStorage.getItem"
+        },
+        {
+          "file": "src/components/layouts/ResizableSplitLayout.tsx",
+          "line": 55,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.setItem",
+          "code": "localStorage.setItem"
+        },
+        {
+          "file": "src/components/layouts/ResizableSplitLayout.tsx",
+          "line": 57,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.setItem",
+          "code": "localStorage.setItem"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 1,
+      "memoizationScore": 0
+    },
+    {
       "file": "src/components/DevErrorBanner.tsx",
       "name": "DevErrorBanner",
-      "linesOfCode": 95,
-      "complexityScore": 17,
+      "linesOfCode": 125,
+      "complexityScore": 26,
       "issues": [
         {
           "file": "src/components/DevErrorBanner.tsx",
-          "line": 23,
+          "line": 38,
           "type": "sync-io",
           "severity": "medium",
           "message": "Synchronous I/O operation in render path: JSON.stringify(a)",
@@ -1360,11 +2389,73 @@
       "memoizationScore": 0
     },
     {
+      "file": "src/components/profile-sections/AnalyticsSection.tsx",
+      "name": "AnalyticsSection",
+      "linesOfCode": 161,
+      "complexityScore": 20,
+      "issues": [
+        {
+          "file": "src/components/profile-sections/AnalyticsSection.tsx",
+          "line": 59,
+          "type": "sync-io",
+          "severity": "medium",
+          "message": "Synchronous I/O operation in render path: localStorage.getItem",
+          "code": "localStorage.getItem"
+        }
+      ],
+      "renderComplexity": 0,
+      "effectsCount": 2,
+      "memoizationScore": 10
+    },
+    {
+      "file": "src/components/StudentProfileSidebar.tsx",
+      "name": "StudentProfileSidebar",
+      "linesOfCode": 179,
+      "complexityScore": 16,
+      "issues": [
+        {
+          "file": "src/components/StudentProfileSidebar.tsx",
+          "line": 114,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((item) => (\n                <SidebarMenuItem key={item.section}"
+        },
+        {
+          "file": "src/components/StudentProfileSidebar.tsx",
+          "line": 149,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((item) => (\n                <SidebarMenuItem key={item.section}"
+        }
+      ],
+      "renderComplexity": 4,
+      "effectsCount": 0,
+      "memoizationScore": 0
+    },
+    {
       "file": "src/components/PaginatedSessionsList.tsx",
       "name": "PaginatedSessionsList",
       "linesOfCode": 224,
       "complexityScore": 16,
       "issues": [
+        {
+          "file": "src/components/PaginatedSessionsList.tsx",
+          "line": 99,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((entry) => (\n                <div key={entry.id} className=\"border-l-4 bord"
+        },
+        {
+          "file": "src/components/PaginatedSessionsList.tsx",
+          "line": 126,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((emotion, idx) => (\n                        <Badge key={idx} variant=\"secon"
+        },
         {
           "file": "src/components/PaginatedSessionsList.tsx",
           "line": 127,
@@ -1381,19 +2472,27 @@
     {
       "file": "src/components/layouts/DashboardLayout.tsx",
       "name": "DashboardLayout",
-      "linesOfCode": 171,
+      "linesOfCode": 173,
       "complexityScore": 16,
       "issues": [
         {
           "file": "src/components/layouts/DashboardLayout.tsx",
-          "line": 134,
+          "line": 135,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((pair, index) => (\n                  <div key={index} className=\"flex items"
+        },
+        {
+          "file": "src/components/layouts/DashboardLayout.tsx",
+          "line": 136,
           "type": "index-as-key",
           "severity": "medium",
           "message": "Using array index as React key (causes re-renders)",
           "code": "key={index}"
         }
       ],
-      "renderComplexity": 1,
+      "renderComplexity": 0,
       "effectsCount": 0,
       "memoizationScore": 0
     },
@@ -1412,6 +2511,14 @@
         },
         {
           "file": "src/components/profile-sections/DashboardSection.tsx",
+          "line": 267,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((suggestion: string, index: number) => (\n                <div key={index} c"
+        },
+        {
+          "file": "src/components/profile-sections/DashboardSection.tsx",
           "line": 268,
           "type": "index-as-key",
           "severity": "medium",
@@ -1424,40 +2531,21 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/ui/PremiumStudentCard.tsx",
-      "name": "PremiumStudentCard",
-      "linesOfCode": 275,
-      "complexityScore": 12,
-      "issues": [
-        {
-          "file": "src/components/ui/PremiumStudentCard.tsx",
-          "line": 44,
-          "type": "sync-io",
-          "severity": "medium",
-          "message": "Synchronous I/O operation in render path: JSON.stringify(dataStorage.getStudents()",
-          "code": "JSON.stringify(dataStorage.getStudents()"
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 0,
-      "memoizationScore": 8
-    },
-    {
-      "file": "src/components/PatternDetectionEmptyState.tsx",
-      "name": "PatternDetectionEmptyState",
-      "linesOfCode": 126,
+      "file": "src/components/DateRangeSelector.tsx",
+      "name": "DateRangeSelector",
+      "linesOfCode": 179,
       "complexityScore": 10,
       "issues": [
         {
-          "file": "src/components/PatternDetectionEmptyState.tsx",
-          "line": 88,
-          "type": "index-as-key",
+          "file": "src/components/DateRangeSelector.tsx",
+          "line": 125,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Using array index as React key (causes re-renders)",
-          "code": "key={index}"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((preset) => (\n            <SelectItem key={preset.value} value={preset.valu"
         }
       ],
-      "renderComplexity": 3,
+      "renderComplexity": 0,
       "effectsCount": 0,
       "memoizationScore": 0
     },
@@ -1473,6 +2561,14 @@
           "type": "missing-memoization",
           "severity": "medium",
           "message": "Component with complex props lacks memoization"
+        },
+        {
+          "file": "src/components/ui/Breadcrumbs.tsx",
+          "line": 21,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((item, idx) => {\n          const isLast = idx === items.length - 1;\n       "
         }
       ],
       "renderComplexity": 0,
@@ -1482,7 +2578,7 @@
     {
       "file": "src/components/analytics-panels/CorrelationsPanel.tsx",
       "name": "CorrelationsPanel",
-      "linesOfCode": 121,
+      "linesOfCode": 123,
       "complexityScore": 10,
       "issues": [
         {
@@ -1491,6 +2587,14 @@
           "type": "missing-memoization",
           "severity": "medium",
           "message": "Component with complex props lacks memoization"
+        },
+        {
+          "file": "src/components/analytics-panels/CorrelationsPanel.tsx",
+          "line": 91,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((correlation: CorrelationResult) => (\n                <Card key={hashOfStri"
         }
       ],
       "renderComplexity": 0,
@@ -1500,7 +2604,7 @@
     {
       "file": "src/components/charts/TrendsChart.tsx",
       "name": "TrendsChart",
-      "linesOfCode": 93,
+      "linesOfCode": 101,
       "complexityScore": 9,
       "issues": [
         {
@@ -1516,40 +2620,37 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/LoadingState.tsx",
-      "name": "LoadingState",
-      "linesOfCode": 62,
+      "file": "src/components/analytics-panels/ChatComposer.tsx",
+      "name": "ChatComposer",
+      "linesOfCode": 71,
       "complexityScore": 8,
       "issues": [
         {
-          "file": "src/components/LoadingState.tsx",
-          "line": 54,
+          "file": "src/components/analytics-panels/ChatComposer.tsx",
+          "line": 1,
+          "type": "missing-memoization",
+          "severity": "medium",
+          "message": "Component with complex props lacks memoization"
+        },
+        {
+          "file": "src/components/analytics-panels/ChatComposer.tsx",
+          "line": 41,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((s, i) => (\n            <button\n              key={i}\n              type=\"b"
+        },
+        {
+          "file": "src/components/analytics-panels/ChatComposer.tsx",
+          "line": 43,
           "type": "index-as-key",
           "severity": "medium",
           "message": "Using array index as React key (causes re-renders)",
           "code": "key={i}"
         }
       ],
-      "renderComplexity": 0,
+      "renderComplexity": 4,
       "effectsCount": 0,
-      "memoizationScore": 0
-    },
-    {
-      "file": "src/components/profile-sections/AnalyticsSection.tsx",
-      "name": "AnalyticsSection",
-      "linesOfCode": 95,
-      "complexityScore": 8,
-      "issues": [
-        {
-          "file": "src/components/profile-sections/AnalyticsSection.tsx",
-          "line": 1,
-          "type": "missing-memoization",
-          "severity": "medium",
-          "message": "Component with complex props lacks memoization"
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 2,
       "memoizationScore": 0
     },
     {
@@ -1571,32 +2672,37 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/profile-sections/ToolsSection.tsx",
-      "name": "ToolsSection",
-      "linesOfCode": 130,
-      "complexityScore": 4,
+      "file": "src/components/dashboard/StudentsGrid.tsx",
+      "name": "StudentsGrid",
+      "linesOfCode": 56,
+      "complexityScore": 6,
       "issues": [
         {
-          "file": "src/components/profile-sections/ToolsSection.tsx",
+          "file": "src/components/dashboard/StudentsGrid.tsx",
           "line": 1,
           "type": "missing-memoization",
           "severity": "medium",
           "message": "Component with complex props lacks memoization"
-        }
-      ],
-      "renderComplexity": 3,
-      "effectsCount": 0,
-      "memoizationScore": 0
-    },
-    {
-      "file": "src/components/PremiumEmptyState.tsx",
-      "name": "PremiumEmptyState",
-      "linesOfCode": 153,
-      "complexityScore": 2,
-      "issues": [
+        },
         {
-          "file": "src/components/PremiumEmptyState.tsx",
-          "line": 87,
+          "file": "src/components/dashboard/StudentsGrid.tsx",
+          "line": 15,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((_, i) => (\n          <div key={i} className=\"glass-card rounded-3xl p-6 an"
+        },
+        {
+          "file": "src/components/dashboard/StudentsGrid.tsx",
+          "line": 41,
+          "type": "missing-react-key",
+          "severity": "medium",
+          "message": "List item rendered without a React key prop",
+          "code": ".map((student, index) => (\n        <PremiumStudentCard\n          key={student.id"
+        },
+        {
+          "file": "src/components/dashboard/StudentsGrid.tsx",
+          "line": 16,
           "type": "index-as-key",
           "severity": "medium",
           "message": "Using array index as React key (causes re-renders)",
@@ -1608,48 +2714,39 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/DebugVisualization.tsx",
-      "name": "DebugVisualization",
-      "linesOfCode": 233,
-      "complexityScore": 0,
+      "file": "src/components/profile-sections/ToolsSection.tsx",
+      "name": "ToolsSection",
+      "linesOfCode": 130,
+      "complexityScore": 4,
       "issues": [
         {
-          "file": "src/components/DebugVisualization.tsx",
-          "line": 210,
-          "type": "sync-io",
+          "file": "src/components/profile-sections/ToolsSection.tsx",
+          "line": 1,
+          "type": "missing-memoization",
           "severity": "medium",
-          "message": "Synchronous I/O operation in render path: JSON.stringify(mockEmotions[0], null, 2)",
-          "code": "JSON.stringify(mockEmotions[0], null, 2)"
+          "message": "Component with complex props lacks memoization"
         },
         {
-          "file": "src/components/DebugVisualization.tsx",
-          "line": 216,
-          "type": "sync-io",
+          "file": "src/components/profile-sections/ToolsSection.tsx",
+          "line": 98,
+          "type": "missing-react-key",
           "severity": "medium",
-          "message": "Synchronous I/O operation in render path: JSON.stringify(mockSensoryInputs[0], null, 2)",
-          "code": "JSON.stringify(mockSensoryInputs[0], null, 2)"
-        },
-        {
-          "file": "src/components/DebugVisualization.tsx",
-          "line": 222,
-          "type": "sync-io",
-          "severity": "medium",
-          "message": "Synchronous I/O operation in render path: JSON.stringify(mockTrackingEntries[0], null, 2)",
-          "code": "JSON.stringify(mockTrackingEntries[0], null, 2)"
+          "message": "List item rendered without a React key prop",
+          "code": ".map((section) => (\n          <button\n            key={section.id}\n            o"
         }
       ],
-      "renderComplexity": 0,
+      "renderComplexity": 3,
       "effectsCount": 0,
       "memoizationScore": 0
     },
     {
-      "file": "src/components/profile-sections/ProgressSection.tsx",
-      "name": "ProgressSection",
-      "linesOfCode": 39,
-      "complexityScore": 0,
+      "file": "src/components/analytics/panels/ExplorePanel.tsx",
+      "name": "ExplorePanel",
+      "linesOfCode": 92,
+      "complexityScore": 2,
       "issues": [
         {
-          "file": "src/components/profile-sections/ProgressSection.tsx",
+          "file": "src/components/analytics/panels/ExplorePanel.tsx",
           "line": 1,
           "type": "missing-memoization",
           "severity": "medium",
@@ -1681,7 +2778,7 @@
     {
       "file": "src/components/lazy/LazyAnalyticsDashboard.tsx",
       "name": "LazyAnalyticsDashboard",
-      "linesOfCode": 70,
+      "linesOfCode": 71,
       "complexityScore": 0,
       "issues": [
         {
@@ -1735,8 +2832,278 @@
   ],
   "issues": [
     {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 213,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const render = [\n        data.summary,\n        '',\n        data.causes?.length ?"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 338,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const socialFromTimeline = allEntries\n      .map((t) => ({\n        id: `tracking"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 371,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const topPlaces = agg([ ...allEntries.map((e) => e.environmentalData?.location),"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 605,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const rightContent = (\n        <div className=\"h-full\" ref={dockRef}>\n          "
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 544,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((pattern: PatternResult) => (\n                <Card key={stableKeyFromPatte"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 575,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((rec) => (\n                                  <li key={hashOfString(rec)} cl"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 703,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((msg, idx) => (\n                <div key={idx} className=\"p-3 bg-muted/50 r"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 704,
+      "type": "index-as-key",
+      "severity": "medium",
+      "message": "Using array index as React key (causes re-renders)",
+      "code": "key={idx}"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 318,
+      "type": "large-list",
+      "severity": "high",
+      "message": "Rendering 80+ items without virtualization",
+      "code": ".slice(0, 80)"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 359,
+      "type": "large-list",
+      "severity": "high",
+      "message": "Rendering 60+ items without virtualization",
+      "code": ".slice(0, 60)"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 425,
+      "type": "large-list",
+      "severity": "high",
+      "message": "Rendering 60+ items without virtualization",
+      "code": ".slice(0, 60)"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 431,
+      "type": "large-list",
+      "severity": "high",
+      "message": "Rendering 60+ items without virtualization",
+      "code": ".slice(0, 60)"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 434,
+      "type": "large-list",
+      "severity": "high",
+      "message": "Rendering 60+ items without virtualization",
+      "code": ".slice(0, 60)"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 506,
+      "type": "large-list",
+      "severity": "high",
+      "message": "Rendering 80+ items without virtualization",
+      "code": ".slice(0, 80)"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 254,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "forklaring. Prøv igjen.');\n        setExplanations("
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 370,
+      "type": "nested-maps",
+      "severity": "critical",
+      "message": "Nested map operations detected (O(n²) complexity)",
+      "code": ".map((e) => e.environmentalData?.classroom?.activity?.toString()));\n    const to"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 428,
+      "type": "nested-maps",
+      "severity": "critical",
+      "message": "Nested map operations detected (O(n²) complexity)",
+      "code": ".map(fmtEntry).slice(0, 40),\n      '',\n      'Emosjoner (seneste):',\n      ...em"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 447,
+      "type": "nested-maps",
+      "severity": "critical",
+      "message": "Nested map operations detected (O(n²) complexity)",
+      "code": ".map((t) => {\n          const ts = new Date(t.timestamp).toISOString().replace('"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 81,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.getItem",
+      "code": "localStorage.getItem"
+    },
+    {
+      "file": "src/components/analytics-panels/PatternsPanel.tsx",
+      "line": 81,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.getItem",
+      "code": "localStorage.getItem"
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 335,
+      "type": "heavy-computation",
+      "severity": "high",
+      "message": "Heavy computation detected in render path: filter(chart => !chart.studentId || chart.studentI...",
+      "code": "filter(chart => !chart.studentId || chart.studentId === student.id)\n              .filter"
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 334,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const overlappingCharts = registrations\n              .filter(chart => !chart.st"
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 1,
+      "type": "excessive-effects",
+      "severity": "medium",
+      "message": "Component has 9 useEffect hooks (consider consolidation)"
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 709,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map(({ key, labelKey, testId, ariaLabelKey }) => (\n            <TabsTrigger\n   "
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 257,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "for shared logic\n  const handleManualRefresh = useCallback(() => {\n    setPendin"
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 293,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "while analysis updates other tabs.\n\n  // Export handler with useCallback for per"
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 389,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "format, exportData, pdfOptions);\n\n        setExportProgress("
+    },
+    {
+      "file": "src/components/AnalyticsDashboard.tsx",
+      "line": 408,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "format: ExportFormat) => {\n    if (format === 'pdf') {\n      setExportDialogOpen"
+    },
+    {
+      "file": "src/components/InteractiveDataVisualization.tsx",
+      "line": 241,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const allTimestamps = [...filteredData.emotions.map(e => e.timestamp), ...filter"
+    },
+    {
+      "file": "src/components/InteractiveDataVisualization.tsx",
+      "line": 277,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const data = chartData.map(map"
+    },
+    {
+      "file": "src/components/InteractiveDataVisualization.tsx",
+      "line": 1,
+      "type": "excessive-effects",
+      "severity": "medium",
+      "message": "Component has 7 useEffect hooks (consider consolidation)"
+    },
+    {
+      "file": "src/components/InteractiveDataVisualization.tsx",
+      "line": 117,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "for cache invalidations\n  useEffect(() => {\n    if (typeof window === 'undefined"
+    },
+    {
+      "file": "src/components/InteractiveDataVisualization.tsx",
+      "line": 237,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "format: ExportFormat) => {\n    // This logic could be moved to a hook or helper\n"
+    },
+    {
+      "file": "src/components/InteractiveDataVisualization.tsx",
+      "line": 241,
+      "type": "nested-maps",
+      "severity": "critical",
+      "message": "Nested map operations detected (O(n²) complexity)",
+      "code": ".map(e => e.timestamp), ...filteredData.sensoryInputs.map(s => s.timestamp), ..."
+    },
+    {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 468,
+      "line": 409,
       "type": "heavy-computation",
       "severity": "high",
       "message": "Heavy computation detected in render path: filter(stream => stream.visible).map...",
@@ -1744,7 +3111,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 817,
+      "line": 758,
       "type": "heavy-computation",
       "severity": "high",
       "message": "Heavy computation detected in render path: filter(s => s.visible).map...",
@@ -1752,7 +3119,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 803,
+      "line": 744,
       "type": "heavy-computation",
       "severity": "high",
       "message": "Heavy computation detected in render path: Object.entries(hoveredEvent.metadata).map...",
@@ -1760,7 +3127,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 205,
+      "line": 185,
       "type": "unmemoized-calculation",
       "severity": "high",
       "message": "Expensive calculation without useMemo",
@@ -1768,7 +3135,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 241,
+      "line": 221,
       "type": "unmemoized-calculation",
       "severity": "high",
       "message": "Expensive calculation without useMemo",
@@ -1776,7 +3143,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 467,
+      "line": 408,
       "type": "unmemoized-calculation",
       "severity": "high",
       "message": "Expensive calculation without useMemo",
@@ -1784,14 +3151,14 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 301,
+      "line": 281,
       "type": "heavy-effect-deps",
       "severity": "high",
       "message": "useEffect with many dependencies detected"
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 467,
+      "line": 408,
       "type": "inline-array-chains",
       "severity": "high",
       "message": "Chained array operations in render method",
@@ -1799,7 +3166,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 817,
+      "line": 758,
       "type": "inline-array-chains",
       "severity": "high",
       "message": "Chained array operations in render method",
@@ -1807,7 +3174,23 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 300,
+      "line": 433,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((point, i) => {\n            const x = timeScale(point.timestamp);\n         "
+    },
+    {
+      "file": "src/components/TimelineVisualization.tsx",
+      "line": 744,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map(([key, value]) => (\n                    <p key={key} className=\"text-xs tex"
+    },
+    {
+      "file": "src/components/TimelineVisualization.tsx",
+      "line": 280,
       "type": "setState-in-loop",
       "severity": "critical",
       "message": "setState called inside a loop (causes multiple re-renders)",
@@ -1815,7 +3198,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 609,
+      "line": 550,
       "type": "unbatched-updates",
       "severity": "high",
       "message": "Multiple setState calls without batching",
@@ -1823,7 +3206,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 608,
+      "line": 549,
       "type": "large-inline-function",
       "severity": "medium",
       "message": "Large inline function in JSX (recreated on each render)",
@@ -1831,7 +3214,7 @@
     },
     {
       "file": "src/components/TimelineVisualization.tsx",
-      "line": 249,
+      "line": 229,
       "type": "nested-maps",
       "severity": "critical",
       "message": "Nested map operations detected (O(n²) complexity)",
@@ -1868,6 +3251,22 @@
       "severity": "high",
       "message": "Expensive calculation without useMemo",
       "code": "const uniqueLocations = [...new Set(\n    trackingEntries.map(t => t.environmenta"
+    },
+    {
+      "file": "src/components/AdvancedFilterPanel.tsx",
+      "line": 671,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((preset) => (\n                <Card key={preset.name} className=\"cursor-poi"
+    },
+    {
+      "file": "src/components/AdvancedFilterPanel.tsx",
+      "line": 717,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((filter) => (\n                  <Card key={filter.id}"
     },
     {
       "file": "src/components/AdvancedFilterPanel.tsx",
@@ -1911,7 +3310,7 @@
     },
     {
       "file": "src/components/ProgressDashboard.tsx",
-      "line": 203,
+      "line": 204,
       "type": "heavy-computation",
       "severity": "high",
       "message": "Heavy computation detected in render path: filter(g => g.status === 'active')\n      .map...",
@@ -1919,7 +3318,7 @@
     },
     {
       "file": "src/components/ProgressDashboard.tsx",
-      "line": 338,
+      "line": 343,
       "type": "heavy-computation",
       "severity": "high",
       "message": "Heavy computation detected in render path: filter(goal => goal.dataPoints.length > 1)\n       ...",
@@ -1927,7 +3326,7 @@
     },
     {
       "file": "src/components/ProgressDashboard.tsx",
-      "line": 200,
+      "line": 201,
       "type": "inline-array-chains",
       "severity": "high",
       "message": "Chained array operations in render method",
@@ -1935,7 +3334,31 @@
     },
     {
       "file": "src/components/ProgressDashboard.tsx",
-      "line": 154,
+      "line": 350,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map(goal => {\n                    const latestPoint = goal.dataPoints.sort((a, "
+    },
+    {
+      "file": "src/components/ProgressDashboard.tsx",
+      "line": 465,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((category, index) => (\n                    <div key={category.category} cla"
+    },
+    {
+      "file": "src/components/ProgressDashboard.tsx",
+      "line": 491,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((goal, index) => (\n                  <div key={goal.id} className=\"p-4 bord"
+    },
+    {
+      "file": "src/components/ProgressDashboard.tsx",
+      "line": 155,
       "type": "setState-in-loop",
       "severity": "critical",
       "message": "setState called inside a loop (causes multiple re-renders)",
@@ -1943,43 +3366,51 @@
     },
     {
       "file": "src/components/ProgressDashboard.tsx",
-      "line": 340,
+      "line": 345,
       "type": "nested-maps",
       "severity": "critical",
       "message": "Nested map operations detected (O(n²) complexity)",
       "code": ".map(dp => dp.timestamp.getTime()));\n                    const bLatest = Math.ma"
     },
     {
-      "file": "src/components/InteractiveDataVisualization.tsx",
-      "line": 154,
-      "type": "unmemoized-calculation",
-      "severity": "high",
-      "message": "Expensive calculation without useMemo",
-      "code": "const allTimestamps = [...filteredData.emotions.map(e => e.timestamp), ...filter"
+      "file": "src/components/EmotionTracker.tsx",
+      "line": 105,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((emotion) => {\n              const Icon = emotion.icon;\n              retur"
     },
     {
-      "file": "src/components/InteractiveDataVisualization.tsx",
-      "line": 190,
-      "type": "unmemoized-calculation",
-      "severity": "high",
-      "message": "Expensive calculation without useMemo",
-      "code": "const data = chartData.map(map"
+      "file": "src/components/EmotionTracker.tsx",
+      "line": 133,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((subEmotion) => (\n                <Badge\n                  key={subEmotion}"
     },
     {
-      "file": "src/components/InteractiveDataVisualization.tsx",
-      "line": 150,
-      "type": "setState-in-loop",
-      "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "format: ExportFormat) => {\n    // This logic could be moved to a hook or helper\n"
+      "file": "src/components/EmotionTracker.tsx",
+      "line": 164,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((level) => (\n                <Button\n                  key={level}\n        "
     },
     {
-      "file": "src/components/InteractiveDataVisualization.tsx",
-      "line": 154,
-      "type": "nested-maps",
-      "severity": "critical",
-      "message": "Nested map operations detected (O(n²) complexity)",
-      "code": ".map(e => e.timestamp), ...filteredData.sensoryInputs.map(s => s.timestamp), ..."
+      "file": "src/components/EmotionTracker.tsx",
+      "line": 213,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((minutes) => (\n                  <Button\n                    key={minutes}\n"
+    },
+    {
+      "file": "src/components/EmotionTracker.tsx",
+      "line": 280,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((trigger) => (\n              <Badge\n                key={trigger}\n         "
     },
     {
       "file": "src/components/EmotionTracker.tsx",
@@ -2014,20 +3445,84 @@
       "code": "onChange={(e) => {\n                  const value =..."
     },
     {
-      "file": "src/components/MockDataLoader.tsx",
-      "line": 47,
-      "type": "setState-in-loop",
-      "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "for better UX\n      setLoadingProgress(25);\n      \n      // Generate and load th"
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 31,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const emotionTypes = new Set<string>(filteredData.emotions.map(e => (e?.emotion "
     },
     {
-      "file": "src/components/MockDataLoader.tsx",
-      "line": 68,
-      "type": "setState-in-loop",
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 32,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const sensoryTypes = new Set<string>(filteredData.sensoryInputs.map(s => (s?.sen"
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 108,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const prevFirstTs = prev.filteredData.entries[0]?.timestamp?.getTime() || prev.f"
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 109,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const nextFirstTs = next.filteredData.entries[0]?.timestamp?.getTime() || next.f"
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 110,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const prevLastTs = prev.filteredData.entries[prev.filteredData.entries.length - "
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 111,
+      "type": "unmemoized-calculation",
+      "severity": "high",
+      "message": "Expensive calculation without useMemo",
+      "code": "const nextLastTs = next.filteredData.entries[next.filteredData.entries.length - "
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 80,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((insight, idx) => (\n                <li key={idx} className=\"text-sm\""
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 81,
+      "type": "index-as-key",
+      "severity": "medium",
+      "message": "Using array index as React key (causes re-renders)",
+      "code": "key={idx}"
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 85,
+      "type": "large-inline-function",
+      "severity": "medium",
+      "message": "Large inline function in JSX (recreated on each render)",
+      "code": "onClick={() => {\n                      try {\n     ..."
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "line": 31,
+      "type": "nested-maps",
       "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "fore setting final progress\n      stopLoadingTimers();\n      \n      setLoadingPr"
+      "message": "Nested map operations detected (O(n²) complexity)",
+      "code": ".map(e => (e?.emotion || '').toLowerCase()).filter(Boolean));\n  const sensoryTyp"
     },
     {
       "file": "src/components/ReportBuilder.tsx",
@@ -2078,6 +3573,22 @@
     },
     {
       "file": "src/components/ReportBuilder.tsx",
+      "line": 309,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map(([emotion, count]) => `\n                <p><strong"
+    },
+    {
+      "file": "src/components/ReportBuilder.tsx",
+      "line": 328,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map(([type, count]) => `\n                <p><strong"
+    },
+    {
+      "file": "src/components/ReportBuilder.tsx",
       "line": 645,
       "type": "large-inline-function",
       "severity": "medium",
@@ -2102,11 +3613,83 @@
     },
     {
       "file": "src/components/DataQualityFeedback.tsx",
+      "line": 246,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((metric) => (\n            <div key={metric.id} className={`p-4 rounded-lg $"
+    },
+    {
+      "file": "src/components/DataQualityFeedback.tsx",
+      "line": 265,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((rec) => (\n                    <p key={`${metric.id}-${rec}`} className=\"te"
+    },
+    {
+      "file": "src/components/DataQualityFeedback.tsx",
+      "line": 293,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((metric, index) => (\n                  <div key={metric.id} className=\"text"
+    },
+    {
+      "file": "src/components/DataQualityFeedback.tsx",
       "line": 58,
       "type": "nested-maps",
       "severity": "critical",
       "message": "Nested map operations detected (O(n²) complexity)",
       "code": ".map(e => e.timestamp),\n      ...sensoryInputs.map(s => s.timestamp),\n      ...e"
+    },
+    {
+      "file": "src/components/SensoryTracker.tsx",
+      "line": 104,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((type) => {\n              const Icon = type.icon;\n              return (\n  "
+    },
+    {
+      "file": "src/components/SensoryTracker.tsx",
+      "line": 134,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((response) => (\n                <Button\n                  key={response.typ"
+    },
+    {
+      "file": "src/components/SensoryTracker.tsx",
+      "line": 161,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((level) => (\n                <Button\n                  key={level}\n        "
+    },
+    {
+      "file": "src/components/SensoryTracker.tsx",
+      "line": 195,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((loc) => (\n                <Badge\n                  key={loc}\n             "
+    },
+    {
+      "file": "src/components/SensoryTracker.tsx",
+      "line": 238,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((strategy) => (\n                <Badge\n                  key={strategy}\n   "
+    },
+    {
+      "file": "src/components/SensoryTracker.tsx",
+      "line": 254,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((strategy) => (\n                <Badge\n                  key={strategy}\n   "
     },
     {
       "file": "src/components/SensoryTracker.tsx",
@@ -2126,7 +3709,7 @@
     },
     {
       "file": "src/components/SensoryTracker.tsx",
-      "line": 242,
+      "line": 243,
       "type": "large-inline-function",
       "severity": "medium",
       "message": "Large inline function in JSX (recreated on each render)",
@@ -2134,7 +3717,15 @@
     },
     {
       "file": "src/components/AnalyticsSettings.tsx",
-      "line": 159,
+      "line": 603,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((modelType) => {\n                    const model = modelStatus.get(modelTyp"
+    },
+    {
+      "file": "src/components/AnalyticsSettings.tsx",
+      "line": 175,
       "type": "setState-in-loop",
       "severity": "critical",
       "message": "setState called inside a loop (causes multiple re-renders)",
@@ -2149,32 +3740,16 @@
       "code": "setToDefaults();\n    setSelectedPreset('balanced');\n    setHasUnsavedChanges(false);\n    "
     },
     {
-      "file": "src/components/AnalyticsConfigTest.tsx",
-      "line": 139,
-      "type": "heavy-computation",
-      "severity": "high",
-      "message": "Heavy computation detected in render path: JSON.parse(exported)...",
-      "code": "JSON.parse(exported)"
-    },
-    {
-      "file": "src/components/AnalyticsConfigTest.tsx",
-      "line": 293,
-      "type": "setState-in-loop",
-      "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "foreground mb-2\">Quick Actions</p>\n          <div className=\"flex flex-wrap gap-"
-    },
-    {
-      "file": "src/components/AnalyticsConfigTest.tsx",
-      "line": 144,
-      "type": "sync-io",
+      "file": "src/components/EnvironmentalTracker.tsx",
+      "line": 245,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Synchronous I/O operation in render path: JSON.stringify(parsed)",
-      "code": "JSON.stringify(parsed)"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((event, index) => (\n                <Badge key={index} variant=\"secondary\" "
     },
     {
       "file": "src/components/EnvironmentalTracker.tsx",
-      "line": 243,
+      "line": 246,
       "type": "index-as-key",
       "severity": "medium",
       "message": "Using array index as React key (causes re-renders)",
@@ -2182,7 +3757,7 @@
     },
     {
       "file": "src/components/EnvironmentalTracker.tsx",
-      "line": 74,
+      "line": 75,
       "type": "setState-in-loop",
       "severity": "critical",
       "message": "setState called inside a loop (causes multiple re-renders)",
@@ -2190,46 +3765,23 @@
     },
     {
       "file": "src/components/EnvironmentalTracker.tsx",
-      "line": 75,
+      "line": 76,
       "type": "unbatched-updates",
       "severity": "high",
       "message": "Multiple setState calls without batching",
       "code": "setRoomTemperature(22);\n    setLighting('');\n    setNoiseLevel(3);\n    setClassroomActivity('');\n   "
     },
     {
-      "file": "src/components/CorrelationHeatmap.tsx",
-      "line": 1,
-      "type": "missing-memoization",
+      "file": "src/components/Visualization3D.tsx",
+      "line": 529,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Component with complex props lacks memoization"
-    },
-    {
-      "file": "src/components/CorrelationHeatmap.tsx",
-      "line": 12,
-      "type": "unmemoized-calculation",
-      "severity": "high",
-      "message": "Expensive calculation without useMemo",
-      "code": "const chartData = factors.map(factor1 => ({\n    id: factor1,\n    data: factors.m"
-    },
-    {
-      "file": "src/components/CorrelationHeatmap.tsx",
-      "line": 12,
-      "type": "nested-maps",
-      "severity": "critical",
-      "message": "Nested map operations detected (O(n²) complexity)",
-      "code": ".map(factor1 => ({\n    id: factor1,\n    data: factors.map("
-    },
-    {
-      "file": "src/components/AnalyticsDashboard.tsx",
-      "line": 173,
-      "type": "setState-in-loop",
-      "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "while analysis updates other tabs.\n\n  // Export handler with useCallback for per"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((point) => (\n              <DataPoint\n                key={point.id}\n      "
     },
     {
       "file": "src/components/Visualization3D.tsx",
-      "line": 185,
+      "line": 198,
       "type": "large-inline-function",
       "severity": "medium",
       "message": "Large inline function in JSX (recreated on each render)",
@@ -2237,11 +3789,98 @@
     },
     {
       "file": "src/components/Visualization3D.tsx",
-      "line": 285,
+      "line": 310,
       "type": "nested-maps",
       "severity": "critical",
       "message": "Nested map operations detected (O(n²) complexity)",
       "code": ".map(p => p.x);\n    const yValues = points.map(p => p.y);\n    const zValues = po"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 1,
+      "type": "excessive-effects",
+      "severity": "medium",
+      "message": "Component has 6 useEffect hooks (consider consolidation)"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 151,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((m, idx) => (\n          <div key={idx} className={m.role === 'user' ? 'text"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 246,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((s, i) => (\n                <li key={i}"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 258,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map(({ key, source }, idx) => (\n              <button\n                key={key}"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 152,
+      "type": "index-as-key",
+      "severity": "medium",
+      "message": "Using array index as React key (causes re-renders)",
+      "code": "key={idx}"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 247,
+      "type": "index-as-key",
+      "severity": "medium",
+      "message": "Using array index as React key (causes re-renders)",
+      "code": "key={i}"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 200,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "foreground\">\n              <button\n                type=\"button\"\n               "
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 97,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+      "code": "sessionStorage.getItem"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationChat.tsx",
+      "line": 100,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+      "code": "sessionStorage.getItem"
+    },
+    {
+      "file": "src/components/GoalManager.tsx",
+      "line": 409,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((goal) => (\n            <Card key={goal.id} className=\"bg-gradient-card bor"
+    },
+    {
+      "file": "src/components/GoalManager.tsx",
+      "line": 492,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((milestone) => (\n                        <div key={milestone.id} className="
     },
     {
       "file": "src/components/GoalManager.tsx",
@@ -2268,6 +3907,78 @@
       "code": "onClick={() => {\n                      const value..."
     },
     {
+      "file": "src/components/analytics-panels/ExplanationDock.tsx",
+      "line": 91,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((r, i) => (<li key={i}"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationDock.tsx",
+      "line": 91,
+      "type": "index-as-key",
+      "severity": "medium",
+      "message": "Using array index as React key (causes re-renders)",
+      "code": "key={i}"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationDock.tsx",
+      "line": 157,
+      "type": "nested-maps",
+      "severity": "critical",
+      "message": "Nested map operations detected (O(n²) complexity)",
+      "code": ".map((t: any) => {\n                      const ts = new Date(t.timestamp).toISOS"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+      "line": 215,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map(({ key }) => (\n                  <span\n                    key={key}\n      "
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+      "line": 173,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "foreground hover:bg-accent/40\"\n                  onClick={() => { setShowAllKild"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+      "line": 120,
+      "type": "large-inline-function",
+      "severity": "medium",
+      "message": "Large inline function in JSX (recreated on each render)",
+      "code": "onClick={() => {\n                try { window.disp..."
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+      "line": 131,
+      "type": "large-inline-function",
+      "severity": "medium",
+      "message": "Large inline function in JSX (recreated on each render)",
+      "code": "onClick={() => {\n                try { window.disp..."
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+      "line": 52,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.getItem",
+      "code": "localStorage.getItem"
+    },
+    {
+      "file": "src/components/analytics-panels/ExplanationTabs.tsx",
+      "line": 55,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.setItem",
+      "code": "localStorage.setItem"
+    },
+    {
       "file": "src/components/ui/sidebar.tsx",
       "line": 72,
       "type": "setState-in-loop",
@@ -2276,20 +3987,12 @@
       "code": "for control from outside the component.\n    const [_open, _setOpen] = React.useS"
     },
     {
-      "file": "src/components/InteractiveDataVisualization.diagnosis.tsx",
-      "line": 109,
-      "type": "index-as-key",
+      "file": "src/components/DataRequirementsCalculator.tsx",
+      "line": 244,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
-    },
-    {
-      "file": "src/components/InteractiveDataVisualization.diagnosis.tsx",
-      "line": 79,
-      "type": "setState-in-loop",
-      "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "for (let i = 0; i < tests.length; i++) {\n        await runTest(i);\n        await"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((calc) => (\n            <div \n              key={calc.requirement.level}\n  "
     },
     {
       "file": "src/components/DataRequirementsCalculator.tsx",
@@ -2301,6 +4004,14 @@
     },
     {
       "file": "src/components/DataCollectionRoadmap.tsx",
+      "line": 233,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((milestone) => (\n              <div key={milestone.id} className=\"relative "
+    },
+    {
+      "file": "src/components/DataCollectionRoadmap.tsx",
       "line": 43,
       "type": "nested-maps",
       "severity": "critical",
@@ -2308,44 +4019,251 @@
       "code": ".map(e => e.timestamp),\n      ...sensoryInputs.map(s => s.timestamp),\n      ...e"
     },
     {
+      "file": "src/components/MockDataLoader.tsx",
+      "line": 40,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "for better UX\n      setLoadingProgress(25);\n      \n      // Generate and load th"
+    },
+    {
       "file": "src/components/EnhancedDataVisualization.tsx",
-      "line": 27,
+      "line": 25,
       "type": "setState-in-loop",
       "severity": "critical",
       "message": "setState called inside a loop (causes multiple re-renders)",
       "code": "map(e => e[nameKey]))];\n\n    for (let i = 0; i < days; i++) {\n        const date"
     },
     {
-      "file": "src/components/VirtualScrollArea.tsx",
-      "line": 56,
-      "type": "index-as-key",
+      "file": "src/components/analytics/QuickQuestions.tsx",
+      "line": 81,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "for better keyboard flow\n  useEffect(() => {\n    if (open) {\n      setFocusedInd"
+    },
+    {
+      "file": "src/components/dev/EnvDebug.tsx",
+      "line": 48,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "foreground\">Tip: set with <code>localStorage.setItem("
+    },
+    {
+      "file": "src/components/dev/EnvDebug.tsx",
+      "line": 23,
+      "type": "sync-io",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
+      "message": "Synchronous I/O operation in render path: localStorage.getItem",
+      "code": "localStorage.getItem"
     },
     {
-      "file": "src/components/VirtualScrollArea.tsx",
-      "line": 93,
-      "type": "setState-in-loop",
-      "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "for smoother scrolling\n *   />\n * );\n * ```\n * \n * @example\n * // Usage with dyn"
+      "file": "src/components/dev/EnvDebug.tsx",
+      "line": 48,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.setItem",
+      "code": "localStorage.setItem"
     },
     {
-      "file": "src/components/optimized/OptimizedAnimatedCounter.tsx",
-      "line": 33,
-      "type": "setState-in-loop",
-      "severity": "critical",
-      "message": "setState called inside a loop (causes multiple re-renders)",
-      "code": "for smoother animation\n      const easeOutQuart = 1 - Math.pow(1 - progress, 4);"
-    },
-    {
-      "file": "src/components/optimized/OptimizedAnimatedCounter.tsx",
-      "line": 62,
+      "file": "src/components/dev/EnvDebug.tsx",
+      "line": 69,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: .toLocaleString()",
       "code": ".toLocaleString()"
+    },
+    {
+      "file": "src/components/ExportDialog.tsx",
+      "line": 37,
+      "type": "setState-in-loop",
+      "severity": "critical",
+      "message": "setState called inside a loop (causes multiple re-renders)",
+      "code": "format, setFormat] = React.useState<'pdf' | 'csv' | 'json'>(defaultFormat);\n  co"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 182,
+      "type": "heavy-computation",
+      "severity": "high",
+      "message": "Heavy computation detected in render path: JSON.parse(raw)...",
+      "code": "JSON.parse(raw)"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 216,
+      "type": "heavy-computation",
+      "severity": "high",
+      "message": "Heavy computation detected in render path: JSON.parse(raw)...",
+      "code": "JSON.parse(raw)"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 1,
+      "type": "excessive-effects",
+      "severity": "medium",
+      "message": "Component has 6 useEffect hooks (consider consolidation)"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 346,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((c) => (\n                  <div key={c.key} className=\"rounded-md border p-"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 431,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((c) => (\n                          <div key={c.key} className=\"rounded-md b"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 475,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((c) => (\n                          <div key={c.key} className=\"rounded-md b"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 525,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((i) => (\n                                <li key={i.title} className=\"flex "
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 545,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((i) => (\n                                <li key={i.title} className=\"flex "
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 564,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((c: any) => (\n                              <li key={c.title}"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 595,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((s) => (\n                      <li key={`added-${s}`} className=\"text-emera"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 598,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((s) => (\n                      <li key={`removed-${s}`} className=\"text-ros"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 408,
+      "type": "unbatched-updates",
+      "severity": "high",
+      "message": "Multiple setState calls without batching",
+      "code": "setPatLimit(6); setCorrLimit(6); setIntAddedLimit(8); setIntRemovedLimit(8); setLastExport({ type: n"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 407,
+      "type": "large-inline-function",
+      "severity": "medium",
+      "message": "Large inline function in JSX (recreated on each render)",
+      "code": "onClick={() => {\n                      setPatLimit..."
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 180,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+      "code": "sessionStorage.getItem"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 201,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: sessionStorage.setItem",
+      "code": "sessionStorage.setItem"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 214,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: sessionStorage.getItem",
+      "code": "sessionStorage.getItem"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 231,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: sessionStorage.setItem",
+      "code": "sessionStorage.setItem"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 133,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: JSON.stringify({\n      patterns: content.patterns,\n      correlations: content.correlations,\n      interventions: content.interventions,\n    }, null, 2)",
+      "code": "JSON.stringify({\n      patterns: content.patterns,\n      correlations: content.correlations,\n      interventions: content.interventions,\n    }, null, 2)"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 201,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: JSON.stringify(data)",
+      "code": "JSON.stringify(data)"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "line": 231,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: JSON.stringify(lastExport)",
+      "code": "JSON.stringify(lastExport)"
+    },
+    {
+      "file": "src/components/analytics/FiltersDrawer.tsx",
+      "line": 78,
+      "type": "heavy-computation",
+      "severity": "high",
+      "message": "Heavy computation detected in render path: filter(p => !p.criteria.dateRange).map...",
+      "code": "filter(p => !p.criteria.dateRange).map"
+    },
+    {
+      "file": "src/components/analytics/FiltersDrawer.tsx",
+      "line": 78,
+      "type": "inline-array-chains",
+      "severity": "high",
+      "message": "Chained array operations in render method",
+      "code": "{FILTER_PRESETS.filter(p => !p.criteria.dateRange).map"
+    },
+    {
+      "file": "src/components/analytics/FiltersDrawer.tsx",
+      "line": 79,
+      "type": "large-inline-function",
+      "severity": "medium",
+      "message": "Large inline function in JSX (recreated on each render)",
+      "code": "onClick={() => {\n                  const clampRang..."
     },
     {
       "file": "src/components/VisualizationControls.tsx",
@@ -2356,7 +4274,15 @@
     },
     {
       "file": "src/components/VisualizationControls.tsx",
-      "line": 126,
+      "line": 122,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((p) => (\n              <Button\n                key={p.id}\n                v"
+    },
+    {
+      "file": "src/components/VisualizationControls.tsx",
+      "line": 131,
       "type": "unbatched-updates",
       "severity": "high",
       "message": "Multiple setState calls without batching",
@@ -2364,7 +4290,7 @@
     },
     {
       "file": "src/components/VisualizationControls.tsx",
-      "line": 134,
+      "line": 139,
       "type": "unbatched-updates",
       "severity": "high",
       "message": "Multiple setState calls without batching",
@@ -2372,7 +4298,7 @@
     },
     {
       "file": "src/components/VisualizationControls.tsx",
-      "line": 122,
+      "line": 127,
       "type": "large-inline-function",
       "severity": "medium",
       "message": "Large inline function in JSX (recreated on each render)",
@@ -2380,7 +4306,7 @@
     },
     {
       "file": "src/components/VisualizationControls.tsx",
-      "line": 151,
+      "line": 156,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: JSON.stringify(filterCriteria[k as keyof typeof filterCriteria])",
@@ -2388,7 +4314,7 @@
     },
     {
       "file": "src/components/VisualizationControls.tsx",
-      "line": 152,
+      "line": 157,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: JSON.stringify({\n                    dateRange: { start: null, end: null },\n                    emotions: { types: [], intensityRange: [0, 10], includeTriggers: [], excludeTriggers: [] },\n                    sensory: { types: [], responses: [], intensityRange: [0, 10] },\n                    environmental: {\n                      locations: [],\n                      activities: [],\n                      conditions: { noiseLevel: [0, 10], temperature: [15, 30], lighting: [] },\n                      weather: [],\n                      timeOfDay: []\n                    },\n                    patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },\n                    realtime: false\n                  }[k as keyof typeof filterCriteria])",
@@ -2411,115 +4337,52 @@
       "code": "const studentsWithData = students.filter(student => {\n        const studentEntri"
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "line": 1,
-      "type": "missing-memoization",
+      "file": "src/components/TestingDebugPanel.tsx",
+      "line": 289,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Component with complex props lacks memoization"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((result) => (\n                <div key={result.name} className=\"flex items-"
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "line": 32,
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "line": 105,
       "type": "unmemoized-calculation",
       "severity": "high",
       "message": "Expensive calculation without useMemo",
-      "code": "const avgEmotionIntensity = filteredData.emotions.reduce((sum, e) => sum + e.int"
+      "code": "const counts = useMemo(() => {\n    return {\n      totalUnresolved: alerts.filter"
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "line": 241,
-      "type": "index-as-key",
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "line": 162,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((sev) => (\n                <Collapsible key={sev} open={!collapsed[sev]} on"
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "line": 309,
-      "type": "index-as-key",
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "line": 182,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((entry) => (\n                          <li key={entry.alert.id} className=\""
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "line": 341,
-      "type": "index-as-key",
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "line": 266,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((entry) => (\n                      <li key={entry.alert.id} className=\"roun"
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "line": 454,
-      "type": "index-as-key",
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "line": 239,
+      "type": "large-inline-function",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "line": 161,
-      "type": "unmemoized-calculation",
-      "severity": "high",
-      "message": "Expensive calculation without useMemo",
-      "code": "const avgEmotionIntensity = filteredData.emotions.reduce((sum, e) => sum + e.int"
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "line": 259,
-      "type": "index-as-key",
-      "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "line": 327,
-      "type": "index-as-key",
-      "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "line": 359,
-      "type": "index-as-key",
-      "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "line": 472,
-      "type": "index-as-key",
-      "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
-    },
-    {
-      "file": "src/components/optimized/OptimizedDataVisualization.tsx",
-      "line": 130,
-      "type": "unmemoized-calculation",
-      "severity": "high",
-      "message": "Expensive calculation without useMemo",
-      "code": "const rows = Array.from(byDate.values())\n                  .sort((a, b) => a.dat"
-    },
-    {
-      "file": "src/components/settings/AnalyticsConfig.tsx",
-      "line": 48,
-      "type": "heavy-computation",
-      "severity": "high",
-      "message": "Heavy computation detected in render path: JSON.parse(JSON.stringify(prev)...",
-      "code": "JSON.parse(JSON.stringify(prev)"
-    },
-    {
-      "file": "src/components/settings/AnalyticsConfig.tsx",
-      "line": 48,
-      "type": "sync-io",
-      "severity": "medium",
-      "message": "Synchronous I/O operation in render path: JSON.stringify(prev)",
-      "code": "JSON.stringify(prev)"
+      "message": "Large inline function in JSX (recreated on each render)",
+      "code": "onClick={() => {\n                            clear..."
     },
     {
       "file": "src/components/QuickEntryTemplates.tsx",
@@ -2538,7 +4401,23 @@
     },
     {
       "file": "src/components/QuickEntryTemplates.tsx",
-      "line": 396,
+      "line": 382,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((template) => (\n            <Card key={template.id} className=\"relative ove"
+    },
+    {
+      "file": "src/components/QuickEntryTemplates.tsx",
+      "line": 411,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((emotion, idx) => (\n                        <Badge key={idx} variant=\"secon"
+    },
+    {
+      "file": "src/components/QuickEntryTemplates.tsx",
+      "line": 412,
       "type": "index-as-key",
       "severity": "medium",
       "message": "Using array index as React key (causes re-renders)",
@@ -2554,7 +4433,7 @@
     },
     {
       "file": "src/components/QuickEntryTemplates.tsx",
-      "line": 193,
+      "line": 198,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: localStorage.setItem",
@@ -2562,7 +4441,7 @@
     },
     {
       "file": "src/components/QuickEntryTemplates.tsx",
-      "line": 193,
+      "line": 198,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: JSON.stringify(updatedTemplates)",
@@ -2577,8 +4456,40 @@
       "code": "const avgIntensity = filteredEmotions.length > 0 \n      ? filteredEmotions.reduc"
     },
     {
+      "file": "src/components/PeriodComparison.tsx",
+      "line": 184,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((metric) => (\n            <div key={metric.label} className=\"text-center\""
+    },
+    {
+      "file": "src/components/AnalyticsConfigTest.tsx",
+      "line": 141,
+      "type": "heavy-computation",
+      "severity": "high",
+      "message": "Heavy computation detected in render path: JSON.parse(exported)...",
+      "code": "JSON.parse(exported)"
+    },
+    {
+      "file": "src/components/AnalyticsConfigTest.tsx",
+      "line": 276,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((result) => (\n              <div\n                key={`${result.name}-${res"
+    },
+    {
+      "file": "src/components/AnalyticsConfigTest.tsx",
+      "line": 146,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: JSON.stringify(parsed)",
+      "code": "JSON.stringify(parsed)"
+    },
+    {
       "file": "src/components/charts/EChartContainer.tsx",
-      "line": 419,
+      "line": 462,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: JSON.stringify(safeOption, (_k, v)",
@@ -2586,11 +4497,83 @@
     },
     {
       "file": "src/components/charts/EChartContainer.tsx",
-      "line": 447,
+      "line": 490,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: JSON.stringify({ seriesKinds, yAxes })",
       "code": "JSON.stringify({ seriesKinds, yAxes })"
+    },
+    {
+      "file": "src/components/AdvancedSearch.tsx",
+      "line": 371,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((emotion) => (\n                    <div key={emotion} className=\"flex items"
+    },
+    {
+      "file": "src/components/AdvancedSearch.tsx",
+      "line": 396,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((sensory) => (\n                    <div key={sensory} className=\"flex items"
+    },
+    {
+      "file": "src/components/AdvancedSearch.tsx",
+      "line": 421,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((status) => (\n                    <div key={status} className=\"flex items-c"
+    },
+    {
+      "file": "src/components/analytics-panels/EntryDetailsDrawer.tsx",
+      "line": 72,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((e) => (\n                    <li key={e.id}"
+    },
+    {
+      "file": "src/components/analytics-panels/EntryDetailsDrawer.tsx",
+      "line": 82,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((s) => (\n                    <li key={s.id}"
+    },
+    {
+      "file": "src/components/AnalyticsStatusIndicator.tsx",
+      "line": 193,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((status) => (\n              <div key={status.studentId} className=\"flex ite"
+    },
+    {
+      "file": "src/components/AlertManager.tsx",
+      "line": 129,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((alertEntry) => (\n        <Card key={alertEntry.alert.id} className={`trans"
+    },
+    {
+      "file": "src/components/AlertManager.tsx",
+      "line": 213,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((rec) => (\n                                  <li key={`${selectedAlert.aler"
+    },
+    {
+      "file": "src/components/AlertManager.tsx",
+      "line": 263,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((recommendation) => (\n                    <li key={`${alertEntry.alert.id}-"
     },
     {
       "file": "src/components/analysis/PatternAnalysisView.tsx",
@@ -2598,6 +4581,46 @@
       "type": "missing-memoization",
       "severity": "medium",
       "message": "Component with complex props lacks memoization"
+    },
+    {
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "line": 95,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((pattern, index) => (\n              <Card\n                key={index}\n     "
+    },
+    {
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "line": 120,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((rec, i) => (\n                            <p key={i} className=\"text-xs tex"
+    },
+    {
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "line": 144,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((insight, index) => (\n              <Card key={index} className=\"bg-gradien"
+    },
+    {
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "line": 196,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((rec, i) => (\n                            <p key={i} className=\"text-xs tex"
+    },
+    {
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "line": 229,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((anomaly, index) => (\n              <Card\n                key={index}\n     "
     },
     {
       "file": "src/components/analysis/PatternAnalysisView.tsx",
@@ -2640,43 +4663,108 @@
       "code": "key={index}"
     },
     {
-      "file": "src/components/analytics-panels/PatternsPanel.tsx",
-      "line": 1,
-      "type": "missing-memoization",
+      "file": "src/components/dev/ModelDiagnosticsPanel.tsx",
+      "line": 242,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Component with complex props lacks memoization"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((mt) => (\n                      <SelectItem key={mt} value={mt}"
     },
     {
-      "file": "src/components/analytics-panels/PatternsPanel.tsx",
-      "line": 175,
-      "type": "index-as-key",
+      "file": "src/components/dev/ModelDiagnosticsPanel.tsx",
+      "line": 331,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={idx}"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((a) => (\n                  <li key={a.id} aria-live={a.tone}"
     },
     {
-      "file": "src/components/DetailedConfidenceExplanation.tsx",
-      "line": 393,
-      "type": "index-as-key",
+      "file": "src/components/ConfidenceIndicator.tsx",
+      "line": 102,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((explanation) => (\n                <div key={explanation} className=\"text-x"
     },
     {
-      "file": "src/components/DetailedConfidenceExplanation.tsx",
-      "line": 410,
-      "type": "index-as-key",
+      "file": "src/components/layouts/ResizableSplitLayout.tsx",
+      "line": 43,
+      "type": "sync-io",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
+      "message": "Synchronous I/O operation in render path: localStorage.getItem",
+      "code": "localStorage.getItem"
+    },
+    {
+      "file": "src/components/layouts/ResizableSplitLayout.tsx",
+      "line": 47,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.getItem",
+      "code": "localStorage.getItem"
+    },
+    {
+      "file": "src/components/layouts/ResizableSplitLayout.tsx",
+      "line": 55,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.setItem",
+      "code": "localStorage.setItem"
+    },
+    {
+      "file": "src/components/layouts/ResizableSplitLayout.tsx",
+      "line": 57,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.setItem",
+      "code": "localStorage.setItem"
     },
     {
       "file": "src/components/DevErrorBanner.tsx",
-      "line": 23,
+      "line": 38,
       "type": "sync-io",
       "severity": "medium",
       "message": "Synchronous I/O operation in render path: JSON.stringify(a)",
       "code": "JSON.stringify(a)"
+    },
+    {
+      "file": "src/components/profile-sections/AnalyticsSection.tsx",
+      "line": 59,
+      "type": "sync-io",
+      "severity": "medium",
+      "message": "Synchronous I/O operation in render path: localStorage.getItem",
+      "code": "localStorage.getItem"
+    },
+    {
+      "file": "src/components/StudentProfileSidebar.tsx",
+      "line": 114,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((item) => (\n                <SidebarMenuItem key={item.section}"
+    },
+    {
+      "file": "src/components/StudentProfileSidebar.tsx",
+      "line": 149,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((item) => (\n                <SidebarMenuItem key={item.section}"
+    },
+    {
+      "file": "src/components/PaginatedSessionsList.tsx",
+      "line": 99,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((entry) => (\n                <div key={entry.id} className=\"border-l-4 bord"
+    },
+    {
+      "file": "src/components/PaginatedSessionsList.tsx",
+      "line": 126,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((emotion, idx) => (\n                        <Badge key={idx} variant=\"secon"
     },
     {
       "file": "src/components/PaginatedSessionsList.tsx",
@@ -2688,7 +4776,15 @@
     },
     {
       "file": "src/components/layouts/DashboardLayout.tsx",
-      "line": 134,
+      "line": 135,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((pair, index) => (\n                  <div key={index} className=\"flex items"
+    },
+    {
+      "file": "src/components/layouts/DashboardLayout.tsx",
+      "line": 136,
       "type": "index-as-key",
       "severity": "medium",
       "message": "Using array index as React key (causes re-renders)",
@@ -2700,6 +4796,14 @@
       "type": "missing-memoization",
       "severity": "medium",
       "message": "Component with complex props lacks memoization"
+    },
+    {
+      "file": "src/components/profile-sections/DashboardSection.tsx",
+      "line": 267,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((suggestion: string, index: number) => (\n                <div key={index} c"
     },
     {
       "file": "src/components/profile-sections/DashboardSection.tsx",
@@ -2710,20 +4814,12 @@
       "code": "key={index}"
     },
     {
-      "file": "src/components/ui/PremiumStudentCard.tsx",
-      "line": 44,
-      "type": "sync-io",
+      "file": "src/components/DateRangeSelector.tsx",
+      "line": 125,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Synchronous I/O operation in render path: JSON.stringify(dataStorage.getStudents()",
-      "code": "JSON.stringify(dataStorage.getStudents()"
-    },
-    {
-      "file": "src/components/PatternDetectionEmptyState.tsx",
-      "line": 88,
-      "type": "index-as-key",
-      "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={index}"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((preset) => (\n            <SelectItem key={preset.value} value={preset.valu"
     },
     {
       "file": "src/components/ui/Breadcrumbs.tsx",
@@ -2733,11 +4829,27 @@
       "message": "Component with complex props lacks memoization"
     },
     {
+      "file": "src/components/ui/Breadcrumbs.tsx",
+      "line": 21,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((item, idx) => {\n          const isLast = idx === items.length - 1;\n       "
+    },
+    {
       "file": "src/components/analytics-panels/CorrelationsPanel.tsx",
       "line": 1,
       "type": "missing-memoization",
       "severity": "medium",
       "message": "Component with complex props lacks memoization"
+    },
+    {
+      "file": "src/components/analytics-panels/CorrelationsPanel.tsx",
+      "line": 91,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((correlation: CorrelationResult) => (\n                <Card key={hashOfStri"
     },
     {
       "file": "src/components/charts/TrendsChart.tsx",
@@ -2747,19 +4859,27 @@
       "message": "Component with complex props lacks memoization"
     },
     {
-      "file": "src/components/LoadingState.tsx",
-      "line": 54,
-      "type": "index-as-key",
-      "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={i}"
-    },
-    {
-      "file": "src/components/profile-sections/AnalyticsSection.tsx",
+      "file": "src/components/analytics-panels/ChatComposer.tsx",
       "line": 1,
       "type": "missing-memoization",
       "severity": "medium",
       "message": "Component with complex props lacks memoization"
+    },
+    {
+      "file": "src/components/analytics-panels/ChatComposer.tsx",
+      "line": 41,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((s, i) => (\n            <button\n              key={i}\n              type=\"b"
+    },
+    {
+      "file": "src/components/analytics-panels/ChatComposer.tsx",
+      "line": 43,
+      "type": "index-as-key",
+      "severity": "medium",
+      "message": "Using array index as React key (causes re-renders)",
+      "code": "key={i}"
     },
     {
       "file": "src/components/layouts/VisualizationLayouts.tsx",
@@ -2769,6 +4889,37 @@
       "message": "Component with complex props lacks memoization"
     },
     {
+      "file": "src/components/dashboard/StudentsGrid.tsx",
+      "line": 1,
+      "type": "missing-memoization",
+      "severity": "medium",
+      "message": "Component with complex props lacks memoization"
+    },
+    {
+      "file": "src/components/dashboard/StudentsGrid.tsx",
+      "line": 15,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((_, i) => (\n          <div key={i} className=\"glass-card rounded-3xl p-6 an"
+    },
+    {
+      "file": "src/components/dashboard/StudentsGrid.tsx",
+      "line": 41,
+      "type": "missing-react-key",
+      "severity": "medium",
+      "message": "List item rendered without a React key prop",
+      "code": ".map((student, index) => (\n        <PremiumStudentCard\n          key={student.id"
+    },
+    {
+      "file": "src/components/dashboard/StudentsGrid.tsx",
+      "line": 16,
+      "type": "index-as-key",
+      "severity": "medium",
+      "message": "Using array index as React key (causes re-renders)",
+      "code": "key={i}"
+    },
+    {
       "file": "src/components/profile-sections/ToolsSection.tsx",
       "line": 1,
       "type": "missing-memoization",
@@ -2776,39 +4927,15 @@
       "message": "Component with complex props lacks memoization"
     },
     {
-      "file": "src/components/PremiumEmptyState.tsx",
-      "line": 87,
-      "type": "index-as-key",
+      "file": "src/components/profile-sections/ToolsSection.tsx",
+      "line": 98,
+      "type": "missing-react-key",
       "severity": "medium",
-      "message": "Using array index as React key (causes re-renders)",
-      "code": "key={i}"
+      "message": "List item rendered without a React key prop",
+      "code": ".map((section) => (\n          <button\n            key={section.id}\n            o"
     },
     {
-      "file": "src/components/DebugVisualization.tsx",
-      "line": 210,
-      "type": "sync-io",
-      "severity": "medium",
-      "message": "Synchronous I/O operation in render path: JSON.stringify(mockEmotions[0], null, 2)",
-      "code": "JSON.stringify(mockEmotions[0], null, 2)"
-    },
-    {
-      "file": "src/components/DebugVisualization.tsx",
-      "line": 216,
-      "type": "sync-io",
-      "severity": "medium",
-      "message": "Synchronous I/O operation in render path: JSON.stringify(mockSensoryInputs[0], null, 2)",
-      "code": "JSON.stringify(mockSensoryInputs[0], null, 2)"
-    },
-    {
-      "file": "src/components/DebugVisualization.tsx",
-      "line": 222,
-      "type": "sync-io",
-      "severity": "medium",
-      "message": "Synchronous I/O operation in render path: JSON.stringify(mockTrackingEntries[0], null, 2)",
-      "code": "JSON.stringify(mockTrackingEntries[0], null, 2)"
-    },
-    {
-      "file": "src/components/profile-sections/ProgressSection.tsx",
+      "file": "src/components/analytics/panels/ExplorePanel.tsx",
       "line": 1,
       "type": "missing-memoization",
       "severity": "medium",

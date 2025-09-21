@@ -23,7 +23,6 @@ interface ComponentInfo {
 const COMPONENT_DIRS = [
   'src/components',
   'src/components/ui',
-  'src/components/optimized',
   'src/components/lazy',
   'src/components/charts',
   'src/components/profile-sections'
@@ -248,10 +247,7 @@ function main() {
       organizationIssues.push(`${file.name} appears to be a UI primitive and should be in src/components/ui/`);
     }
     
-    // Check if it's performance-critical
-    if (file.name.includes('Optimized')) {
-      organizationIssues.push(`${file.name} should be in src/components/optimized/`);
-    }
+    // Performance-focused components can live alongside peers; no special optimized dir
     
     // Check if it's lazy-loaded
     if (file.name.includes('Lazy')) {

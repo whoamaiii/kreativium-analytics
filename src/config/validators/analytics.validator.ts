@@ -13,7 +13,7 @@ export interface AnalyticsValidationResult {
 }
 
 // Formats ZodError issues into developer-friendly messages with paths
-export function formatZodError(error: ZodError): string[] {
+function formatZodError(error: ZodError): string[] {
   return error.issues.map((issue) => {
     const path = issue.path?.length ? issue.path.join('.') : '(root)';
     const code = issue.code;

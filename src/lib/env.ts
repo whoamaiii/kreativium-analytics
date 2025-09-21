@@ -33,6 +33,12 @@ export const POC_MODE: boolean = (
 export const IS_PROD: boolean = env.PROD === true;
 
 /**
+ * Unified flag to enable development/POC visualizations in non-production builds
+ * without requiring VITE_POC_MODE. True if not production or POC mode is enabled.
+ */
+export const DEV_VIZ_ENABLED: boolean = (!IS_PROD || POC_MODE);
+
+/**
  * Debug flag to force-disable the analytics worker and use the fallback path.
  * Set VITE_DISABLE_ANALYTICS_WORKER to '1' | 'true' | 'yes'.
  */

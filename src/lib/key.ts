@@ -37,20 +37,14 @@ export function hashOfString(input: string): string {
   return (hash >>> 0).toString(16);
 }
 
-export function hashOfObject(value: unknown): string {
-  return hashOfString(stableStringify(value));
-}
-
 // Produce a stable key for list rendering from an object that may or may not have an id
 // Preference order: explicit id -> computed hash
-export function stableKeyFromObject(obj: IdentifiableLike): string {
-  if (obj && (typeof obj.id === 'string' || typeof obj.id === 'number')) {
-    return String(obj.id);
-  }
-  return hashOfObject(obj);
-}
+ 
 
 // Back-compat helper specifically named for pattern items used across analytics panels
 export function stableKeyFromPattern(pattern: IdentifiableLike): string {
-  return stableKeyFromObject(pattern);
+  if (pattern && (typeof pattern.id === 'string' || typeof pattern.id === 'number')) {
+    return String(pattern.id);
+  }
+  return hashOfString(stableStringify(pattern));
 }

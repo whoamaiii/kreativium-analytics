@@ -1,9 +1,16 @@
-import React, { Suspense, memo, useMemo } from 'react';
+import React, { Suspense, memo, useMemo, useEffect, useState } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LazyChartsPanel } from '@/components/lazy/LazyChartsPanel';
 import type { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import type { ChartType } from '@/hooks/useVisualizationState';
+import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
+import { stableKeyFromPattern } from '@/lib/key';
+import type { PatternResult } from '@/lib/patternAnalysis';
+import { Card, CardContent } from '@/components/ui/card';
+import { useSyncedTabParam } from '@/hooks/useSyncedTabParam';
+import { useSyncedExplorePreset } from '@/hooks/useSyncedExplorePreset';
+import { useSyncedPatternParams } from '@/hooks/useSyncedPatternParams';
 
 export interface OverviewPanelProps {
   studentName: string;
@@ -39,6 +46,11 @@ function determineOptimalChartType(filteredData: OverviewPanelProps['filteredDat
 
 export const OverviewPanel = memo(function OverviewPanel({ studentName, filteredData, insights }: OverviewPanelProps): React.ReactElement {
   const { tAnalytics } = useTranslation();
+  const { results, runAnalysis } = useAnalyticsWorker({ precomputeOnIdle: false });
+  const [topPatterns, setTopPatterns] = useState<PatternResult[]>([]);
+  const [, setTab] = useSyncedTabParam();
+  const [, setPreset] = useSyncedExplorePreset();
+  const { setPatternId, setExplain } = useSyncedPatternParams();
 
   const optimalChartType = useMemo(() => determineOptimalChartType(filteredData), [filteredData]);
 
@@ -46,6 +58,29 @@ export const OverviewPanel = memo(function OverviewPanel({ studentName, filtered
     const list = Array.isArray(insights) ? insights.filter(Boolean) : [];
     return list.slice(0, 2);
   }, [insights]);
+
+  // Run lightweight pattern analysis for overview when data changes
+  useEffect(() => {
+    try { runAnalysis(filteredData, { useAI: false }); } catch {}
+  }, [filteredData, runAnalysis]);
+
+  // Extract 2-3 most significant patterns
+  useEffect(() => {
+    try {
+      const patterns = (results?.patterns || []) as PatternResult[];
+      if (!Array.isArray(patterns) || patterns.length === 0) {
+        setTopPatterns([]);
+        return;
+      }
+      const ranked = patterns
+        .slice()
+        .sort((a, b) => (b.confidence - a.confidence) || (b.frequency - a.frequency))
+        .slice(0, 3);
+      setTopPatterns(ranked);
+    } catch {
+      setTopPatterns([]);
+    }
+  }, [results?.patterns]);
 
   return (
     <ErrorBoundary>
@@ -83,12 +118,8 @@ export const OverviewPanel = memo(function OverviewPanel({ studentName, filtered
                   <button
                     type="button"
                     onClick={() => {
-                      try {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set('tab', 'explore');
-                        url.searchParams.set('preset', 'charts');
-                        window.history.replaceState(window.history.state, '', url.toString());
-                      } catch {}
+                      setTab('explore');
+                      setPreset('charts');
                     }}
                     className="text-primary underline underline-offset-2"
                     aria-label={String(tAnalytics('aria.overview.insightLink', { defaultValue: 'View detailed analysis in explore tab' }))}
@@ -100,6 +131,58 @@ export const OverviewPanel = memo(function OverviewPanel({ studentName, filtered
             </ul>
           )}
         </section>
+
+      {/* Detected Patterns section */}
+      <section aria-labelledby="overview-patterns-title" className="space-y-3">
+        <h3 id="overview-patterns-title" className="text-base font-medium">
+          {String(tAnalytics('overview.detectedPatterns', { defaultValue: 'Detected Patterns' }))}
+        </h3>
+        {topPatterns.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {String(tAnalytics('overview.noPatternsYet', { defaultValue: 'No patterns detected yet.' }))}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {topPatterns.map((p) => {
+              const title = String((p as any).pattern ?? (p as any).name ?? 'Pattern')
+                .replace('-', ' ')
+                .replace(/\b\w/g, (l: string) => l.toUpperCase());
+              const id = stableKeyFromPattern(p);
+              return (
+                <Card
+                  key={id}
+                  className="cursor-pointer hover:shadow-sm transition-shadow"
+                  onClick={() => {
+                    setTab('explore');
+                    setPreset('patterns');
+                    setPatternId(id);
+                    setExplain(true);
+                  }}
+                  aria-label={String(tAnalytics('aria.overview.openPattern', { defaultValue: 'Open pattern explanation' }))}
+                >
+                  <CardContent className="py-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium text-foreground">{title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {String(tAnalytics('overview.patternType', { defaultValue: 'Type' }))}: {String(p.type)}
+                        </div>
+                        {p.description && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{String((p as any).description)}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs font-medium">{Math.round((p.confidence || 0) * 100)}%</div>
+                        <div className="text-[11px] text-muted-foreground">{String(tAnalytics('insights.confidence', { defaultValue: 'Confidence' }))}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
       </section>
     </ErrorBoundary>
   );

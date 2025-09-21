@@ -417,7 +417,7 @@ export function buildCorrelationHeatmapOption(
         const sig = significanceMap.get(key)?.significance;
         const corr = typeof p?.value?.[2] === 'number' ? p.value[2] : Number(p.value?.[2]) || 0;
         const sign = corr > 0 ? String(tAnalytics('charts.positive')) : corr < 0 ? String(tAnalytics('charts.negative')) : String(tAnalytics('charts.neutral'));
-        return `<div style="font-weight:600;margin-bottom:6px">${f1} ↔ ${f2}</div>
+        return `<div style="font-weight:600;margin-bottom:6px">${f1} &harr; ${f2}</div>
                 <div>${tAnalytics('charts.correlation')}: <b>${corr.toFixed(2)}</b> (${sign})</div>
                 ${sig ? `<div>${tAnalytics('charts.significance')}: <b>${sig}</b></div>` : ''}`;
       }

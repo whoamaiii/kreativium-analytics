@@ -56,7 +56,7 @@ const ruleConditionSchema = z
 
 const ruleSeveritySchema = z.enum(["info", "warn", "error"]);
 
-export const insightRuleSchema = z
+const insightRuleSchema = z
   .object({
     id: z
       .string()
@@ -86,7 +86,7 @@ export type InsightRule = z.infer<typeof insightRuleSchema>;
 // ---------------------------------------------
 const chartThemeSchema = z.enum(["light", "dark", "system"]);
 
-export const chartDefaultsSchema = z
+const chartDefaultsSchema = z
   .object({
     theme: chartThemeSchema.default("system"),
     showLegend: z.boolean().default(true),
@@ -117,7 +117,7 @@ export type ChartDefaults = z.infer<typeof chartDefaultsSchema>;
 // ---------------------------------------------
 // Worker settings (cache TTL, memory limits)
 // ---------------------------------------------
-export const workerSettingsSchema = z
+const workerSettingsSchema = z
   .object({
     cache: z
       .object({
@@ -155,7 +155,7 @@ export type WorkerSettings = z.infer<typeof workerSettingsSchema>;
 // ---------------------------------------------
 // Feature flags for analytics modules
 // ---------------------------------------------
-export const featureFlagsSchema = z
+const featureFlagsSchema = z
   .object({
     enableTrends: z.boolean().default(true),
     enableAnomalies: z.boolean().default(true),
@@ -189,11 +189,5 @@ export type AnalyticsConfig = z.infer<typeof analyticsConfigSchema>;
 // ---------------------------------------------
 // Helper: parse & validate with strong typing
 // ---------------------------------------------
-export function parseAnalyticsConfig(input: unknown): AnalyticsConfig {
-  const result = analyticsConfigSchema.safeParse(input);
-  if (!result.success) {
-    throw result.error;
-  }
-  return result.data;
-}
+// Removed unused helper: parseAnalyticsConfig
 

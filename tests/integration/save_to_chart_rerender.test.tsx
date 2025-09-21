@@ -134,7 +134,7 @@ function Dashboard({ initialEntries, studentId }: { initialEntries: TrackingEntr
   const { runAnalysis } = useAnalyticsWorker({ precomputeOnIdle: false });
 
   useEffect(() => {
-    runAnalysis(data, { student: createStudent(studentId) });
+    runAnalysis(data, { student: createStudent(studentId), useAI: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(entries), studentId]);
 
@@ -145,7 +145,7 @@ function Dashboard({ initialEntries, studentId }: { initialEntries: TrackingEntr
         try {
           const next = (dataStorage.getEntriesForStudent(studentId) || []) as TrackingEntry[];
           setEntries(next);
-          runAnalysis(createAnalyticsData(next), { student: createStudent(studentId) });
+          runAnalysis(createAnalyticsData(next), { student: createStudent(studentId), useAI: false });
         } catch { /* noop */ }
       }
     };

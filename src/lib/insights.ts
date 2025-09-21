@@ -326,7 +326,7 @@ export function generateInsights(...args: any[]): InsightOutput {
 
   strongCorrelations.forEach((c: any) => {
     insights.push(
-      `Correlation: ${c.factor1} ↔ ${c.factor2} (r=${typeof c.correlation === 'number' ? c.correlation.toFixed(2) : '0.00'}, ${c.significance}). ${c.description}`
+      `Correlation: ${c.factor1} <-> ${c.factor2} (r=${typeof c.correlation === 'number' ? c.correlation.toFixed(2) : '0.00'}, ${c.significance}). ${c.description}`
     );
   });
 

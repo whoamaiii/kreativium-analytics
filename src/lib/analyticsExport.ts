@@ -199,7 +199,7 @@ class AnalyticsExport {
         }
 
         pdf.setFont(undefined, 'bold');
-        pdf.text(`${index + 1}. ${correlation.factor1} ↔ ${correlation.factor2}`, margin, currentY);
+        pdf.text(`${index + 1}. ${correlation.factor1} <-> ${correlation.factor2}`, margin, currentY);
         currentY += 7;
 
         pdf.setFont(undefined, 'normal');

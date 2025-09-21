@@ -351,70 +351,7 @@ export type _Doc_TaxonomyConfig = TaxonomyConfig;
 // -----------------------------------------------------------------------------
 
 /** Example: Balanced/default configuration clone. */
-export const EXAMPLE_CONFIG_BALANCED: AnalyticsConfiguration = {
-  ...DEFAULT_ANALYTICS_CONFIG,
-};
-
-/** Example: Conservative configuration (higher thresholds, fewer alerts). */
-export const EXAMPLE_CONFIG_CONSERVATIVE: AnalyticsConfiguration = {
-  ...DEFAULT_ANALYTICS_CONFIG,
-  patternAnalysis: {
-    ...DEFAULT_ANALYTICS_CONFIG.patternAnalysis,
-    minDataPoints: 5,
-    correlationThreshold: 0.4,
-    concernFrequencyThreshold: 0.4,
-  },
-  enhancedAnalysis: {
-    ...DEFAULT_ANALYTICS_CONFIG.enhancedAnalysis,
-    anomalyThreshold: 2.0,
-    minSampleSize: 8,
-  },
-  alertSensitivity: {
-    level: 'low',
-    emotionIntensityMultiplier: 0.8,
-    frequencyMultiplier: 0.8,
-    anomalyMultiplier: 0.8,
-  },
-};
-
-/** Example: Sensitive configuration (lower thresholds, more alerts). */
-export const EXAMPLE_CONFIG_SENSITIVE: AnalyticsConfiguration = {
-  ...DEFAULT_ANALYTICS_CONFIG,
-  patternAnalysis: {
-    ...DEFAULT_ANALYTICS_CONFIG.patternAnalysis,
-    minDataPoints: 2,
-    correlationThreshold: 0.15,
-    concernFrequencyThreshold: 0.2,
-  },
-  enhancedAnalysis: {
-    ...DEFAULT_ANALYTICS_CONFIG.enhancedAnalysis,
-    anomalyThreshold: 1.0,
-    minSampleSize: 3,
-  },
-  alertSensitivity: {
-    level: 'high',
-    emotionIntensityMultiplier: 1.2,
-    frequencyMultiplier: 1.2,
-    anomalyMultiplier: 1.2,
-  },
-};
-
-/** Example: Custom configuration tuned for short-term trend detection. */
-export const EXAMPLE_CONFIG_SHORT_TERM: AnalyticsConfiguration = {
-  ...DEFAULT_ANALYTICS_CONFIG,
-  timeWindows: {
-    ...DEFAULT_ANALYTICS_CONFIG.timeWindows,
-    defaultAnalysisDays: 14,
-    recentDataDays: 5,
-    shortTermDays: 7,
-    longTermDays: 60,
-  },
-  enhancedAnalysis: {
-    ...DEFAULT_ANALYTICS_CONFIG.enhancedAnalysis,
-    trendThreshold: 0.03,
-    predictionConfidenceThreshold: 0.55,
-  },
-};
+ 
 
 // -----------------------------------------------------------------------------
 // Migration Notes (breaking changes guidance)
@@ -437,7 +374,7 @@ export const EXAMPLE_CONFIG_SHORT_TERM: AnalyticsConfiguration = {
  * 3) Presets
  *    - Preset keys are available via AnalyticsPresetKey. Use analyticsConfig.setPreset(key) at runtime.
  */
-export const ANALYTICS_CONFIG_MIGRATION_NOTES = true as const;
+ 
 
 // -----------------------------------------------------------------------------
 // Cache & Manager types

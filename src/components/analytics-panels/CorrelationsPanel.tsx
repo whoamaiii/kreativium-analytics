@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Info, BarChart3, Clock } from 'lucide-react';
+import { Info, BarChart3, Clock, ArrowLeftRight } from 'lucide-react';
 import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
 import { CorrelationResult } from '@/lib/patternAnalysis';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -93,8 +93,11 @@ export const CorrelationsPanel = memo(function CorrelationsPanel({ filteredData 
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h4 className="font-medium text-foreground">
-                          {correlation.factor1} ↔ {correlation.factor2}
+                        <h4 className="font-medium text-foreground flex items-center gap-2">
+                          <span>{correlation.factor1}</span>
+                          <ArrowLeftRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                          <span className="sr-only">{String(tAnalytics('correlations.labels.correlatesWith', { defaultValue: 'correlates with' }))}</span>
+                          <span>{correlation.factor2}</span>
                         </h4>
                         <p className="text-sm text-muted-foreground mt-1">{correlation.description}</p>
                       </div>
