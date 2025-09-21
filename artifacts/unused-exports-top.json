@@ -1,189 +1,2346 @@
 {
-  "top": [
+  "generatedAt": "2025-09-21T08:58:00.206Z",
+  "root": "/Users/quentinthiessen/Desktop/kreativiummedgemma",
+  "totalFilesScanned": 391,
+  "totalExports": 943,
+  "unusedExportsCount": 199,
+  "unusedExports": [
+    {
+      "file": "src/components/analysis/CorrelationHeatmap.tsx",
+      "exportName": "CorrelationHeatmap",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "exportName": "PatternAnalysisView",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/analytics/FiltersDrawer.tsx",
+      "exportName": "default",
+      "exportKind": "default"
+    },
+    {
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "exportName": "AlertsPanel",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/analytics/panels/AlertsPanel.tsx",
+      "exportName": "default",
+      "exportKind": "default"
+    },
+    {
+      "file": "src/components/analytics/panels/ExplorePanel.tsx",
+      "exportName": "ExplorePanel",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/analytics/panels/OverviewPanel.tsx",
+      "exportName": "OverviewPanel",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/analytics/PrecomputationScheduler.tsx",
+      "exportName": "PrecomputationScheduler",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/analytics/PrecomputationScheduler.tsx",
+      "exportName": "default",
+      "exportKind": "default"
+    },
+    {
+      "file": "src/components/analytics/QuickQuestions.tsx",
+      "exportName": "default",
+      "exportKind": "default"
+    },
+    {
+      "file": "src/components/AnalyticsConfigBoundary.tsx",
+      "exportName": "AnalyticsConfigBoundary",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/components/charts/EChartContainer.tsx",
+      "exportName": "EChartContainer",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/charts/TrendsChart.tsx",
+      "exportName": "TrendsChart",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/ComparisonSummary.tsx",
+      "exportName": "default",
+      "exportKind": "default"
+    },
+    {
+      "file": "src/components/DetailedConfidenceExplanation.tsx",
+      "exportName": "DetailedConfidenceExplanation",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/EnhancedDataVisualization.tsx",
+      "exportName": "EnhancedDataVisualization",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/EnhancedPersonalizedInsights.tsx",
+      "exportName": "EnhancedPersonalizedInsights",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/LoadingState.tsx",
+      "exportName": "LoadingState",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/NoData.tsx",
+      "exportName": "NoData",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/PatternDetectionEmptyState.tsx",
+      "exportName": "PatternDetectionEmptyState",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/PremiumEmptyState.tsx",
+      "exportName": "PremiumEmptyState",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/PremiumHeader.tsx",
+      "exportName": "PremiumHeader",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/profile-sections/GoalsSection.tsx",
+      "exportName": "GoalsSection",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/components/profile-sections/ProfileErrorState.tsx",
+      "exportName": "ProfileErrorState",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/components/profile-sections/ProfileLoadingState.tsx",
+      "exportName": "ProfileLoadingState",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/components/profile-sections/ProgressSection.tsx",
+      "exportName": "ProgressSection",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/components/profile-sections/ReportsSection.tsx",
+      "exportName": "ReportsSection",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/components/ReportBuilder.tsx",
+      "exportName": "ReportBuilder",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/settings/AnalyticsConfig.tsx",
+      "exportName": "AnalyticsConfig",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/StorageManager.tsx",
+      "exportName": "StorageManager",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/tracking/DataCollectionMonitor.tsx",
+      "exportName": "DataCollectionMonitor",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/tracking/SessionIndicator.tsx",
+      "exportName": "SessionIndicator",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/tracking/SessionRecovery.tsx",
+      "exportName": "SessionRecovery",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/ui/FloatingActionButton.tsx",
+      "exportName": "FloatingActionButton",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/ui/PremiumStatsCard.tsx",
+      "exportName": "PremiumStatsCard",
+      "exportKind": "const"
+    },
     {
       "file": "src/components/ui/sidebar.tsx",
-      "count": 13,
-      "exports": [
-        "SidebarFooter",
-        "SidebarGroupAction",
-        "SidebarHeader",
-        "SidebarInput",
-        "SidebarInset",
-        "SidebarMenuAction",
-        "SidebarMenuBadge",
-        "SidebarMenuSkeleton",
-        "SidebarMenuSub",
-        "SidebarMenuSubButton",
-        "SidebarMenuSubItem",
-        "SidebarRail",
-        "SidebarSeparator"
-      ]
-    },
-    {
-      "file": "src/components/ui/dropdown-menu.tsx",
-      "count": 10,
-      "exports": [
-        "DropdownMenuCheckboxItem",
-        "DropdownMenuRadioItem",
-        "DropdownMenuLabel",
-        "DropdownMenuShortcut",
-        "DropdownMenuGroup",
-        "DropdownMenuPortal",
-        "DropdownMenuSub",
-        "DropdownMenuSubContent",
-        "DropdownMenuSubTrigger",
-        "DropdownMenuRadioGroup"
-      ]
-    },
-    {
-      "file": "src/lib/formValidation.ts",
-      "count": 7,
-      "exports": [
-        "studentSchema",
-        "emotionEntrySchema",
-        "sensoryEntrySchema",
-        "environmentalEntrySchema",
-        "validateEnvironmentalEntry",
-        "sanitizeInput",
-        "sanitizeObject"
-      ]
-    },
-    {
-      "file": "src/components/ui/select.tsx",
-      "count": 5,
-      "exports": [
-        "SelectGroup",
-        "SelectLabel",
-        "SelectSeparator",
-        "SelectScrollUpButton",
-        "SelectScrollDownButton"
-      ]
-    },
-    {
-      "file": "src/lib/errorHandler.ts",
-      "count": 5,
-      "exports": [
-        "errorHandler",
-        "handleError",
-        "handleValidationError",
-        "handleStorageError",
-        "handleAnalyticsError"
-      ]
-    },
-    {
-      "file": "src/components/ui/dialog.tsx",
-      "count": 4,
-      "exports": [
-        "DialogPortal",
-        "DialogOverlay",
-        "DialogClose",
-        "DialogFooter"
-      ]
-    },
-    {
-      "file": "src/components/ui/sheet.tsx",
-      "count": 4,
-      "exports": [
-        "SheetClose",
-        "SheetFooter",
-        "SheetOverlay",
-        "SheetPortal"
-      ]
-    },
-    {
-      "file": "src/types/errors.ts",
-      "count": 3,
-      "exports": [
-        "createValidationError",
-        "createStorageError",
-        "createAnalyticsError"
-      ]
-    },
-    {
-      "file": "src/lib/mlModels.ts",
-      "count": 2,
-      "exports": [
-        "DataPreprocessor",
-        "MLModels"
-      ]
-    },
-    {
-      "file": "src/components/ui/alert-dialog.tsx",
-      "count": 2,
-      "exports": [
-        "AlertDialogPortal",
-        "AlertDialogOverlay"
-      ]
-    },
-    {
-      "file": "src/lib/mockData.ts",
-      "count": 1,
-      "exports": [
-        "default"
-      ]
-    },
-    {
-      "file": "src/lib/analyticsWorkerFallback.ts",
-      "count": 1,
-      "exports": [
-        "AnalyticsWorkerFallback"
-      ]
-    },
-    {
-      "file": "src/lib/analyticsConfig.ts",
-      "count": 1,
-      "exports": [
-        "DEFAULT_ANALYTICS_CONFIG"
-      ]
-    },
-    {
-      "file": "src/lib/dataValidation.ts",
-      "count": 1,
-      "exports": [
-        "validateTrackingData"
-      ]
+      "exportName": "SidebarInset",
+      "exportKind": "re-export"
     },
     {
       "file": "src/components/ui/sonner.tsx",
-      "count": 1,
-      "exports": [
-        "toast"
-      ]
+      "exportName": "Toaster",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/components/ui/StudentCard.tsx",
+      "exportName": "StudentCard",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/UniversalAnalyticsStatus.tsx",
+      "exportName": "UniversalAnalyticsStatus",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/Visualization3D.poc.stub.tsx",
+      "exportName": "Visualization3D",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/components/Visualization3D.tsx",
+      "exportName": "Visualization3D",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/config/loaders/analytics.loader.ts",
+      "exportName": "getAnalyticsConfigCacheStamp",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/config/loaders/analytics.loader.ts",
+      "exportName": "loadAnalyticsConfig",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/config/schemas/analytics.schema.ts",
+      "exportName": "featureFlagsSchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/config/schemas/analytics.schema.ts",
+      "exportName": "insightRuleSchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/config/schemas/analytics.schema.ts",
+      "exportName": "workerSettingsSchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/config/schemas/analytics.schema.ts",
+      "exportName": "parseAnalyticsConfig",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/config/validators/analytics.validator.ts",
+      "exportName": "formatZodError",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/contexts/TrackingContext.tsx",
+      "exportName": "TrackingProvider",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/contexts/TrackingContext.tsx",
+      "exportName": "useTracking",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/hooks/useAnalyticsStatus.ts",
+      "exportName": "useAnalyticsStatus",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/hooks/useAsyncHandler.ts",
+      "exportName": "useAsyncHandler",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/useChartStore.ts",
+      "exportName": "useChartStore",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/hooks/useMockDataSeeding.ts",
+      "exportName": "useMockDataSeeding",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/usePerformanceMonitor.ts",
+      "exportName": "onRenderCallback",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/usePerformanceMonitor.ts",
+      "exportName": "useBatchPerformanceMonitor",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/usePerformanceMonitor.ts",
+      "exportName": "useComputationTimer",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/usePerformanceMonitor.ts",
+      "exportName": "useMemoryLeakDetector",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/usePerformanceMonitor.ts",
+      "exportName": "usePerformanceMonitor",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/usePerformanceMonitor.ts",
+      "exportName": "useWhyDidYouUpdate",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/usePinnedAlerts.ts",
+      "exportName": "usePinnedAlerts",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/useProgressiveChartData.ts",
+      "exportName": "useProgressiveChartData",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/useRealtimeData.ts",
+      "exportName": "useRealtimeVisualization",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/hooks/useRenderProfiler.ts",
+      "exportName": "useRenderProfiler",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/useStudentExport.ts",
+      "exportName": "useStudentExport",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/hooks/useSyncedExplorePreset.ts",
+      "exportName": "isValidPreset",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/hooks/useSyncedExplorePreset.ts",
+      "exportName": "normalizePreset",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/hooks/useSyncedExplorePreset.ts",
+      "exportName": "VALID_PRESETS",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/lib/ai/utils.ts",
+      "exportName": "delay",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/ai/utils.ts",
+      "exportName": "backoffDelay",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/ai/utils.ts",
+      "exportName": "extractFirstJsonObject",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/ai/utils.ts",
+      "exportName": "sanitizeBodyForLog",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/ai/utils.ts",
+      "exportName": "sanitizeHeadersForLog",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/aiConfig.ts",
+      "exportName": "DEFAULT_AI_CONFIG",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/aiConfig.ts",
+      "exportName": "getAllowedModels",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analysis/heuristicAnalysisEngine.ts",
+      "exportName": "default",
+      "exportKind": "default"
+    },
+    {
+      "file": "src/lib/analysis/llmAnalysisEngine.ts",
+      "exportName": "default",
+      "exportKind": "default"
+    },
+    {
+      "file": "src/lib/analysis/mapReduce.ts",
+      "exportName": "ZChunkSummary",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/analysis/mapReduce.ts",
+      "exportName": "chooseChunkSpanDays",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analysis/mapReduce.ts",
+      "exportName": "chunkByDays",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analysis/mapReduce.ts",
+      "exportName": "reduceSummariesToFinalReport",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analysis/mapReduce.ts",
+      "exportName": "summarizeChunk",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analytics/cache-key.ts",
+      "exportName": "stableSerialize",
+      "exportKind": "function"
     },
     {
       "file": "src/lib/analyticsConfigOverride.ts",
-      "count": 1,
-      "exports": [
-        "applyDevelopmentAnalyticsConfig"
-      ]
+      "exportName": "applyDevelopmentAnalyticsConfig",
+      "exportKind": "function"
     },
     {
-      "file": "src/pages/AddStudent.tsx",
-      "count": 1,
-      "exports": [
-        "default"
-      ]
+      "file": "src/lib/analyticsCoordinator.ts",
+      "exportName": "AnalyticsWorkerCoordinator",
+      "exportKind": "class"
     },
     {
-      "file": "src/pages/TrackStudent.tsx",
-      "count": 1,
-      "exports": [
-        "default"
-      ]
+      "file": "src/lib/analyticsExportOptimized.ts",
+      "exportName": "analyticsExport",
+      "exportKind": "const"
     },
     {
-      "file": "src/pages/NotFound.tsx",
-      "count": 1,
-      "exports": [
-        "default"
-      ]
+      "file": "src/lib/analyticsManager.ts",
+      "exportName": "ensureUniversalAnalyticsInitialization",
+      "exportKind": "const"
     },
     {
-      "file": "src/components/ui/card.tsx",
+      "file": "src/lib/analyticsManager.ts",
+      "exportName": "buildCacheKey",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/lib/analyticsManager.ts",
+      "exportName": "buildTask",
+      "exportKind": "re-export"
+    },
+    {
+      "file": "src/lib/analyticsManagerLite.ts",
+      "exportName": "analyticsManagerLite",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/analyticsProfiles.ts",
+      "exportName": "clearAllProfiles",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analyticsProfiles.ts",
+      "exportName": "clearStudentProfile",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analyticsProfiles.ts",
+      "exportName": "getProfileCacheStats",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analyticsProfiles.ts",
+      "exportName": "resetProfiles",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/analyticsWorkerFallback.ts",
+      "exportName": "AnalyticsWorkerFallback",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/lib/buttonVariants.ts",
+      "exportName": "buttonVariants",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/cachedPatternAnalysis.ts",
+      "exportName": "CachedPatternAnalysisEngine",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/lib/cacheManager.ts",
+      "exportName": "cacheManager",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/chartBuilders.ts",
+      "exportName": "buildAreaOption",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/chartBuilders.ts",
+      "exportName": "buildComposedOption",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/chartBuilders.ts",
+      "exportName": "buildCorrelationHeatmapOption",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/chartBuilders.ts",
+      "exportName": "buildEmotionTrendsOption",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/chartBuilders.ts",
+      "exportName": "buildScatterOption",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/chartTransforms.ts",
+      "exportName": "aggregateEntriesByDay",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/chartTransforms.ts",
+      "exportName": "computeIntensityBins",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/chartUtils.ts",
+      "exportName": "ChartEmotionRowSchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/chartUtils.ts",
+      "exportName": "EMOTION_EMOJIS",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/chartUtils.ts",
+      "exportName": "EMOTION_TYPES",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/chartUtils.ts",
+      "exportName": "processEmotionData",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/DataFilter.ts",
+      "exportName": "applyFilters",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/DataFilter.ts",
+      "exportName": "initialFilterCriteria",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/dataStorage.ts",
+      "exportName": "DataStorageManager",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/lib/dataValidation.ts",
+      "exportName": "validateTrackingData",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/dateRange.ts",
+      "exportName": "computeDateRange",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/dateRange.ts",
+      "exportName": "isCustomRangeInvalid",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deprecation.ts",
+      "exportName": "clearDeprecationWarnings",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deprecation.ts",
+      "exportName": "deprecate",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deviceConstraints.ts",
+      "exportName": "canPrecompute",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deviceConstraints.ts",
+      "exportName": "estimateCpuBusy",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deviceConstraints.ts",
+      "exportName": "getBatteryStatus",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deviceConstraints.ts",
+      "exportName": "getNetworkInfo",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deviceConstraints.ts",
+      "exportName": "isMemoryPressureHigh",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deviceConstraints.ts",
+      "exportName": "isNetworkSlow",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/deviceConstraints.ts",
+      "exportName": "isUserIdle",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/echartsUtils.ts",
+      "exportName": "bindChartEvents",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/echartsUtils.ts",
+      "exportName": "initEChart",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/echartsUtils.ts",
+      "exportName": "resizeChart",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/echartsUtils.ts",
+      "exportName": "updateChartOption",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/errorHandler.ts",
+      "exportName": "handleAnalyticsError",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/errorHandler.ts",
+      "exportName": "handleStorageError",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/errorHandler.ts",
+      "exportName": "handleValidationError",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/evidence/select.ts",
+      "exportName": "filterAndBreakTies",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/evidence/select.ts",
+      "exportName": "normalizeTags",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/evidence/select.ts",
+      "exportName": "scoreSources",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/evidence/types.ts",
+      "exportName": "ZDomainTag",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/evidence/types.ts",
+      "exportName": "ZEvidenceLevel",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/evidence/types.ts",
+      "exportName": "ZGradeBand",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/evidence/validation.ts",
+      "exportName": "ZAIExplanationResponse",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/evidence/validation.ts",
+      "exportName": "ZPatternResult",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/evidence/validation.ts",
+      "exportName": "validatePatternResults",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "buildCopyFromSource",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "CITATION_LIMIT",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "clampText",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "collectEnvironmentDetails",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "describeSource",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "describeSourceForPrompt",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "formatSourceTimestamp",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "SOCIAL_CONTEXT_RE",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "exportName": "sourcePrimaryLabel",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/exportTemplates.ts",
+      "exportName": "getChartA11yDescription",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/exportTemplates.ts",
+      "exportName": "getChartConfig",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/exportTemplates.ts",
+      "exportName": "getLayoutConfig",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/formValidation.ts",
+      "exportName": "emotionEntrySchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/formValidation.ts",
+      "exportName": "environmentalEntrySchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/formValidation.ts",
+      "exportName": "sensoryEntrySchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/formValidation.ts",
+      "exportName": "studentSchema",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/lib/formValidation.ts",
+      "exportName": "sanitizeObject",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/formValidation.ts",
+      "exportName": "validateEnvironmentalEntry",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/hash.ts",
+      "exportName": "hashStringToHex64",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/inlineWorker.ts",
+      "exportName": "createInlineWorker",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/key.ts",
+      "exportName": "hashOfObject",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/key.ts",
+      "exportName": "stableKeyFromObject",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/mlModels.ts",
+      "exportName": "MLModels",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/lib/mock/mockSeeders.ts",
+      "exportName": "seedDemoData",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/modelEvaluation.ts",
+      "exportName": "invalidateEvaluationCacheByTag",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/monitoring/modelDrift.ts",
+      "exportName": "ModelDriftDetector",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/lib/preprocessing/facade.ts",
+      "exportName": "convertTrackingEntriesToSessions",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/preprocessing/facade.ts",
+      "exportName": "extractTimeFeatures",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/preprocessing/facade.ts",
+      "exportName": "normalizeData",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/preprocessing/facade.ts",
+      "exportName": "prepareEmotionData",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/preprocessing/facade.ts",
+      "exportName": "prepareSensoryData",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/resolveCssColorVar.ts",
+      "exportName": "colorMutedForeground",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/resolveCssColorVar.ts",
+      "exportName": "resolveCssColorVar",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/sessionManager.ts",
+      "exportName": "SessionManager",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/lib/startupValidation.ts",
+      "exportName": "validateApiKeyPresence",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/startupValidation.ts",
+      "exportName": "validateModelAvailability",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/startupValidation.ts",
+      "exportName": "validateModelName",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/statistics.ts",
+      "exportName": "regularizedIncompleteBeta",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/tracking/dataQuality.ts",
+      "exportName": "calculateCompleteness",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/tracking/dataQuality.ts",
+      "exportName": "calculateConsistency",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/tracking/dataQuality.ts",
+      "exportName": "calculateRichness",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/universalAnalyticsInitializer.ts",
+      "exportName": "UniversalAnalyticsInitializer",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/lib/universalDataGenerator.ts",
+      "exportName": "getStudentPatternInfo",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/lib/validation/dataLeakage.ts",
+      "exportName": "DataLeakageDetector",
+      "exportKind": "class"
+    },
+    {
+      "file": "src/types/analytics.ts",
+      "exportName": "ANALYTICS_CONFIG_MIGRATION_NOTES",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/analytics.ts",
+      "exportName": "EXAMPLE_CONFIG_BALANCED",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/analytics.ts",
+      "exportName": "EXAMPLE_CONFIG_CONSERVATIVE",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/analytics.ts",
+      "exportName": "EXAMPLE_CONFIG_SENSITIVE",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/analytics.ts",
+      "exportName": "EXAMPLE_CONFIG_SHORT_TERM",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/errors.ts",
+      "exportName": "createAnalyticsError",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/errors.ts",
+      "exportName": "createStorageError",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/errors.ts",
+      "exportName": "createValidationError",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/filters.ts",
+      "exportName": "LIGHTING_CONDITION_TOKENS",
+      "exportKind": "const"
+    },
+    {
+      "file": "src/types/typeGuards.ts",
+      "exportName": "isEmotionEntry",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/types/typeGuards.ts",
+      "exportName": "isSensoryEntry",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/utils/accessibility.ts",
+      "exportName": "getFocusableElements",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/utils/accessibility.ts",
+      "exportName": "isFocusable",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/utils/accessibility.ts",
+      "exportName": "moveFocusTo",
+      "exportKind": "function"
+    },
+    {
+      "file": "src/utils/accessibility.ts",
+      "exportName": "trapFocus",
+      "exportKind": "function"
+    }
+  ],
+  "summaryByFile": {
+    "src/components/analysis/CorrelationHeatmap.tsx": {
       "count": 1,
       "exports": [
-        "CardFooter"
+        {
+          "name": "CorrelationHeatmap",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/analysis/PatternAnalysisView.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "PatternAnalysisView",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/analytics/FiltersDrawer.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/components/analytics/panels/AlertsPanel.tsx": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "AlertsPanel",
+          "kind": "const"
+        },
+        {
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/components/analytics/panels/ExplorePanel.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ExplorePanel",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/analytics/panels/OverviewPanel.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "OverviewPanel",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/analytics/PrecomputationScheduler.tsx": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "PrecomputationScheduler",
+          "kind": "const"
+        },
+        {
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/components/analytics/QuickQuestions.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/components/AnalyticsConfigBoundary.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "AnalyticsConfigBoundary",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/components/charts/EChartContainer.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "EChartContainer",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/charts/TrendsChart.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "TrendsChart",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/ComparisonSummary.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/components/DetailedConfidenceExplanation.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "DetailedConfidenceExplanation",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/EnhancedDataVisualization.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "EnhancedDataVisualization",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/EnhancedPersonalizedInsights.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "EnhancedPersonalizedInsights",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/LoadingState.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "LoadingState",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/NoData.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "NoData",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/PatternDetectionEmptyState.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "PatternDetectionEmptyState",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/PremiumEmptyState.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "PremiumEmptyState",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/PremiumHeader.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "PremiumHeader",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/profile-sections/GoalsSection.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "GoalsSection",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/components/profile-sections/ProfileErrorState.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ProfileErrorState",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/components/profile-sections/ProfileLoadingState.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ProfileLoadingState",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/components/profile-sections/ProgressSection.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ProgressSection",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/components/profile-sections/ReportsSection.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ReportsSection",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/components/ReportBuilder.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ReportBuilder",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/settings/AnalyticsConfig.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "AnalyticsConfig",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/StorageManager.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "StorageManager",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/tracking/DataCollectionMonitor.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "DataCollectionMonitor",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/tracking/SessionIndicator.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "SessionIndicator",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/tracking/SessionRecovery.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "SessionRecovery",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/ui/FloatingActionButton.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "FloatingActionButton",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/ui/PremiumStatsCard.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "PremiumStatsCard",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/ui/sidebar.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "SidebarInset",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/components/ui/sonner.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "Toaster",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/components/ui/StudentCard.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "StudentCard",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/UniversalAnalyticsStatus.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "UniversalAnalyticsStatus",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/Visualization3D.poc.stub.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "Visualization3D",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/components/Visualization3D.tsx": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "Visualization3D",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/config/loaders/analytics.loader.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "getAnalyticsConfigCacheStamp",
+          "kind": "function"
+        },
+        {
+          "name": "loadAnalyticsConfig",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/config/schemas/analytics.schema.ts": {
+      "count": 4,
+      "exports": [
+        {
+          "name": "featureFlagsSchema",
+          "kind": "const"
+        },
+        {
+          "name": "insightRuleSchema",
+          "kind": "const"
+        },
+        {
+          "name": "workerSettingsSchema",
+          "kind": "const"
+        },
+        {
+          "name": "parseAnalyticsConfig",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/config/validators/analytics.validator.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "formatZodError",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/contexts/TrackingContext.tsx": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "TrackingProvider",
+          "kind": "const"
+        },
+        {
+          "name": "useTracking",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/hooks/useAnalyticsStatus.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useAnalyticsStatus",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/hooks/useAsyncHandler.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useAsyncHandler",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/hooks/useChartStore.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useChartStore",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/hooks/useMockDataSeeding.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useMockDataSeeding",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/hooks/usePerformanceMonitor.ts": {
+      "count": 6,
+      "exports": [
+        {
+          "name": "onRenderCallback",
+          "kind": "function"
+        },
+        {
+          "name": "useBatchPerformanceMonitor",
+          "kind": "function"
+        },
+        {
+          "name": "useComputationTimer",
+          "kind": "function"
+        },
+        {
+          "name": "useMemoryLeakDetector",
+          "kind": "function"
+        },
+        {
+          "name": "usePerformanceMonitor",
+          "kind": "function"
+        },
+        {
+          "name": "useWhyDidYouUpdate",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/hooks/usePinnedAlerts.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "usePinnedAlerts",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/hooks/useProgressiveChartData.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useProgressiveChartData",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/hooks/useRealtimeData.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useRealtimeVisualization",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/hooks/useRenderProfiler.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useRenderProfiler",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/hooks/useStudentExport.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "useStudentExport",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/hooks/useSyncedExplorePreset.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "isValidPreset",
+          "kind": "re-export"
+        },
+        {
+          "name": "normalizePreset",
+          "kind": "re-export"
+        },
+        {
+          "name": "VALID_PRESETS",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/lib/ai/utils.ts": {
+      "count": 5,
+      "exports": [
+        {
+          "name": "delay",
+          "kind": "const"
+        },
+        {
+          "name": "backoffDelay",
+          "kind": "function"
+        },
+        {
+          "name": "extractFirstJsonObject",
+          "kind": "function"
+        },
+        {
+          "name": "sanitizeBodyForLog",
+          "kind": "function"
+        },
+        {
+          "name": "sanitizeHeadersForLog",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/aiConfig.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "DEFAULT_AI_CONFIG",
+          "kind": "const"
+        },
+        {
+          "name": "getAllowedModels",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/analysis/heuristicAnalysisEngine.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/lib/analysis/llmAnalysisEngine.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "default",
+          "kind": "default"
+        }
+      ]
+    },
+    "src/lib/analysis/mapReduce.ts": {
+      "count": 5,
+      "exports": [
+        {
+          "name": "ZChunkSummary",
+          "kind": "const"
+        },
+        {
+          "name": "chooseChunkSpanDays",
+          "kind": "function"
+        },
+        {
+          "name": "chunkByDays",
+          "kind": "function"
+        },
+        {
+          "name": "reduceSummariesToFinalReport",
+          "kind": "function"
+        },
+        {
+          "name": "summarizeChunk",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/analytics/cache-key.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "stableSerialize",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/analyticsConfigOverride.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "applyDevelopmentAnalyticsConfig",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/analyticsCoordinator.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "AnalyticsWorkerCoordinator",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/analyticsExportOptimized.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "analyticsExport",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/analyticsManager.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "ensureUniversalAnalyticsInitialization",
+          "kind": "const"
+        },
+        {
+          "name": "buildCacheKey",
+          "kind": "re-export"
+        },
+        {
+          "name": "buildTask",
+          "kind": "re-export"
+        }
+      ]
+    },
+    "src/lib/analyticsManagerLite.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "analyticsManagerLite",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/analyticsProfiles.ts": {
+      "count": 4,
+      "exports": [
+        {
+          "name": "clearAllProfiles",
+          "kind": "function"
+        },
+        {
+          "name": "clearStudentProfile",
+          "kind": "function"
+        },
+        {
+          "name": "getProfileCacheStats",
+          "kind": "function"
+        },
+        {
+          "name": "resetProfiles",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/analyticsWorkerFallback.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "AnalyticsWorkerFallback",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/buttonVariants.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "buttonVariants",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/cachedPatternAnalysis.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "CachedPatternAnalysisEngine",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/cacheManager.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "cacheManager",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/chartBuilders.ts": {
+      "count": 5,
+      "exports": [
+        {
+          "name": "buildAreaOption",
+          "kind": "function"
+        },
+        {
+          "name": "buildComposedOption",
+          "kind": "function"
+        },
+        {
+          "name": "buildCorrelationHeatmapOption",
+          "kind": "function"
+        },
+        {
+          "name": "buildEmotionTrendsOption",
+          "kind": "function"
+        },
+        {
+          "name": "buildScatterOption",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/chartTransforms.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "aggregateEntriesByDay",
+          "kind": "function"
+        },
+        {
+          "name": "computeIntensityBins",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/chartUtils.ts": {
+      "count": 4,
+      "exports": [
+        {
+          "name": "ChartEmotionRowSchema",
+          "kind": "const"
+        },
+        {
+          "name": "EMOTION_EMOJIS",
+          "kind": "const"
+        },
+        {
+          "name": "EMOTION_TYPES",
+          "kind": "const"
+        },
+        {
+          "name": "processEmotionData",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/DataFilter.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "applyFilters",
+          "kind": "const"
+        },
+        {
+          "name": "initialFilterCriteria",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/dataStorage.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "DataStorageManager",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/dataValidation.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "validateTrackingData",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/dateRange.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "computeDateRange",
+          "kind": "function"
+        },
+        {
+          "name": "isCustomRangeInvalid",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/deprecation.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "clearDeprecationWarnings",
+          "kind": "function"
+        },
+        {
+          "name": "deprecate",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/deviceConstraints.ts": {
+      "count": 7,
+      "exports": [
+        {
+          "name": "canPrecompute",
+          "kind": "function"
+        },
+        {
+          "name": "estimateCpuBusy",
+          "kind": "function"
+        },
+        {
+          "name": "getBatteryStatus",
+          "kind": "function"
+        },
+        {
+          "name": "getNetworkInfo",
+          "kind": "function"
+        },
+        {
+          "name": "isMemoryPressureHigh",
+          "kind": "function"
+        },
+        {
+          "name": "isNetworkSlow",
+          "kind": "function"
+        },
+        {
+          "name": "isUserIdle",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/echartsUtils.ts": {
+      "count": 4,
+      "exports": [
+        {
+          "name": "bindChartEvents",
+          "kind": "function"
+        },
+        {
+          "name": "initEChart",
+          "kind": "function"
+        },
+        {
+          "name": "resizeChart",
+          "kind": "function"
+        },
+        {
+          "name": "updateChartOption",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/errorHandler.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "handleAnalyticsError",
+          "kind": "const"
+        },
+        {
+          "name": "handleStorageError",
+          "kind": "const"
+        },
+        {
+          "name": "handleValidationError",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/evidence/select.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "filterAndBreakTies",
+          "kind": "function"
+        },
+        {
+          "name": "normalizeTags",
+          "kind": "function"
+        },
+        {
+          "name": "scoreSources",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/evidence/types.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "ZDomainTag",
+          "kind": "const"
+        },
+        {
+          "name": "ZEvidenceLevel",
+          "kind": "const"
+        },
+        {
+          "name": "ZGradeBand",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/evidence/validation.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "ZAIExplanationResponse",
+          "kind": "const"
+        },
+        {
+          "name": "ZPatternResult",
+          "kind": "const"
+        },
+        {
+          "name": "validatePatternResults",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/explanations/sourceUtils.ts": {
+      "count": 9,
+      "exports": [
+        {
+          "name": "buildCopyFromSource",
+          "kind": "const"
+        },
+        {
+          "name": "CITATION_LIMIT",
+          "kind": "const"
+        },
+        {
+          "name": "clampText",
+          "kind": "const"
+        },
+        {
+          "name": "collectEnvironmentDetails",
+          "kind": "const"
+        },
+        {
+          "name": "describeSource",
+          "kind": "const"
+        },
+        {
+          "name": "describeSourceForPrompt",
+          "kind": "const"
+        },
+        {
+          "name": "formatSourceTimestamp",
+          "kind": "const"
+        },
+        {
+          "name": "SOCIAL_CONTEXT_RE",
+          "kind": "const"
+        },
+        {
+          "name": "sourcePrimaryLabel",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/lib/exportTemplates.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "getChartA11yDescription",
+          "kind": "function"
+        },
+        {
+          "name": "getChartConfig",
+          "kind": "function"
+        },
+        {
+          "name": "getLayoutConfig",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/formValidation.ts": {
+      "count": 6,
+      "exports": [
+        {
+          "name": "emotionEntrySchema",
+          "kind": "const"
+        },
+        {
+          "name": "environmentalEntrySchema",
+          "kind": "const"
+        },
+        {
+          "name": "sensoryEntrySchema",
+          "kind": "const"
+        },
+        {
+          "name": "studentSchema",
+          "kind": "const"
+        },
+        {
+          "name": "sanitizeObject",
+          "kind": "function"
+        },
+        {
+          "name": "validateEnvironmentalEntry",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/hash.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "hashStringToHex64",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/inlineWorker.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "createInlineWorker",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/key.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "hashOfObject",
+          "kind": "function"
+        },
+        {
+          "name": "stableKeyFromObject",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/mlModels.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "MLModels",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/mock/mockSeeders.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "seedDemoData",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/modelEvaluation.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "invalidateEvaluationCacheByTag",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/monitoring/modelDrift.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "ModelDriftDetector",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/preprocessing/facade.ts": {
+      "count": 5,
+      "exports": [
+        {
+          "name": "convertTrackingEntriesToSessions",
+          "kind": "function"
+        },
+        {
+          "name": "extractTimeFeatures",
+          "kind": "function"
+        },
+        {
+          "name": "normalizeData",
+          "kind": "function"
+        },
+        {
+          "name": "prepareEmotionData",
+          "kind": "function"
+        },
+        {
+          "name": "prepareSensoryData",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/resolveCssColorVar.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "colorMutedForeground",
+          "kind": "function"
+        },
+        {
+          "name": "resolveCssColorVar",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/sessionManager.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "SessionManager",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/startupValidation.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "validateApiKeyPresence",
+          "kind": "function"
+        },
+        {
+          "name": "validateModelAvailability",
+          "kind": "function"
+        },
+        {
+          "name": "validateModelName",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/statistics.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "regularizedIncompleteBeta",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/tracking/dataQuality.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "calculateCompleteness",
+          "kind": "function"
+        },
+        {
+          "name": "calculateConsistency",
+          "kind": "function"
+        },
+        {
+          "name": "calculateRichness",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/universalAnalyticsInitializer.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "UniversalAnalyticsInitializer",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/lib/universalDataGenerator.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "getStudentPatternInfo",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/lib/validation/dataLeakage.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "DataLeakageDetector",
+          "kind": "class"
+        }
+      ]
+    },
+    "src/types/analytics.ts": {
+      "count": 5,
+      "exports": [
+        {
+          "name": "ANALYTICS_CONFIG_MIGRATION_NOTES",
+          "kind": "const"
+        },
+        {
+          "name": "EXAMPLE_CONFIG_BALANCED",
+          "kind": "const"
+        },
+        {
+          "name": "EXAMPLE_CONFIG_CONSERVATIVE",
+          "kind": "const"
+        },
+        {
+          "name": "EXAMPLE_CONFIG_SENSITIVE",
+          "kind": "const"
+        },
+        {
+          "name": "EXAMPLE_CONFIG_SHORT_TERM",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/types/errors.ts": {
+      "count": 3,
+      "exports": [
+        {
+          "name": "createAnalyticsError",
+          "kind": "const"
+        },
+        {
+          "name": "createStorageError",
+          "kind": "const"
+        },
+        {
+          "name": "createValidationError",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/types/filters.ts": {
+      "count": 1,
+      "exports": [
+        {
+          "name": "LIGHTING_CONDITION_TOKENS",
+          "kind": "const"
+        }
+      ]
+    },
+    "src/types/typeGuards.ts": {
+      "count": 2,
+      "exports": [
+        {
+          "name": "isEmotionEntry",
+          "kind": "function"
+        },
+        {
+          "name": "isSensoryEntry",
+          "kind": "function"
+        }
+      ]
+    },
+    "src/utils/accessibility.ts": {
+      "count": 4,
+      "exports": [
+        {
+          "name": "getFocusableElements",
+          "kind": "function"
+        },
+        {
+          "name": "isFocusable",
+          "kind": "function"
+        },
+        {
+          "name": "moveFocusTo",
+          "kind": "function"
+        },
+        {
+          "name": "trapFocus",
+          "kind": "function"
+        }
       ]
     }
+  },
+  "notes": [
+    "Heuristic analysis. Re-exports and dynamic usage may not be fully captured.",
+    "Excluded index files, tests, stories, and common config/entry files from unused-export consideration."
   ]
 }

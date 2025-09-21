@@ -1,233 +1,220 @@
 {
-  "totalSrcFiles": 198,
-  "totalSrcLoc": 35778,
-  "unusedFilesCount": 49,
-  "unusedFilesLoc": 6067,
-  "deadCodePercentByFiles": 16.96,
-  "unusedExportsCount": 77,
-  "unusedExportsFiles": 32,
+  "totalSrcFiles": 391,
+  "totalSrcLoc": 72281,
+  "unusedFilesCount": 46,
+  "unusedFilesLoc": 7549,
+  "deadCodePercentByFiles": 11.76,
+  "unusedExportsCount": 199,
+  "unusedExportsFiles": 108,
   "unusedDependencies": [
-    "@hookform/resolvers",
-    "@nivo/heatmap",
-    "@radix-ui/react-aspect-ratio",
-    "@radix-ui/react-context-menu",
-    "@radix-ui/react-menubar",
-    "@radix-ui/react-navigation-menu",
-    "@radix-ui/react-scroll-area",
-    "@radix-ui/react-toast",
-    "@radix-ui/react-toggle-group",
-    "@tensorflow/tfjs-vis",
-    "caniuse-lite",
-    "cmdk",
-    "embla-carousel-react",
-    "input-otp",
-    "react-hook-form",
-    "react-resizable-panels",
-    "recharts",
-    "uuid",
-    "vaul"
+    "@types/three",
+    "html2canvas",
+    "jspdf",
+    "tailwindcss-animate",
+    "xxhashjs"
   ],
   "unusedDevDependencies": [
-    "@tailwindcss/typography",
-    "@testing-library/user-event",
-    "@vitest/coverage-v8"
+    "@browser-echo/vite",
+    "@testing-library/dom",
+    "@types/jest",
+    "@types/node",
+    "@types/react",
+    "@types/react-dom",
+    "autoprefixer",
+    "eslint",
+    "husky",
+    "jsdom",
+    "lint-staged",
+    "markdownlint",
+    "markdownlint-cli",
+    "postcss",
+    "prettier",
+    "tsx"
   ],
   "unusedFiles": [
     {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "loc": 495
+      "file": "src/components/AnalyticsConfigBoundary.tsx",
+      "loc": 38
     },
     {
-      "file": "src/components/optimized/OptimizedEnhancedPersonalizedInsights.tsx",
-      "loc": 491
-    },
-    {
-      "file": "src/workers/hyperparameterOptimization.worker.ts",
-      "loc": 358
-    },
-    {
-      "file": "src/pages/EnhancedTrackStudent.tsx",
-      "loc": 332
-    },
-    {
-      "file": "src/workers/mlTraining.worker.ts",
-      "loc": 323
-    },
-    {
-      "file": "src/lib/analyticsPrecomputation.ts",
-      "loc": 293
-    },
-    {
-      "file": "src/lib/monitoring/modelDrift.ts",
-      "loc": 286
-    },
-    {
-      "file": "src/components/VirtualScrollArea.tsx",
-      "loc": 282
-    },
-    {
-      "file": "src/components/DebugVisualization.tsx",
-      "loc": 226
-    },
-    {
-      "file": "src/hooks/useAsyncState.ts",
-      "loc": 193
-    },
-    {
-      "file": "src/components/UniversalAnalyticsStatus.tsx",
-      "loc": 180
-    },
-    {
-      "file": "src/lib/validation/crossValidation.ts",
-      "loc": 169
-    },
-    {
-      "file": "src/hooks/use-toast.ts",
-      "loc": 161
-    },
-    {
-      "file": "src/components/ui/form.tsx",
-      "loc": 152
-    },
-    {
-      "file": "src/components/PremiumEmptyState.tsx",
-      "loc": 145
-    },
-    {
-      "file": "src/hooks/useMLTrainingWorker.ts",
-      "loc": 145
-    },
-    {
-      "file": "src/components/InteractiveDataVisualization.diagnosis.tsx",
-      "loc": 128
-    },
-    {
-      "file": "src/lib/chartUtils.ts",
-      "loc": 122
-    },
-    {
-      "file": "src/components/ui/PremiumStatsCard.tsx",
-      "loc": 117
-    },
-    {
-      "file": "src/components/ui/toast.tsx",
-      "loc": 115
+      "file": "src/components/DetailedConfidenceExplanation.tsx",
+      "loc": 439
     },
     {
       "file": "src/components/EnhancedDataVisualization.tsx",
-      "loc": 102
+      "loc": 120
     },
     {
-      "file": "src/hooks/useAnalyticsStatus.ts",
-      "loc": 102
-    },
-    {
-      "file": "src/lib/DataFilter.ts",
-      "loc": 100
-    },
-    {
-      "file": "src/components/PremiumHeader.tsx",
-      "loc": 87
-    },
-    {
-      "file": "src/utils/accessibility.ts",
-      "loc": 86
-    },
-    {
-      "file": "src/components/PredictionTimeline.tsx",
-      "loc": 82
-    },
-    {
-      "file": "src/hooks/useChartStore.ts",
-      "loc": 81
-    },
-    {
-      "file": "src/lib/chartTransforms.ts",
-      "loc": 77
-    },
-    {
-      "file": "src/components/ui/FloatingActionButton.tsx",
-      "loc": 64
-    },
-    {
-      "file": "src/components/CorrelationHeatmap.tsx",
-      "loc": 62
-    },
-    {
-      "file": "src/components/ui/StudentCard.tsx",
-      "loc": 61
-    },
-    {
-      "file": "src/hooks/useLocalStorage.ts",
-      "loc": 60
-    },
-    {
-      "file": "src/components/optimized/OptimizedStudentList.tsx",
-      "loc": 59
+      "file": "src/components/EnhancedPersonalizedInsights.tsx",
+      "loc": 527
     },
     {
       "file": "src/components/LoadingState.tsx",
-      "loc": 54
-    },
-    {
-      "file": "src/components/LoadingSpinner.tsx",
-      "loc": 48
-    },
-    {
-      "file": "src/hooks/useAsyncHandler.ts",
-      "loc": 45
-    },
-    {
-      "file": "src/lib/inlineWorker.ts",
-      "loc": 40
-    },
-    {
-      "file": "src/components/AccessibilityWrapper.tsx",
-      "loc": 35
-    },
-    {
-      "file": "src/components/ui/toaster.tsx",
-      "loc": 31
-    },
-    {
-      "file": "src/types/typeGuards.ts",
-      "loc": 21
-    },
-    {
-      "file": "src/types/chart.ts",
-      "loc": 19
-    },
-    {
-      "file": "src/types/global.d.ts",
-      "loc": 10
-    },
-    {
-      "file": "src/types/window.d.ts",
-      "loc": 9
+      "loc": 59
     },
     {
       "file": "src/components/NoData.tsx",
-      "loc": 6
+      "loc": 10
     },
     {
-      "file": "src/types/index.ts",
-      "loc": 6
+      "file": "src/components/PatternDetectionEmptyState.tsx",
+      "loc": 145
     },
     {
-      "file": "src/components/ui/chart.tsx",
-      "loc": 4
+      "file": "src/components/PremiumEmptyState.tsx",
+      "loc": 153
     },
     {
-      "file": "src/lib/testing/biasTester.ts",
-      "loc": 1
+      "file": "src/components/PremiumHeader.tsx",
+      "loc": 94
     },
     {
-      "file": "src/lib/testing/performanceTester.ts",
-      "loc": 1
+      "file": "src/components/ReportBuilder.tsx",
+      "loc": 663
     },
     {
-      "file": "src/lib/testing/regressionTester.ts",
-      "loc": 1
+      "file": "src/components/StorageManager.tsx",
+      "loc": 184
+    },
+    {
+      "file": "src/components/UniversalAnalyticsStatus.tsx",
+      "loc": 198
+    },
+    {
+      "file": "src/components/Visualization3D.poc.stub.tsx",
+      "loc": 11
+    },
+    {
+      "file": "src/components/Visualization3D.tsx",
+      "loc": 615
+    },
+    {
+      "file": "src/components/analysis/CorrelationHeatmap.tsx",
+      "loc": 103
+    },
+    {
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "loc": 260
+    },
+    {
+      "file": "src/components/analytics/PrecomputationScheduler.tsx",
+      "loc": 77
+    },
+    {
+      "file": "src/components/charts/TrendsChart.tsx",
+      "loc": 101
+    },
+    {
+      "file": "src/components/profile-sections/GoalsSection.tsx",
+      "loc": 39
+    },
+    {
+      "file": "src/components/profile-sections/ProfileErrorState.tsx",
+      "loc": 60
+    },
+    {
+      "file": "src/components/profile-sections/ProfileLoadingState.tsx",
+      "loc": 40
+    },
+    {
+      "file": "src/components/profile-sections/ProgressSection.tsx",
+      "loc": 42
+    },
+    {
+      "file": "src/components/profile-sections/ReportsSection.tsx",
+      "loc": 109
+    },
+    {
+      "file": "src/components/settings/AnalyticsConfig.tsx",
+      "loc": 397
+    },
+    {
+      "file": "src/components/tracking/DataCollectionMonitor.tsx",
+      "loc": 542
+    },
+    {
+      "file": "src/components/tracking/SessionIndicator.tsx",
+      "loc": 260
+    },
+    {
+      "file": "src/components/tracking/SessionRecovery.tsx",
+      "loc": 268
+    },
+    {
+      "file": "src/components/ui/FloatingActionButton.tsx",
+      "loc": 67
+    },
+    {
+      "file": "src/components/ui/PremiumStatsCard.tsx",
+      "loc": 124
+    },
+    {
+      "file": "src/components/ui/StudentCard.tsx",
+      "loc": 66
+    },
+    {
+      "file": "src/components/ui/sonner.tsx",
+      "loc": 31
+    },
+    {
+      "file": "src/hooks/useAnalyticsStatus.ts",
+      "loc": 113
+    },
+    {
+      "file": "src/hooks/useAsyncHandler.ts",
+      "loc": 60
+    },
+    {
+      "file": "src/hooks/useChartStore.ts",
+      "loc": 83
+    },
+    {
+      "file": "src/hooks/useMockDataSeeding.ts",
+      "loc": 158
+    },
+    {
+      "file": "src/hooks/usePerformanceMonitor.ts",
+      "loc": 385
+    },
+    {
+      "file": "src/hooks/useProgressiveChartData.ts",
+      "loc": 186
+    },
+    {
+      "file": "src/hooks/useRenderProfiler.ts",
+      "loc": 151
+    },
+    {
+      "file": "src/hooks/useStudentExport.ts",
+      "loc": 156
+    },
+    {
+      "file": "src/lib/analyticsConfigOverride.ts",
+      "loc": 78
+    },
+    {
+      "file": "src/lib/buttonVariants.ts",
+      "loc": 33
+    },
+    {
+      "file": "src/lib/chartTransforms.ts",
+      "loc": 84
+    },
+    {
+      "file": "src/lib/deprecation.ts",
+      "loc": 39
+    },
+    {
+      "file": "src/lib/explanations/sourceUtils.ts",
+      "loc": 105
+    },
+    {
+      "file": "src/lib/inlineWorker.ts",
+      "loc": 50
+    },
+    {
+      "file": "src/types/typeGuards.ts",
+      "loc": 26
     }
   ]
 }
