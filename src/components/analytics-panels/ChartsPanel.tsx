@@ -1,7 +1,8 @@
-import React, { Suspense, memo } from 'react';
+import React, { memo } from 'react';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
 import { useTranslation } from '@/hooks/useTranslation';
+import type { ChartType } from '@/hooks/useVisualizationState';
 
 const LazyInteractiveDataVisualization = React.lazy(() =>
   import('@/components/lazy/LazyInteractiveDataVisualization').then(m => ({ default: m.LazyInteractiveDataVisualization }))
@@ -14,20 +15,19 @@ export interface ChartsPanelProps {
     emotions: EmotionEntry[];
     sensoryInputs: SensoryEntry[];
   };
+  preferredChartType?: ChartType;
 }
-export const ChartsPanel = memo(function ChartsPanel({ studentName, filteredData }: ChartsPanelProps): React.ReactElement {
+export const ChartsPanel = memo(function ChartsPanel({ studentName, filteredData, preferredChartType }: ChartsPanelProps): React.ReactElement {
   const { tAnalytics } = useTranslation();
   return (
-    
     <ErrorBoundary>
-      <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('charts.loadingLabel'))} />}>
-        <LazyInteractiveDataVisualization
-          emotions={filteredData.emotions}
-          sensoryInputs={filteredData.sensoryInputs}
-          trackingEntries={filteredData.entries}
-          studentName={studentName}
-        />
-      </Suspense>
+      <LazyInteractiveDataVisualization
+        emotions={filteredData.emotions}
+        sensoryInputs={filteredData.sensoryInputs}
+        trackingEntries={filteredData.entries}
+        studentName={studentName}
+        preferredChartType={preferredChartType}
+      />
     </ErrorBoundary>
   );
 });

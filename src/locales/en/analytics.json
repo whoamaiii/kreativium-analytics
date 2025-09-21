@@ -3,7 +3,19 @@
     "fallbackTitle": "Analytics running in fallback mode",
     "fallbackDescription": "Background worker failed. Using safe fallback to keep the UI responsive.",
     "disabledTitle": "Analytics worker disabled",
-    "disabledDescription": "Running analytics without a background worker (debug mode)."
+    "disabledDescription": "Running analytics without a background worker (debug mode).",
+    "workerUnavailable": "Worker unavailable",
+    "workerTimeout": "Worker timeout",
+    "workerFailed": "Worker failed",
+    "fallbackMode": "Using fallback mode",
+    "workerErrorDescription": "We couldn't reach the analytics worker. Your results may be computed using a safe fallback.",
+    "fallbackModeDescription": "The app is temporarily using a safe fallback to keep things responsive.",
+    "retryInstructions": "You can try again now. If the problem persists, try again in a minute.",
+    "processingFailed": "Analytics processing failed",
+    "analysisRecovered": "Analysis recovered",
+    "checkConnection": "Check your connection",
+    "contactSupport": "Contact support if this continues",
+    "temporaryIssue": "This is likely a temporary issue."
   },
   "dashboard": {
     "title": "Analytics Dashboard - {{name}}",
@@ -17,14 +29,54 @@
     "charts": "Charts",
     "patterns": "Patterns",
     "correlations": "Correlations",
-    "alerts": "Alerts"
+    "alerts": "Alerts",
+    "overview": "Overview",
+    "explore": "Explore"
   },
   "aria": {
+    "alerts": {
+      "pinnedAlertsRail": "Pinned alerts sidebar",
+      "severityGroup": "{severity} priority alerts group",
+      "pinButton": "Pin this alert to sidebar",
+      "unpinButton": "Remove this alert from sidebar",
+      "alertCount": "{count} {severity} priority alerts"
+    },
     "tabs": {
       "charts": "View charts",
       "patterns": "View patterns",
       "correlations": "View correlations",
-      "alerts": "View alerts"
+      "alerts": "View alerts",
+      "overview": "View overview",
+      "explore": "Explore data"
+    },
+    "explore": {
+      "presetTabs": "Choose analysis type",
+      "chartsTab": "Switch to charts view",
+      "patternsTab": "Switch to patterns view",
+      "correlationsTab": "Switch to correlations view",
+      "activePreset": "Currently viewing {{preset}}"
+    },
+    "overview": {
+      "heroChart": "Overview chart showing key metrics",
+      "insights": "Key insights from data analysis",
+      "insightLink": "View detailed analysis in explore tab"
+    },
+    "filters": {
+      "drawer": "Advanced filters drawer",
+      "section": "{section} filters section",
+      "applyButton": "Apply selected filters",
+      "resetButton": "Reset all filters to default",
+      "closeButton": "Close filters drawer",
+      "intensitySlider": "Adjust {type} intensity range",
+      "filterCheckbox": "Toggle {filter} filter"
+    },
+    "quickQuestions": {
+      "popover": "Quick questions popover",
+      "trigger": "Open quick questions menu",
+      "questionsList": "List of analytical questions",
+      "questionButton": "Select {question} for analysis",
+      "questionDescription": "Question description: {description}",
+      "closePopover": "Close quick questions popover"
     }
   },
   "metrics": {
@@ -32,10 +84,18 @@
     "patternsFound": "Patterns Found"
   },
   "states": {
-    "analyzing": "Analyzing..."
+    "analyzing": "Analyzing...",
+    "retryingAnalysis": "Retrying analysis...",
+    "analysisRecovered": "Analysis recovered"
   },
   "actions": {
-    "refreshAnalysis": "Refresh Analysis"
+    "refreshAnalysis": "Refresh Analysis",
+    "refreshInsights": "Refresh insights",
+    "autoRefresh": "Auto refresh",
+    "manualRefresh": "Manual refresh",
+    "retryAnalysis": "Retry Analysis",
+    "retryNow": "Retry now",
+    "tryAgain": "Try again"
   },
   "empty": {
     "noPatterns": "No patterns found",
@@ -46,19 +106,149 @@
     "subtitle": "Deep dive into insights for {{name}}"
   },
   "charts": {
+    "smartSelection": "Showing optimal chart for your data",
+    "timeSeriesDetected": "Time series view",
+    "categoricalDetected": "Distribution view",
+    "mixedDataDetected": "Combined view",
     "emotionFrequency": "Emotion Frequency",
     "sensoryDistribution": "Sensory Distribution",
     "intensityLevels": "Intensity Levels",
     "dailyActivity": "Daily Activity",
     "noData": "No data available for selected period",
-    "loadingLabel": "Loading charts"
+    "loadingLabel": "Loading charts",
+    "avgEmotionIntensity": "Avg Emotion Intensity",
+    "positiveEmotions": "Positive Emotions",
+    "negativeEmotions": "Negative Emotions",
+    "sensoryInputs": "Sensory Inputs",
+    "movingAverage": "Avg Intensity ({{window}}d MA)",
+    "emotionThreshold": "Emotion Threshold",
+    "sensoryThreshold": "Sensory Threshold",
+    "intensity": "Intensity",
+    "date": "Date",
+    "zoom": "Zoom",
+    "reset": "Reset",
+    "save": "Save",
+    "dataZoom": "Data Zoom",
+    "restore": "Restore",
+    "saveAsImage": "Save as image",
+    "positive": "Positive",
+    "negative": "Negative",
+    "neutral": "Neutral",
+    "correlation": "Correlation",
+    "significance": "Significance",
+    "dailyDataPoints": "Daily Data Points",
+    "emotionTrends": "Emotion Trends",
+    "correlationHeatmap": "Correlation Heatmap"
+  },
+  "overview": {
+    "title": "Overview",
+    "heroChart": "Key Metrics",
+    "insights": "Key Insights",
+    "noInsights": "No insights available yet. More data will improve analysis.",
+    "viewInExplore": "View in Explore",
+    "loadingChart": "Loading overview chart..."
+  },
+  "explore": {
+    "title": "Explore",
+    "presets": {
+      "charts": "Charts",
+      "patterns": "Patterns",
+      "correlations": "Correlations"
+    },
+    "loadingPreset": "Loading {{preset}}...",
+    "switchingPreset": "Switching to {{preset}} view",
+    "descriptions": {
+      "charts": "Interactive data visualizations and trends",
+      "patterns": "AI-powered pattern analysis and insights",
+      "correlations": "Environmental and behavioral correlations"
+    }
+  },
+  "quickQuestions": {
+    "title": "Quick Questions",
+    "subtitle": "Get instant insights with these common questions",
+    "triggerLabel": "Quick Questions",
+    "triggerTooltip": "Ask common analytical questions",
+    "selectQuestion": "Select a question to explore",
+    "navigatingTo": "Navigating to {{preset}} analysis...",
+    "questions": {
+      "peakTiming": { "question": "When do peaks happen?", "description": "Find high-intensity moments and their timing patterns" },
+      "activityLoad": { "question": "Which activities raise load?", "description": "Discover which activities correlate with increased stress" },
+      "difficultTriggers": { "question": "What triggers difficult moments?", "description": "Identify patterns in challenging emotional experiences" },
+      "sensoryChanges": { "question": "How do sensory needs change?", "description": "Track sensory preferences and responses over time" },
+      "timePatterns": { "question": "What patterns emerge over time?", "description": "Discover long-term trends and recurring patterns" },
+      "bestEnvironments": { "question": "Which environments work best?", "description": "Find environmental conditions that support success" }
+    },
+    "categories": {
+      "timing": "Timing Analysis",
+      "triggers": "Trigger Identification",
+      "environmental": "Environmental Factors",
+      "patterns": "Pattern Recognition",
+      "sensory": "Sensory Analysis",
+      "correlations": "Relationship Analysis"
+    },
+    "actions": {
+      "exploring": "Exploring...",
+      "applyingFilters": "Applying filters...",
+      "viewResults": "View Results",
+      "closeQuestions": "Close Questions"
+    }
   },
   "filters": {
     "dateRange": "Date Range",
     "emotionType": "Emotion Type",
     "sensoryType": "Sensory Type",
     "intensity": "Intensity",
-    "all": "All"
+    "all": "All",
+    "title": "Advanced Filters",
+    "apply": "Apply Filters",
+    "reset": "Reset All",
+    "clear": "Clear",
+    "activeFilters": "{count} active filters",
+    "noActiveFilters": "No active filters",
+    "categories": {
+      "emotions": "Emotions",
+      "sensory": "Sensory",
+      "environmental": "Environmental",
+      "patterns": "Patterns",
+      "advanced": "Advanced"
+    },
+    "emotions": {
+      "types": "Emotion Types",
+      "intensity": "Intensity Range",
+      "triggers": "Triggers",
+      "includeTriggers": "Include Triggers",
+      "excludeTriggers": "Exclude Triggers",
+      "intensityMin": "Minimum: {value}",
+      "intensityMax": "Maximum: {value}"
+    },
+    "sensory": {
+      "types": "Sensory Types",
+      "responses": "Responses",
+      "intensity": "Intensity Range",
+      "seeking": "Seeking",
+      "avoiding": "Avoiding"
+    },
+    "environmental": {
+      "locations": "Locations",
+      "activities": "Activities",
+      "conditions": "Conditions",
+      "noiseLevel": "Noise Level",
+      "temperature": "Temperature",
+      "lighting": "Lighting",
+      "weather": "Weather",
+      "timeOfDay": "Time of Day"
+    },
+    "patterns": {
+      "anomaliesOnly": "Show anomalies only",
+      "minConfidence": "Minimum confidence",
+      "patternTypes": "Pattern types",
+      "confidence": "Confidence: {value}%"
+    },
+    "advanced": {
+      "realtime": "Real-time filtering",
+      "presets": "Quick Presets",
+      "customFilters": "Custom Filters"
+    }
   },
   "correlations": {
     "title": "Correlation Heatmap",
@@ -311,6 +501,7 @@
     "none": "No alerts",
     "noneUnresolved": "No unresolved alerts",
     "resolveTitle": "Resolve Alert",
+    "resolveDescription": "Review details and add resolution notes before confirming.",
     "details": "Details",
     "resolutionNotes": "Resolution notes",
     "resolutionNotesPlaceholder": "Describe actions taken or observations...",
@@ -320,7 +511,60 @@
     "resolveSuccess": "Alert resolved successfully",
     "resolveFailure": "Failed to resolve alert. Please try again.",
     "resolvedLabel": "Resolved",
-    "dataPoints": "data points"
+    "dataPoints": "data points",
+    "dataPointsLabel": "{{count}} data points",
+    "pinnedAlerts": "Pinned Alerts",
+    "pinAlert": "Pin Alert",
+    "unpinAlert": "Unpin Alert",
+    "noPinnedAlerts": "No pinned alerts",
+    "severityGroups": { "high": "High Priority", "medium": "Medium Priority", "low": "Low Priority" },
+    "alertCounts": "({count} alerts)",
+    "totalUnresolved": "Total Unresolved: {count}",
+    "actions": {
+      "expandGroup": "Expand {severity} alerts",
+      "collapseGroup": "Collapse {severity} alerts",
+      "viewAllAlerts": "View All Alerts",
+      "managePinned": "Manage Pinned Alerts",
+      "clearAllPinned": "Clear all"
+    }
+  },
+  "dialogs": {
+    "alerts": {
+      "confirmClearPinnedTitle": "Clear all pinned alerts?",
+      "confirmClearPinnedDescription": "This will remove all pinned alerts from the sidebar. You can pin them again later."
+    }
+  },
+
+  "configTest": {
+    "title": "Analytics Configuration Tests",
+    "description": "Verify that configuration changes and cache invalidation work correctly",
+    "currentConfiguration": "Current Configuration",
+    "alertLevel": "Alert Level: {{level}}",
+    "minDataPoints": "Min Data Points: {{count}}",
+    "cacheSize": "Cache Size: {{size}}",
+    "runTests": "Run Tests",
+    "testResults": "Test Results",
+    "quickActions": "Quick Actions",
+    "setConservative": "Set Conservative",
+    "setSensitive": "Set Sensitive",
+    "resetDefaults": "Reset to Defaults",
+    "clearCache": "Clear Cache"
+  },
+
+  "ai": {
+    "meta": {
+      "provider": "Provider",
+      "model": "Model",
+      "confidence": "Confidence",
+      "latency": "Latency",
+      "latencyValue": "{{value}} ms",
+      "lineage": "Data Lineage",
+      "caveats": "Caveats"
+    },
+    "mode": {
+      "ai": "AI",
+      "heuristic": "Heuristic"
+    }
   },
 
   "insights": {
@@ -330,6 +574,10 @@
     "alerts": "Alerts",
     "noPatterns": "No patterns found yet. Keep collecting data for better insights.",
     "explainPattern": "Explain pattern",
+    "newInsightsAvailable": "New insights available",
+    "analyzingNewData": "Analyzing new data",
+    "insightsUpdated": "Insights updated",
+    "refreshComplete": "Refresh complete",
     "patternExplain": {
       "title": "What does this pattern mean?",
       "default": "A recurring pattern has been detected in data for this period.",
@@ -345,6 +593,11 @@
       "copyFail": "Could not copy"
     },
     "confidencePercent": "{{percentage}}% confidence"
+  },
+  "realtime": {
+    "realtimeDataUpdated": "Realtime data updated",
+    "insightsOutdated": "Insights may be outdated",
+    "clickToRefresh": "Click to refresh"
   },
   "confidence": {
     "low": "Low confidence",

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-export const ZSeverity = z.enum(["low", "medium", "high"]);
-export const ZTimeHorizon = z.enum(["short", "medium", "long"]);
-export const ZSourceType = z.enum([
+const ZSeverity = z.enum(["low", "medium", "high"]);
+const ZTimeHorizon = z.enum(["short", "medium", "long"]);
+const ZSourceType = z.enum([
   "emotion",
   "behavior",
   "sensor",
@@ -14,7 +14,7 @@ export const ZSourceType = z.enum([
   "other",
 ]);
 
-export const ZTimeRange = z
+const ZTimeRange = z
   .object({
     start: z.string().min(1),
     end: z.string().min(1),
@@ -22,7 +22,7 @@ export const ZTimeRange = z
   })
   .strict();
 
-export const ZAiConfidence = z
+const ZAiConfidence = z
   .object({
     overall: z.number().min(0).max(1),
     calibration: z.string().optional(),
@@ -30,7 +30,7 @@ export const ZAiConfidence = z
   })
   .strict();
 
-export const ZAiEvidence = z
+const ZAiEvidence = z
   .object({
     id: z.string().optional(),
     description: z.string().min(1),
@@ -40,7 +40,7 @@ export const ZAiEvidence = z
   })
   .strict();
 
-export const ZAiPattern = z
+const ZAiPattern = z
   .object({
     name: z.string().min(1),
     description: z.string().optional(),
@@ -50,7 +50,7 @@ export const ZAiPattern = z
   })
   .strict();
 
-export const ZAiCorrelation = z
+const ZAiCorrelation = z
   .object({
     variables: z.tuple([z.string(), z.string()]),
     coefficient: z.number().min(-1).max(1),
@@ -61,7 +61,7 @@ export const ZAiCorrelation = z
   })
   .strict();
 
-export const ZAiHypothesis = z
+const ZAiHypothesis = z
   .object({
     cause: z.string().min(1),
     likelihood: z.number().min(0).max(1),
@@ -70,7 +70,7 @@ export const ZAiHypothesis = z
   })
   .strict();
 
-export const ZAiIntervention = z
+const ZAiIntervention = z
   .object({
     title: z.string().min(1),
     description: z.string().min(1),
@@ -88,7 +88,7 @@ export const ZAiIntervention = z
   })
   .strict();
 
-export const ZAiAnomaly = z
+const ZAiAnomaly = z
   .object({
     id: z.string().optional(),
     description: z.string().min(1),
@@ -99,7 +99,7 @@ export const ZAiAnomaly = z
   })
   .strict();
 
-export const ZAiPredictiveInsight = z
+const ZAiPredictiveInsight = z
   .object({
     outcome: z.string().min(1),
     probability: z.number().min(0).max(1),
@@ -109,7 +109,7 @@ export const ZAiPredictiveInsight = z
   })
   .strict();
 
-export const ZAiDataLineageItem = z
+const ZAiDataLineageItem = z
   .object({
     source: z.string().min(1),
     type: ZSourceType.optional(),
@@ -137,13 +137,4 @@ export const ZAiReport = ZAiReportCore.extend({
 }).strict();
 
 export type AiReport = z.infer<typeof ZAiReport>;
-export type AiPattern = z.infer<typeof ZAiPattern>;
-export type AiCorrelation = z.infer<typeof ZAiCorrelation>;
-export type AiHypothesis = z.infer<typeof ZAiHypothesis>;
-export type AiIntervention = z.infer<typeof ZAiIntervention>;
-export type AiAnomaly = z.infer<typeof ZAiAnomaly>;
-export type AiPredictiveInsight = z.infer<typeof ZAiPredictiveInsight>;
-export type AiEvidence = z.infer<typeof ZAiEvidence>;
-export type AiConfidence = z.infer<typeof ZAiConfidence>;
-export type AiDataLineageItem = z.infer<typeof ZAiDataLineageItem>;
 

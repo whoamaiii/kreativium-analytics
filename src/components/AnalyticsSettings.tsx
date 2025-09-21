@@ -135,9 +135,24 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
     toast.success("Configuration saved to analytics-config.json");
   };
 
+  const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+  const ALLOWED_IMPORT_TYPES = new Set(['application/json', 'text/json']);
+
   const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    if (file.size > MAX_IMPORT_BYTES) {
+      toast.error('Configuration file exceeds the 5 MB limit');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.type && !ALLOWED_IMPORT_TYPES.has(file.type)) {
+      toast.error('Only JSON configuration files are supported');
+      event.target.value = '';
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -152,6 +167,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
       } catch (_error) {
         toast.error("Failed to read configuration file");
       }
+      event.target.value = '';
     };
     reader.readAsText(file);
   };
@@ -847,4 +863,3 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
     </Dialog>
   );
 };
-

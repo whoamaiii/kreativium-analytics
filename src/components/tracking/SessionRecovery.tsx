@@ -13,7 +13,6 @@ import {
   Calendar,
   Activity
 } from 'lucide-react';
-import { useTracking } from '@/contexts/TrackingContext';
 import { sessionManager } from '@/lib/sessionManager';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -34,7 +33,6 @@ export const SessionRecovery: React.FC<SessionRecoveryProps> = ({
   className,
   autoRecover = false,
 }) => {
-  const { recoverSession, sessions } = useTracking();
   const [recoverableSessions, setRecoverableSessions] = useState<any[]>([]);
   const [isRecovering, setIsRecovering] = useState(false);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
@@ -44,7 +42,8 @@ export const SessionRecovery: React.FC<SessionRecoveryProps> = ({
     setSelectedSession(sessionId);
     
     try {
-      recoverSession(sessionId);
+      // Ensure the session is marked active
+      sessionManager.resumeSession(sessionId);
       // Remove from recoverable list
       setRecoverableSessions(prev => 
         prev.filter(s => s.sessionId !== sessionId)
@@ -55,7 +54,7 @@ export const SessionRecovery: React.FC<SessionRecoveryProps> = ({
       setIsRecovering(false);
       setSelectedSession(null);
     }
-  }, [recoverSession]);
+  }, []);
 
   const checkSessions = useCallback(() => {
     const recovered = sessionManager.recoverSessions();

@@ -32,6 +32,7 @@ function minimalSafeResults(partial?: Partial<AnalyticsResults> & { confidence?:
     predictiveInsights: [],
     anomalies: [],
     insights: [],
+    suggestedInterventions: [],
     ...partial,
   } as AnalyticsResults;
 }
@@ -85,7 +86,14 @@ export async function computeInsights(
       }
     }
 
-    const resultsBase = { patterns, correlations, predictiveInsights, anomalies, hasMinimumData } as any;
+    const resultsBase = {
+      patterns,
+      correlations,
+      environmentalCorrelations: correlations,
+      predictiveInsights,
+      anomalies,
+      hasMinimumData,
+    } as any;
 
     const insights = generateUnifiedInsights(resultsBase, emotions, entries, cfg.insights);
     const confidence = computeUnifiedConfidence(emotions, sensoryInputs, entries, cfg.confidence);
@@ -94,6 +102,7 @@ export async function computeInsights(
       ...resultsBase,
       insights,
       confidence,
+      suggestedInterventions: [],
     } as AnalyticsResults;
   } catch (error) {
     logger.error('[insights/unified] computeInsights failed', { error: error instanceof Error ? { message: error.message, stack: error.stack, name: error.name } : error });

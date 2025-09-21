@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,7 @@ import {
   Activity,
   TrendingUp
 } from 'lucide-react';
-import { useTracking } from '@/contexts/TrackingContext';
+import { sessionManager } from '@/lib/sessionManager';
 import { formatDuration } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -22,6 +22,7 @@ interface SessionIndicatorProps {
   className?: string;
   compact?: boolean;
   showControls?: boolean;
+  studentId?: string;
 }
 
 /**
@@ -32,18 +33,62 @@ export const SessionIndicator: React.FC<SessionIndicatorProps> = ({
   className,
   compact = false,
   showControls = true,
+  studentId,
 }) => {
-  const {
-    currentSession,
-    pauseSession,
-    resumeSession,
-    saveSession,
-    discardSession,
-    getDataQuality,
-  } = useTracking();
+  const [currentSession, setCurrentSession] = useState(() => {
+    const sessions = studentId
+      ? sessionManager.getActiveSessionsForStudent(studentId)
+      : sessionManager.getAllActiveSessions();
+    return sessions.length > 0 ? sessions[0] : null;
+  });
 
-  const quality = useMemo(() => getDataQuality(), [getDataQuality]);
+  const [quality, setQuality] = useState(() => currentSession?.metadata.quality ?? {
+    score: 0,
+    completeness: 0,
+    consistency: 0,
+    richness: 0,
+    issues: [],
+    recommendations: [],
+    emotionCount: 0,
+    sensoryCount: 0,
+    hasEnvironmental: false,
+    sessionDuration: 0,
+  });
 
+  // Poll session state periodically for simplicity
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const sessions = studentId
+        ? sessionManager.getActiveSessionsForStudent(studentId)
+        : sessionManager.getAllActiveSessions();
+      const active = sessions[0] ?? null;
+      setCurrentSession(active);
+      if (active) setQuality(active.metadata.quality);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [studentId]);
+
+  const pauseSession = useCallback(() => {
+    if (!currentSession) return;
+    sessionManager.pauseSession(currentSession.sessionId);
+  }, [currentSession]);
+
+  const resumeSession = useCallback(() => {
+    if (!currentSession) return;
+    sessionManager.resumeSession(currentSession.sessionId);
+  }, [currentSession]);
+
+  const saveSession = useCallback(async () => {
+    if (!currentSession) return;
+    await sessionManager.completeSession(currentSession.sessionId);
+  }, [currentSession]);
+
+  const discardSession = useCallback(() => {
+    if (!currentSession) return;
+    sessionManager.abandonSession(currentSession.sessionId);
+    setCurrentSession(null);
+  }, [currentSession]);
+  
   const sessionDuration = useMemo(() => {
     if (!currentSession) return '00:00';
     const duration = Date.now() - currentSession.startTime.getTime();
@@ -151,15 +196,7 @@ export const SessionIndicator: React.FC<SessionIndicatorProps> = ({
           </div>
         </div>
 
-        {/* Last Saved Indicator */}
-        {quality.lastSaved && (
-          <div className="flex items-center gap-2 mb-3 text-xs text-muted-foreground">
-            <CheckCircle className="h-3 w-3 text-green-500" />
-            <span>
-              Last saved {new Date(quality.lastSaved).toLocaleTimeString()}
-            </span>
-          </div>
-        )}
+        {/* Last Saved Indicator removed; avoid mixing save timestamps into quality model */}
 
         {/* Session Controls */}
         {showControls && (

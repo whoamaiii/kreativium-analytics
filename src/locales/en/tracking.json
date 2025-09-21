@@ -2,6 +2,13 @@
   "session": {
     "title": "Tracking Session for {{studentName}}",
     "summary": "Session Summary",
+    "sessionTime": "Session Time",
+    "startHint": "Start tracking by adding emotions or sensory inputs below",
+    "emotionsThisSession": "Emotions This Session",
+    "sensoryInputsThisSession": "Sensory Inputs This Session",
+    "duration": "Session duration: {{minutes}} minutes",
+    "unsavedConfirm": "You have unsaved data. Are you sure you want to cancel?",
+    "description": "Record emotions and sensory responses for this session",
     "emotionsRecorded": "{{count}} emotion recorded",
     "emotionsRecorded_plural": "{{count}} emotions recorded",
     "sensoryInputsRecorded": "{{count}} sensory input recorded",
@@ -17,8 +24,11 @@
   "emotions": {
     "title": "Emotions",
     "addEmotion": "Add Emotion",
+    "added": "Added {{emotion}} (intensity {{intensity}})",
     "selectEmotion": "Select emotion",
     "intensity": "Intensity",
+    "outOf": "/{{max}}",
+    "context": "Context",
     "duration": "Duration",
     "notes": "Notes",
     "types": {
@@ -50,6 +60,7 @@
   "sensory": {
     "title": "Sensory Input",
     "addInput": "Add Sensory Input",
+    "added": "Added {{type}}: {{response}}",
     "selectType": "Select type",
     "response": "Response",
     "intensity": "Intensity",

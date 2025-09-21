@@ -128,7 +128,7 @@ export function ExplanationChat({
     try {
       const re = /\[S(\d+)\]/g;
       let m: RegExpExecArray | null;
-      // eslint-disable-next-line no-cond-assign
+       
       while ((m = re.exec(lastAssistant.content))) {
         const n = Number(m[1]);
         if (Number.isFinite(n) && n >= 1 && n <= sList.length) set.add(`S${n}`);

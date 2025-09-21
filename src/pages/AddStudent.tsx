@@ -12,6 +12,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { analyticsManager } from "@/lib/analyticsManager";
 import { dataStorage } from "@/lib/dataStorage";
 import { logger } from "@/lib/logger";
+import { sanitizeInput } from "@/lib/formValidation";
 
 const AddStudent = () => {
   const [name, setName] = useState('');
@@ -34,12 +35,16 @@ const AddStudent = () => {
     setIsLoading(true);
 
     try {
+      const sanitizedName = sanitizeInput(name);
+      const sanitizedGrade = grade ? sanitizeInput(grade) : undefined;
+      const sanitizedNotes = notes ? sanitizeInput(notes) : undefined;
+
       const newStudent: Student = {
         id: crypto.randomUUID(),
-        name: name.trim(),
-        grade: grade.trim() || undefined,
+        name: sanitizedName,
+        grade: sanitizedGrade,
         dateOfBirth: dateOfBirth || undefined,
-        notes: notes.trim() || undefined,
+        notes: sanitizedNotes,
         createdAt: new Date(),
       };
 

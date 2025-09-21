@@ -1,4 +1,5 @@
 import React, { useMemo, memo, useRef } from "react";
+import { useTranslation } from '@/hooks/useTranslation';
 import ReactECharts from "echarts-for-react";
 // Use our trimmed ECharts core to keep the chart chunk small
 import { echarts } from '@/lib/echartsCore';
@@ -12,11 +13,11 @@ import type {
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 import { Skeleton } from "@/components/ui/skeleton";
-import type ReactEChartsType from "echarts-for-react";
+import type { EChartsEventMap, EChartsComponentRef } from '@/lib/echartsTypes';
 import { useChartExport } from "@/hooks/useChartExport";
 import { chartRegistry, type ChartType } from "@/lib/chartRegistry";
 
-type EventsMap = Record<string, (params: unknown) => void>;
+type EventsMap = EChartsEventMap;
 
 export type EChartExportRegistration = {
   /** Unique id for registry; provide to group charts and ensure stable keys */
@@ -48,7 +49,7 @@ export type EChartContainerProps = {
   /** Optional registration so this chart can be included in PDF export */
   exportRegistration?: EChartExportRegistration;
   /** INTERNAL: ref to ReactECharts instance for export hooks */
-  __innerChartRef__?: React.Ref<ReactEChartsType>;
+  __innerChartRef__?: React.Ref<EChartsComponentRef>;
 };
 
 /**
@@ -77,7 +78,7 @@ const emotionColors = {
 
 // (sensory-specific color map removed; not used here)
 
-const baseTheme = {
+const createBaseTheme = (tAnalytics: (key: string, options?: Record<string, unknown>) => string) => ({
     color: [
       "hsl(var(--primary))",        // Primary purple
       emotionColors.calm,            // Calm blue
@@ -87,7 +88,7 @@ const baseTheme = {
       emotionColors.excited,         // Excited purple
       emotionColors.overwhelmed,     // Overwhelmed magenta
       emotionColors.neutral          // Neutral gray
-    ],
+    ] as string[],
     backgroundColor: "transparent",
     textStyle: {
       color: "hsl(var(--foreground))",
@@ -160,17 +161,28 @@ const baseTheme = {
         const seriesNameToKey = (name?: string): string | undefined => {
           if (!name) return undefined;
           const n = name.toLowerCase();
-          if (n.includes('avg emotion intensity')) return 'avgEmotionIntensity';
-          if (n.includes('7d') || n.includes('ma')) return 'avgEmotionIntensityMA7';
-          if (n.includes('positive')) return 'positiveEmotions';
-          if (n.includes('negative')) return 'negativeEmotions';
-          if (n.includes('sensory')) return 'totalSensoryInputs';
+          if (n.includes(String(tAnalytics('charts.avgEmotionIntensity')).toLowerCase())) return 'avgEmotionIntensity';
+          if (n.includes('7d') || n.includes('ma')) return 'avgEmotionIntensityMA';
+          if (n.includes(String(tAnalytics('charts.positiveEmotions')).toLowerCase().split(' ')[0])) return 'positiveEmotions';
+          if (n.includes(String(tAnalytics('charts.negativeEmotions')).toLowerCase().split(' ')[0])) return 'negativeEmotions';
+          if (n.includes(String(tAnalytics('charts.sensoryInputs')).toLowerCase().split(' ')[0])) return 'totalSensoryInputs';
+          return undefined;
+        };
+
+        const getSeriesKey = (p: TP): string | undefined => {
+          const metaKey = (p as any)?.meta?.key;
+          if (typeof metaKey === 'string' && metaKey.length > 0) return metaKey;
+          const encY = (p as any)?.encode?.y;
+          if (typeof encY === 'string') return encY;
+          if (Array.isArray(encY)) {
+            const firstString = (encY as Array<unknown>).find((x) => typeof x === 'string');
+            if (typeof firstString === 'string') return firstString;
+          }
           return undefined;
         };
 
         const valueFromParam = (p: TP) => {
-          const encY = (p as TP).encode?.y;
-          let yKey = Array.isArray(encY) ? (encY[0] as string | number) : encY;
+          let yKey: string | number | undefined = getSeriesKey(p);
           if (yKey == null) {
             const inferred = seriesNameToKey((p as TP).seriesName as string | undefined);
             if (inferred) yKey = inferred as unknown as string;
@@ -337,7 +349,7 @@ const baseTheme = {
     animation: true,
     animationDuration: 800,
     animationEasing: 'cubicOut'
-} as const;
+});
 
 function EChartContainerBase({
   option,
@@ -349,6 +361,7 @@ function EChartContainerBase({
   chartDefaults,
   __innerChartRef__
 }: EChartContainerProps) {
+  const { tAnalytics } = useTranslation();
   // Defensive: guard against undefined/empty/invalid options
   const safeOption: EChartsOption = useMemo(() => {
     try {
@@ -379,6 +392,7 @@ function EChartContainerBase({
 
   const themed = useMemo(() => {
     try {
+      const baseTheme = createBaseTheme(tAnalytics);
       const xAxis = (safeOption as EChartsOption).xAxis as XAXisComponentOption | XAXisComponentOption[] | undefined;
       const yAxis = (safeOption as EChartsOption).yAxis as YAXisComponentOption | YAXisComponentOption[] | undefined;
 
@@ -432,7 +446,7 @@ function EChartContainerBase({
         grid: { ...baseTheme.grid, ...(safeOption as EChartsOption).grid } as GridComponentOption,
         xAxis: normalizeXAxis(xAxis),
         yAxis: normalizeYAxis(yAxis),
-        color: (safeOption as EChartsOption).color ?? (baseTheme.color as unknown as string[]),
+        color: (safeOption as EChartsOption).color ?? Array.from(baseTheme.color),
         tooltip: { ...baseTheme.tooltip, ...(safeOption as EChartsOption).tooltip } as TooltipComponentOption,
         legend: (safeOption as EChartsOption).legend as Record<string, unknown>,
         stateAnimation: { duration: 0 },
@@ -451,7 +465,7 @@ function EChartContainerBase({
       }
       return { series: [] } as EChartsOption;
     }
-  }, [safeOption, chartDefaults]);
+  }, [safeOption, chartDefaults, tAnalytics]);
 
   // Fail-soft: treat non-array truthy series as having data, but avoid crashing render
   const hasSeries = (() => {
@@ -501,8 +515,8 @@ function EChartContainerBase({
           // Keep chart itself explicitly sized
           style={{ height, width: width ?? "100%", ...style }} // RADIX_INLINE_STYLE_ALLOWED - ReactECharts requires style prop for dimensions
           onEvents={onEvents}
-          echarts={echarts as unknown as any}
-          ref={__innerChartRef__ as any}
+          echarts={echarts}
+          ref={__innerChartRef__}
         />
       ) : (
         <div className="p-4">
@@ -516,9 +530,9 @@ function EChartContainerBase({
 
 
 function EChartContainerWithExport(props: EChartContainerProps & { exportRegistration?: EChartExportRegistration }) {
-  const innerRef = useRef<ReactEChartsType>(null as unknown as ReactEChartsType);
+  const innerRef = useRef<EChartsComponentRef | null>(null);
 
-  const exportMethods = useChartExport(innerRef as unknown as React.RefObject<ReactEChartsType>);
+  const exportMethods = useChartExport(innerRef);
 
   // Register/unregister with registry when id provided
   React.useEffect(() => {

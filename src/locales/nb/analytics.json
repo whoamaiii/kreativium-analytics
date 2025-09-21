@@ -3,7 +3,19 @@
     "fallbackTitle": "Analyse kjører i reserve-modus",
     "fallbackDescription": "Bakgrunnsarbeideren feilet. Bruker trygg reserve for å holde grensesnittet responsivt.",
     "disabledTitle": "Analysearbeider deaktivert",
-    "disabledDescription": "Kjører analyse uten bakgrunnsarbeider (feilsøkingsmodus)."
+    "disabledDescription": "Kjører analyse uten bakgrunnsarbeider (feilsøkingsmodus).",
+    "workerUnavailable": "Arbeider utilgjengelig",
+    "workerTimeout": "Arbeider tidsavbrudd",
+    "workerFailed": "Arbeider feilet",
+    "fallbackMode": "Reservemodus",
+    "workerErrorDescription": "Vi fikk ikke kontakt med analysearbeideren. Resultater kan bli beregnet med en trygg reserve.",
+    "fallbackModeDescription": "Appen bruker midlertidig en trygg reserve for å holde seg responsiv.",
+    "retryInstructions": "Du kan prøve igjen nå. Hvis problemet fortsetter, prøv igjen om ett minutt.",
+    "processingFailed": "Behandling feilet",
+    "analysisRecovered": "Analyse gjenopprettet",
+    "checkConnection": "Sjekk tilkobling",
+    "contactSupport": "Kontakt support hvis dette fortsetter",
+    "temporaryIssue": "Dette er sannsynligvis et midlertidig problem."
   },
   "dashboard": {
     "title": "Analysedashboard - {{name}}",
@@ -17,14 +29,54 @@
     "charts": "Diagrammer",
     "patterns": "Mønstre",
     "correlations": "Korrelasjoner",
-    "alerts": "Varsler"
+    "alerts": "Varsler",
+    "overview": "Oversikt",
+    "explore": "Utforsk"
   },
   "aria": {
+    "alerts": {
+      "pinnedAlertsRail": "Festede varsler sidepanel",
+      "severityGroup": "{severity} prioritet varsler gruppe",
+      "pinButton": "Fest dette varselet til sidepanel",
+      "unpinButton": "Fjern dette varselet fra sidepanel",
+      "alertCount": "{count} {severity} prioritet varsler"
+    },
     "tabs": {
       "charts": "Vis diagrammer",
       "patterns": "Vis mønstre",
       "correlations": "Vis korrelasjoner",
-      "alerts": "Vis varsler"
+      "alerts": "Vis varsler",
+      "overview": "Vis oversikt",
+      "explore": "Utforsk data"
+    },
+    "explore": {
+      "presetTabs": "Velg analysetype",
+      "chartsTab": "Bytt til diagramvisning",
+      "patternsTab": "Bytt til mønstervisning",
+      "correlationsTab": "Bytt til korrelasjonsvisning",
+      "activePreset": "Viser nå {{preset}}"
+    },
+    "overview": {
+      "heroChart": "Oversiktsdiagram som viser nøkkeltall",
+      "insights": "Viktige innsikter fra dataanalyse",
+      "insightLink": "Vis detaljert analyse i utforsk-fanen"
+    },
+    "filters": {
+      "drawer": "Avanserte filtre skuff",
+      "section": "{section} filtre seksjon",
+      "applyButton": "Bruk valgte filtre",
+      "resetButton": "Tilbakestill alle filtre til standard",
+      "closeButton": "Lukk filtre skuff",
+      "intensitySlider": "Juster {type} intensitetsområde",
+      "filterCheckbox": "Veksle {filter} filter"
+    },
+    "quickQuestions": {
+      "popover": "Hurtigspørsmål popover",
+      "trigger": "Åpne hurtigspørsmål meny",
+      "questionsList": "Liste over analytiske spørsmål",
+      "questionButton": "Velg {question} for analyse",
+      "questionDescription": "Spørsmålsbeskrivelse: {description}",
+      "closePopover": "Lukk hurtigspørsmål popover"
     }
   },
   "metrics": {
@@ -32,10 +84,18 @@
     "patternsFound": "Mønstre funnet"
   },
   "states": {
-    "analyzing": "Analyserer..."
+    "analyzing": "Analyserer...",
+    "retryingAnalysis": "Prøver analyse på nytt...",
+    "analysisRecovered": "Analyse gjenopprettet"
   },
   "actions": {
-    "refreshAnalysis": "Oppdater analyse"
+    "refreshAnalysis": "Oppdater analyse",
+    "refreshInsights": "Oppdater innsikter",
+    "autoRefresh": "Automatisk oppdatering",
+    "manualRefresh": "Manuell oppdatering",
+    "retryAnalysis": "Prøv analyse på nytt",
+    "retryNow": "Prøv nå",
+    "tryAgain": "Prøv igjen"
   },
   "empty": {
     "noPatterns": "Ingen mønstre funnet",
@@ -46,19 +106,149 @@
     "subtitle": "Fordyp deg i innsikt for {{name}}"
   },
   "charts": {
+    "smartSelection": "Viser optimal diagram for dine data",
+    "timeSeriesDetected": "Tidsserievisning",
+    "categoricalDetected": "Distribusjonsvisning",
+    "mixedDataDetected": "Kombinert visning",
     "emotionFrequency": "Følelsesfrekvens",
     "sensoryDistribution": "Sensorisk fordeling",
     "intensityLevels": "Intensitetsnivåer",
     "dailyActivity": "Daglig aktivitet",
     "noData": "Ingen data tilgjengelig for valgt periode",
-    "loadingLabel": "Laster diagrammer"
+    "loadingLabel": "Laster diagrammer",
+    "avgEmotionIntensity": "Gjennomsnittlig følelsesintensitet",
+    "positiveEmotions": "Positive følelser",
+    "negativeEmotions": "Negative følelser",
+    "sensoryInputs": "Sensoriske innspill",
+    "movingAverage": "Glidende gjennomsnitt ({{window}}d)",
+    "emotionThreshold": "Følelsesterskel",
+    "sensoryThreshold": "Sensorisk terskel",
+    "intensity": "Intensitet",
+    "date": "Dato",
+    "zoom": "Zoom",
+    "reset": "Tilbakestill",
+    "save": "Lagre",
+    "dataZoom": "Datazoom",
+    "restore": "Gjenopprett",
+    "saveAsImage": "Lagre som bilde",
+    "positive": "Positiv",
+    "negative": "Negativ",
+    "neutral": "Nøytral",
+    "correlation": "Korrelasjon",
+    "significance": "Signifikans",
+    "dailyDataPoints": "Daglige datapunkter",
+    "emotionTrends": "Følelsestrender",
+    "correlationHeatmap": "Korrelasjonsvarmekart"
+  },
+  "overview": {
+    "title": "Oversikt",
+    "heroChart": "Nøkkeltall",
+    "insights": "Viktige innsikter",
+    "noInsights": "Ingen innsikter tilgjengelig ennå. Mer data vil forbedre analysen.",
+    "viewInExplore": "Vis i Utforsk",
+    "loadingChart": "Laster oversiktsdiagram..."
+  },
+  "explore": {
+    "title": "Utforsk",
+    "presets": {
+      "charts": "Diagrammer",
+      "patterns": "Mønstre",
+      "correlations": "Korrelasjoner"
+    },
+    "loadingPreset": "Laster {{preset}}...",
+    "switchingPreset": "Bytter til {{preset}}-visning",
+    "descriptions": {
+      "charts": "Interaktive datavisualiseringer og trender",
+      "patterns": "AI-drevet mønsteranalyse og innsikter",
+      "correlations": "Miljø- og atferdskorrelasjoner"
+    }
+  },
+  "quickQuestions": {
+    "title": "Hurtigspørsmål",
+    "subtitle": "Få øyeblikkelige innsikter med disse vanlige spørsmålene",
+    "triggerLabel": "Hurtigspørsmål",
+    "triggerTooltip": "Still vanlige analytiske spørsmål",
+    "selectQuestion": "Velg et spørsmål å utforske",
+    "navigatingTo": "Navigerer til {{preset}} analyse...",
+    "questions": {
+      "peakTiming": { "question": "Når skjer toppene?", "description": "Finn høyintensive øyeblikk og deres tidsmønstre" },
+      "activityLoad": { "question": "Hvilke aktiviteter øker belastningen?", "description": "Oppdag hvilke aktiviteter korrelerer med økt stress" },
+      "difficultTriggers": { "question": "Hva utløser vanskelige øyeblikk?", "description": "Identifiser mønstre i utfordrende følelsesmessige opplevelser" },
+      "sensoryChanges": { "question": "Hvordan endrer sensoriske behov seg?", "description": "Spor sensoriske preferanser og responser over tid" },
+      "timePatterns": { "question": "Hvilke mønstre dukker opp over tid?", "description": "Oppdag langsiktige trender og gjentakende mønstre" },
+      "bestEnvironments": { "question": "Hvilke miljøer fungerer best?", "description": "Finn miljøforhold som støtter suksess" }
+    },
+    "categories": {
+      "timing": "Tidsanalyse",
+      "triggers": "Utløseridentifikasjon",
+      "environmental": "Miljøfaktorer",
+      "patterns": "Mønstergjenkjenning",
+      "sensory": "Sensorisk analyse",
+      "correlations": "Relasjonsanalyse"
+    },
+    "actions": {
+      "exploring": "Utforsker...",
+      "applyingFilters": "Bruker filtre...",
+      "viewResults": "Vis resultater",
+      "closeQuestions": "Lukk spørsmål"
+    }
   },
   "filters": {
     "dateRange": "Datoområde",
     "emotionType": "Følelsestype",
     "sensoryType": "Sensorisk type",
     "intensity": "Intensitet",
-    "all": "Alle"
+    "all": "Alle",
+    "title": "Avanserte filtre",
+    "apply": "Bruk filtre",
+    "reset": "Tilbakestill alle",
+    "clear": "Tøm",
+    "activeFilters": "{count} aktive filtre",
+    "noActiveFilters": "Ingen aktive filtre",
+    "categories": {
+      "emotions": "Følelser",
+      "sensory": "Sensorisk",
+      "environmental": "Miljø",
+      "patterns": "Mønstre",
+      "advanced": "Avansert"
+    },
+    "emotions": {
+      "types": "Følelsestyper",
+      "intensity": "Intensitetsområde",
+      "triggers": "Utløsere",
+      "includeTriggers": "Inkluder utløsere",
+      "excludeTriggers": "Ekskluder utløsere",
+      "intensityMin": "Minimum: {value}",
+      "intensityMax": "Maksimum: {value}"
+    },
+    "sensory": {
+      "types": "Sensoriske typer",
+      "responses": "Responser",
+      "intensity": "Intensitetsområde",
+      "seeking": "Søkende",
+      "avoiding": "Unngående"
+    },
+    "environmental": {
+      "locations": "Steder",
+      "activities": "Aktiviteter",
+      "conditions": "Forhold",
+      "noiseLevel": "Støynivå",
+      "temperature": "Temperatur",
+      "lighting": "Belysning",
+      "weather": "Vær",
+      "timeOfDay": "Tid på dagen"
+    },
+    "patterns": {
+      "anomaliesOnly": "Vis kun anomalier",
+      "minConfidence": "Minimum tillit",
+      "patternTypes": "Mønstertyper",
+      "confidence": "Tillit: {value}%"
+    },
+    "advanced": {
+      "realtime": "Sanntidsfiltrering",
+      "presets": "Hurtigvalg",
+      "customFilters": "Egendefinerte filtre"
+    }
   },
   "correlations": {
     "title": "Korrelasjonsvarmekart",
@@ -311,6 +501,7 @@
     "none": "Ingen varsler",
     "noneUnresolved": "Ingen uløste varsler",
     "resolveTitle": "Løs varsel",
+    "resolveDescription": "Gå gjennom detaljene og legg til notater før du bekrefter.",
     "details": "Detaljer",
     "resolutionNotes": "Løsningsnotater",
     "resolutionNotesPlaceholder": "Beskriv tiltak eller observasjoner...",
@@ -320,7 +511,60 @@
     "resolveSuccess": "Varsel er løst",
     "resolveFailure": "Kunne ikke løse varsel. Prøv igjen.",
     "resolvedLabel": "Løst",
-    "dataPoints": "datapunkter"
+    "dataPoints": "datapunkter",
+    "dataPointsLabel": "{{count}} datapunkter",
+    "pinnedAlerts": "Festede varsler",
+    "pinAlert": "Fest varsel",
+    "unpinAlert": "Løsne varsel",
+    "noPinnedAlerts": "Ingen festede varsler",
+    "severityGroups": { "high": "Høy prioritet", "medium": "Middels prioritet", "low": "Lav prioritet" },
+    "alertCounts": "({count} varsler)",
+    "totalUnresolved": "Totalt uløste: {count}",
+    "actions": {
+      "expandGroup": "Utvid {severity} varsler",
+      "collapseGroup": "Skjul {severity} varsler",
+      "viewAllAlerts": "Vis alle varsler",
+      "managePinned": "Administrer festede varsler",
+      "clearAllPinned": "Tøm alle"
+    }
+  },
+  "dialogs": {
+    "alerts": {
+      "confirmClearPinnedTitle": "Tøm alle festede varsler?",
+      "confirmClearPinnedDescription": "Dette fjerner alle festede varsler fra sidepanelet. Du kan feste dem igjen senere."
+    }
+  },
+
+  "configTest": {
+    "title": "Tester av analyseoppsett",
+    "description": "Kontroller at konfigurasjonsendringer og cache-invalidering fungerer riktig",
+    "currentConfiguration": "Nåværende oppsett",
+    "alertLevel": "Varslingsnivå: {{level}}",
+    "minDataPoints": "Minimum datapunkter: {{count}}",
+    "cacheSize": "Cache-størrelse: {{size}}",
+    "runTests": "Kjør tester",
+    "testResults": "Testresultater",
+    "quickActions": "Hurtigtiltak",
+    "setConservative": "Sett konservativ",
+    "setSensitive": "Sett sensitiv",
+    "resetDefaults": "Tilbakestill til standard",
+    "clearCache": "Tøm cache"
+  },
+
+  "ai": {
+    "meta": {
+      "provider": "Leverandør",
+      "model": "Modell",
+      "confidence": "Sikkerhet",
+      "latency": "Latens",
+      "latencyValue": "{{value}} ms",
+      "lineage": "Datalinje",
+      "caveats": "Forbehold"
+    },
+    "mode": {
+      "ai": "AI",
+      "heuristic": "Heuristisk"
+    }
   },
 
   "insights": {
@@ -330,6 +574,10 @@
     "alerts": "Varsler",
     "noPatterns": "Ingen mønstre funnet ennå. Fortsett å samle data for bedre innsikt.",
     "explainPattern": "Forklar mønster",
+    "newInsightsAvailable": "Nye innsikter tilgjengelig",
+    "analyzingNewData": "Analyserer nye data",
+    "insightsUpdated": "Innsikter oppdatert",
+    "refreshComplete": "Oppdatering fullført",
     "patternExplain": {
       "title": "Hva betyr dette mønsteret?",
       "default": "Systemet har funnet et gjentakende mønster i dataene for denne perioden.",
@@ -355,6 +603,11 @@
       "negativeTrend": "Vurder tiltak – bare {{percentage}}% av nylige følelser har vært positive.",
       "analyticsActive": "Analysen er aktiv. Fortsett å samle data for mer detaljerte innsikter."
     }
+  },
+  "realtime": {
+    "realtimeDataUpdated": "Sanntidsdata oppdatert",
+    "insightsOutdated": "Innsikter utdatert",
+    "clickToRefresh": "Klikk for å oppdatere"
   },
   "confidence": {
     "low": "Lav sikkerhet",

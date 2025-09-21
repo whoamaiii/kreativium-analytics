@@ -103,6 +103,69 @@ export class LLMAnalysisEngine implements AnalysisEngine {
     return { tags: rankedTags, category, text, gradeBand, weights };
   }
 
+  private async resolveEvidenceContext(
+    studentId: string,
+    timeframe: TimeRange | undefined,
+    goals: Goal[]
+  ): Promise<EvidenceSource[] | undefined> {
+    if (AI_EVIDENCE_DISABLED) return undefined;
+
+    try {
+      let patterns: Pattern[] | undefined;
+      let correlations: Correlation[] | undefined;
+
+      try {
+        const heurPreview = await this.heuristic.analyzeStudent(studentId, timeframe, { bypassCache: false });
+        patterns = (heurPreview as any)?.patterns || [];
+        correlations = (heurPreview as any)?.correlations || [];
+      } catch (error) {
+        try {
+          logger.warn('[LLMAnalysisEngine] heuristic preview for evidence failed', { error: error instanceof Error ? error.message : String(error) });
+        } catch {
+          /* noop */
+        }
+      }
+
+      const student = dataStorage.getStudentById(studentId);
+      const domainCtx = this.buildDomainContext(goals, patterns, correlations, student?.grade);
+      if (!domainCtx.tags.length && !domainCtx.text && !domainCtx.category) return undefined;
+
+      const selectionOpts = {
+        gradeBand: domainCtx.gradeBand,
+        category: domainCtx.category,
+        text: domainCtx.text,
+        enforceDiversity: true,
+      } as const;
+
+      if (domainCtx.weights && domainCtx.weights.size > 0) {
+        try {
+          const weighted = Array.from(domainCtx.weights.entries()).map(([tag, weight]) => ({ tag, weight }));
+          return await selectEvidenceWeighted(weighted, 5, selectionOpts);
+        } catch (error) {
+          try {
+            logger.warn('[LLMAnalysisEngine] weighted evidence selection failed; falling back', { error: error instanceof Error ? error.message : String(error) });
+          } catch {
+            /* noop */
+          }
+        }
+      }
+
+      if (domainCtx.tags.length > 0) {
+        const topTags = domainCtx.tags.slice(0, 5);
+        return await selectEvidence(topTags, 5, selectionOpts);
+      }
+
+      return undefined;
+    } catch (error) {
+      try {
+        logger.warn('[LLMAnalysisEngine] evidence selection failed; proceeding without evidence', { error: error instanceof Error ? error.message : String(error) });
+      } catch {
+        /* noop */
+      }
+      return undefined;
+    }
+  }
+
   async analyzeStudent(
     studentId: string,
     timeframe?: TimeRange,
@@ -185,17 +248,18 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       const longHorizon = days > 60;
       const useMapReduce = longHorizon || tooManyRecords;
 
+      const evidenceContext = await this.resolveEvidenceContext(studentId, timeframe, goals);
+      const mapReduceOptions = { evidence: evidenceContext, aiProfile: options?.aiProfile } as const;
+
       let validated: any;
       let usedFallback = false;
       let repaired = false;
       let caveats: string[] = [];
 
       if (useMapReduce && start && end) {
-        // TODO: Map-reduce pipeline does not currently thread evidence selection or aiProfile into prompts.
-        // Consider updating summarizeChunk/reduceSummariesToFinalReport to use generateAnalysisPrompt with evidence and options.aiProfile.
         lineage = buildDataLineage({ entries, emotions, sensoryInputs, goals }, timeframe);
         const overallRange = { start, end, timezone: timeframe?.timezone } as any;
-        const mergedReport = await analyzeLargePeriod(entries, emotions, sensoryInputs, goals, overallRange);
+        const mergedReport = await analyzeLargePeriod(entries, emotions, sensoryInputs, goals, overallRange, mapReduceOptions);
         if (mergedReport) {
           validated = { ok: true, report: mergedReport, repaired: false, caveats: ['Map‑reduce pipeline benyttet for langt tidsrom'] };
         } else {
@@ -212,56 +276,6 @@ export class LLMAnalysisEngine implements AnalysisEngine {
         };
 
         lineage = buildDataLineage({ entries, emotions, sensoryInputs, goals }, timeframe);
-        // Select evidence context unless disabled via env flag
-        let evidenceContext: EvidenceSource[] | undefined = undefined;
-        if (!AI_EVIDENCE_DISABLED) {
-          try {
-            let pat: Pattern[] | undefined;
-            let corr: Correlation[] | undefined;
-            try {
-              // Use cached heuristic preview to avoid double work/token cost; consider lighter extraction in future.
-              const heurPreview = await this.heuristic.analyzeStudent(studentId, timeframe, { bypassCache: false });
-              pat = (heurPreview as any)?.patterns || [];
-              corr = (heurPreview as any)?.correlations || [];
-            } catch (e) {
-              // ignore heuristic preview errors
-            }
-            const student = dataStorage.getStudentById(studentId);
-            const domainCtx = this.buildDomainContext(goals, pat, corr, student?.grade);
-            if (domainCtx.tags.length > 0 || domainCtx.text || domainCtx.category) {
-              // Approach B: weighted evidence selection with backward compatibility.
-              let usedWeighted = false;
-              try {
-                if (domainCtx.weights && domainCtx.weights.size > 0) {
-                  const arr = Array.from(domainCtx.weights.entries()).map(([tag, weight]) => ({ tag, weight }));
-                  evidenceContext = await selectEvidenceWeighted(arr, 5, {
-                    gradeBand: domainCtx.gradeBand,
-                    category: domainCtx.category,
-                    text: domainCtx.text,
-                    enforceDiversity: true,
-                  });
-                  usedWeighted = true;
-                }
-              } catch (_e) {
-                usedWeighted = false;
-              }
-              if (!usedWeighted) {
-                // Fallback Approach A: pass only top-K tags to bias selection toward higher weights
-                const K = 5; // Keep K small to preserve strong bias; configurable if needed
-                const topTags = domainCtx.tags.slice(0, K);
-                evidenceContext = await selectEvidence(topTags, 5, {
-                  gradeBand: domainCtx.gradeBand,
-                  category: domainCtx.category,
-                  text: domainCtx.text,
-                  enforceDiversity: true,
-                });
-              }
-            }
-          } catch (e) {
-            logger.warn('[LLMAnalysisEngine] evidence selection failed; proceeding without evidence', { error: e instanceof Error ? e.message : String(e) });
-            evidenceContext = undefined;
-          }
-        }
         const { system, user } = generateAnalysisPrompt({ ...limited, timeframe }, evidenceContext, options?.aiProfile ?? 'default');
         const { data: raw, response } = await openRouterClient.chatJSON(
           { system, user },

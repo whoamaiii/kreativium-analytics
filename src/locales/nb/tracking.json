@@ -2,6 +2,13 @@
   "session": {
     "title": "Sporingsøkt for {{studentName}}",
     "summary": "Øktoversikt",
+    "sessionTime": "Øktens varighet",
+    "startHint": "Start sporing ved å legge til følelser eller sensoriske innganger nedenfor",
+    "emotionsThisSession": "Følelser i denne økten",
+    "sensoryInputsThisSession": "Sensoriske innganger i denne økten",
+    "duration": "Øktens varighet: {{minutes}} minutter",
+    "unsavedConfirm": "Du har ulagrede data. Er du sikker på at du vil avbryte?",
+    "description": "Registrer følelser og sensoriske responser for denne økten",
     "emotionsRecorded": "{{count}} følelse registrert",
     "emotionsRecorded_plural": "{{count}} følelser registrert",
     "sensoryInputsRecorded": "{{count}} sensorisk inngang registrert",
@@ -17,8 +24,11 @@
   "emotions": {
     "title": "Følelser",
     "addEmotion": "Legg til følelse",
+    "added": "La til {{emotion}} (intensitet {{intensity}})",
     "selectEmotion": "Velg følelse",
     "intensity": "Intensitet",
+    "outOf": "/{{max}}",
+    "context": "Kontekst",
     "duration": "Varighet",
     "notes": "Notater",
     "types": {
@@ -50,6 +60,7 @@
   "sensory": {
     "title": "Sensorisk inngang",
     "addInput": "Legg til sensorisk inngang",
+    "added": "La til {{type}}: {{response}}",
     "selectType": "Velg type",
     "response": "Respons",
     "intensity": "Intensitet",

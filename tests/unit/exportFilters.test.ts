@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDateRange, isCustomRangeInvalid, DatePreset } from '@/lib/dateRange';
+import { computeDateRange, isCustomRangeInvalid } from '@/lib/dateRange';
 
 describe('export filters helpers', () => {
   it('computes relative presets', () => {

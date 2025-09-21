@@ -340,9 +340,9 @@ const StudentProfile = () => {
             student,
             dateRange: { start, end },
             data: {
-              entries: filteredData.entries as unknown as any[],
-              emotions: filteredData.emotions as unknown as any[],
-              sensoryInputs: filteredData.sensoryInputs as unknown as any[],
+              entries: filteredData.entries as TrackingEntry[],
+              emotions: filteredData.emotions as EmotionEntry[],
+              sensoryInputs: filteredData.sensoryInputs as SensoryEntry[],
             },
             analytics: {
               patterns: [],
@@ -353,7 +353,7 @@ const StudentProfile = () => {
             },
           } as unknown as AnalyticsExportData;
 
-          await analyticsExport.exportTo('pdf' as any, exportData);
+          await analyticsExport.exportTo('pdf', exportData);
           toast.success('Report exported as PDF');
           return;
         }

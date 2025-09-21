@@ -32,7 +32,7 @@ export const CorrelationsPanel = memo(function CorrelationsPanel({ filteredData 
   if (hasEnoughData) {
     try {
       const matrix = enhancedPatternAnalysis.generateCorrelationMatrix(filteredData.entries);
-      option = buildCorrelationHeatmapOption(matrix);
+      option = buildCorrelationHeatmapOption(matrix, tAnalytics);
     } catch {
       option = null;
     }

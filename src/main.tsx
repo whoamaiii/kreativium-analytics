@@ -14,8 +14,8 @@ setRuntimeEnvFromVite();
 // Dev-only: seed localStorage fallbacks so AI works even if Vite env is missing
 if (import.meta.env.DEV) {
   try {
-    const key = (import.meta as any)?.env?.VITE_OPENROUTER_API_KEY as string | undefined;
-    const model = (import.meta as any)?.env?.VITE_AI_MODEL_NAME as string | undefined;
+    const key = import.meta.env.VITE_OPENROUTER_API_KEY as string | undefined;
+    const model = import.meta.env.VITE_AI_MODEL_NAME as string | undefined;
     const ls = (k: string) => {
       try { return localStorage.getItem(k) || ''; } catch { return ''; }
     };

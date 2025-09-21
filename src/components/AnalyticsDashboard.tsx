@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,11 +8,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import React, { Suspense } from 'react';
 import { AnalyticsSettings } from "@/components/AnalyticsSettings";
-import { LazyChartsPanel } from '@/components/lazy/LazyChartsPanel';
-import { LazyPatternsPanel } from '@/components/lazy/LazyPatternsPanel';
-import { LazyCorrelationsPanel } from '@/components/lazy/LazyCorrelationsPanel';
+import { LazyOverviewPanel } from '@/components/lazy/LazyOverviewPanel';
+import { LazyExplorePanel } from '@/components/lazy/LazyExplorePanel';
 import { LazyAlertsPanel } from '@/components/lazy/LazyAlertsPanel';
 import {
   TrendingUp,
@@ -24,6 +22,7 @@ import {
   FileSpreadsheet,
   FileJson,
   Settings,
+  RefreshCw,
 } from "lucide-react";
 import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/student";
 import { useAnalyticsWorker } from "@/hooks/useAnalyticsWorker";
@@ -32,11 +31,15 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { analyticsExport, ExportFormat } from "@/lib/analyticsExport";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { doOnce } from "@/lib/rateLimit";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { useSyncedTabParam } from '@/hooks/useSyncedTabParam';
 import { Badge } from '@/components/ui/badge';
 import { useAsyncState } from '@/hooks/useAsyncState';
 import { ExportDialog, type ExportOptions } from '@/components/ExportDialog';
+import { FiltersDrawer } from '@/components/analytics/FiltersDrawer';
+import { QuickQuestions } from '@/components/analytics/QuickQuestions';
+import type { FilterCriteria } from '@/lib/filterUtils';
 
 // Typed tab keys to avoid stringly-typed errors
 
@@ -87,21 +90,95 @@ export const AnalyticsDashboard = memo(({
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [isSeeding, setIsSeeding] = useState<boolean>(false);
   const visualizationRef = useRef<HTMLDivElement>(null);
+  const [hasNewInsights, setHasNewInsights] = useState<boolean>(false);
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(() => false);
+  const [pendingRefresh, setPendingRefresh] = useState<boolean>(false);
+  const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
+  const [filters, setFilters] = useState<FilterCriteria>(() => ({
+    dateRange: { start: null, end: null },
+    emotions: { types: [], intensityRange: [0, 5], includeTriggers: [], excludeTriggers: [] },
+    sensory: { types: [], responses: [], intensityRange: [0, 5] },
+    environmental: {
+      locations: [],
+      activities: [],
+      conditions: { noiseLevel: [0, 10], temperature: [-10, 40], lighting: [] },
+      weather: [],
+      timeOfDay: [],
+    },
+    patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },
+    realtime: false,
+  }));
   
   // Always call hook at top level - hooks cannot be inside try-catch
-  const { results, isAnalyzing, /* eslint-disable @typescript-eslint/no-unused-vars */ error, /* eslint-enable @typescript-eslint/no-unused-vars */ runAnalysis, invalidateCacheForStudent } = useAnalyticsWorker({ precomputeOnIdle: false });
+  const { results, isAnalyzing, error, runAnalysis, invalidateCacheForStudent } = useAnalyticsWorker({ precomputeOnIdle: false });
+  // Stabilize runAnalysis usage to avoid effect re-runs from changing function identity
+  const runAnalysisRef = useRef(runAnalysis);
+  useEffect(() => { runAnalysisRef.current = runAnalysis; }, [runAnalysis]);
+
+  // Stabilize student reference for analytics operations to avoid
+  // retriggering effects when parent passes a new object instance.
+  const analyticsStudent = useMemo(() => student, [student]);
+
+  // Derive a stable signature for filteredData so effects do not re-run on
+  // mere object identity changes from parent re-renders.
+  const dataSignature = useMemo(() => {
+    const entries = filteredData.entries || [];
+    const emotions = filteredData.emotions || [];
+    const sensory = filteredData.sensoryInputs || [];
+    const toTime = (v: unknown): number => {
+      try {
+        const dt = v instanceof Date ? v : new Date(v as string);
+        return isNaN(dt.getTime()) ? 0 : dt.getTime();
+      } catch {
+        return 0;
+      }
+    };
+    const first = entries[0]?.timestamp;
+    const last = entries.length > 0 ? entries[entries.length - 1]?.timestamp : undefined;
+    return [entries.length, emotions.length, sensory.length, toTime(first), toTime(last)].join('|');
+  }, [filteredData]);
+
+  // Shared normalization for analysis input (must be declared before first use)
+  const normalizeForAnalysis = useCallback((d: typeof filteredData) => {
+    const coerce = (v: unknown): Date => {
+      try {
+        if (v instanceof Date && !isNaN(v.getTime())) return v;
+        if (typeof v === 'string' || typeof v === 'number') {
+          const dt = new Date(v);
+          return isNaN(dt.getTime()) ? new Date() : dt;
+        }
+        return new Date();
+      } catch (error) {
+        logger.error('Error coercing timestamp:', v, error);
+        return new Date();
+      }
+    };
+    try {
+      return {
+        entries: (d.entries || []).map(e => ({ ...e, timestamp: coerce(e.timestamp) })),
+        emotions: (d.emotions || []).map(e => ({ ...e, timestamp: coerce(e.timestamp) })),
+        sensoryInputs: (d.sensoryInputs || []).map(s => ({ ...s, timestamp: coerce(s.timestamp) })),
+      };
+    } catch (error) {
+      logger.error('Error normalizing filteredData:', error);
+      return { entries: [], emotions: [], sensoryInputs: [] };
+    }
+  }, []);
+
+  // Normalize once when the signature changes to avoid churn on identity-only changes
+  const normalizedData = useMemo(() => normalizeForAnalysis(filteredData), [normalizeForAnalysis, dataSignature]);
 
   // Dev-only guard
-  const isDevSeedEnabled = (() => {
+  const isDevSeedEnabled = useMemo(() => {
     try {
-      // Vite-style envs
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const env: any = (import.meta as any)?.env ?? {};
-      return Boolean(env?.DEV || env?.MODE === 'development' || env?.VITE_ENABLE_DEV_SEED === 'true');
+      const meta = import.meta as unknown as { env?: Record<string, unknown> };
+      const env = meta.env ?? {};
+      const mode = typeof env.MODE === 'string' ? env.MODE : undefined;
+      return Boolean(env.DEV || mode === 'development' || env.VITE_ENABLE_DEV_SEED === 'true');
     } catch {
       return false;
     }
-  })();
+  }, []);
 
   const handleSeedDemo = useCallback(async () => {
     setIsSeeding(true);
@@ -112,69 +189,104 @@ export const AnalyticsDashboard = memo(({
       toast.success(String(tAnalytics('dev.seed.success', { students: totalStudentsAffected, entries: totalEntriesCreated })));
       // Invalidate analysis cache for this student and re-run to reflect new data if provided by parent
       invalidateCacheForStudent(student.id);
-      runAnalysis(filteredData);
+      runAnalysisRef.current(normalizedData, { useAI, student: analyticsStudent });
     } catch (e) {
       logger.error('[AnalyticsDashboard] Demo seed failed', { error: e });
       toast.error(String(tAnalytics('dev.seed.failure')));
     } finally {
       setIsSeeding(false);
     }
-  }, [filteredData, invalidateCacheForStudent, runAnalysis, student.id, tAnalytics]);
+  }, [normalizedData, invalidateCacheForStudent, student.id, tAnalytics, useAI, analyticsStudent]);
 
-  // Effect to trigger the analysis in the worker whenever the filtered data changes.
+  // (moved earlier)
+
+  // Effect to trigger the analysis when inputs actually change.
   useEffect(() => {
-    // Normalize incoming filteredData timestamps to Date instances for charts/UI safety
-    const normalize = (d: typeof filteredData) => {
-      const coerce = (v: unknown): Date => {
-        try {
-          if (v instanceof Date && !isNaN(v.getTime())) return v;
-          if (typeof v === 'string' || typeof v === 'number') {
-            const dt = new Date(v);
-            return isNaN(dt.getTime()) ? new Date() : dt;
-          }
-          return new Date();
-        } catch (error) {
-          logger.error('Error coercing timestamp:', v, error);
-          return new Date();
-        }
-      };
-      
-      try {
-        return {
-          entries: (d.entries || []).map(e => ({ ...e, timestamp: coerce(e.timestamp) })),
-          emotions: (d.emotions || []).map(e => ({ ...e, timestamp: coerce(e.timestamp) })),
-          sensoryInputs: (d.sensoryInputs || []).map(s => ({ ...s, timestamp: coerce(s.timestamp) })),
-        };
-      } catch (error) {
-        logger.error('Error normalizing filteredData:', error);
-        return {
-          entries: [],
-          emotions: [],
-          sensoryInputs: []
-        };
-      }
-    };
-    
-    if (filteredData && filteredData.entries) {
-      runAnalysis(normalize(filteredData), { useAI, student });
+    if (normalizedData && normalizedData.entries) {
+      setPendingRefresh(true);
+      Promise
+        .resolve(runAnalysisRef.current(normalizedData, { useAI, student: analyticsStudent }))
+        .finally(() => {
+          // Clear badge regardless of outcome to reflect latest run
+          setHasNewInsights(false);
+          setPendingRefresh(false);
+        });
     }
     // Ensure student analytics exists for all students, including new and mock
     analyticsManager.initializeStudentAnalytics(student.id);
-  }, [student.id, filteredData, runAnalysis, useAI, student]);
+  }, [student.id, dataSignature, useAI, analyticsStudent, normalizedData]);
 
-  // Cleanup on unmount
+  const handleCacheClear = useCallback((event: Event) => {
+    const customEvent = event as CustomEvent<{ studentId?: string } | undefined>;
+    const targetStudentId = customEvent.detail?.studentId;
+    if (targetStudentId && targetStudentId !== student.id) {
+      return;
+    }
+    setHasNewInsights(true);
+  }, [student.id]);
+
+  // Listen for global/student cache clear events and surface a "new insights" indicator
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handler = (event: Event) => handleCacheClear(event);
+    window.addEventListener('analytics:cache:clear', handler);
+    window.addEventListener('analytics:cache:clear:student', handler);
     return () => {
-      // Component cleanup noop to satisfy no-empty
-      void 0;
+      window.removeEventListener('analytics:cache:clear', handler);
+      window.removeEventListener('analytics:cache:clear:student', handler);
     };
-  }, []);
+  }, [handleCacheClear]);
+
+  // Detect incoming data changes to hint that insights may be outdated
+  const prevCountsRef = useRef<{ entries: number; emotions: number; sensory: number }>({ entries: 0, emotions: 0, sensory: 0 });
+  useEffect(() => {
+    try {
+      const prev = prevCountsRef.current;
+      const next = {
+        entries: filteredData.entries?.length || 0,
+        emotions: filteredData.emotions?.length || 0,
+        sensory: filteredData.sensoryInputs?.length || 0,
+      };
+      if (next.entries > prev.entries || next.emotions > prev.emotions || next.sensory > prev.sensory) {
+        setHasNewInsights(true);
+      }
+      prevCountsRef.current = next;
+    } catch { /* noop */ }
+  }, [filteredData.entries?.length, filteredData.emotions?.length, filteredData.sensoryInputs?.length]);
+
+  // Manual refresh helper kept near auto-refresh effect for shared logic
+  const handleManualRefresh = useCallback(() => {
+    setPendingRefresh(true);
+    runAnalysisRef.current(normalizedData, { useAI, student: analyticsStudent });
+  }, [normalizedData, useAI, analyticsStudent]);
+
+  // Auto-refresh if enabled
+  useEffect(() => {
+    if (!autoRefresh || !hasNewInsights) return undefined;
+    const timeoutId = window.setTimeout(() => {
+      setPendingRefresh(true);
+      runAnalysisRef.current(normalizedData, { useAI, student: analyticsStudent });
+    }, 1200);
+    return () => window.clearTimeout(timeoutId);
+  }, [autoRefresh, hasNewInsights, normalizedData, useAI, analyticsStudent]);
+
+  // Clear indicator when our triggered analysis completes
+  useEffect(() => {
+    if (!isAnalyzing && pendingRefresh) {
+      setHasNewInsights(false);
+      setPendingRefresh(false);
+    }
+  }, [isAnalyzing, pendingRefresh]);
+
+  // Rate-limited error logging (once per minute per message)
+  useEffect(() => {
+    if (!error) return;
+    doOnce('analytics_ui_error_' + String(error), 60_000, () => logger.error('[AnalyticsDashboard] Analytics error surfaced to user', { error }));
+  }, [error]);
 
   // useMemo hooks to prevent re-calculating derived data on every render.
   const patterns = useMemo(() => results?.patterns || [], [results]);
   const correlations = useMemo(() => results?.correlations || [], [results]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const environmentalCorrelations = useMemo(() => results?.environmentalCorrelations || results?.correlations || [], [results]);
   const insights = useMemo(() => results?.insights || [], [results]);
 
   // Decouple visualization rendering from worker readiness to avoid spinners.
@@ -185,115 +297,113 @@ export const AnalyticsDashboard = memo(({
     try {
       setIsExporting(true);
       setExportProgress(5);
+
       await exportState.run(async () => {
-      const dateRange = {
-        start: filteredData.entries.length > 0
-          ? filteredData.entries.reduce((min, entry) => {
-              const entryTime = entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp);
-              const minTime = min instanceof Date ? min : new Date(min);
-              return entryTime < minTime ? entryTime : minTime;
-            }, filteredData.entries[0].timestamp)
-          : new Date(),
-        end: filteredData.entries.length > 0
-          ? filteredData.entries.reduce((max, entry) => {
-              const entryTime = entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp);
-              const maxTime = max instanceof Date ? max : new Date(max);
-              return entryTime > maxTime ? entryTime : maxTime;
-            }, filteredData.entries[0].timestamp)
-          : new Date()
-      };
+        const dateRange = (() => {
+          if (filteredData.entries.length === 0) {
+            const now = new Date();
+            return { start: now, end: now };
+          }
 
-      setExportProgress(20);
-      const exportData = {
-        student,
-        dateRange,
-        data: filteredData,
-        analytics: {
-          patterns,
-          correlations,
-          insights,
-          predictiveInsights: results?.predictiveInsights || [],
-          anomalies: results?.anomalies || []
-        },
-        charts: format === 'pdf' && visualizationRef.current
-          ? [{
-              element: visualizationRef.current,
-              title: String(tAnalytics('export.chartTitle'))
-            }]
-          : undefined,
-        chartExports: format === 'pdf'
-          ? await (async () => {
-              try {
-                const regs = (await import('@/lib/chartRegistry')).chartRegistry.all();
-                if (!regs || regs.length === 0) {
-                  toast.error(String(tAnalytics('export.noCharts')));
-                  return [];
-                }
-                // Prefer charts matching the current student and overlapping date range
-                const selected = regs
-                  .filter(r => !r.studentId || r.studentId === student.id)
-                  .filter(r => {
-                    if (!r.dateRange) return true;
-                    // simple overlap check
-                    const s = r.dateRange.start.getTime();
-                    const e = r.dateRange.end.getTime();
-                    const ds = (dateRange.start as Date).getTime();
-                    const de = (dateRange.end as Date).getTime();
-                    return !(e < ds || s > de);
-                  })
-                  .slice(0, 6);
-                setExportProgress(40);
-                const items = await Promise.all(selected.map(async r => {
-                  const methods = r.getMethods();
-                  const dataURL = methods.getImage({ pixelRatio: 2, backgroundColor: '#ffffff' });
-                  const svgString = methods.getSVG();
-                  return {
-                    title: r.title,
-                    type: r.type,
-                    // pass through metadata when we later add smarter layout/selection
-                    // filters: r.filters,
-                    // dateRange: r.dateRange,
-                    dataURL: dataURL,
-                    svgString: svgString,
-                  };
-                }));
-                const filtered = items.filter(i => i.dataURL || i.svgString);
-                if (filtered.length === 0) {
-                  toast.error(String(tAnalytics('export.noCharts')));
-                }
-                return filtered;
-              } catch (e) {
-                logger.error('Failed to collect chart exports', e);
-                toast.error(String(tAnalytics('export.noCharts')));
-                return [];
-              }
-            })()
-          : undefined
-      };
+          const [firstEntry] = filteredData.entries;
+          const initial = firstEntry.timestamp instanceof Date ? firstEntry.timestamp : new Date(firstEntry.timestamp);
+          const accumulator = filteredData.entries.reduce<{ minDate: Date; maxDate: Date }>((acc, entry) => {
+            const rawTimestamp = entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp);
+            const timestamp = Number.isNaN(rawTimestamp.getTime()) ? acc.minDate : rawTimestamp;
+            return {
+              minDate: timestamp < acc.minDate ? timestamp : acc.minDate,
+              maxDate: timestamp > acc.maxDate ? timestamp : acc.maxDate,
+            };
+          }, { minDate: initial, maxDate: initial });
 
-           setExportProgress(65);
-           await analyticsExport.exportTo(format, exportData, { pdf: { chartQuality: opts?.chartQuality as any } });
-           setExportProgress(100);
-           switch (format) {
-             case 'pdf':
-               toast.success(String(tAnalytics('export.success.pdf')));
-               break;
-             case 'csv':
-               toast.success(String(tAnalytics('export.success.csv')));
-               break;
-             case 'json':
-               toast.success(String(tAnalytics('export.success.json')));
-               break;
-           }
+          return { start: accumulator.minDate, end: accumulator.maxDate };
+        })();
+
+        setExportProgress(20);
+
+        const collectChartExports = async () => {
+          if (format !== 'pdf') return undefined;
+          try {
+            const { chartRegistry } = await import('@/lib/chartRegistry');
+            const registrations = chartRegistry.all();
+            if (registrations.length === 0) {
+              toast.error(String(tAnalytics('export.noCharts')));
+              return [] as Array<{ title: string; type?: string; dataURL?: string; svgString?: string }>;
+            }
+
+            const overlappingCharts = registrations
+              .filter(chart => !chart.studentId || chart.studentId === student.id)
+              .filter(chart => {
+                if (!chart.dateRange) return true;
+                const chartStart = chart.dateRange.start.getTime();
+                const chartEnd = chart.dateRange.end.getTime();
+                const exportStart = dateRange.start.getTime();
+                const exportEnd = dateRange.end.getTime();
+                return !(chartEnd < exportStart || chartStart > exportEnd);
+              })
+              .slice(0, 6);
+
+            setExportProgress(40);
+
+            const exports = await Promise.all(overlappingCharts.map(async chart => {
+              const methods = chart.getMethods();
+              return {
+                title: chart.title,
+                type: chart.type,
+                dataURL: methods.getImage({ pixelRatio: 2, backgroundColor: '#ffffff' }),
+                svgString: methods.getSVG(),
+              };
+            }));
+
+            const usableExports = exports.filter(item => item.dataURL || item.svgString);
+            if (usableExports.length === 0) {
+              toast.error(String(tAnalytics('export.noCharts')));
+            }
+            return usableExports;
+          } catch (collectError) {
+            logger.error('Failed to collect chart exports', collectError);
+            toast.error(String(tAnalytics('export.noCharts')));
+            return [] as Array<{ title: string; type?: string; dataURL?: string; svgString?: string }>;
+          }
+        };
+
+        const exportData = {
+          student,
+          dateRange,
+          data: filteredData,
+          analytics: {
+            patterns,
+            correlations,
+            insights,
+            predictiveInsights: results?.predictiveInsights || [],
+            anomalies: results?.anomalies || [],
+          },
+          charts: format === 'pdf' && visualizationRef.current
+            ? [{ element: visualizationRef.current, title: String(tAnalytics('export.chartTitle')) }]
+            : undefined,
+          chartExports: await collectChartExports(),
+        } as const;
+
+        setExportProgress(65);
+        const pdfOptions = opts?.chartQuality ? { pdf: { chartQuality: opts.chartQuality } } : undefined;
+        await analyticsExport.exportTo(format, exportData, pdfOptions);
+
+        setExportProgress(100);
+
+        const successMessageKey: Record<ExportFormat, string> = {
+          pdf: 'export.success.pdf',
+          csv: 'export.success.csv',
+          json: 'export.success.json',
+        };
+        toast.success(String(tAnalytics(successMessageKey[format])));
       });
-        } catch (error) {
-          logger.error('Export failed:', error);
-          toast.error(String(tAnalytics('export.failure')));
-        }
-      finally {
-        setIsExporting(false);
-      }
-      }, [filteredData, student, patterns, correlations, insights, results, tAnalytics, exportState]);
+    } catch (error) {
+      logger.error('Export failed:', error);
+      toast.error(String(tAnalytics('export.failure')));
+    } finally {
+      setIsExporting(false);
+    }
+  }, [exportState, filteredData, patterns, correlations, insights, results, student, tAnalytics]);
 
   const handleExport = useCallback((format: ExportFormat) => {
     if (format === 'pdf') {
@@ -303,30 +413,9 @@ export const AnalyticsDashboard = memo(({
     void doExport(format);
   }, [doExport]);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getPatternIcon = (type: string) => {
-    switch (type) {
-      case 'emotion':
-        return <Brain className="h-4 w-4" />;
-      case 'sensory':
-        return <Eye className="h-4 w-4" />;
-      case 'environmental':
-        return <BarChart3 className="h-4 w-4" />;
-      default:
-        return <TrendingUp className="h-4 w-4" />;
-    }
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence > 0.7) return 'text-green-600';
-    if (confidence > 0.4) return 'text-yellow-600';
-    return 'text-orange-600';
-  };
-
-// Track active tab synced with URL
+  // Track active tab synced with URL
   // URL-synced hook for persistence across reloads and deep links
-  const [activeTab, setActiveTab] = useSyncedTabParam({ debounceMs: 150, paramKey: 'tab', defaultTab: 'charts' });
+  const [activeTab, setActiveTab] = useSyncedTabParam({ debounceMs: 150, paramKey: 'tab', defaultTab: 'overview' });
 
   // Live region for announcing tab changes
   const [liveMessage, setLiveMessage] = useState<string>("");
@@ -351,6 +440,35 @@ export const AnalyticsDashboard = memo(({
         {String(tAnalytics('skipToContent'))}
       </a>
       <section role="region" aria-labelledby="analytics-dashboard-title" className="space-y-6">
+      {error && !isAnalyzing && (
+        <Card role="alert" aria-live="assertive" className="border-destructive">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-destructive">
+              {String(tAnalytics('worker.processingFailed'))}
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" aria-label={String(tAnalytics('worker.fallbackMode'))}>
+                {String(tAnalytics('worker.fallbackMode'))}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-destructive mb-3">{error}</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              {String(tAnalytics('worker.workerErrorDescription'))} {String(tAnalytics('worker.retryInstructions'))}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button variant="default" size="sm" onClick={handleManualRefresh} aria-label={String(tAnalytics('actions.retryAnalysis'))}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {String(tAnalytics('actions.retryAnalysis'))}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { try { window?.location?.reload(); } catch {} }}>
+                {String(tAnalytics('actions.tryAgain'))}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       {/* Hidden live region for announcing tab changes */}
       <div id="analytics-live-region" className="sr-only" aria-live="polite" aria-atomic="true" role="status">
         {liveMessage}
@@ -366,6 +484,11 @@ export const AnalyticsDashboard = memo(({
             <Badge variant={useAI ? 'default' : 'secondary'} data-testid="ai-mode-badge" aria-label={useAI ? String(tAnalytics('ai.mode.ai', { defaultValue: 'AI' })) : String(tAnalytics('ai.mode.heuristic', { defaultValue: 'Heuristic' }))}>
               {useAI ? String(tAnalytics('ai.mode.ai', { defaultValue: 'AI' })) : String(tAnalytics('ai.mode.heuristic', { defaultValue: 'Heuristic' }))}
             </Badge>
+            {hasNewInsights && (
+              <Badge variant="default" data-testid="new-insights-badge" aria-live="polite">
+                {String(tAnalytics('insights.newInsightsAvailable', { defaultValue: 'New insights available' }))}
+              </Badge>
+            )}
             {isDevSeedEnabled && (
               <Button
                 variant="outline"
@@ -378,6 +501,66 @@ export const AnalyticsDashboard = memo(({
                 {isSeeding ? String(tAnalytics('dev.seed.seeding')) : String(tAnalytics('dev.seed.button'))}
               </Button>
             )}
+            {hasNewInsights && (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleManualRefresh}
+                aria-label={String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}
+                title={String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">{String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}</span>
+              </Button>
+            )}
+            {/* Optional auto-refresh toggle */}
+            <Button
+              variant={autoRefresh ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setAutoRefresh(v => !v)}
+              aria-pressed={autoRefresh}
+              aria-label={String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
+              title={String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
+            >
+              {String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
+            </Button>
+            {/* Filters toggle with active count */}
+            <Button
+              variant={filtersOpen ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFiltersOpen(true)}
+              aria-label={String(tAnalytics('filters.title'))}
+              title={String(tAnalytics('filters.title'))}
+            >
+              {String(tAnalytics('filters.title'))}
+              {/* Simple active count heuristic */}
+              {(() => {
+                const count =
+                  (filters.emotions.types.length > 0 ? 1 : 0) +
+                  (filters.sensory.types.length > 0 || filters.sensory.responses.length > 0 ? 1 : 0) +
+                  (filters.environmental.locations.length + filters.environmental.activities.length + filters.environmental.conditions.lighting.length + filters.environmental.weather.length + filters.environmental.timeOfDay.length > 0 ? 1 : 0) +
+                  (filters.patterns.patternTypes.length > 0 || filters.patterns.anomaliesOnly || filters.patterns.minConfidence > 0 ? 1 : 0) +
+                  (filters.dateRange.start || filters.dateRange.end ? 1 : 0);
+                return count > 0 ? <Badge variant="secondary" className="ml-2">{count}</Badge> : null;
+              })()}
+            </Button>
+            {/* Quick Questions */}
+            <QuickQuestions
+              className="hidden sm:inline-flex"
+              onNavigate={(tab, preset) => {
+                setActiveTab(tab);
+                try {
+                  const url = new URL(window.location.href);
+                  url.searchParams.set('tab', tab);
+                  url.searchParams.set('preset', preset);
+                  window.history.replaceState(window.history.state, '', url.toString());
+                } catch {}
+              }}
+              onFiltersApply={(criteria) => {
+                setFilters(criteria);
+                setFiltersOpen(false);
+              }}
+            />
             <Button
               variant="outline"
               size="sm"
@@ -500,7 +683,7 @@ export const AnalyticsDashboard = memo(({
               {typeof results.ai.latencyMs === 'number' && (
                 <div>
                   <span className="text-muted-foreground">{String(tAnalytics('ai.meta.latency', { defaultValue: 'Latency' }))}: </span>
-                  <span data-testid="ai-latency">{String(results.ai.latencyMs)} ms</span>
+                  <span data-testid="ai-latency">{String(tAnalytics('ai.meta.latencyValue', { value: Math.round(results.ai.latencyMs) }))}</span>
                 </div>
               )}
               {Array.isArray(results.ai.dataLineage) && results.ai.dataLineage.length > 0 && (
@@ -522,7 +705,7 @@ export const AnalyticsDashboard = memo(({
 
       {/* Main tabbed interface for displaying detailed analysis results. */}
       <Tabs value={activeTab} onValueChange={setActiveTab as (v: string) => void} className="w-full">
-        <TabsList className="grid w-full grid-cols-4 relative z-10" aria-label={String(tAnalytics('tabs.label'))}>
+        <TabsList className="grid w-full grid-cols-3 relative z-10" aria-label={String(tAnalytics('tabs.label'))}>
           {TABS.map(({ key, labelKey, testId, ariaLabelKey }) => (
             <TabsTrigger
               key={key}
@@ -535,28 +718,20 @@ export const AnalyticsDashboard = memo(({
           ))}
         </TabsList>
 
-        <TabsContent id="analytics-tabpanel" value="charts" className="space-y-6" tabIndex={-1}>
+        <TabsContent id="analytics-tabpanel" value="overview" className="space-y-6" tabIndex={-1}>
           <div ref={visualizationRef}>
             <ErrorBoundary showToast={false}>
               <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
-                <LazyChartsPanel studentName={student.name} filteredData={filteredData} />
+                <LazyOverviewPanel studentName={student.name} filteredData={filteredData} insights={insights} />
               </Suspense>
             </ErrorBoundary>
           </div>
         </TabsContent>
 
-        <TabsContent value="patterns" className="space-y-6" aria-busy={isAnalyzing}>
+        <TabsContent value="explore" className="space-y-6" aria-busy={isAnalyzing}>
           <ErrorBoundary showToast={false}>
             <Suspense fallback={<div className="h-[280px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
-              <LazyPatternsPanel filteredData={filteredData} useAI={useAI} student={student} />
-            </Suspense>
-          </ErrorBoundary>
-        </TabsContent>
-
-        <TabsContent value="correlations" className="space-y-6">
-          <ErrorBoundary showToast={false}>
-            <Suspense fallback={<div className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
-              <LazyCorrelationsPanel filteredData={filteredData} />
+              <LazyExplorePanel studentName={student.name} filteredData={filteredData} useAI={useAI} student={student} />
             </Suspense>
           </ErrorBoundary>
         </TabsContent>
@@ -582,6 +757,16 @@ export const AnalyticsDashboard = memo(({
           onClose={() => setShowSettings(false)}
         />
       )}
+      {/* Filters Drawer */}
+      <FiltersDrawer
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        onFiltersApply={(criteria) => {
+          setFilters(criteria);
+          // Optional: re-run analysis if filters impact analysis inputs (kept lightweight here)
+        }}
+        initialFilters={filters}
+      />
       </section>
       <ExportDialog
         open={exportDialogOpen}

@@ -1,7 +1,12 @@
 import { TrackingEntry, EmotionEntry, SensoryEntry, EnvironmentalEntry } from '@/types/student';
 import { dataStorage } from '@/lib/dataStorage';
 import { analyticsManager } from '@/lib/analyticsManager';
+import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/saveTrackingEntry';
+import { assessSessionQuality } from '@/lib/tracking/dataQuality';
+import { validateSession as runSessionValidation } from '@/lib/tracking/validation';
 import { logger } from '@/lib/logger';
+import type { QualityAssessmentResult } from '@/lib/tracking/dataQuality';
+import type { TrackingValidationRules, ValidationResult } from '@/lib/tracking/validation';
 
 /**
  * Session metadata for tracking and recovery
@@ -21,14 +26,7 @@ export interface SessionMetadata {
 /**
  * Session quality assessment
  */
-export interface SessionQuality {
-  score: number; // 0-100
-  completeness: number; // 0-100
-  consistency: number; // 0-100
-  richness: number; // 0-100
-  issues: string[];
-  recommendations: string[];
-}
+export type SessionQuality = QualityAssessmentResult;
 
 /**
  * Session recovery data
@@ -49,15 +47,7 @@ export interface SessionRecoveryData {
 /**
  * Session validation rules
  */
-export interface SessionValidationRules {
-  minEmotions?: number;
-  minSensoryInputs?: number;
-  requireEnvironmental?: boolean;
-  minDuration?: number; // milliseconds
-  maxDuration?: number; // milliseconds
-  requireNotes?: boolean;
-  customValidators?: Array<(session: SessionRecoveryData) => { isValid: boolean; error?: string }>;
-}
+export type SessionValidationRules = TrackingValidationRules;
 
 /**
  * Session statistics
@@ -87,7 +77,9 @@ export class SessionManager {
     minDuration: 60000, // 1 minute
     maxDuration: 2 * 60 * 60 * 1000, // 2 hours
     requireNotes: false,
+    enableQualityChecks: true,
   };
+  private validationQualityThreshold: number = 20;
 
   private constructor() {
     this.loadSessionHistory();
@@ -201,11 +193,18 @@ export class SessionManager {
     // Validate session
     const validation = this.validateSession(session);
     if (!validation.isValid) {
-      logger.warn('[SessionManager] Session validation failed', { 
-        sessionId, 
-        errors: validation.errors 
+      logger.warn('[SessionManager] Session validation failed', {
+        sessionId,
+        errors: validation.errors,
       });
       return null;
+    }
+
+    if (validation.quality) {
+      session.metadata.quality = {
+        ...session.metadata.quality,
+        ...validation.quality,
+      };
     }
 
     // Create tracking entry
@@ -231,15 +230,24 @@ export class SessionManager {
       } : undefined,
       notes: session.data.notes || undefined,
       generalNotes: session.data.notes || undefined,
-      version: 1,
     };
 
-    // Save to storage
-    dataStorage.saveTrackingEntry(trackingEntry);
+    // Unified save: validate → save → broadcast → analytics
+    const result = await saveTrackingEntryUnified(trackingEntry, { minDataPoints: 1 });
+    if (!result.success) {
+      logger.warn('[SessionManager] Unified save failed', { errors: result.errors, sessionId });
+      return null;
+    }
 
     // Update session metadata
     session.metadata.endTime = timestamp;
     session.metadata.status = 'completed';
+    session.metadata.duration = timestamp.getTime() - session.metadata.startTime.getTime();
+    session.metadata.dataPoints =
+      session.data.emotions.length +
+      session.data.sensoryInputs.length +
+      (session.data.environmentalData ? 1 : 0);
+    session.metadata.quality = this.assessQuality(session);
     this.sessionHistory.push(session.metadata);
     this.saveSessionHistory();
 
@@ -247,11 +255,7 @@ export class SessionManager {
     this.activeSessions.delete(sessionId);
     this.clearPersistedSession(sessionId);
 
-    // Trigger analytics
-    const student = dataStorage.getStudentById(session.studentId);
-    if (student) {
-      await analyticsManager.triggerAnalyticsForStudent(student);
-    }
+    // Analytics handled by unified helper
 
     logger.info('[SessionManager] Completed session', { 
       sessionId, 
@@ -364,6 +368,15 @@ export class SessionManager {
   }
 
   /**
+   * Get all active sessions across all students
+   */
+  getAllActiveSessions(): SessionRecoveryData[] {
+    return Array.from(this.activeSessions.values()).filter(
+      session => session.metadata.status === 'active'
+    );
+  }
+
+  /**
    * Get session statistics
    */
   getStatistics(studentId?: string): SessionStatistics {
@@ -405,162 +418,31 @@ export class SessionManager {
   }
 
   /**
-   * Validate a session
+   * Validate a session using shared validation rules
    */
-  private validateSession(session: SessionRecoveryData): { isValid: boolean; errors: string[] } {
-    const errors: string[] = [];
-    const rules = this.validationRules;
+  private validateSession(session: SessionRecoveryData): ValidationResult {
+    const baselineQuality = session.metadata.quality;
+    const validation = runSessionValidation(session, this.validationRules, {
+      now: new Date(),
+      qualityEvaluator: () => baselineQuality ?? assessSessionQuality(session),
+      qualityThreshold: this.validationQualityThreshold,
+    });
 
-    // Check minimum data requirements
-    if (rules.minEmotions && session.data.emotions.length < rules.minEmotions) {
-      errors.push(`At least ${rules.minEmotions} emotion(s) required`);
+    if (validation.warnings.length > 0) {
+      logger.debug('[SessionManager] Session validation warnings', {
+        sessionId: session.sessionId,
+        warnings: validation.warnings,
+      });
     }
 
-    if (rules.minSensoryInputs && session.data.sensoryInputs.length < rules.minSensoryInputs) {
-      errors.push(`At least ${rules.minSensoryInputs} sensory input(s) required`);
-    }
-
-    if (rules.requireEnvironmental && !session.data.environmentalData) {
-      errors.push('Environmental data is required');
-    }
-
-    if (rules.requireNotes && !session.data.notes.trim()) {
-      errors.push('Notes are required');
-    }
-
-    // Check duration
-    const duration = Date.now() - session.metadata.startTime.getTime();
-    if (rules.minDuration && duration < rules.minDuration) {
-      errors.push(`Session too short (minimum ${rules.minDuration / 1000} seconds)`);
-    }
-
-    if (rules.maxDuration && duration > rules.maxDuration) {
-      errors.push(`Session too long (maximum ${rules.maxDuration / 1000} seconds)`);
-    }
-
-    // Custom validators
-    if (rules.customValidators) {
-      for (const validator of rules.customValidators) {
-        const result = validator(session);
-        if (!result.isValid && result.error) {
-          errors.push(result.error);
-        }
-      }
-    }
-
-    // Require at least some data
-    const totalData = session.data.emotions.length + session.data.sensoryInputs.length;
-    if (totalData === 0) {
-      errors.push('Session must contain at least one data point');
-    }
-
-    return { isValid: errors.length === 0, errors };
+    return validation;
   }
 
   /**
-   * Assess session quality
+   * Assess session quality via shared module
    */
   private assessQuality(session: SessionRecoveryData): SessionQuality {
-    const issues: string[] = [];
-    const recommendations: string[] = [];
-
-    // Calculate completeness
-    let completeness = 0;
-    if (session.data.emotions.length > 0) completeness += 30;
-    if (session.data.sensoryInputs.length > 0) completeness += 30;
-    if (session.data.environmentalData) completeness += 20;
-    if (session.data.notes.length > 20) completeness += 20;
-
-    // Calculate consistency
-    const consistency = this.calculateConsistency(session);
-
-    // Calculate richness
-    const richness = this.calculateRichness(session);
-
-    // Overall score
-    const score = (completeness * 0.4 + consistency * 0.3 + richness * 0.3);
-
-    // Generate issues and recommendations
-    if (session.data.emotions.length === 0) {
-      issues.push('No emotions recorded');
-      recommendations.push('Record at least one emotion');
-    }
-
-    if (session.data.sensoryInputs.length === 0) {
-      issues.push('No sensory inputs recorded');
-      recommendations.push('Add sensory observations');
-    }
-
-    if (!session.data.environmentalData) {
-      issues.push('No environmental data');
-      recommendations.push('Record environmental conditions');
-    }
-
-    if (session.data.notes.length < 10) {
-      issues.push('Minimal or no notes');
-      recommendations.push('Add descriptive notes about the session');
-    }
-
-    const duration = Date.now() - session.metadata.startTime.getTime();
-    if (duration < 2 * 60 * 1000) { // Less than 2 minutes
-      issues.push('Very short session');
-      recommendations.push('Spend more time observing and recording');
-    }
-
-    return {
-      score,
-      completeness,
-      consistency,
-      richness,
-      issues,
-      recommendations,
-    };
-  }
-
-  /**
-   * Calculate consistency score
-   */
-  private calculateConsistency(session: SessionRecoveryData): number {
-    // Check for variety in emotion intensities
-    const emotionIntensities = session.data.emotions.map(e => e.intensity);
-    const uniqueIntensities = new Set(emotionIntensities).size;
-    const emotionConsistency = uniqueIntensities > 1 ? 
-      (uniqueIntensities / Math.max(emotionIntensities.length, 1)) * 100 : 0;
-
-    // Check for variety in sensory responses
-    const sensoryResponses = session.data.sensoryInputs.map(s => s.response);
-    const uniqueResponses = new Set(sensoryResponses).size;
-    const sensoryConsistency = uniqueResponses > 1 ? 
-      (uniqueResponses / Math.max(sensoryResponses.length, 1)) * 100 : 0;
-
-    return (emotionConsistency + sensoryConsistency) / 2;
-  }
-
-  /**
-   * Calculate richness score
-   */
-  private calculateRichness(session: SessionRecoveryData): number {
-    let richness = 0;
-
-    // Emotion diversity
-    const emotionTypes = new Set(session.data.emotions.map(e => e.emotion)).size;
-    richness += Math.min(emotionTypes * 10, 30);
-
-    // Sensory diversity
-    const sensoryTypes = new Set(session.data.sensoryInputs.map(s => s.sensoryType || s.type)).size;
-    richness += Math.min(sensoryTypes * 10, 30);
-
-    // Notes length
-    if (session.data.notes.length > 50) richness += 20;
-    else if (session.data.notes.length > 20) richness += 10;
-
-    // Environmental data completeness
-    if (session.data.environmentalData) {
-      const env = session.data.environmentalData as any;
-      if (env.classroom || env.roomConditions) richness += 20;
-    }
-
-    return Math.min(richness, 100);
+    return assessSessionQuality(session);
   }
 
   /**
@@ -634,10 +516,21 @@ export class SessionManager {
 
   /**
    * Update validation rules
+   *
+   * Note: Quality checks are enabled by default. To adjust the quality threshold used by
+   * shared validation, call updateQualityThreshold().
    */
   updateValidationRules(rules: Partial<SessionValidationRules>): void {
     this.validationRules = { ...this.validationRules, ...rules };
     logger.info('[SessionManager] Updated validation rules', { rules });
+  }
+
+  /**
+   * Update the quality threshold used when enableQualityChecks is true (default: 20)
+   */
+  updateQualityThreshold(threshold: number): void {
+    this.validationQualityThreshold = Math.max(0, Math.min(100, threshold));
+    logger.info('[SessionManager] Updated quality threshold', { threshold: this.validationQualityThreshold });
   }
 
   /**

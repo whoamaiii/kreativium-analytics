@@ -17,23 +17,23 @@ const EnvDebug = lazy(() => import('@/components/dev/EnvDebug').then(m => ({ def
  * Gated to non-production or POC modes via routing in App.tsx
  */
 const DevTools = (): JSX.Element => {
+  const { tCommon } = useTranslation();
   // Extra guard to avoid accidental exposure if route misconfigured
   if (IS_PROD && !POC_MODE) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-12">
         <Card>
           <CardHeader>
-            <CardTitle>Developer Tools</CardTitle>
+            <CardTitle>{String(tCommon('devTools.title'))}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">This section is not available in production.</p>
+            <p className="text-sm text-muted-foreground">{String(tCommon('devTools.unavailable'))}</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const { tCommon } = useTranslation();
   return (
     <div className="relative z-10 min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -41,12 +41,12 @@ const DevTools = (): JSX.Element => {
           <Breadcrumbs
             items={[
               { label: tCommon('buttons.home'), href: '/' },
-              { label: 'Developer Tools', current: true },
+              { label: String(tCommon('devTools.title')), current: true },
             ]}
           />
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Wrench className="h-6 w-6 text-primary" />
-            Developer Tools
+            {String(tCommon('devTools.title'))}
           </h1>
         </header>
 
@@ -58,25 +58,25 @@ const DevTools = (): JSX.Element => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Database className="h-5 w-5 text-primary" />
-              Storage Management
+              {String(tCommon('devTools.storage.title'))}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Inspect and manage local data storage. Clear old or non-essential data safely.
+              {String(tCommon('devTools.storage.description'))}
             </p>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
                   <Database className="h-4 w-4 mr-2" />
-                  Open Storage Manager
+                  {String(tCommon('devTools.storage.open'))}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Storage Management</DialogTitle>
+                  <DialogTitle>{String(tCommon('devTools.storage.title'))}</DialogTitle>
                 </DialogHeader>
-                <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Loading…</div>}>
+                <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">{String(tCommon('devTools.storage.loading'))}</div>}>
                   <StorageManager />
                 </Suspense>
               </DialogContent>
@@ -89,25 +89,25 @@ const DevTools = (): JSX.Element => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Stethoscope className="h-5 w-5 text-primary" />
-              Model Diagnostics
+              {String(tCommon('devTools.diagnostics.title'))}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Run time-series cross-validation and inspect recent evaluation runs. Loaded on demand to keep main bundle small.
+              {String(tCommon('devTools.diagnostics.description'))}
             </p>
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline" className="w-full">
                   <Stethoscope className="h-4 w-4 mr-2" />
-                  Open Diagnostics Panel
+                  {String(tCommon('devTools.diagnostics.open'))}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Model Diagnostics</DialogTitle>
+                  <DialogTitle>{String(tCommon('devTools.diagnostics.title'))}</DialogTitle>
                 </DialogHeader>
-                <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Loading diagnostics…</div>}>
+                <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">{String(tCommon('devTools.diagnostics.loading'))}</div>}>
                   <ModelDiagnosticsPanel />
                 </Suspense>
               </DialogContent>
@@ -116,7 +116,7 @@ const DevTools = (): JSX.Element => {
         </Card>
 
         {/* Env / AI Debug */}
-        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">Loading env…</div>}>
+        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">{String(tCommon('devTools.env.loading'))}</div>}>
           <EnvDebug />
         </Suspense>
       </div>

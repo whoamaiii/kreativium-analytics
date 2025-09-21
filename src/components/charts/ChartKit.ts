@@ -1,4 +1,5 @@
 import { chartColor } from '@/lib/chartColor';
+import { analyticsConfig, DEFAULT_ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import type { EChartsOption, SeriesOption } from 'echarts';
 import type { CorrelationMatrix } from '@/lib/enhancedPatternAnalysis';
 
@@ -30,6 +31,19 @@ export interface EmotionTrendsConfig {
   movingAverageWindow: number; // e.g., 7 for 7d MA
   useDualYAxis: boolean; // sensory on right axis
   thresholds?: { emotion?: number; sensory?: number };
+  // Optional per-call overrides for chart config values
+  overrides?: Partial<{
+    dataZoomMinSpan: number;
+    yAxisMax: number;
+    yAxisInterval: number;
+    lineWidths: {
+      average: number;
+      movingAverage: number;
+      positive: number;
+      negative: number;
+      sensory: number;
+    };
+  }>;
 }
 
 /**
@@ -59,7 +73,22 @@ function toFiniteNumber(value: unknown): number {
  * Build an ECharts option for the main Emotion & Sensory trends chart.
  * Pure function – safe to unit test.
  */
-export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrendsConfig): EChartsOption {
+export function buildEmotionTrendsOption(
+  rows: TrendRow[],
+  config: EmotionTrendsConfig,
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+): EChartsOption {
+  const chartsCfg = analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts;
+  const yAxisMax = config.overrides?.yAxisMax ?? chartsCfg.yAxisMax;
+  const yAxisInterval = config.overrides?.yAxisInterval ?? chartsCfg.yAxisInterval;
+  const minValueSpan = config.overrides?.dataZoomMinSpan ?? chartsCfg.dataZoomMinSpan;
+  const widths = {
+    average: config.overrides?.lineWidths?.average ?? chartsCfg.lineWidths.average,
+    movingAverage: config.overrides?.lineWidths?.movingAverage ?? chartsCfg.lineWidths.movingAverage,
+    positive: config.overrides?.lineWidths?.positive ?? chartsCfg.lineWidths.positive,
+    negative: config.overrides?.lineWidths?.negative ?? chartsCfg.lineWidths.negative,
+    sensory: config.overrides?.lineWidths?.sensory ?? chartsCfg.lineWidths.sensory,
+  };
   const dates = rows.map(r => r.date);
   const avg = rows.map(r => toFiniteNumber(r.avgEmotionIntensity));
   const pos = rows.map(r => toFiniteNumber(r.positiveEmotions));
@@ -70,15 +99,26 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
     ? computeMovingAverage(avg, Math.max(2, config.movingAverageWindow))
     : [];
 
+  const labelAvg = String(tAnalytics('charts.avgEmotionIntensity'));
+  const labelMA = (window: number) => String(tAnalytics('charts.movingAverage', { window }));
+  const labelPos = String(tAnalytics('charts.positiveEmotions'));
+  const labelNeg = String(tAnalytics('charts.negativeEmotions'));
+  const labelSensory = String(tAnalytics('charts.sensoryInputs'));
+  const labelEmotionThreshold = String(tAnalytics('charts.emotionThreshold'));
+  const labelSensoryThreshold = String(tAnalytics('charts.sensoryThreshold'));
+  const labelIntensity = String(tAnalytics('charts.intensity'));
+
   const series: SeriesOption[] = [
     {
       type: 'line',
-      name: 'Avg Emotion Intensity',
+      name: labelAvg,
       data: avg,
+      meta: { key: 'avgEmotionIntensity' } as any,
+      encode: { y: 'avgEmotionIntensity' },
       smooth: true,
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 3 },
+      lineStyle: { width: widths.average },
       emphasis: { focus: 'none', disabled: true },
       blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
       markLine: config.thresholds?.emotion
@@ -87,7 +127,7 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
             data: [
               {
                 yAxis: config.thresholds.emotion,
-                label: { position: 'end', formatter: 'Emotion Threshold' },
+                label: { position: 'end', formatter: labelEmotionThreshold },
                 lineStyle: { type: 'dashed', width: 2 },
               },
             ],
@@ -98,12 +138,14 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
       ? ([
           {
             type: 'line',
-            name: `Avg Intensity (${config.movingAverageWindow}d MA)`,
+            name: labelMA(config.movingAverageWindow),
             data: avgMA,
+            meta: { key: 'avgEmotionIntensityMA' } as any,
+            encode: { y: 'avgEmotionIntensityMA' },
             smooth: true,
             showSymbol: false,
             sampling: 'lttb',
-            lineStyle: { width: 2 },
+            lineStyle: { width: widths.movingAverage },
             emphasis: { focus: 'none', disabled: true },
             blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
           },
@@ -111,34 +153,40 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
       : []),
     {
       type: 'line',
-      name: 'Positive Emotions',
+      name: labelPos,
       data: pos,
+      meta: { key: 'positiveEmotions' } as any,
+      encode: { y: 'positiveEmotions' },
       smooth: true,
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 2 },
+      lineStyle: { width: widths.positive },
       emphasis: { focus: 'none', disabled: true },
       blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
     },
     {
       type: 'line',
-      name: 'Negative Emotions',
+      name: labelNeg,
       data: neg,
+      meta: { key: 'negativeEmotions' } as any,
+      encode: { y: 'negativeEmotions' },
       smooth: true,
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 2 },
+      lineStyle: { width: widths.negative },
       emphasis: { focus: 'none', disabled: true },
       blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
     },
     {
       type: 'line',
-      name: 'Sensory Inputs',
+      name: labelSensory,
       data: sensory,
+      meta: { key: 'totalSensoryInputs' } as any,
+      encode: { y: 'totalSensoryInputs' },
       smooth: true,
       showSymbol: false,
       sampling: 'lttb',
-      lineStyle: { width: 2, type: 'dashed' },
+      lineStyle: { width: widths.sensory, type: 'dashed' },
       emphasis: { focus: 'none', disabled: true },
       blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
       yAxisIndex: config.useDualYAxis ? 1 : 0,
@@ -148,7 +196,7 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
             data: [
               {
                 yAxis: config.thresholds.sensory,
-                label: { position: 'end', formatter: 'Sensory Threshold' },
+                label: { position: 'end', formatter: labelSensoryThreshold },
                 lineStyle: { type: 'dashed', width: 2 },
               },
             ],
@@ -165,18 +213,18 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
       hoverLink: false,
       bottom: 0,
       data: [
-        'Avg Emotion Intensity',
-        ...(config.showMovingAverage ? [`Avg Intensity (${config.movingAverageWindow}d MA)`] : []),
-        'Positive Emotions',
-        'Negative Emotions',
-        'Sensory Inputs',
+        labelAvg,
+        ...(config.showMovingAverage ? [labelMA(config.movingAverageWindow)] : []),
+        labelPos,
+        labelNeg,
+        labelSensory,
       ],
       selected: {
-        'Avg Emotion Intensity': true,
-        ...(config.showMovingAverage ? { [`Avg Intensity (${config.movingAverageWindow}d MA)`]: true } : {}),
-        'Positive Emotions': true,
-        'Negative Emotions': true,
-        'Sensory Inputs': false,
+        [labelAvg]: true,
+        ...(config.showMovingAverage ? { [labelMA(config.movingAverageWindow)]: true } : {}),
+        [labelPos]: true,
+        [labelNeg]: true,
+        [labelSensory]: false,
       },
     },
     tooltip: { trigger: 'axis', confine: true },
@@ -185,29 +233,22 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
       right: 16,
       top: 16,
       feature: {
-        dataZoom: { yAxisIndex: 'none', title: { zoom: 'Zoom', back: 'Reset' } },
-        restore: { title: 'Reset' },
-        saveAsImage: { title: 'Save', pixelRatio: 2 },
+        dataZoom: { yAxisIndex: 'none', title: { zoom: String(tAnalytics('charts.zoom')), back: String(tAnalytics('charts.reset')) } },
+        restore: { title: String(tAnalytics('charts.reset')) },
+        saveAsImage: { title: String(tAnalytics('charts.save')), pixelRatio: 2 },
       },
     },
     dataZoom: [
-      { type: 'inside', start: 0, end: 100, minValueSpan: 7 },
-      {
-        show: true,
-        type: 'slider',
-        bottom: 50,
-        start: 0,
-        end: 100,
-        height: 20,
-      },
+      { type: 'inside', start: 0, end: 100, minValueSpan },
+      { show: true, type: 'slider', bottom: 50, start: 0, end: 100, height: 20, minValueSpan },
     ],
     xAxis: { type: 'category', boundaryGap: false, data: dates },
     yAxis: config.useDualYAxis
       ? [
-          { type: 'value', max: 10, min: 0, interval: 2, name: 'Intensity' },
-          { type: 'value', name: 'Sensory Inputs', alignTicks: true, min: 'dataMin' },
+          { type: 'value', max: yAxisMax, min: 0, interval: yAxisInterval, name: labelIntensity },
+          { type: 'value', name: labelSensory, alignTicks: true, min: 'dataMin' },
         ]
-      : [{ type: 'value', max: 10, min: 0, interval: 2, name: 'Intensity' }],
+      : [{ type: 'value', max: yAxisMax, min: 0, interval: yAxisInterval, name: labelIntensity }],
     series,
     grid: { bottom: 72 },
   };
@@ -216,7 +257,11 @@ export function buildEmotionTrendsOption(rows: TrendRow[], config: EmotionTrends
 }
 
 /** Simpler area option builder using the same TrendRow type. */
-export function buildAreaOption(rows: TrendRow[]): EChartsOption {
+export function buildAreaOption(
+  rows: TrendRow[],
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+): EChartsOption {
+  const widths = (analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts).lineWidths;
   const dates = rows.map(r => r.date);
   return {
     tooltip: { trigger: 'axis' },
@@ -226,22 +271,26 @@ export function buildAreaOption(rows: TrendRow[]): EChartsOption {
     series: [
       {
         type: 'line',
-        name: 'Avg Emotion Intensity',
+        name: String(tAnalytics('charts.avgEmotionIntensity')),
         data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
+        meta: { key: 'avgEmotionIntensity' } as any,
+        encode: { y: 'avgEmotionIntensity' },
         smooth: true,
         showSymbol: false,
         areaStyle: {},
-        lineStyle: { width: 3 },
+        lineStyle: { width: widths.average },
         emphasis: { focus: 'none' },
       },
       {
         type: 'line',
-        name: 'Positive Emotions',
+        name: String(tAnalytics('charts.positiveEmotions')),
         data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
+        meta: { key: 'positiveEmotions' } as any,
+        encode: { y: 'positiveEmotions' },
         smooth: true,
         showSymbol: false,
         areaStyle: {},
-        lineStyle: { width: 2 },
+        lineStyle: { width: widths.positive },
         emphasis: { focus: 'none' },
       },
     ],
@@ -249,15 +298,18 @@ export function buildAreaOption(rows: TrendRow[]): EChartsOption {
 }
 
 /** Scatter option with numeric axes for correlation-like view. */
-export function buildScatterOption(rows: TrendRow[]): EChartsOption {
+export function buildScatterOption(
+  rows: TrendRow[],
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+): EChartsOption {
   return {
     tooltip: { trigger: 'item' },
     legend: {},
-    xAxis: { type: 'value', name: 'Avg Emotion Intensity' },
-    yAxis: { type: 'value', name: 'Sensory Inputs' },
+    xAxis: { type: 'value', name: String(tAnalytics('charts.avgEmotionIntensity')) },
+    yAxis: { type: 'value', name: String(tAnalytics('charts.sensoryInputs')) },
     series: [
       {
-        name: 'Daily Data Points',
+        name: String(tAnalytics('charts.dailyDataPoints')),
         type: 'scatter',
         data: rows.map(r => [toFiniteNumber(r.avgEmotionIntensity), toFiniteNumber(r.totalSensoryInputs)]),
         symbolSize: 8,
@@ -268,7 +320,11 @@ export function buildScatterOption(rows: TrendRow[]): EChartsOption {
 }
 
 /** Composed bar+line option builder using the same rows. */
-export function buildComposedOption(rows: TrendRow[]): EChartsOption {
+export function buildComposedOption(
+  rows: TrendRow[],
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+): EChartsOption {
+  const widths = (analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts).lineWidths;
   const dates = rows.map(r => r.date);
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
@@ -278,25 +334,31 @@ export function buildComposedOption(rows: TrendRow[]): EChartsOption {
     series: [
       {
         type: 'bar',
-        name: 'Positive Emotions',
+        name: String(tAnalytics('charts.positiveEmotions')),
         data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
+        meta: { key: 'positiveEmotions' } as any,
+        encode: { y: 'positiveEmotions' },
         yAxisIndex: 0,
         emphasis: { focus: 'none' },
       },
       {
         type: 'bar',
-        name: 'Negative Emotions',
+        name: String(tAnalytics('charts.negativeEmotions')),
         data: rows.map(r => toFiniteNumber(r.negativeEmotions)),
+        meta: { key: 'negativeEmotions' } as any,
+        encode: { y: 'negativeEmotions' },
         yAxisIndex: 0,
         emphasis: { focus: 'none' },
       },
       {
         type: 'line',
-        name: 'Avg Intensity',
+        name: String(tAnalytics('charts.avgEmotionIntensity')),
         data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
+        meta: { key: 'avgEmotionIntensity' } as any,
+        encode: { y: 'avgEmotionIntensity' },
         yAxisIndex: 1,
         smooth: true,
-        lineStyle: { width: 3 },
+        lineStyle: { width: widths.average },
         showSymbol: false,
         emphasis: { focus: 'none' },
       },
@@ -305,7 +367,11 @@ export function buildComposedOption(rows: TrendRow[]): EChartsOption {
 }
 
 /** Correlation heatmap option builder (ECharts). */
-export function buildCorrelationHeatmapOption(matrix: CorrelationMatrix): EChartsOption {
+export function buildCorrelationHeatmapOption(
+  matrix: CorrelationMatrix,
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+): EChartsOption {
+  const chartsCfg = analyticsConfig.getConfig().charts;
   const factors = matrix.factors ?? [];
   const values: Array<[number, number, number]> = [];
   for (let i = 0; i < matrix.matrix.length; i++) {
@@ -350,10 +416,10 @@ export function buildCorrelationHeatmapOption(matrix: CorrelationMatrix): EChart
         const key = `${f1}__${f2}`;
         const sig = significanceMap.get(key)?.significance;
         const corr = typeof p?.value?.[2] === 'number' ? p.value[2] : Number(p.value?.[2]) || 0;
-        const sign = corr > 0 ? 'Positive' : corr < 0 ? 'Negative' : 'Neutral';
+        const sign = corr > 0 ? String(tAnalytics('charts.positive')) : corr < 0 ? String(tAnalytics('charts.negative')) : String(tAnalytics('charts.neutral'));
         return `<div style="font-weight:600;margin-bottom:6px">${f1} ↔ ${f2}</div>
-                <div>Correlation: <b>${corr.toFixed(2)}</b> (${sign})</div>
-                ${sig ? `<div>Significance: <b>${sig}</b></div>` : ''}`;
+                <div>${tAnalytics('charts.correlation')}: <b>${corr.toFixed(2)}</b> (${sign})</div>
+                ${sig ? `<div>${tAnalytics('charts.significance')}: <b>${sig}</b></div>` : ''}`;
       }
     },
     visualMap: {
@@ -363,7 +429,7 @@ export function buildCorrelationHeatmapOption(matrix: CorrelationMatrix): EChart
       orient: 'vertical',
       right: 8,
       top: 40,
-      text: ['Positiv', 'Negativ'],
+      text: [String(tAnalytics('charts.positive')), String(tAnalytics('charts.negative'))],
       inRange: {
         // Diverging palette from semantic tokens
         color: [
@@ -385,7 +451,7 @@ export function buildCorrelationHeatmapOption(matrix: CorrelationMatrix): EChart
           formatter: (params: any) => {
             const v = typeof params?.value?.[2] === 'number' ? params.value[2] : Number(params?.value?.[2]) || 0;
             // Only label moderate/strong correlations to reduce clutter
-            return Math.abs(v) >= 0.25 ? v.toFixed(2) : '';
+            return Math.abs(v) >= chartsCfg.correlationLabelThreshold ? v.toFixed(2) : '';
           },
         },
         itemStyle: {
@@ -401,5 +467,65 @@ export function buildCorrelationHeatmapOption(matrix: CorrelationMatrix): EChart
   };
 
   return option;
+}
+
+/** Prediction timeline (risk score) option builder (ECharts). */
+export function buildPredictionTimelineOption(
+  rows: Array<{ date: string; riskScore: number; label?: string }>,
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+): EChartsOption {
+  const chartsCfg = analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts;
+  const dates = rows.map(r => r.date);
+  const values = rows.map(r => (Number.isFinite(r.riskScore) ? r.riskScore : 0));
+
+  // Allow risk score scale 0..1 or 0..100 depending on config; default 0..1
+  const yMax = (chartsCfg as any)?.riskYAxisMax && Number.isFinite((chartsCfg as any).riskYAxisMax)
+    ? (chartsCfg as any).riskYAxisMax
+    : 1;
+  const yInterval = (chartsCfg as any)?.riskYAxisInterval && Number.isFinite((chartsCfg as any).riskYAxisInterval)
+    ? (chartsCfg as any).riskYAxisInterval
+    : yMax <= 1 ? 0.1 : Math.ceil(yMax / 10);
+
+  const labelRisk = String(tAnalytics('charts.riskScore'));
+
+  return {
+    tooltip: {
+      trigger: 'axis',
+      confine: true,
+      formatter: (params: any) => {
+        const p = Array.isArray(params) ? params[0] : params;
+        const idx = p?.dataIndex ?? 0;
+        const date = dates[idx] ?? '';
+        const vRaw = values[idx] ?? 0;
+        const v = Number.isFinite(vRaw) ? vRaw : 0;
+        const label = rows[idx]?.label;
+        const riskText = yMax <= 1 ? v.toFixed(2) : Math.round(v).toString();
+        return `<div style="font-weight:600;margin-bottom:6px">${date}</div>
+                <div>${labelRisk}: <b>${riskText}</b>${label ? ` — ${label}` : ''}</div>`;
+      }
+    },
+    legend: {
+      hoverLink: false,
+      bottom: 0,
+      data: [labelRisk],
+    },
+    xAxis: { type: 'category', boundaryGap: false, data: dates },
+    yAxis: [{ type: 'value', min: 0, max: yMax, interval: yInterval, name: labelRisk }],
+    series: [
+      {
+        type: 'line',
+        name: labelRisk,
+        data: values,
+        smooth: true,
+        showSymbol: false,
+        sampling: 'lttb',
+        lineStyle: { width: chartsCfg.lineWidths?.average ?? 2 },
+        emphasis: { focus: 'none', disabled: true },
+        blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
+        areaStyle: {},
+      }
+    ],
+    grid: { bottom: 72 },
+  } as EChartsOption;
 }
 

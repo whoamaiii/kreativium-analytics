@@ -1,9 +1,9 @@
 # Unused Exports Report
 
-Generated: 2025-09-21T08:58:00.206Z
-Files scanned: 391
-Total exports: 943
-Unused exports: 199
+Generated: 2025-09-21T09:04:35.433Z
+Files scanned: 384
+Total exports: 936
+Unused exports: 192
 
 
 ## src/components/analysis/CorrelationHeatmap.tsx
@@ -32,9 +32,6 @@ Unused exports: 199
 ## src/components/analytics/QuickQuestions.tsx
 - default: default
 
-## src/components/AnalyticsConfigBoundary.tsx
-- function: AnalyticsConfigBoundary
-
 ## src/components/charts/EChartContainer.tsx
 - const: EChartContainer
 
@@ -49,24 +46,6 @@ Unused exports: 199
 
 ## src/components/EnhancedDataVisualization.tsx
 - const: EnhancedDataVisualization
-
-## src/components/EnhancedPersonalizedInsights.tsx
-- const: EnhancedPersonalizedInsights
-
-## src/components/LoadingState.tsx
-- const: LoadingState
-
-## src/components/NoData.tsx
-- const: NoData
-
-## src/components/PatternDetectionEmptyState.tsx
-- const: PatternDetectionEmptyState
-
-## src/components/PremiumEmptyState.tsx
-- const: PremiumEmptyState
-
-## src/components/PremiumHeader.tsx
-- const: PremiumHeader
 
 ## src/components/profile-sections/GoalsSection.tsx
 - re-export: GoalsSection

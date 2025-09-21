@@ -22,7 +22,7 @@ import React from 'react';
 const EChartContainer = React.lazy(() => import("@/components/charts/EChartContainer").then(m => ({ default: m.EChartContainer })));
 import { TrendingUp, Crosshair, Award, Clock, CheckCircle } from "lucide-react";
 import { format, differenceInDays, startOfWeek, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth } from "date-fns";
-import { OptimizedAnimatedCounter } from "@/components/optimized";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
 
 interface ProgressDashboardProps {
   student: Student;
@@ -223,7 +223,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              <OptimizedAnimatedCounter value={progressMetrics.totalGoals} />
+              <AnimatedCounter value={progressMetrics.totalGoals} />
             </div>
             <p className="text-xs text-muted-foreground">
               {progressMetrics.activeGoals} active, {progressMetrics.achievedGoals} achieved
@@ -238,7 +238,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">
-              <OptimizedAnimatedCounter value={Math.round(progressMetrics.overallProgress)} />%
+              <AnimatedCounter value={Math.round(progressMetrics.overallProgress)} />%
             </div>
             <Progress value={progressMetrics.overallProgress} className="mt-2" />
           </CardContent>
@@ -251,7 +251,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              <OptimizedAnimatedCounter value={progressMetrics.onTrackGoals} />
+              <AnimatedCounter value={progressMetrics.onTrackGoals} />
             </div>
             <p className="text-xs text-muted-foreground">
               goals meeting expectations
@@ -266,7 +266,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              <OptimizedAnimatedCounter value={progressMetrics.atRiskGoals} />
+              <AnimatedCounter value={progressMetrics.atRiskGoals} />
             </div>
             <p className="text-xs text-muted-foreground">
               goals needing attention

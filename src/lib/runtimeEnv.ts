@@ -6,17 +6,17 @@ export type ViteEnv = Record<string, unknown> & {
 };
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __RUNTIME_ENV__: ViteEnv | undefined;
 }
 
 export function getRuntimeEnv(): ViteEnv {
   try {
     if (typeof globalThis !== 'undefined' && globalThis.__RUNTIME_ENV__) {
-      return globalThis.__RUNTIME_ENV__ as ViteEnv;
+      return globalThis.__RUNTIME_ENV__;
     }
-    const env: ViteEnv = ((import.meta as any)?.env ?? {}) as ViteEnv;
-    (globalThis as any).__RUNTIME_ENV__ = env;
+    const env: ViteEnv = (import.meta.env ?? {}) as ViteEnv;
+    globalThis.__RUNTIME_ENV__ = env;
     return env;
   } catch {
     return {} as ViteEnv;
@@ -25,8 +25,8 @@ export function getRuntimeEnv(): ViteEnv {
 
 export function setRuntimeEnvFromVite(): void {
   try {
-    const env: ViteEnv = ((import.meta as any)?.env ?? {}) as ViteEnv;
-    (globalThis as any).__RUNTIME_ENV__ = env;
+    const env: ViteEnv = (import.meta.env ?? {}) as ViteEnv;
+    globalThis.__RUNTIME_ENV__ = env;
   } catch {
     // noop
   }

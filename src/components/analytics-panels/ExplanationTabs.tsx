@@ -94,7 +94,7 @@ export function ExplanationTabs({
     try {
       const re = /\[S(\d+)\]/g;
       let m: RegExpExecArray | null;
-      // eslint-disable-next-line no-cond-assign
+       
       while ((m = re.exec((lastAssistant as any).content))) {
         const n = Number(m[1]);
         if (Number.isFinite(n) && n >= 1 && n <= sourcesList.length) set.add(`S${n}`);

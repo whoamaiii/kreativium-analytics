@@ -167,10 +167,17 @@ function loadProfilesFromStorage(_storedProfiles: string | null): AnalyticsProfi
  * const analytics = await manager.getStudentAnalytics(student);
  */
 let __lastFacadeLogMinute: number | null = null;
+// Rate-limit map for deprecation warnings per student
+const __ttlDeprecationWarnWindow = new Map<string, number>();
 class AnalyticsManagerService {
   private static instance: AnalyticsManagerService;
 private analyticsProfiles: AnalyticsProfileMap;
-  // Deprecated TTL cache: callers should use cache keys with their own caches
+  /**
+   * @deprecated Manager-level TTL cache is deprecated. New code should rely on
+   * useAnalyticsWorker + usePerformanceCache at the hook level (with worker-internal
+   * caching) and avoid this Map entirely. Set VITE_DISABLE_MANAGER_TTL_CACHE=true or
+   * analyticsConfig.cache.disableManagerTTLCache=true to disable.
+   */
   private analyticsCache: AnalyticsCache = new Map();
   private storage: IDataStorage;
 
@@ -305,42 +312,62 @@ private analyticsProfiles: AnalyticsProfileMap;
   public async getStudentAnalytics(student: Student, options?: { useAI?: boolean }): Promise<AnalyticsResults> {
     this.initializeStudentAnalytics(student.id);
 
-    // Check TTL cache for existing results
-    const cached = this.analyticsCache.get(student.id);
-    if (cached) {
-      const now = new Date();
-      const cacheAge = now.getTime() - cached.timestamp.getTime();
-      const liveCfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
-      const ttl = liveCfg?.cache?.ttl ?? ANALYTICS_CONFIG.cache.ttl;
-      const preferAI = options?.useAI === true;
-      const preferHeuristic = options?.useAI === false;
+    // Check TTL cache for existing results (unless disabled)
+    const ttlDisabled = this.isManagerTtlCacheDisabled();
+    if (!ttlDisabled) {
+      const cached = this.analyticsCache.get(student.id);
+      if (cached) {
+        const now = new Date();
+        const cacheAge = now.getTime() - cached.timestamp.getTime();
+        const liveCfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
+        const ttl = liveCfg?.cache?.ttl ?? ANALYTICS_CONFIG.cache.ttl;
+        const preferAI = options?.useAI === true;
+        const preferHeuristic = options?.useAI === false;
 
-      // Determine whether the cached result was produced by an AI provider (non-heuristic)
-      const provider = (cached.results as any)?.ai?.provider;
-      const isCachedAI = typeof provider === 'string' && provider.toLowerCase() !== 'heuristic';
+        // Determine whether the cached result was produced by an AI provider (non-heuristic)
+        const provider = (cached.results as any)?.ai?.provider;
+        const isCachedAI = typeof provider === 'string' && provider.toLowerCase() !== 'heuristic';
 
-      if (cacheAge < ttl) {
-        // When runtime explicitly requests heuristic (useAI=false) and cache holds AI, bypass cache
-        if (preferHeuristic) {
-          if (!isCachedAI) {
+        if (cacheAge < ttl) {
+          // Emit deprecation notice when returning from manager TTL cache, rate-limited per student (60s)
+          try {
+            const key = `ttl_warn_${student.id}`;
+            const nowMs = Date.now();
+            const last = __ttlDeprecationWarnWindow.get(key) ?? 0;
+            if (nowMs - last > 60_000) {
+              logger.warn('[analyticsManager] Using deprecated manager TTL cache for student. Migrate to useAnalyticsWorker + usePerformanceCache. Set VITE_DISABLE_MANAGER_TTL_CACHE=true to test disabling.', { studentId: student.id });
+              __ttlDeprecationWarnWindow.set(key, nowMs);
+            }
+          } catch { /* noop */ }
+
+          // When runtime explicitly requests heuristic (useAI=false) and cache holds AI, bypass cache
+          if (preferHeuristic) {
+            if (!isCachedAI) {
+              return cached.results;
+            }
+            // else: cached is AI; fall through to regenerate heuristically
+          } else if (preferAI) {
+            // When AI is preferred, only return if cached is AI
+            if (isCachedAI) {
+              return cached.results;
+            }
+            // else: fall through to regenerate with AI
+          } else {
+            // No explicit preference provided; accept any fresh cached result
             return cached.results;
           }
-          // else: cached is AI; fall through to regenerate heuristically
-        } else if (preferAI) {
-          // When AI is preferred, only return if cached is AI
-          if (isCachedAI) {
-            return cached.results;
-          }
-          // else: fall through to regenerate with AI
-        } else {
-          // No explicit preference provided; accept any fresh cached result
-          return cached.results;
         }
       }
     }
 
     const results = await this.generateAnalytics(student, options?.useAI);
-    this.analyticsCache.set(student.id, { results, timestamp: new Date() });
+    if (!this.isManagerTtlCacheDisabled()) {
+      this.analyticsCache.set(student.id, { results, timestamp: new Date() });
+    } else {
+      try {
+        logger.info('[analyticsManager] Manager TTL cache disabled; not storing results.');
+      } catch { /* noop */ }
+    }
 
     const profile = this.analyticsProfiles.get(student.id);
     if (profile) {
@@ -459,6 +486,17 @@ private analyticsProfiles: AnalyticsProfileMap;
       // Attempt heuristic fallback on failure
       try {
         const fallback = await new HeuristicAnalysisEngine().analyzeStudent(student.id, undefined, { includeAiMetadata: true });
+        if ((fallback as any)?.error) {
+          return {
+            patterns: [],
+            correlations: [],
+            environmentalCorrelations: [],
+            predictiveInsights: [],
+            anomalies: [],
+            insights: [],
+            error: 'ANALYTICS_GENERATION_FAILED',
+          } as AnalyticsResultsCompat;
+        }
         return fallback as AnalyticsResultsCompat;
       } catch {
         // Return minimal safe result to prevent UI crashes
@@ -593,6 +631,9 @@ private analyticsProfiles: AnalyticsProfileMap;
    * Otherwise, clears the entire analytics cache.
    */
   public clearCache(studentId?: string): void {
+    try {
+      logger.warn('[analyticsManager] clearCache called on deprecated manager TTL cache. Prefer broadcasting via analyticsCoordinator and relying on hook-level caching.');
+    } catch { /* noop */ }
     if (studentId) {
       this.analyticsCache.delete(studentId);
     } else {
@@ -672,6 +713,9 @@ private analyticsProfiles: AnalyticsProfileMap;
     const summary: Record<string, unknown> = {};
     try {
       // Manager TTL cache
+      try {
+        logger.warn('[analyticsManager] Clearing deprecated manager TTL cache as part of global cache clear.');
+      } catch { /* noop */ }
       this.clearCache();
       summary.managerCacheCleared = true;
 
@@ -719,6 +763,7 @@ private analyticsProfiles: AnalyticsProfileMap;
     try {
       if (!studentId) return { ok: false, studentId };
       // Manager-level
+      try { logger.warn('[analyticsManager] Clearing deprecated manager TTL cache for student', { studentId }); } catch { /* noop */ }
       this.clearCache(studentId);
 
       // Profiles
@@ -828,6 +873,26 @@ private analyticsProfiles: AnalyticsProfileMap;
 
     if (shouldUseAi) return new LLMAnalysisEngine();
     return new HeuristicAnalysisEngine();
+  }
+
+  /**
+   * Feature flag to disable the manager's TTL cache for migration/testing.
+   * Sources:
+   * - analyticsConfig.cache.disableManagerTTLCache or analyticsConfig.cache.disableManagerTTL
+   * - VITE_DISABLE_MANAGER_TTL_CACHE env ("1" | "true" | "yes")
+   */
+  private isManagerTtlCacheDisabled(): boolean {
+    try {
+      const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
+      const cfgFlag = (cfg?.cache as any)?.disableManagerTTLCache === true || (cfg?.cache as any)?.disableManagerTTL === true;
+      if (cfgFlag) return true;
+    } catch { /* ignore */ }
+    try {
+      const env: Record<string, unknown> = (import.meta as any)?.env ?? {};
+      const raw = (env.VITE_DISABLE_MANAGER_TTL_CACHE ?? '').toString().toLowerCase();
+      return raw === '1' || raw === 'true' || raw === 'yes';
+    } catch { /* ignore */ }
+    return false;
   }
 }
 

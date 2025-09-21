@@ -196,7 +196,8 @@ export default tseslint.config(
       "no-console": "off",
       // During tests we relax i18n literal checks to reduce friction when building fixtures
       "i18next/no-literal-string": "off",
-      "react/jsx-no-literals": "off"
+      "react/jsx-no-literals": "off",
+      "@typescript-eslint/no-explicit-any": "off"
     }
   }
 );

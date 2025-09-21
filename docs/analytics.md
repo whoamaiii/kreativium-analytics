@@ -14,6 +14,12 @@ behavior.
 
 - analyticsManager API overview with examples
 - Using useAnalyticsWorker with buildInsightsTask and buildInsightsCacheKey
+- Goals integration and goals-aware pipeline
+- Cache invalidation flows with analyticsCoordinator
+- Real-time invalidation with useRealtimeData
+- Precomputation with device constraints
+- Enhanced buildInsightsTask details (goals, tags, TTL)
+- Configuration integration (charts and precomputation)
 - Error handling and toast de-duplication expectations
 - Migration notes and breaking changes
 
@@ -31,16 +37,20 @@ preferred over the old singleton for new code.
 - getInsights(inputs, options): Promise<AnalyticsResult>
   - Returns a minimal, stable summary shape (counts + diagnostics) for UI and caching layers.
 
+Note: Prefer `@/lib/analyticsManager` for `buildInsightsCacheKey`/`buildInsightsTask`. The lower-level `@/lib/insights/task` is available for advanced/internal use only.
+
 Example
 
 ```
 import { buildInsightsCacheKey, buildInsightsTask, getInsights } from '@/lib/analyticsManager';
 
 const inputs = { entries, emotions, sensoryInputs, goals };
-const cacheKey = buildInsightsCacheKey(inputs, { tags: ['student-123'] });
-const task = buildInsightsTask(inputs, { tags: ['student-123'] });
-const summary = await getInsights(inputs, { ttlSeconds: 600, tags: ['student-123'] });
+const cacheKey = buildInsightsCacheKey(inputs, { tags: ['student:' + student.id] });
+const task = buildInsightsTask(inputs, { tags: ['student:' + student.id] });
+const summary = await getInsights(inputs, { ttlSeconds: 600, tags: ['student:' + student.id] }); // override default TTL
 ```
+
+Convention: use `student:` prefix (e.g., `student:123`) for student-scoped cache tags.
 
 ### Profiles
 
@@ -198,6 +208,197 @@ Notes:
   schedule your own tasks, reuse buildInsightsCacheKey to avoid cache fragmentation.
 
 ---
+
+## Goals integration and goals-aware pipeline
+
+Goals are treated as first-class inputs throughout the analytics pipeline:
+
+- When a `student` context is provided, goals are fetched automatically and merged into the worker inputs.
+- Goals are included in cache keys to ensure distinct results when goal state changes.
+- Enhanced analysis functions receive goals and use them to tune insights and prioritization.
+
+Example: component-driven analysis with automatic goals
+
+```tsx
+import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker'
+
+export function StudentAnalytics({ student, entries, emotions, sensoryInputs }: Props) {
+  const { results, isAnalyzing, runAnalysis } = useAnalyticsWorker()
+
+  useEffect(() => {
+    if (entries?.length) {
+      // Goals are fetched from the provided student context and sent to the worker
+      runAnalysis({ entries, emotions, sensoryInputs }, { student })
+    }
+  }, [entries, emotions, sensoryInputs, student, runAnalysis])
+
+  if (isAnalyzing) return <Spinner />
+  return <Charts data={results} />
+}
+```
+
+Example: manual task construction showing goals flow via `buildInsightsTask`
+
+```ts
+import { buildInsightsTask, buildInsightsCacheKey } from '@/lib/analyticsManager'
+import { analyticsConfig } from '@/lib/analyticsConfig'
+
+const inputs = { entries, emotions, sensoryInputs, goals }
+
+// Cache keys include goals to avoid collisions when goal state differs
+const cacheKey = buildInsightsCacheKey(inputs, { tags: ['student:' + student.id] })
+
+// ttlSeconds is resolved from runtime config (analyticsConfig.cache.ttl)
+const task = buildInsightsTask(inputs, { tags: ['student:' + student.id] })
+
+// Post to the worker
+worker.postMessage({ ...task.payload, cacheKey: task.cacheKey })
+```
+
+Benefits:
+
+- More personalized and actionable insights
+- Correct cache segregation when goals change
+- Zero extra wiring in components beyond providing `{ student }`
+
+---
+
+## Cache invalidation flows with analyticsCoordinator
+
+Cache invalidation is coordinated centrally and propagated via DOM events so all listeners remain consistent.
+
+- `analyticsCoordinator.broadcastCacheClear()` triggers global invalidation
+- `analyticsCoordinator.broadcastCacheClear({ tags })` triggers tag-based invalidation (e.g., per student)
+- `useAnalyticsWorker` subscribes to these events and clears its internal caches accordingly
+
+Examples:
+
+```ts
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator'
+
+// Global invalidation
+analyticsCoordinator.broadcastCacheClear()
+
+// Student-specific invalidation using tags
+analyticsCoordinator.broadcastCacheClear({ tags: ['student:' + student.id] })
+```
+
+Within components using the hook, you also have imperative helpers for targeted invalidation when needed:
+
+```ts
+const { invalidateCacheForStudent } = useAnalyticsWorker()
+invalidateCacheForStudent(student.id)
+```
+
+---
+
+## Real-time invalidation with useRealtimeData
+
+When new data arrives from realtime streams, caches are invalidated in a debounced fashion to keep the UI up to date without thrashing.
+
+Flow: INSERT_DATA → analyticsCoordinator.broadcastCacheClear({ tags }) → useAnalyticsWorker clears + refetches.
+
+Example:
+
+```ts
+import { useRealtimeData } from '@/hooks/useRealtimeData'
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator'
+
+useRealtimeData({
+  onInsert: (payload) => {
+    const tag = 'student:' + payload.studentId
+    // Debounced internally to avoid excessive recomputations
+    analyticsCoordinator.broadcastCacheClear({ tags: [tag] })
+  },
+})
+```
+
+---
+
+## Precomputation with device constraints
+
+Background analytics precomputation runs opportunistically and respects device constraints (battery, CPU, network). Behavior is fully configurable.
+
+Key ideas:
+
+- Runs only when allowed by `precomputation` settings in runtime config
+- Honors battery level, CPU usage, and network conditions when configured
+- Prioritizes common timeframes and most-recent students to maximize usefulness
+
+Enable and tune via configuration:
+
+```ts
+import { analyticsConfig } from '@/lib/analyticsConfig'
+
+analyticsConfig.updateConfig({
+  precomputation: {
+    enabled: true,
+    enableOnBattery: false,
+    enableOnSlowNetwork: false,
+    maxConcurrentTasks: 2,
+    commonTimeframes: [7, 30],
+    precomputeOnlyWhenIdle: true,
+    pauseOnUserActivity: true,
+  },
+})
+```
+
+Operational notes:
+
+- The `AnalyticsPrecomputationManager` schedules tasks during idle windows and staggers execution.
+- Device constraints are re-checked before each batch and when user activity resumes.
+- Tag-aware cache keys are used so precomputed results naturally fill regular caches.
+
+---
+
+## Enhanced buildInsightsTask details (goals, tags, TTL)
+
+`buildInsightsTask` now constructs a complete, goals-aware task envelope with cache metadata:
+
+```ts
+const task = buildInsightsTask(
+  { entries, emotions, sensoryInputs, goals },
+  { tags: ['student:' + student.id] }
+)
+
+// Shape (illustrative):
+// {
+//   cacheKey: string,
+//   ttlSeconds: number, // derived from analyticsConfig.cache.ttl
+//   tags: string[],
+//   payload: {
+//     type: 'ANALYZE',
+//     inputs: { entries, emotions, sensoryInputs, goals },
+//     configSubset: { /* minimal runtime subset for deterministic keys */ }
+//   }
+// }
+```
+
+TTL is derived from `analyticsConfig.getConfig().cache.ttl` (milliseconds) and converted to seconds for worker tasks: `ttlSeconds = Math.floor(cache.ttl / 1000)`. You may override this by passing `options.ttlSeconds`; omit to use the configured value.
+
+Notes:
+
+- Tags enable targeted invalidation and cross-tab coordination.
+- TTL is resolved from `analyticsConfig.getConfig().cache.ttl` so callers rarely need to pass it.
+- Including goals in inputs and in the cache key prevents stale or cross-student leakage.
+
+---
+
+## Configuration integration (charts and precomputation)
+
+Chart behavior and background precomputation are fully configurable at runtime via `analyticsConfig.getConfig()`.
+
+Examples:
+
+```ts
+const cfg = analyticsConfig.getConfig()
+const yMax = cfg.charts.yAxisMax
+const zoomMin = cfg.charts.dataZoomMinSpan
+
+if (cfg.precomputation.enabled && cfg.precomputation.precomputeOnlyWhenIdle) {
+  // schedule background work conservatively
+}
+```
 
 ## Error handling expectations and toast de-duplication
 

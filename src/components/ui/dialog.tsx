@@ -205,9 +205,6 @@ registerDialogComponent(dialogDescriptionRegistry, DialogDescription)
 
 export {
   Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogClose,
   DialogTrigger,
   DialogContent,
   DialogHeader,

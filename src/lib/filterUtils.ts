@@ -78,14 +78,14 @@ export const FILTER_PRESETS: Array<{ name: string; description: string; criteria
     criteria: {
       emotions: {
         types: ['happy', 'calm', 'excited', 'proud', 'focused'],
-        intensityRange: [0, 10],
+        intensityRange: [0, 5],
         includeTriggers: [],
         excludeTriggers: []
       },
       sensory: {
         types: [],
         responses: ['seeking'],
-        intensityRange: [0, 10]
+        intensityRange: [0, 5]
       }
     }
   },

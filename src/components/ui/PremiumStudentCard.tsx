@@ -1,17 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Student } from "@/types/student";
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, GraduationCap, Trash2, Eye, TrendingUp, School } from 'lucide-react';
-import { format, isToday } from 'date-fns';
-import { nb } from 'date-fns/locale';
+import { User, Trash2, Eye, TrendingUp, School } from 'lucide-react';
+import { isToday } from 'date-fns';
 import { useTranslation } from "@/hooks/useTranslation";
 import { Progress } from "@/components/ui/progress";
-import { cn } from '@/lib/utils';
 import { dataStorage } from '@/lib/dataStorage';
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 import { toast } from 'sonner';
 import { useState, useMemo } from 'react';
 
@@ -30,27 +28,24 @@ export const PremiumStudentCard = ({
   onDelete,
   index 
 }: PremiumStudentCardProps) => {
-  const { tDashboard } = useTranslation();
+  const { tDashboard, tCommon, tStudent, formatDate } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
 
   const handleDeleteStudent = async () => {
     try {
       dataStorage.deleteStudent(student.id);
-      toast.success(`${student.name} has been deleted successfully`);
+      toast.success(tStudent('profile.deleteSuccess', { name: student.name }));
       
-      // Trigger storage event to refresh Dashboard
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'sensoryTracker_students',
-        newValue: JSON.stringify(dataStorage.getStudents())
-      }));
+      // Broadcast cache clear to refresh dashboard and analytics views
+      try { analyticsCoordinator.broadcastCacheClear(); } catch { /* noop */ }
       
       // Call onDelete callback if provided
       if (onDelete) {
         onDelete(student);
       }
     } catch (error) {
-      toast.error('Failed to delete student', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred'
+      toast.error(tStudent('profile.deleteFailure'), {
+        description: error instanceof Error ? error.message : tStudent('profile.deleteFailureUnknown')
       });
     }
   };
@@ -76,8 +71,8 @@ export const PremiumStudentCard = ({
   
   const { progressPercentage, isActiveToday, entriesThisWeek, lastTracked } = mockData;
   const lastTrackedText = isToday(lastTracked) 
-    ? "I dag" 
-    : format(lastTracked, 'dd. MMM', { locale: nb });
+    ? String(tCommon('time.today')) 
+    : formatDate(lastTracked);
 
   return (
     <motion.div
@@ -155,7 +150,7 @@ export const PremiumStudentCard = ({
                 <School className="h-4 w-4" />
                 <span>
                   {student.grade 
-                    ? String(tDashboard('studentCard.grade')).replace('{{grade}}', student.grade.toString())
+                    ? String(tDashboard('studentCard.grade', { grade: student.grade }))
                     : String(tDashboard('studentCard.noGrade'))
                   }
                 </span>
@@ -166,7 +161,7 @@ export const PremiumStudentCard = ({
           {/* Progress Section */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-muted-foreground">Datainnsamling</span>
+              <span className="text-xs text-muted-foreground">{String(tDashboard('studentCard.dataCollection'))}</span>
               <span className="text-xs font-medium text-primary">{progressPercentage}%</span>
             </div>
             <Progress 
@@ -179,11 +174,11 @@ export const PremiumStudentCard = ({
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="text-center p-2 rounded-lg bg-muted/30">
               <div className="text-lg font-bold text-primary">{entriesThisWeek}</div>
-              <div className="text-xs text-muted-foreground">Denne uken</div>
+              <div className="text-xs text-muted-foreground">{String(tDashboard('studentCard.thisWeek'))}</div>
             </div>
             <div className="text-center p-2 rounded-lg bg-muted/30">
               <div className="text-sm font-medium text-foreground">{lastTrackedText}</div>
-              <div className="text-xs text-muted-foreground">Sist sporet</div>
+              <div className="text-xs text-muted-foreground">{String(tDashboard('studentCard.lastTrackedLabel'))}</div>
             </div>
           </div>
 
@@ -228,19 +223,19 @@ export const PremiumStudentCard = ({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Student</AlertDialogTitle>
+                  <AlertDialogTitle>{String(tStudent('profile.deleteConfirmTitle'))}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete {student.name}? This will permanently delete all their tracking data, goals, and associated records. This action cannot be undone.
+                    {String(tStudent('profile.deleteConfirmDescription', { name: student.name }))}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{String(tCommon('buttons.cancel'))}</AlertDialogCancel>
                   <AlertDialogAction 
                     onClick={handleDeleteStudent}
                     className="bg-destructive hover:bg-destructive/90"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Student
+                    {String(tCommon('buttons.delete'))}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>

@@ -1,5 +1,6 @@
 import { Student, TrackingEntry, EmotionEntry, SensoryEntry, EnvironmentalEntry, Goal } from '@/types/student';
 import { dataStorage } from './dataStorage';
+import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/saveTrackingEntry';
 import { logger } from './logger';
 import { generateId } from './uuid';
 import { validateEmotionEntry, validateSensoryEntry, validateTrackingEntry, validateStudent } from './dataValidation';
@@ -42,7 +43,13 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
   const r = Math.random();
   if (r < 0.30) {
     // Gruppearbeid i klasserommet
-    entry.environmentalData = entry.environmentalData || { id: undefined, timestamp: entry.timestamp } as any;
+    entry.environmentalData = entry.environmentalData || { 
+      id: undefined, 
+      timestamp: entry.timestamp,
+      location: '',
+      roomConditions: { noiseLevel: 0, lighting: '', temperature: 0 },
+      socialContext: ''
+    };
     if (entry.environmentalData) {
       entry.environmentalData.location = 'classroom';
       entry.environmentalData.socialContext = 'Gruppearbeid';
@@ -57,7 +64,13 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
     entry.generalNotes = 'Sosial situasjon: gruppeoppgave i klasserommet (samarbeid/gruppe).';
   } else if (r < 0.55) {
     // Friminutt ute
-    entry.environmentalData = entry.environmentalData || { id: undefined, timestamp: entry.timestamp } as any;
+    entry.environmentalData = entry.environmentalData || { 
+      id: undefined, 
+      timestamp: entry.timestamp,
+      location: '',
+      roomConditions: { noiseLevel: 0, lighting: '', temperature: 0 },
+      socialContext: ''
+    };
     if (entry.environmentalData) {
       entry.environmentalData.location = 'playground';
       entry.environmentalData.socialContext = 'Friminutt';
@@ -72,7 +85,13 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
     entry.generalNotes = 'Friminutt med mange elever; mulig konflikt/press i sosial situasjon.';
   } else if (r < 0.75) {
     // Lunsj i kantinen
-    entry.environmentalData = entry.environmentalData || { id: undefined, timestamp: entry.timestamp } as any;
+    entry.environmentalData = entry.environmentalData || { 
+      id: undefined, 
+      timestamp: entry.timestamp,
+      location: '',
+      roomConditions: { noiseLevel: 0, lighting: '', temperature: 0 },
+      socialContext: ''
+    };
     if (entry.environmentalData) {
       entry.environmentalData.location = 'cafeteria';
       entry.environmentalData.socialContext = 'Lunsj/kantine';
@@ -87,7 +106,13 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
     entry.generalNotes = 'Lunsj i kantinen; tett sosialt miljø og høy lyd.';
   } else if (r < 0.90) {
     // Presentasjon foran klassen
-    entry.environmentalData = entry.environmentalData || { id: undefined, timestamp: entry.timestamp } as any;
+    entry.environmentalData = entry.environmentalData || { 
+      id: undefined, 
+      timestamp: entry.timestamp,
+      location: '',
+      roomConditions: { noiseLevel: 0, lighting: '', temperature: 0 },
+      socialContext: ''
+    };
     if (entry.environmentalData) {
       entry.environmentalData.location = 'classroom';
       entry.environmentalData.socialContext = 'Presentasjon';
@@ -102,7 +127,13 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
     entry.generalNotes = 'Presentasjon foran klassen; sosial eksponering og forventninger.';
   } else {
     // Overgang mellom aktiviteter/timer (hallway/transition)
-    entry.environmentalData = entry.environmentalData || { id: undefined, timestamp: entry.timestamp } as any;
+    entry.environmentalData = entry.environmentalData || { 
+      id: undefined, 
+      timestamp: entry.timestamp,
+      location: '',
+      roomConditions: { noiseLevel: 0, lighting: '', temperature: 0 },
+      socialContext: ''
+    };
     if (entry.environmentalData) {
       entry.environmentalData.location = 'hallway';
       entry.environmentalData.socialContext = 'Overgang';
@@ -149,27 +180,27 @@ function ensureEmmaSocialBaseline(entries: TrackingEntry[], student: Student, mi
     const t = scenarios[i % scenarios.length];
     switch (t) {
       case 'gruppe':
-        e.environmentalData = { ...(e.environmentalData || {}), location: 'classroom', socialContext: 'Gruppearbeid', classroom: { activity: 'group-work', timeOfDay: 'morning' } } as any;
+        e.environmentalData = { ...(e.environmentalData || {}), location: 'classroom', socialContext: 'Gruppearbeid', classroom: { activity: 'group-work', timeOfDay: 'morning' } };
         e.generalNotes = 'Sosial situasjon: gruppeoppgave i klasserommet (gruppe/samarbeid).';
         e.emotions[0].triggers?.push('gruppearbeid');
         break;
       case 'friminutt':
-        e.environmentalData = { ...(e.environmentalData || {}), location: 'playground', socialContext: 'Friminutt', classroom: { activity: 'free-time', timeOfDay: 'afternoon' } } as any;
+        e.environmentalData = { ...(e.environmentalData || {}), location: 'playground', socialContext: 'Friminutt', classroom: { activity: 'free-time', timeOfDay: 'afternoon' } };
         e.generalNotes = 'Friminutt med venner; noe konflikt og uro.';
         e.emotions[0].triggers?.push('friminutt');
         break;
       case 'kantine':
-        e.environmentalData = { ...(e.environmentalData || {}), location: 'cafeteria', socialContext: 'Lunsj/kantine', roomConditions: { noiseLevel: 4, lighting: 'bright' } } as any;
+        e.environmentalData = { ...(e.environmentalData || {}), location: 'cafeteria', socialContext: 'Lunsj/kantine', roomConditions: { noiseLevel: 4, lighting: 'bright', temperature: 0 } };
         e.generalNotes = 'Lunsj i kantinen; høy lyd og tett sosialt miljø.';
         e.emotions[0].triggers?.push('kantine', 'lunsj');
         break;
       case 'presentasjon':
-        e.environmentalData = { ...(e.environmentalData || {}), location: 'classroom', socialContext: 'Presentasjon', classroom: { activity: 'instruction', timeOfDay: 'morning' } } as any;
+        e.environmentalData = { ...(e.environmentalData || {}), location: 'classroom', socialContext: 'Presentasjon', classroom: { activity: 'instruction', timeOfDay: 'morning' } };
         e.generalNotes = 'Presentasjon foran klassen; sosial eksponering.';
         e.emotions[0].triggers?.push('presentasjon');
         break;
       case 'overgang':
-        e.environmentalData = { ...(e.environmentalData || {}), location: 'hallway', socialContext: 'Overgang', classroom: { activity: 'transition', timeOfDay: 'afternoon' } } as any;
+        e.environmentalData = { ...(e.environmentalData || {}), location: 'hallway', socialContext: 'Overgang', classroom: { activity: 'transition', timeOfDay: 'afternoon' } };
         e.generalNotes = 'Overgang fra friminutt til time; stress i korridor.';
         e.emotions[0].triggers?.push('overgang');
         break;
@@ -598,7 +629,8 @@ export function loadScenarioDataToStorage(scenario: 'emma' | 'lars' | 'astrid'):
         logger.error('Generated invalid tracking entry for scenario', { scenario, entry, errors: trackingValidation.errors });
         continue; // Skip invalid entries rather than failing entire load
       }
-      dataStorage.saveTrackingEntry(entry);
+      // Use unified save to ensure cache invalidation and analytics triggers
+      try { void saveTrackingEntryUnified(entry); } catch { dataStorage.saveTrackingEntry(entry); }
     }
   } catch (error) {
     logger.error('Failed to load scenario data', error);
@@ -615,7 +647,7 @@ export function loadMockDataToStorage(): void {
     
     // Save students
     students.forEach(student => {
-      const studentValidation = validateStudent(student as any);
+      const studentValidation = validateStudent(student);
       if (!studentValidation.isValid) {
         logger.warn('Skipping invalid student in mock load', { student });
         return;
@@ -625,12 +657,13 @@ export function loadMockDataToStorage(): void {
     
     // Save tracking entries
     trackingEntries.forEach(entry => {
-      const trackingValidation = validateTrackingEntry(entry as any);
+      const trackingValidation = validateTrackingEntry(entry);
       if (!trackingValidation.isValid) {
         logger.error('Generated invalid tracking entry during bulk mock load', { entry, errors: trackingValidation.errors });
         return; // Skip invalid entries
       }
-      dataStorage.saveTrackingEntry(entry);
+      // Use unified save helper with minimal rules; fall back to direct save if needed
+      try { void saveTrackingEntryUnified(entry); } catch { dataStorage.saveTrackingEntry(entry); }
     });
   } catch (error) {
     logger.error('Failed to load mock data:', error);

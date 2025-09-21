@@ -271,8 +271,8 @@ function coerceToAiReportShape(input: unknown): AiReport {
     })),
     suggestedInterventions: sugg,
     anomalies,
-    predictiveInsights: predictive,
-    dataLineage: lineage,
+    predictiveInsights,
+    dataLineage,
     confidence,
     insights: asStrArr(o.insights),
   } as AiReport;

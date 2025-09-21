@@ -1,11 +1,11 @@
 {
-  "totalSrcFiles": 391,
-  "totalSrcLoc": 72281,
-  "unusedFilesCount": 46,
-  "unusedFilesLoc": 7549,
-  "deadCodePercentByFiles": 11.76,
-  "unusedExportsCount": 199,
-  "unusedExportsFiles": 108,
+  "totalSrcFiles": 384,
+  "totalSrcLoc": 71255,
+  "unusedFilesCount": 39,
+  "unusedFilesLoc": 6523,
+  "deadCodePercentByFiles": 10.16,
+  "unusedExportsCount": 192,
+  "unusedExportsFiles": 101,
   "unusedDependencies": [
     "@types/three",
     "html2canvas",
@@ -33,40 +33,12 @@
   ],
   "unusedFiles": [
     {
-      "file": "src/components/AnalyticsConfigBoundary.tsx",
-      "loc": 38
-    },
-    {
       "file": "src/components/DetailedConfidenceExplanation.tsx",
       "loc": 439
     },
     {
       "file": "src/components/EnhancedDataVisualization.tsx",
       "loc": 120
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "loc": 527
-    },
-    {
-      "file": "src/components/LoadingState.tsx",
-      "loc": 59
-    },
-    {
-      "file": "src/components/NoData.tsx",
-      "loc": 10
-    },
-    {
-      "file": "src/components/PatternDetectionEmptyState.tsx",
-      "loc": 145
-    },
-    {
-      "file": "src/components/PremiumEmptyState.tsx",
-      "loc": 153
-    },
-    {
-      "file": "src/components/PremiumHeader.tsx",
-      "loc": 94
     },
     {
       "file": "src/components/ReportBuilder.tsx",

@@ -240,7 +240,8 @@ export function useAsyncState<TValue = unknown>(
   };
 }
 
-export function useAsyncMutation<TData = unknown, TVariables = unknown>(
+// Removed per plan: useAsyncMutation (unused)
+/* export function useAsyncMutation<TData = unknown, TVariables = unknown>(
   mutationFn: (variables: TVariables) => Promise<TData>,
   options: UseAsyncStateOptions<TData> = {}
 ) {
@@ -267,9 +268,10 @@ export function useAsyncMutation<TData = unknown, TVariables = unknown>(
     run,
     execute: run,
   };
-}
+} */
 
-export function useAsyncQuery<T = unknown>(
+// Removed per plan: useAsyncQuery (unused)
+/* export function useAsyncQuery<T = unknown>(
   queryFn: () => Promise<T>,
   options: UseAsyncStateOptions<T> & { enabled?: boolean; refetchInterval?: number } = {}
 ) {
@@ -313,4 +315,4 @@ export function useAsyncQuery<T = unknown>(
     run,
     execute: run,
   };
-}
+} */

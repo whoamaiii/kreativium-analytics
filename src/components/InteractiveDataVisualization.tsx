@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useCallback, memo, Suspense, lazy } from "react";
+import React, { useMemo, useRef, useCallback, memo, Suspense, lazy, useEffect } from "react";
 // Unused Card components removed after refactoring
 import { EmotionEntry, SensoryEntry, TrackingEntry, Student } from "@/types/student";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -8,6 +8,7 @@ import { POC_MODE } from '@/lib/env';
 import { TimelineVisualization } from './TimelineVisualization';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { useVisualizationState, VisualizationType } from '@/hooks/useVisualizationState';
+import type { ChartType } from '@/hooks/useVisualizationState';
 import { useFilteredData } from '@/hooks/useFilteredData';
 import { useDataAnalysis } from '@/hooks/useDataAnalysis';
 import { VisualizationControls } from './VisualizationControls';
@@ -20,12 +21,19 @@ const EChartContainerLazy = lazy(() => import('@/components/charts/EChartContain
 import { analyticsExport, ExportFormat } from "@/lib/analyticsExport";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
+import { doOnce } from '@/lib/rateLimit';
 
 interface InteractiveDataVisualizationProps {
   emotions: EmotionEntry[];
   sensoryInputs: SensoryEntry[];
   trackingEntries: TrackingEntry[];
   studentName: string;
+  preferredChartType?: ChartType;
 }
 
 // Move static data outside component to prevent recreation
@@ -36,10 +44,16 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
   emotions: initialEmotions, 
   sensoryInputs: initialSensoryInputs, 
   trackingEntries: initialTrackingEntries, 
-  studentName 
+  studentName,
+  preferredChartType
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = React.useState(false);
+  const [hasNewInsights, setHasNewInsights] = React.useState(false);
+  const [autoRefresh, setAutoRefresh] = React.useState(false);
+  const [pendingRefresh, setPendingRefresh] = React.useState(false);
+  const refreshTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { tAnalytics } = useTranslation();
 
   const safeInitialEmotions = useMemo(() => Array.isArray(initialEmotions) ? initialEmotions : [], [initialEmotions]);
   const safeInitialSensoryInputs = useMemo(() => Array.isArray(initialSensoryInputs) ? initialSensoryInputs : [], [initialSensoryInputs]);
@@ -49,7 +63,7 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
     new Set(safeInitialEmotions.map(e => e.emotion))
   ), [safeInitialEmotions]);
 
-  const visualizationState = useVisualizationState(availableEmotions);
+  const visualizationState = useVisualizationState(availableEmotions, preferredChartType ?? 'line');
   const { layoutMode, selectedChartType, filterCriteria, highlightState } = visualizationState;
 
   const realtimeData = useRealtimeData(
@@ -83,6 +97,78 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
   );
 
   const analysisData = useDataAnalysis(filteredData);
+
+  // Wire analytics worker to re-run with current filteredData
+  const { runAnalysis, isAnalyzing, error } = useAnalyticsWorker({ precomputeOnIdle: false });
+
+  // Derive student context from data to scope events and align cache keys
+  const currentStudentId = useMemo(() => {
+    const id = filteredData.trackingEntries[0]?.studentId || (safeInitialTracking[0]?.studentId);
+    return id || 'current-student';
+  }, [filteredData.trackingEntries, safeInitialTracking]);
+  const currentStudent = useMemo(() => ({ id: currentStudentId, name: studentName } as Student), [currentStudentId, studentName]);
+
+  // Initial run
+  useEffect(() => {
+    try { runAnalysis({ entries: filteredData.trackingEntries, emotions: filteredData.emotions, sensoryInputs: filteredData.sensoryInputs } as any, { student: currentStudent }); } catch {}
+  }, [filteredData.trackingEntries, filteredData.emotions, filteredData.sensoryInputs, runAnalysis, currentStudent]);
+
+  // Listen for cache invalidations
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onClear = (ev: Event) => setHasNewInsights(true);
+    const onClearStudent = (ev: Event) => {
+      try {
+        const ce = ev as CustomEvent<{ studentId?: string }>;
+        const sid = (ce?.detail as any)?.studentId as string | undefined;
+        if (!sid || sid === currentStudentId) setHasNewInsights(true);
+      } catch {
+        // if parsing fails, assume relevant
+        setHasNewInsights(true);
+      }
+    };
+    window.addEventListener('analytics:cache:clear', onClear);
+    window.addEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
+    return () => {
+      window.removeEventListener('analytics:cache:clear', onClear);
+      window.removeEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
+    };
+  }, [currentStudentId]);
+
+  // Monitor realtime data counters
+  const prevCountsRef = React.useRef<{ e: number; s: number; t: number }>({ e: 0, s: 0, t: 0 });
+  useEffect(() => {
+    const prev = prevCountsRef.current;
+    const next = { e: filteredData.emotions.length, s: filteredData.sensoryInputs.length, t: filteredData.trackingEntries.length };
+    if (next.e > prev.e || next.s > prev.s || next.t > prev.t) setHasNewInsights(true);
+    prevCountsRef.current = next;
+  }, [filteredData.emotions.length, filteredData.sensoryInputs.length, filteredData.trackingEntries.length]);
+
+  // Auto refresh
+  useEffect(() => {
+    if (!hasNewInsights || !autoRefresh) return;
+    if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    refreshTimeoutRef.current = setTimeout(() => { try { handleRefresh(); } catch {} }, 1000);
+    return () => { if (refreshTimeoutRef.current) { clearTimeout(refreshTimeoutRef.current); refreshTimeoutRef.current = null; } };
+  }, [hasNewInsights, autoRefresh]);
+
+  // Clear badge when analysis completes after manual refresh
+  useEffect(() => {
+    if (!isAnalyzing && pendingRefresh) { setHasNewInsights(false); setPendingRefresh(false); }
+  }, [isAnalyzing, pendingRefresh]);
+
+  // Rate-limited error logging
+  useEffect(() => {
+    if (!error) return;
+    doOnce('analytics_ui_error_' + String(error), 60_000, () => {
+      try { logger.error('[InteractiveDataVisualization] analytics error', { error }); } catch {}
+    });
+  }, [error]);
+
+  const handleRefresh = useCallback(() => {
+    setPendingRefresh(true);
+    try { runAnalysis({ entries: filteredData.trackingEntries, emotions: filteredData.emotions, sensoryInputs: filteredData.sensoryInputs } as any, { student: currentStudent }); } catch {}
+  }, [filteredData.trackingEntries, filteredData.emotions, filteredData.sensoryInputs, runAnalysis, currentStudent]);
 
   const chartData = useMemo(() => {
     interface ChartDataPoint {
@@ -241,6 +327,50 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
           togglePictureInPicture={togglePictureInPicture}
           handleExport={handleExport}
         />
+
+        {/* New insights banner and refresh */}
+        <div className="flex items-center gap-2">
+          {hasNewInsights && (
+            <Badge variant="default" aria-live="polite">{String(tAnalytics('insights.newInsightsAvailable', { defaultValue: 'New insights available' }))}</Badge>
+          )}
+          <Button
+            variant={hasNewInsights || error ? 'default' : 'outline'}
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isAnalyzing}
+            aria-label={String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}
+            title={String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {isAnalyzing ? String(tAnalytics('states.analyzing')) : error ? String(tAnalytics('actions.retryAnalysis')) : String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}
+          </Button>
+          <Button
+            variant={autoRefresh ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setAutoRefresh(v => !v)}
+            aria-pressed={autoRefresh}
+            aria-label={String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
+          >
+            {String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
+          </Button>
+        </div>
+
+        {error && !isAnalyzing && (
+          <div className="p-4 border border-destructive rounded-md" role="alert" aria-live="assertive">
+            <p className="text-destructive font-medium mb-2">{String(tAnalytics('worker.processingFailed'))}</p>
+            <p className="text-destructive mb-3">{error}</p>
+            <p className="text-sm text-muted-foreground mb-4">{String(tAnalytics('worker.workerErrorDescription'))} {String(tAnalytics('worker.retryInstructions'))}</p>
+            <div className="flex items-center gap-2">
+              <Button variant="default" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {String(tAnalytics('actions.retryAnalysis'))}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { try { window?.location?.reload(); } catch {} }}>
+                {String(tAnalytics('actions.tryAgain'))}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {layoutMode === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 items-start">

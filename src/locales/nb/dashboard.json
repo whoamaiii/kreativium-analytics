@@ -1,10 +1,14 @@
 {
   "title": "Kreativium",
   "subtitle": "Spor sensorisk inngang og følelser for spesialundervisningselever",
+  "brand": {
+    "initial": "K"
+  },
   "stats": {
     "totalStudents": "Totalt antall elever",
     "todaysEntries": "Dagens registreringer",
-    "totalEntries": "Totale registreringer"
+    "totalEntries": "Totale registreringer",
+    "fromLastWeek": "fra forrige uke"
   },
   "emptyState": {
     "title": "Ingen elever lagt til ennå",
@@ -21,6 +25,9 @@
     "grade": "Klasse {{grade}}",
     "noGrade": "Ingen klasse",
     "lastTracked": "Sist sporet: {{date}}",
+    "lastTrackedLabel": "Sist sporet",
+    "thisWeek": "Denne uken",
+    "dataCollection": "Datainnsamling",
     "neverTracked": "Aldri sporet",
     "viewProfile": "Se profil",
     "trackNow": "Spor nå"

@@ -10,7 +10,7 @@ vi.mock('@/hooks/useTranslation', () => ({
 }));
 
 // Spy on toast to verify user notifications are deduped
-import * as toastModule from '@/hooks/use-toast';
+import * as toastModule from 'sonner';
 
 // Provide a minimal host component to trigger the hook
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';

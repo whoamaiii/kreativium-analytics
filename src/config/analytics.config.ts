@@ -335,31 +335,5 @@ export function getRuntimeAnalyticsConfig(): RuntimeAnalyticsConfig {
   return safeMerged;
 }
 
-export function getAdvancedThresholds(): AdvancedThresholdConfig {
-  return getRuntimeAnalyticsConfig().advancedThresholds;
-}
-
-export function getInsightRules(): InsightRule[] {
-  return getRuntimeAnalyticsConfig().rules;
-}
-
-export function getMLModels(): MLModelConfig[] {
-  return getRuntimeAnalyticsConfig().ml.models;
-}
-
-export function getPerformanceBudgets(): PerformanceBudgets {
-  return getRuntimeAnalyticsConfig().performanceBudgets;
-}
-
-export function getChartDefaults(): RuntimeAnalyticsConfig['charts'] {
-  return getRuntimeAnalyticsConfig().charts;
-}
-
-export function getWorkerSettings(): RuntimeAnalyticsConfig['worker'] {
-  return getRuntimeAnalyticsConfig().worker;
-}
-
-export function getFeatureFlags(): FeatureFlags {
-  return getRuntimeAnalyticsConfig().features;
-}
+// Removed unused getters per plan; consumers should use getRuntimeAnalyticsConfig directly
 

@@ -1,10 +1,14 @@
 {
   "title": "Kreativium",
   "subtitle": "Track sensory input and emotions for special education students",
+  "brand": {
+    "initial": "K"
+  },
   "stats": {
     "totalStudents": "Total Students",
     "todaysEntries": "Today's Entries",
-    "totalEntries": "Total Entries"
+    "totalEntries": "Total Entries",
+    "fromLastWeek": "from last week"
   },
   "emptyState": {
     "title": "No students added yet",
@@ -21,6 +25,9 @@
     "grade": "Grade {{grade}}",
     "noGrade": "No grade",
     "lastTracked": "Last tracked: {{date}}",
+    "lastTrackedLabel": "Last tracked",
+    "thisWeek": "This week",
+    "dataCollection": "Data collection",
     "neverTracked": "Never tracked",
     "viewProfile": "View Profile",
     "trackNow": "Track Now"

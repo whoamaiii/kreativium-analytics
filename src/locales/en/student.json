@@ -33,7 +33,13 @@
     "noDataYet": "No data yet. Start by tracking this student.",
     "startTracking": "Start Tracking",
     "editStudent": "Edit Student",
-    "deleteStudent": "Delete Student"
+    "deleteStudent": "Delete Student",
+    "deleteConfirmTitle": "Delete Student",
+    "deleteConfirmDescription": "Are you sure you want to delete {{name}}? This will permanently delete all their tracking data, goals, and associated records. This action cannot be undone.",
+    "deleteFailure": "Failed to delete student",
+    "deleteFailureUnknown": "Unknown error occurred",
+    "deleteSuccess": "{{name}} has been deleted successfully",
+    "backToProfile": "Back to Profile"
   },
   "grades": {
     "1": "1st Grade",

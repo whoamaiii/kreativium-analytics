@@ -9,8 +9,9 @@ import { ArrowLeft, Save, User } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSettings } from "@/components/LanguageSettings";
-import { analyticsManager } from "@/lib/analyticsManager";
 import { logger } from "@/lib/logger";
+import { saveTrackingEntry as saveTrackingEntryUnified } from "@/lib/tracking/saveTrackingEntry";
+import { dataStorage } from "@/lib/dataStorage";
 
 const TrackStudent = () => {
   const { studentId } = useParams();
@@ -26,20 +27,13 @@ const TrackStudent = () => {
   useEffect(() => {
     if (!studentId) return;
 
-    // Load student data
-    const storedStudents = localStorage.getItem('sensoryTracker_students');
-    if (storedStudents) {
-      const students = JSON.parse(storedStudents);
-      const foundStudent = students.find((s: Student) => s.id === studentId);
-      if (foundStudent) {
-        setStudent({
-          ...foundStudent,
-          createdAt: new Date(foundStudent.createdAt)
-        });
-      } else {
-        toast.error(String(tTracking('session.validationError')));
-        navigate('/');
-      }
+    // Load student data using dataStorage API
+    const foundStudent = dataStorage.getStudentById(studentId);
+    if (foundStudent) {
+      setStudent(foundStudent);
+    } else {
+      toast.error(String(tTracking('session.validationError')));
+      navigate('/');
     }
   }, [studentId, navigate, tTracking]);
 
@@ -93,14 +87,12 @@ const TrackStudent = () => {
         notes: generalNotes.trim() || undefined
       };
 
-      // Save using dataStorage for consistency
-      const storedEntries = localStorage.getItem('sensoryTracker_entries');
-      const entries = storedEntries ? JSON.parse(storedEntries) : [];
-      entries.push(trackingEntry);
-      localStorage.setItem('sensoryTracker_entries', JSON.stringify(entries));
-
-      // Trigger analytics update for this student
-      await analyticsManager.triggerAnalyticsForStudent(student);
+      // Unified save flow
+      const result = await saveTrackingEntryUnified(trackingEntry, { minDataPoints: 1 });
+      if (!result.success) {
+        result.errors?.forEach(err => toast.error(err));
+        return;
+      }
 
       toast.success(String(tTracking('session.sessionSaved')));
       navigate(`/student/${student.id}`);
@@ -117,7 +109,7 @@ const TrackStudent = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">{String(tCommon('status.loading'))}...</p>
+          <p className="text-muted-foreground">{String(tCommon('status.loading'))}</p>
         </div>
       </div>
     );
@@ -152,7 +144,7 @@ const TrackStudent = () => {
           </div>
           
           <p className="text-muted-foreground">
-            Record emotions and sensory responses for this session
+            {String(tTracking('session.description'))}
           </p>
         </div>
 

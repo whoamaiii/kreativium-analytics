@@ -117,8 +117,10 @@
     "analytics": "Analyse",
     "settings": "Innstillinger",
     "reports": "Rapporter",
+    "globalMenu": "Hovedmeny",
     "devTools": "Utviklerverktøy",
-    "tegnTilTale": "Tegn til Tale"
+    "tegnTilTale": "Tegn til Tale",
+    "kreativiumAI": "Kreativium AI"
   },
   "tegn": {
     "menu": "Meny",
@@ -156,6 +158,25 @@
     "description": "Hvis du trenger hjelp eller støtte, kontakt oss på:",
     "email": "support@example.com"
   },
+  "devTools": {
+    "title": "Utviklerverktøy",
+    "unavailable": "Denne seksjonen er ikke tilgjengelig i produksjon.",
+    "storage": {
+      "title": "Lagringshåndtering",
+      "description": "Inspiser og administrer lokal datalagring. Rydd trygt bort gamle eller unødvendige data.",
+      "open": "Åpne lagringshåndtering",
+      "loading": "Laster…"
+    },
+    "diagnostics": {
+      "title": "Modelldiagnostikk",
+      "description": "Kjør tidsserie-kryssvalidering og se nylige evalueringskjøringer. Lastes ved behov for å holde hovedpakken liten.",
+      "open": "Åpne diagnostikkpanel",
+      "loading": "Laster diagnostikk…"
+    },
+    "env": {
+      "loading": "Laster miljø…"
+    }
+  },
   "time": {
     "today": "I dag",
     "yesterday": "I går",
@@ -170,7 +191,8 @@
     "saved": "Lagret",
     "error": "Feil",
     "success": "Suksess",
-    "empty": "Ingen data tilgjengelig"
+    "empty": "Ingen data tilgjengelig",
+    "resolving": "Løser..."
   },
   "language": {
     "norwegian": "Norsk bokmål",
@@ -196,7 +218,15 @@
     "emotion": "Følelse",
     "sensory": "Sensorisk",
     "goal": "Mål",
-    "clearAllFilters": "Fjern alle filtre"
+    "clearAllFilters": "Fjern alle filtre",
+    "filterTag": "{{label}}: {{value}}",
+    "filterTagQuoted": "{{label}}: \"{{value}}\"",
+    "dateRangeTag": "{{start}} – {{end}}",
+    "resultsSummary": "{{resultsLabel}}: {{students}} {{studentsLabel}}, {{emotions}} {{emotionsLabel}}, {{sensory}} {{sensoryLabel}}, {{goals}} {{goalsLabel}}",
+    "studentsLabel": "elever",
+    "emotionsLabel": "følelser",
+    "sensoryInputsLabel": "sensoriske data",
+    "goalsLabel": "mål"
   },
   "accessibility": {
     "skipToContent": "Hopp til hovedinnhold"

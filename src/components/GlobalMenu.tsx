@@ -20,7 +20,7 @@ export const GlobalMenu = (): JSX.Element => {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={buttonVariants({ variant: 'ghost', size: 'sm' }) + ' text-muted-foreground hover:text-foreground transition-colors'}
-        aria-label={tCommon('navigation.reports')}
+        aria-label={tCommon('navigation.globalMenu')}
         data-testid="global-menu-trigger"
         id="global-menu-trigger"
       >

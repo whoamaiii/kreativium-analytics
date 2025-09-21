@@ -26,6 +26,7 @@ vi.mock('@/lib/insights/unified', () => ({
     predictiveInsights: [],
     anomalies: [],
     insights: [],
+    suggestedInterventions: [],
     confidence: 0.9,
     hasMinimumData: true,
   }))
@@ -73,6 +74,9 @@ describe('orchestrator exports from analyticsManager', () => {
       insightsCount: 0,
       hasMinimumData: true,
     });
+    // Ensure unified returns complete shape including suggestedInterventions
+    const detailed = await (await import('@/lib/insights/unified')).computeInsights(inputs as any);
+    expect(Array.isArray((detailed as any).suggestedInterventions)).toBe(true);
     expect(result.diagnostics).toMatchObject({ entries: 1, emotions: 1, sensoryInputs: 1 });
   });
 });

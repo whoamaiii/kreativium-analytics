@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
 // Mock components for testing
@@ -12,7 +12,7 @@ const MockStudentList = ({ onSelect }: { onSelect: (id: string) => void }) => {
   );
 };
 
-const MockDataVisualization = ({ data }: { data: any }) => {
+const MockDataVisualization = ({ data }: { data: number[] | null }) => {
   return (
     <div data-testid="data-visualization">
       {data ? `Displaying ${data.length} entries` : 'No data'}
@@ -20,7 +20,7 @@ const MockDataVisualization = ({ data }: { data: any }) => {
   );
 };
 
-const MockFilterControls = ({ onFilterChange }: { onFilterChange: (filters: any) => void }) => {
+const MockFilterControls = ({ onFilterChange }: { onFilterChange: (filters: { emotion: string | null }) => void }) => {
   return (
     <div>
       <button onClick={() => onFilterChange({ emotion: 'happy' })}>Filter Happy</button>
@@ -114,7 +114,7 @@ describe('Interactive Features', () => {
   });
 
   describe('Loading States', () => {
-    const MockLoadingComponent = ({ isLoading, data }: { isLoading: boolean, data?: any }) => {
+    const MockLoadingComponent = ({ isLoading, data }: { isLoading: boolean, data?: string }) => {
       if (isLoading) {
         return <div role="status" aria-busy="true">Loading...</div>;
       }
@@ -141,15 +141,15 @@ describe('Interactive Features', () => {
   });
 
   describe('Form Validation', () => {
-    const MockForm = ({ onSubmit }: { onSubmit: (data: any) => void }) => {
-      const [errors, setErrors] = React.useState<{ [key: string]: string }>({});
+    const MockForm = ({ onSubmit }: { onSubmit: (data: Record<string, FormDataEntryValue>) => void }) => {
+      const [errors, setErrors] = React.useState<Record<string, string>>({});
       
       const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
-        const data = Object.fromEntries(formData);
-        
-        const newErrors: { [key: string]: string } = {};
+        const data = Object.fromEntries(formData) as Record<string, FormDataEntryValue>;
+
+        const newErrors: Record<string, string> = {};
         if (!data.name) {
           newErrors.name = 'Name is required';
         }

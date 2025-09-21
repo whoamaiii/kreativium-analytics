@@ -239,6 +239,49 @@ export function generateInsightsStructured(
   return messages;
 }
 
+type InsightTemplate = (params?: Record<string, unknown>) => string;
+
+const INSIGHT_MESSAGE_TEMPLATES: Record<string, InsightTemplate> = {
+  'analytics.insights.messages.noTrackingData': () =>
+    'No tracking data available yet. Start by creating your first tracking session to begin pattern analysis.',
+  'analytics.insights.messages.limitedData': (params) => {
+    const sessions = typeof params?.sessions === 'number' ? params.sessions : 0;
+    return `Limited data available (${sessions} sessions). Analytics will improve as more data is collected.`;
+  },
+  'analytics.insights.messages.patternDetected': (params) => {
+    const description = String(params?.description ?? '');
+    const confidencePct = typeof params?.confidencePct === 'number' ? params.confidencePct : 0;
+    return `Pattern detected: ${description} (${confidencePct}% confidence)`;
+  },
+  'analytics.insights.messages.strongCorrelation': (params) => {
+    const description = String(params?.description ?? '');
+    return `Strong correlation found: ${description}`;
+  },
+  'analytics.insights.messages.prediction': (params) => {
+    const description = String(params?.description ?? '');
+    const confidencePct = typeof params?.confidencePct === 'number' ? params.confidencePct : 0;
+    return `Prediction: ${description} (${confidencePct}% confidence)`;
+  },
+  'analytics.insights.messages.positiveTrend': (params) => {
+    const percentage = typeof params?.percentage === 'number' ? params.percentage : 0;
+    return `Positive trend: ${percentage}% of recent emotions have been positive.`;
+  },
+  'analytics.insights.messages.negativeTrend': (params) => {
+    const percentage = typeof params?.percentage === 'number' ? params.percentage : 0;
+    return `Consider reviewing strategies - only ${percentage}% of recent emotions have been positive.`;
+  },
+  'analytics.insights.messages.analyticsActive': () =>
+    'Analytics are active and monitoring patterns. Continue collecting data for more detailed insights.',
+};
+
+function renderStructuredInsight(insight: StructuredInsight): string {
+  const template = INSIGHT_MESSAGE_TEMPLATES[insight.key];
+  if (!template) {
+    return insight.key;
+  }
+  return template(insight.params);
+}
+
 export function generateInsights(...args: any[]): InsightOutput {
   // Branch 1: New signature with results object first
   if (args.length >= 3 && args[0] && typeof args[0] === 'object' && 'patterns' in args[0]) {
@@ -246,59 +289,8 @@ export function generateInsights(...args: any[]): InsightOutput {
     const emotions = args[1] as readonly EmotionEntry[];
     const trackingEntries = args[2] as readonly TrackingEntry[];
     const cfg = getEffectiveInsightsConfig(args[3] as InsightConfig | undefined);
-    const fullCfg = getEffectiveFullConfig() as typeof ANALYTICS_CONFIG; // For POSITIVE_EMOTIONS
-
-    // TODO: Map to i18n keys; keep verbatim strings to avoid UI diffs
-    const insights: string[] = [];
-
-    // Guard: no tracking data
-    if (trackingEntries.length === 0) {
-      return [
-        'No tracking data available yet. Start by creating your first tracking session to begin pattern analysis.'
-      ];
-    }
-
-    // Limited data notice
-    if (trackingEntries.length < cfg.MIN_SESSIONS_FOR_FULL_ANALYTICS) {
-      insights.push(`Limited data available (${trackingEntries.length} sessions). Analytics will improve as more data is collected.`);
-    }
-
-    // Patterns (match analyticsManager exact filter/format)
-    results.patterns
-      .filter(p => p.confidence > cfg.HIGH_CONFIDENCE_PATTERN_THRESHOLD)
-      .slice(0, cfg.MAX_PATTERNS_TO_SHOW)
-      .forEach(pattern => insights.push(`Pattern detected: ${pattern.description} (${Math.round(pattern.confidence * 100)}% confidence)`));
-
-    // Correlations
-    results.correlations
-      .filter(c => (c as any).significance === 'high')
-      .slice(0, cfg.MAX_CORRELATIONS_TO_SHOW)
-      .forEach(correlation => insights.push(`Strong correlation found: ${correlation.description}`));
-
-    // Predictive insights
-    results.predictiveInsights
-      .slice(0, cfg.MAX_PREDICTIONS_TO_SHOW)
-      .forEach(insight => insights.push(`Prediction: ${insight.description} (${Math.round(insight.confidence * 100)}% confidence)`));
-
-    // Emotion trend
-    if (emotions.length >= cfg.RECENT_EMOTION_COUNT) {
-      const recent = emotions.slice(-cfg.RECENT_EMOTION_COUNT);
-      const positiveSet: Set<string> = (fullCfg.POSITIVE_EMOTIONS ?? ANALYTICS_CONFIG.POSITIVE_EMOTIONS) as Set<string>;
-      const positives = recent.filter(e => positiveSet.has(e.emotion.toLowerCase())).length;
-      const positiveRate = positives / recent.length;
-      if (positiveRate > cfg.POSITIVE_EMOTION_TREND_THRESHOLD) {
-        insights.push(`Positive trend: ${Math.round(positiveRate * 100)}% of recent emotions have been positive.`);
-      } else if (positiveRate < cfg.NEGATIVE_EMOTION_TREND_THRESHOLD) {
-        insights.push(`Consider reviewing strategies - only ${Math.round(positiveRate * 100)}% of recent emotions have been positive.`);
-      }
-    }
-
-    // Ensure non-empty
-    if (insights.length === 0) {
-      insights.push('Analytics are active and monitoring patterns. Continue collecting data for more detailed insights.');
-    }
-
-    return insights;
+    const structured = generateInsightsStructured(results, emotions, trackingEntries, cfg);
+    return structured.map(renderStructuredInsight);
   }
 
   // Branch 2: Legacy signature implementation (preserve existing behavior)
@@ -472,4 +464,3 @@ function getTopCategory(values: ReadonlyArray<string>): { key: string; count: nu
   }
   return bestKey ? { key: bestKey, count: bestCount } : null;
 }
-

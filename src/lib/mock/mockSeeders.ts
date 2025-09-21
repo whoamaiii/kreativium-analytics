@@ -5,7 +5,7 @@
  */
 import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '@/lib/uuid';
 import { generateUniversalMockDataForStudent as generateMockData } from '@/lib/universalDataGenerator';
 
 export interface SeedDemoOptions {
@@ -31,7 +31,7 @@ export async function seedDemoData(options: SeedDemoOptions = {}): Promise<{ tot
     // Optionally create new demo students
     if (createNewStudents > 0) {
       for (let i = 0; i < createNewStudents; i++) {
-        const id = `demo-${uuidv4()}`;
+        const id = `demo-${generateUUID()}`;
         // Minimal student object; adapt to your domain model if needed
         const student = { id, name: `Demo Student ${i + 1}` } as any;
         try {

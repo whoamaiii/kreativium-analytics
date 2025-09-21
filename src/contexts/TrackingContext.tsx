@@ -2,8 +2,11 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { TrackingEntry, EmotionEntry, SensoryEntry, EnvironmentalEntry } from '@/types/student';
 import { dataStorage } from '@/lib/dataStorage';
 import { analyticsManager } from '@/lib/analyticsManager';
+import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/saveTrackingEntry';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
+import { validateTrackingEntry } from '@/lib/tracking/validation';
+import { assessEntryQuality } from '@/lib/tracking/dataQuality';
 
 /**
  * Session state for tracking data collection
@@ -48,6 +51,9 @@ export interface SessionConfig {
 
 /**
  * Tracking context value interface
+ */
+/**
+ * @deprecated TrackingContext is deprecated. Use `sessionManager` from `src/lib/sessionManager.ts` instead.
  */
 export interface TrackingContextValue {
   // Session state
@@ -95,6 +101,8 @@ const TrackingContext = createContext<TrackingContextValue | undefined>(undefine
 /**
  * TrackingProvider component
  * Manages all tracking sessions and data collection
+ *
+ * @deprecated Use `sessionManager` from `src/lib/sessionManager.ts`. This provider is no longer used in the app.
  */
 export const TrackingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentSession, setCurrentSession] = useState<SessionState | null>(null);
@@ -104,30 +112,35 @@ export const TrackingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Emit deprecation warning once on mount
+  useEffect(() => {
+    logger.warn('[TrackingContext] Deprecated: TrackingContext/Provider are deprecated. Use sessionManager instead.');
+  }, []);
+
   /**
    * Calculate data quality metrics
    */
   const calculateDataQuality = useCallback((session: SessionState): DataQualityMetrics => {
-    const emotionCount = session.emotions.length;
-    const sensoryCount = session.sensoryInputs.length;
-    const hasEnvironmental = session.environmentalData !== null;
-    const sessionDuration = Date.now() - session.startTime.getTime();
-    
-    // Calculate completeness score (0-100)
-    let completeness = 0;
-    if (emotionCount > 0) completeness += 30;
-    if (sensoryCount > 0) completeness += 30;
-    if (hasEnvironmental) completeness += 20;
-    if (session.notes.length > 0) completeness += 10;
-    if (sessionDuration > 5 * 60 * 1000) completeness += 10; // 5+ minutes
-    
+    const timestamp = new Date();
+    const pseudoEntry: TrackingEntry = {
+      id: 'temp',
+      studentId: session.studentId,
+      timestamp,
+      emotions: session.emotions.map(e => ({ ...e, id: 'temp', timestamp })),
+      sensoryInputs: session.sensoryInputs.map(s => ({ ...s, id: 'temp', timestamp })),
+      environmentalData: session.environmentalData ? { ...session.environmentalData, id: 'temp', timestamp } : undefined,
+      notes: session.notes || undefined,
+    };
+
+    const quality = assessEntryQuality(pseudoEntry);
+
     return {
-      emotionCount,
-      sensoryCount,
-      hasEnvironmental,
-      sessionDuration,
-      completeness,
-      lastSaved: null,
+      emotionCount: quality.emotionCount,
+      sensoryCount: quality.sensoryCount,
+      hasEnvironmental: quality.hasEnvironmental,
+      sessionDuration: quality.sessionDuration,
+      completeness: quality.completeness,
+      lastSaved: session.dataQuality?.lastSaved ?? null,
     };
   }, []);
 
@@ -454,11 +467,15 @@ export const TrackingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           timestamp,
         } : undefined,
         notes: currentSession.notes || undefined,
-        version: 1,
       };
 
-      // Save to storage
-      dataStorage.saveTrackingEntry(trackingEntry);
+      // Unified save: validate → save → broadcast → analytics
+      const min = sessionConfig.minDataForSave ?? 1;
+      const result = await saveTrackingEntryUnified(trackingEntry, { minDataPoints: min });
+      if (!result.success) {
+        result.errors?.forEach(err => toast.error(err));
+        return null;
+      }
 
       // Update quality metrics
       setCurrentSession(prev => prev ? {
@@ -469,11 +486,7 @@ export const TrackingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
       } : null);
 
-      // Trigger analytics update
-      const student = dataStorage.getStudentById(currentSession.studentId);
-      if (student) {
-        await analyticsManager.triggerAnalyticsForStudent(student);
-      }
+      // Analytics is triggered by unified helper; no-op here
 
       toast.success('Session saved successfully');
       logger.info('[TrackingContext] Session saved', { 
@@ -493,29 +506,29 @@ export const TrackingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
    * Validate the current session
    */
   const validateSession = useCallback((): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
-
+    // Deprecated: mirrors SessionManager validation via unified module
     if (!currentSession) {
-      errors.push('No active session');
-      return { isValid: false, errors };
+      return { isValid: false, errors: ['No active session'] };
     }
 
-    if (sessionConfig.minDataForSave) {
-      const totalData = currentSession.emotions.length + currentSession.sensoryInputs.length;
-      if (totalData < sessionConfig.minDataForSave) {
-        errors.push(`At least ${sessionConfig.minDataForSave} data point(s) required`);
-      }
-    }
+    const timestamp = new Date();
+    const pseudoEntry: TrackingEntry = {
+      id: 'temp',
+      studentId: currentSession.studentId,
+      timestamp,
+      emotions: currentSession.emotions.map(e => ({ ...e, id: 'temp', timestamp })),
+      sensoryInputs: currentSession.sensoryInputs.map(s => ({ ...s, id: 'temp', timestamp })),
+      environmentalData: currentSession.environmentalData ? { ...currentSession.environmentalData, id: 'temp', timestamp } : undefined,
+      notes: currentSession.notes || undefined,
+    };
 
-    if (sessionConfig.enableQualityChecks) {
-      const quality = calculateDataQuality(currentSession);
-      if (quality.completeness < 20) {
-        errors.push('Session data is too incomplete (< 20% completeness)');
-      }
-    }
+    const validation = validateTrackingEntry(pseudoEntry, {
+      minDataPoints: sessionConfig.minDataForSave,
+      enableQualityChecks: true,
+    });
 
-    return { isValid: errors.length === 0, errors };
-  }, [currentSession, sessionConfig, calculateDataQuality]);
+    return { isValid: validation.isValid, errors: validation.errors };
+  }, [currentSession, sessionConfig.minDataForSave]);
 
   /**
    * Discard the current session
@@ -648,6 +661,7 @@ export const TrackingProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
 /**
  * Hook to use the tracking context
+ * @deprecated Use `sessionManager` instead of this hook.
  */
 export const useTracking = () => {
   const context = useContext(TrackingContext);

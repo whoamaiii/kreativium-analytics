@@ -1608,24 +1608,6 @@
       "memoizationScore": 0
     },
     {
-      "file": "src/components/PredictionTimeline.tsx",
-      "name": "PredictionTimeline",
-      "linesOfCode": 88,
-      "complexityScore": 2,
-      "issues": [
-        {
-          "file": "src/components/PredictionTimeline.tsx",
-          "line": 1,
-          "type": "missing-memoization",
-          "severity": "medium",
-          "message": "Component with complex props lacks memoization"
-        }
-      ],
-      "renderComplexity": 0,
-      "effectsCount": 0,
-      "memoizationScore": 0
-    },
-    {
       "file": "src/components/DebugVisualization.tsx",
       "name": "DebugVisualization",
       "linesOfCode": 233,
@@ -2800,13 +2782,6 @@
       "severity": "medium",
       "message": "Using array index as React key (causes re-renders)",
       "code": "key={i}"
-    },
-    {
-      "file": "src/components/PredictionTimeline.tsx",
-      "line": 1,
-      "type": "missing-memoization",
-      "severity": "medium",
-      "message": "Component with complex props lacks memoization"
     },
     {
       "file": "src/components/DebugVisualization.tsx",

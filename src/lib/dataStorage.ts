@@ -1,5 +1,6 @@
 import { Student, TrackingEntry, Goal, Intervention, Alert, CorrelationData, DataVersion, StorageIndex } from "@/types/student";
 import { logger } from './logger';
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 import { storageUtils } from './storageUtils';
 
 /**
@@ -454,6 +455,13 @@ export class DataStorageManager implements IDataStorage {
     this.saveAll(STORAGE_KEYS.TRACKING_ENTRIES, entries);
     this.storageIndex.trackingEntries[entry.id] = entry.timestamp;
     this.saveStorageIndex();
+
+    // Broadcast cache invalidation to ensure analytics caches are consistent
+    try {
+      analyticsCoordinator.broadcastCacheClear(entry.studentId);
+    } catch {
+      // fail-soft: do not throw from storage operations
+    }
   }
 
   /**
@@ -490,6 +498,11 @@ export class DataStorageManager implements IDataStorage {
     this.saveAll(STORAGE_KEYS.GOALS, goals);
     this.storageIndex.goals[goal.id] = new Date();
     this.saveStorageIndex();
+
+    // Analytics may depend on goals; broadcast cache invalidation for affected student
+    try {
+      if ((goal as any)?.studentId) analyticsCoordinator.broadcastCacheClear((goal as any).studentId as string);
+    } catch { /* noop */ }
   }
 
   /**
@@ -526,6 +539,11 @@ export class DataStorageManager implements IDataStorage {
     this.saveAll(STORAGE_KEYS.INTERVENTIONS, interventions);
     this.storageIndex.interventions[intervention.id] = new Date();
     this.saveStorageIndex();
+
+    // Interventions impact analytics; invalidate caches for the student
+    try {
+      if ((intervention as any)?.studentId) analyticsCoordinator.broadcastCacheClear((intervention as any).studentId as string);
+    } catch { /* noop */ }
   }
 
   /**
@@ -562,6 +580,11 @@ export class DataStorageManager implements IDataStorage {
     this.saveAll(STORAGE_KEYS.ALERTS, alerts);
     this.storageIndex.alerts[alert.id] = alert.timestamp;
     this.saveStorageIndex();
+
+    // Alerts may be surfaced in analytics; invalidate per student
+    try {
+      if ((alert as any)?.studentId) analyticsCoordinator.broadcastCacheClear((alert as any).studentId as string);
+    } catch { /* noop */ }
   }
 
   /**
@@ -596,6 +619,11 @@ export class DataStorageManager implements IDataStorage {
     }
     
     this.saveAll(STORAGE_KEYS.CORRELATIONS, correlations);
+
+    // Correlations directly tie into analytics views; invalidate for the student
+    try {
+      if ((correlation as any)?.studentId) analyticsCoordinator.broadcastCacheClear((correlation as any).studentId as string);
+    } catch { /* noop */ }
   }
 
   /**
@@ -744,7 +772,8 @@ export class DataStorageManager implements IDataStorage {
       }
       this.saveStorageIndex();
       
-      
+      // Broadcast cache clear for the deleted student to refresh analytics across the app
+      try { analyticsCoordinator.broadcastCacheClear(studentId); } catch { /* noop */ }
     } catch (error) {
       logger.error('Error deleting student:', error);
       throw error;

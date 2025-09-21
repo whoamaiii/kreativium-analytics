@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from '@/hooks/useTranslation';
 const EChartContainer = React.lazy(() => import('./EChartContainer').then(m => ({ default: m.EChartContainer })));
 import { buildEmotionTrendsOption, buildAreaOption, buildScatterOption, buildComposedOption, TrendRow as ChartKitTrendRow } from './ChartKit';
 import { Activity } from 'lucide-react';
 import { logger } from '@/lib/logger';
+import { analyticsConfig } from '@/lib/analyticsConfig';
 import { ChartType } from '@/hooks/useVisualizationState';
 import { EChartsOption } from 'echarts';
 
@@ -25,6 +27,7 @@ interface TrendsChartProps {
 }
 
 export const TrendsChart: React.FC<TrendsChartProps> = ({ chartData, selectedChartType }) => {
+  const { tAnalytics } = useTranslation();
   try {
     if (chartData.length === 0) {
       return (
@@ -50,24 +53,25 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({ chartData, selectedCha
 
     switch (selectedChartType) {
       case 'area':
-        option = buildAreaOption(rows);
+        option = buildAreaOption(rows, tAnalytics);
         break;
       case 'scatter':
-        option = buildScatterOption(rows);
+        option = buildScatterOption(rows, tAnalytics);
         break;
       case 'composed':
-        option = buildComposedOption(rows);
+        option = buildComposedOption(rows, tAnalytics);
         break;
       default: // line fallback
-        const emotionThreshold = 7;
-        const sensoryThreshold = 5;
+        const chartsCfg = analyticsConfig.getConfig().charts;
+        const emotionThreshold = chartsCfg.emotionThreshold;
+        const sensoryThreshold = chartsCfg.sensoryThreshold;
         option = buildEmotionTrendsOption(rows, {
-          title: 'Emotion Trends Over Time',
+          title: String(tAnalytics('charts.emotionTrends')),
           showMovingAverage: true,
-          movingAverageWindow: 7,
+          movingAverageWindow: chartsCfg.movingAverageWindow,
           useDualYAxis: true,
           thresholds: { emotion: emotionThreshold, sensory: sensoryThreshold },
-        });
+        }, tAnalytics);
         break;
     }
 
@@ -76,7 +80,7 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({ chartData, selectedCha
         <EChartContainer 
           option={option} 
           height={400}
-          exportRegistration={{ id: 'trends-main', type: 'trends', title: 'Emotion & Sensory Trends' }}
+          exportRegistration={{ id: 'trends-main', type: 'trends', title: String(tAnalytics('export.chartTitle')) }}
         />
       </React.Suspense>
     );

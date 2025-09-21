@@ -4,19 +4,35 @@ import type { TabKey } from '@/types/analytics';
 import { logger } from '@/lib/logger';
 
 
-const VALID_TABS: ReadonlyArray<TabKey> = ['charts', 'patterns', 'correlations', 'alerts'] as const;
+const VALID_TABS: ReadonlyArray<TabKey> = ['overview', 'explore', 'alerts'] as const;
+
+const LEGACY_TAB_MAP: Record<string, TabKey> = {
+  // Previously separate tabs now consolidated under Explore
+  charts: 'explore',
+  patterns: 'explore',
+  correlations: 'explore',
+  // Legacy alias previously mapped to charts; now to explore
+  visualizations: 'explore',
+  // Alerts remains the same
+  alerts: 'alerts',
+};
 
 function isValidTab(value: string | null | undefined): value is TabKey {
   if (!value) return false;
-  // Back-compat mapping: legacy "visualizations" -> "charts"
-  const normalized = value === 'visualizations' ? 'charts' : value;
-  return (VALID_TABS as readonly string[]).includes(normalized);
+  const lower = value.toLowerCase();
+  const mapped = LEGACY_TAB_MAP[lower] ?? lower;
+  return (VALID_TABS as readonly string[]).includes(mapped);
 }
 
 function normalizeTab(value: string | null | undefined): TabKey {
-  if (!value) return 'charts';
-  if (value === 'visualizations') return 'charts';
-  return isValidTab(value) ? (value as TabKey) : 'charts';
+  if (!value) return 'overview';
+  const lower = value.toLowerCase();
+  const mapped = (LEGACY_TAB_MAP[lower] ?? lower) as string;
+  const finalTab = (VALID_TABS as readonly string[]).includes(mapped) ? (mapped as TabKey) : 'overview';
+  if (lower !== finalTab) {
+    try { logger.debug('[useSyncedTabParam] Back-compat mapping applied', { from: value, to: finalTab }); } catch {}
+  }
+  return finalTab;
 }
 
 export interface UseSyncedTabParamOptions {
@@ -24,7 +40,7 @@ export interface UseSyncedTabParamOptions {
   debounceMs?: number;
   // Query parameter key to use. Defaults to 'tab'.
   paramKey?: string;
-  // Default tab when missing/invalid in URL. Defaults to 'charts'.
+  // Default tab when missing/invalid in URL. Defaults to 'overview'.
   defaultTab?: TabKey;
 }
 
@@ -40,15 +56,14 @@ export type UseSyncedTabParamReturn = [TabKey, Dispatch<SetStateAction<TabKey>>]
  * - Keeps state in sync with back/forward navigation via popstate or router updates
  */
 export function useSyncedTabParam(options: UseSyncedTabParamOptions = {}): UseSyncedTabParamReturn {
-  const { debounceMs = 150, paramKey = 'tab', defaultTab = 'charts' } = options;
+  const { debounceMs = 150, paramKey = 'tab', defaultTab = 'overview' } = options;
 
   // Read initial value from current URL
   const getTabFromLocation = useCallback((): TabKey => {
     try {
       const params = new URLSearchParams(window.location.search);
       const urlValue = params.get(paramKey);
-      const normalized = urlValue === 'visualizations' ? 'charts' : urlValue;
-      const tab = normalizeTab(normalized) || defaultTab;
+      const tab = normalizeTab(urlValue) || defaultTab;
       try { logger.debug('[useSyncedTabParam] Read tab from URL', { tab, paramKey }); } catch {}
       return tab;
     } catch {

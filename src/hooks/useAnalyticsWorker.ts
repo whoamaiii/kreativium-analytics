@@ -15,13 +15,17 @@ import { analyticsConfig } from '@/lib/analyticsConfig';
 import { getValidatedConfig, validateAnalyticsRuntimeConfig } from '@/lib/analyticsConfigValidation';
 import { buildInsightsCacheKey, buildInsightsTask } from '@/lib/analyticsManager';
 import { logger } from '@/lib/logger';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { diagnostics } from '@/lib/diagnostics';
 import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { POC_MODE, DISABLE_ANALYTICS_WORKER } from '@/lib/env';
-import type { Student } from '@/types/student';
+import type { Student, Goal } from '@/types/student';
 import type { AnalyticsResultsAI } from '@/lib/analysis';
 import { analyticsManager } from '@/lib/analyticsManager';
+import { dataStorage } from '@/lib/dataStorage';
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { AnalyticsPrecomputationManager } from '@/lib/analyticsPrecomputation';
+import { deviceConstraints } from '@/lib/deviceConstraints';
 
 // -----------------------------------------------------------------------------
 // Module-level singleton to prevent duplicate workers across multiple consumers
@@ -44,16 +48,8 @@ function nowMs(): number { return Date.now(); }
 function isCircuitOpen(): boolean { return nowMs() < singleton.circuitUntil; }
 function openCircuit(ms: number): void { singleton.circuitUntil = nowMs() + Math.max(0, ms); }
 
-// Simple once-per-key dedupe for user-facing notifications
-const onceWindow = new Map<string, number>();
-function doOnce(key: string, ttlMs: number, fn: () => void) {
-  const now = nowMs();
-  const last = onceWindow.get(key) ?? 0;
-  if (now - last > ttlMs) {
-    onceWindow.set(key, now);
-    try { fn(); } catch { /* noop */ }
-  }
-}
+// Shared once-per-key dedupe for user-facing notifications
+import { doOnce } from '@/lib/rateLimit';
 
 // Queue tasks until worker signals ready
 const pendingTasks: MessageEvent['data'][] = [];
@@ -184,12 +180,17 @@ interface UseAnalyticsWorkerReturn {
   results: AnalyticsResultsAI | null;
   isAnalyzing: boolean;
   error: string | null;
-  runAnalysis: (data: AnalyticsData, options?: { useAI?: boolean; student?: Student }) => Promise<void>;
-  precomputeCommonAnalytics: (dataProvider: () => AnalyticsData[]) => void;
+  runAnalysis: (data: AnalyticsData, options?: { useAI?: boolean; student?: Student; prewarm?: boolean }) => Promise<void>;
+  precomputeCommonAnalytics: (dataProvider: () => AnalyticsData[], options?: { student?: Student }) => void;
   invalidateCacheForStudent: (studentId: string) => void;
   clearCache: () => void;
   cacheStats: CacheStats | null;
   cacheSize: number;
+  // Optional precomputation status/controls
+  precomputeEnabled?: boolean;
+  precomputeStatus?: { enabled: boolean; queueSize: number; isProcessing: boolean; processedCount: number } | null;
+  startPrecomputation?: () => void;
+  stopPrecomputation?: () => void;
 }
 
 /**
@@ -227,6 +228,10 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
   const [error, setError] = useState<string | null>(null);
   const idleCallbackRef = useRef<number | null>(null);
   const [isWorkerReady, setIsWorkerReady] = useState<boolean>(false);
+  const activeCacheKeyRef = useRef<string | null>(null);
+  const cacheTagsRef = useRef<Map<string, string[]>>(new Map());
+  const precompManagerRef = useRef<AnalyticsPrecomputationManager | null>(null);
+  const [precomputeStatus, setPrecomputeStatus] = useState<{ enabled: boolean; queueSize: number; isProcessing: boolean; processedCount: number } | null>(null);
 
   // Initialize performance cache with appropriate settings
   const cache = usePerformanceCache<AnalyticsResults>({
@@ -256,6 +261,28 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     return tags;
   }, []);
   const extractTagsFn = options.extractTagsFromData ?? defaultExtractTagsFromData;
+
+  const buildCacheTags = useCallback(({ data, goals, studentId, includeAiTag }: { data: AnalyticsData | AnalyticsResults; goals?: Goal[]; studentId?: string | number; includeAiTag?: boolean }): string[] => {
+    const tagsFromData = extractTagsFn({ ...data, goals } as AnalyticsData) ?? [];
+    const tagSet = new Set<string>(tagsFromData);
+
+    (goals ?? []).forEach(goal => {
+      const goalId = (goal as Goal)?.id;
+      if (goalId) tagSet.add(`goal-${goalId}`);
+      const goalStudentId = (goal as Goal)?.studentId;
+      if (goalStudentId) tagSet.add(`student-${goalStudentId}`);
+    });
+
+    if (studentId !== undefined && studentId !== null) {
+      tagSet.add(`student-${studentId}`);
+    }
+
+    if (includeAiTag) {
+      tagSet.add('ai');
+    }
+
+    return Array.from(tagSet);
+  }, [extractTagsFn]);
 
   useEffect(() => {
     let isMounted = true; // Race condition guard
@@ -328,11 +355,33 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
                 // For now, do not merge partials into results to avoid flicker; could add later
                 break;
               case 'complete':
-                setResults(data.payload as unknown as AnalyticsResultsAI);
-                setIsAnalyzing(false);
-                setError(null);
+                {
+                  const cacheKeyFromMsg = (data.cacheKey || (data.payload as any)?.cacheKey) as string | undefined;
+                  const prewarmFlag = ((data.payload as any)?.prewarm === true);
+                  const shouldUpdateUi = !!cacheKeyFromMsg && cacheKeyFromMsg === activeCacheKeyRef.current && !prewarmFlag;
+                  // Always populate local cache when possible
+                  if (cacheKeyFromMsg && data.payload) {
+                    try {
+                      const storedTags = cacheTagsRef.current.get(cacheKeyFromMsg);
+                      const derivedTags = storedTags && storedTags.length
+                        ? storedTags
+                        : buildCacheTags({ data: data.payload as AnalyticsResults });
+                      const tags = Array.from(new Set([...(derivedTags ?? []), 'worker']));
+                      cache.set(cacheKeyFromMsg, data.payload as unknown as AnalyticsResultsAI, tags);
+                    } catch { /* noop */ }
+                    cacheTagsRef.current.delete(cacheKeyFromMsg);
+                  }
+                  if (shouldUpdateUi) {
+                    setResults(data.payload as unknown as AnalyticsResultsAI);
+                    setError(null);
+                    setIsAnalyzing(false);
+                  }
+                }
                 break;
               case 'error':
+                if (data.cacheKey) {
+                  cacheTagsRef.current.delete(data.cacheKey);
+                }
                 setIsAnalyzing(false);
                 setError(typeof (data as any).error === 'string' ? (data as any).error : 'Analytics worker error');
                 // Provide minimal safe results to prevent UI crashes per rules
@@ -394,13 +443,13 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
   /**
    * Creates a cache key based on the analytics data using centralized helper
    */
-  const createCacheKey = useCallback((data: AnalyticsData): string => {
+  const createCacheKey = useCallback((data: AnalyticsData, goals?: Goal[]): string => {
     // Map AnalyticsData to ComputeInsightsInputs structure expected by cache key builder
     const inputs = {
       entries: data.entries,
       emotions: data.emotions,
       sensoryInputs: data.sensoryInputs,
-      // goals are not available at this layer; omit for key purposes
+      ...(goals && goals.length ? { goals: goals.map(g => ({ id: (g as any).id })) as unknown as Goal[] } : {}),
     } as unknown as { entries: unknown[]; emotions: unknown[]; sensoryInputs: unknown[] };
 
     // Use live runtime config to ensure keys align across app and worker
@@ -413,9 +462,27 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
    * Sends data to the worker to start a new analysis, checking cache first.
    * Supports AI analysis via analyticsManager when requested.
    */
-  const runAnalysis = useCallback(async (data: AnalyticsData, options?: { useAI?: boolean; student?: Student }) => {
+  const runAnalysis = useCallback(async (data: AnalyticsData, options?: { useAI?: boolean; student?: Student; prewarm?: boolean }) => {
+    const prewarm = (options as any)?.prewarm === true;
     const aiRequested = options?.useAI === true;
-    const cacheKey = `${createCacheKey(data)}|ai=${aiRequested ? '1' : '0'}`;
+    const resolvedStudentId = (() => {
+      if (options?.student?.id) return options.student.id;
+      return (data.entries?.[0]?.studentId) || (data.emotions?.[0]?.studentId as any) || (data.sensoryInputs?.[0]?.studentId as any) || undefined;
+    })();
+
+    // Fetch goals when student context is provided (before cache key for correctness)
+    const goals = (() => {
+      if (!resolvedStudentId) return undefined;
+      try {
+        return dataStorage.getGoalsForStudent(resolvedStudentId) ?? [];
+      } catch {
+        return undefined;
+      }
+    })();
+    const cacheKey = `${createCacheKey({ ...data, goals }, goals)}|ai=${aiRequested ? '1' : '0'}`;
+    if (!prewarm) {
+      activeCacheKeyRef.current = cacheKey;
+    }
     
     // Check cache first
     const cachedResult = cache.get(cacheKey);
@@ -434,6 +501,8 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       return;
     }
 
+    const cacheTags = buildCacheTags({ data, goals, studentId: resolvedStudentId, includeAiTag: aiRequested });
+
     // AI path: bypass worker and use analyticsManager with runtime toggle
     if (aiRequested) {
       setIsAnalyzing(true);
@@ -449,20 +518,18 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         if (!studentObj) throw new Error('Missing student context for AI analysis');
 
         const res = await analyticsManager.getStudentAnalytics(studentObj, { useAI: true });
-        setResults(res as AnalyticsResultsAI);
-        const tags = Array.from(new Set([...(extractTagsFn(data) || []), `student-${studentObj.id}`, 'ai'])) as string[];
-        cache.set(cacheKey, res as AnalyticsResultsAI, tags);
+        if (!prewarm) setResults(res as AnalyticsResultsAI);
+        cache.set(cacheKey, res as AnalyticsResultsAI, cacheTags);
       } catch (err) {
         logger.error('[useAnalyticsWorker] AI analysis path failed', err);
         setError('AI analysis failed. Falling back to standard analytics.');
         try {
-          const res = await analyticsWorkerFallback.processAnalytics(data, { useAI: false, student: options?.student });
-          setResults(res as AnalyticsResultsAI);
-          const tags = extractTagsFn(data);
-          cache.set(cacheKey, res as AnalyticsResultsAI, tags);
+          const res = await analyticsWorkerFallback.processAnalytics({ ...(data as any), goals } as any, { useAI: false, student: options?.student });
+          if (!prewarm) setResults(res as AnalyticsResultsAI);
+          cache.set(cacheKey, res as AnalyticsResultsAI, cacheTags);
         } catch (fallbackError) {
           logger.error('[useAnalyticsWorker] Fallback after AI failure also failed', fallbackError);
-          setResults({
+          if (!prewarm) setResults({
             patterns: [],
             correlations: [],
             environmentalCorrelations: [],
@@ -472,7 +539,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
           } as AnalyticsResultsAI);
         }
       } finally {
-        setIsAnalyzing(false);
+        if (!prewarm) setIsAnalyzing(false);
       }
       return;
     }
@@ -484,20 +551,21 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         logger.debug('[useAnalyticsWorker] No worker available, using fallback');
         cache.set('_logged_fallback_mode', true, ['logging'], 3600000); // Log once per hour
       }
-      setIsAnalyzing(true);
+      if (!prewarm) setIsAnalyzing(true);
       setError(null);
       
       try {
-        const results = await analyticsWorkerFallback.processAnalytics(data, { useAI: options?.useAI, student: options?.student });
-        setResults(results as AnalyticsResultsAI);
+        const results = await analyticsWorkerFallback.processAnalytics({ ...(data as any), goals } as any, { useAI: options?.useAI, student: options?.student });
+        // Prewarm path does not update UI
+        if (!prewarm) setResults(results as AnalyticsResultsAI);
         // Cache the results
-        const tags = extractTagsFn(data);
-        cache.set(cacheKey, results as AnalyticsResultsAI, tags);
+        cache.set(cacheKey, results as AnalyticsResultsAI, cacheTags);
+        cacheTagsRef.current.delete(cacheKey);
       } catch (error) {
         logger.error('[useAnalyticsWorker] Fallback failed', error);
         setError('Analytics processing failed. Please try again.');
         // Set minimal results to prevent UI crash
-        setResults({
+        if (!prewarm) setResults({
           patterns: [],
           correlations: [],
           environmentalCorrelations: [],
@@ -506,15 +574,15 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
           insights: ['Analytics temporarily unavailable.']
         } as AnalyticsResultsAI);
       } finally {
-        setIsAnalyzing(false);
+        if (!prewarm) setIsAnalyzing(false);
       }
       return;
     }
 
     // If not in cache, proceed with worker analysis
-    setIsAnalyzing(true);
+    if (!prewarm) setIsAnalyzing(true);
     setError(null);
-    setResults(null);
+    if (!prewarm) setResults(null);
 
     // Start watchdog timeout to prevent indefinite spinner
     if (watchdogRef.current) {
@@ -543,16 +611,16 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       
       // Attempt fallback processing
       try {
-        const fallbackResults = await analyticsWorkerFallback.processAnalytics(data, { useAI: options?.useAI, student: options?.student });
-        setResults(fallbackResults as AnalyticsResultsAI);
-        const tags = extractTagsFn(data);
-        cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, tags);
+        const fallbackResults = await analyticsWorkerFallback.processAnalytics({ ...data, goals } as AnalyticsData, { useAI: options?.useAI, student: options?.student });
+        if (!prewarm) setResults(fallbackResults as AnalyticsResultsAI);
+        cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, cacheTags);
+        cacheTagsRef.current.delete(cacheKey);
         setError('Worker timeout - results computed using fallback mode.');
       } catch (fallbackError) {
         logger.error('[useAnalyticsWorker] Fallback failed after watchdog timeout', fallbackError);
         setError('Analytics processing failed. Please try again.');
         // Set minimal results to prevent UI crash
-        setResults({
+        if (!prewarm) setResults({
           patterns: [],
           correlations: [],
           environmentalCorrelations: [],
@@ -561,7 +629,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
           insights: ['Analytics temporarily unavailable.']
         } as AnalyticsResultsAI);
       } finally {
-        setIsAnalyzing(false);
+        if (!prewarm) setIsAnalyzing(false);
       }
     }, timeoutMs);
     
@@ -586,11 +654,13 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         entries: data.entries,
         emotions: data.emotions,
         sensoryInputs: data.sensoryInputs,
+        ...(goals ? { goals } : {}),
       } as const;
       const task = buildInsightsTask(inputs, {
         config,
         // Propagate tags derived from inputs so worker-side caches can invalidate by tag
-        tags: extractTagsFn(data),
+        tags: cacheTags,
+        prewarm,
       });
 
       // Rate limit WORKER_MESSAGE logs
@@ -615,6 +685,8 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         }
       }
 
+      cacheTagsRef.current.set(cacheKey, cacheTags);
+
       // If worker exists but is not ready yet, queue the task
       if (workerRef.current && !singleton.ready) {
         pendingTasks.push(task as unknown as MessageEvent['data']);
@@ -632,61 +704,50 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       
       // Fallback to synchronous processing
       try {
-        const fallbackResults = await analyticsWorkerFallback.processAnalytics(data, { useAI: options?.useAI, student: options?.student });
-        setResults(fallbackResults as AnalyticsResultsAI);
-        const tags = extractTagsFn(data);
-        cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, tags);
+        const fallbackResults = await analyticsWorkerFallback.processAnalytics({ ...data, goals } as AnalyticsData, { useAI: options?.useAI, student: options?.student });
+        if (!prewarm) setResults(fallbackResults as AnalyticsResultsAI);
+        cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, cacheTags);
+        cacheTagsRef.current.delete(cacheKey);
         setError(null);
       } catch (fallbackError) {
         logger.error('[useAnalyticsWorker] Fallback processing failed after worker post error', fallbackError);
         setError('Analytics processing failed.');
       } finally {
-        setIsAnalyzing(false);
+        if (!prewarm) setIsAnalyzing(false);
       }
     }
-  }, [cache, createCacheKey, extractTagsFn]);
+  }, [cache, createCacheKey, buildCacheTags]);
 
   /**
-   * Pre-compute analytics for common queries during idle time
+   * Pre-compute analytics for common queries during idle time.
+   * Note: When a student is provided, their goals are fetched and included to align with on-demand analytics.
    */
-  const precomputeCommonAnalytics = useCallback((dataProvider: () => AnalyticsData[]) => {
-    if (!precomputeOnIdle || !workerRef.current) return;
+  const precomputeCommonAnalytics = useCallback((dataProvider: () => AnalyticsData[], options?: { student?: Student }) => {
+    const pc = liveCfg?.precomputation;
+    if (!pc || !pc.enabled) return;
 
-    const precompute = () => {
-      const commonDataSets = dataProvider();
-      const config = getValidatedConfig();
-      
-      commonDataSets.forEach((data, index) => {
-        // Stagger the precomputation to avoid blocking
+    const schedule = async () => {
+      try {
+        const allowed = await deviceConstraints.canPrecompute(pc);
+        if (!allowed) return;
+      } catch { /* noop */ }
+
+      const dataSets = dataProvider();
+      const student = options?.student;
+      dataSets.forEach((data, index) => {
         setTimeout(() => {
-          const cacheKey = createCacheKey(data);
-          
-          // Only compute if not already cached
-          if (!cache.has(cacheKey)) {
-            try {
-        logger.debug('[useAnalyticsWorker] posting Insights/Compute task (precompute)', { hasConfig: !!config, cacheKey, idx: index });
-            } catch {
-              /* noop */
-            }
-            const task = buildInsightsTask({
-              entries: data.entries,
-              emotions: data.emotions,
-              sensoryInputs: data.sensoryInputs,
-            }, { config, tags: extractTagsFn(data) });
-            workerRef.current?.postMessage(task);
-          }
-        }, index * 100); // 100ms between each precomputation
+          // Route through runAnalysis to ensure caching and goal inclusion; mark as prewarm
+          runAnalysis(data, { student, prewarm: true }).catch(() => { /* noop */ });
+        }, index * (pc.taskStaggerDelay ?? 100));
       });
     };
 
-    // Use requestIdleCallback for precomputation
-    if ('requestIdleCallback' in window) {
-      idleCallbackRef.current = requestIdleCallback(precompute, { timeout: 5000 });
+    if (pc.precomputeOnlyWhenIdle && 'requestIdleCallback' in window) {
+      idleCallbackRef.current = requestIdleCallback(() => { schedule(); }, { timeout: pc.idleTimeout ?? 5000 });
     } else {
-      // Fallback for browsers without requestIdleCallback
-      setTimeout(precompute, 2000);
+      setTimeout(schedule, pc.idleTimeout ?? 1000);
     }
-  }, [precomputeOnIdle, cache, createCacheKey]);
+  }, [liveCfg, runAnalysis]);
 
   /**
    * Invalidate cache entries for a specific student
@@ -710,10 +771,97 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       if (newConfig.cache.invalidateOnConfigChange) {
         clearCache();
       }
+      // Update precompute manager status on config changes
+      try {
+        const pc = newConfig.precomputation as any;
+        if (pc && precompManagerRef.current) {
+          if (pc.enabled) {
+            precompManagerRef.current.resume();
+          } else {
+            precompManagerRef.current.stop();
+          }
+          setPrecomputeStatus(precompManagerRef.current.getStatus());
+        }
+      } catch { /* noop */ }
     });
 
     return unsubscribe;
   }, [clearCache]);
+
+  /**
+   * Subscribe to analyticsCoordinator cache clear events so this hook-level cache
+   * acts as the primary cache responding to global/student invalidations.
+   */
+  useEffect(() => {
+    const onClearAll = () => {
+      try { clearCache(); } catch { /* noop */ }
+    };
+    const onClearStudent = (evt: Event) => {
+      try {
+        const detail = (evt as CustomEvent).detail as { studentId?: string } | undefined;
+        if (detail?.studentId) {
+          invalidateCacheForStudent(detail.studentId);
+        } else {
+          clearCache();
+        }
+      } catch { /* noop */ }
+    };
+
+    try {
+      if (typeof window !== 'undefined') {
+        window.addEventListener('analytics:cache:clear', onClearAll as EventListener);
+        window.addEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
+        cleanupFns.push(() => {
+          try {
+            window.removeEventListener('analytics:cache:clear', onClearAll as EventListener);
+            window.removeEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
+          } catch { /* noop */ }
+        });
+      }
+    } catch { /* noop */ }
+
+    return () => {
+      try {
+        if (typeof window !== 'undefined') {
+          window.removeEventListener('analytics:cache:clear', onClearAll as EventListener);
+          window.removeEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
+        }
+      } catch { /* noop */ }
+    };
+  }, [clearCache, invalidateCacheForStudent]);
+
+  // Create/teardown precomputation manager
+  useEffect(() => {
+    const pc = liveCfg?.precomputation;
+    if (!pc || !pc.enabled) {
+      if (precompManagerRef.current) {
+        precompManagerRef.current.stop();
+        setPrecomputeStatus(precompManagerRef.current.getStatus());
+      }
+      return;
+    }
+
+    if (!precompManagerRef.current) {
+      precompManagerRef.current = new AnalyticsPrecomputationManager((data) => {
+        // Use runAnalysis with prewarm flag; student inference occurs within
+        runAnalysis(data, { prewarm: true }).catch(() => { /* noop */ });
+      });
+    }
+
+    // Kick off scheduling based on current data
+    try {
+      const entries = dataStorage.getTrackingEntries();
+      const emotions = entries.flatMap(e => (e.emotions || []).map(em => ({ ...em, studentId: em.studentId ?? e.studentId })));
+      const sensoryInputs = entries.flatMap(e => (e.sensoryInputs || []).map(s => ({ ...s, studentId: s.studentId ?? e.studentId })));
+      precompManagerRef.current.schedulePrecomputation(entries, emotions as any, sensoryInputs as any);
+      setPrecomputeStatus(precompManagerRef.current.getStatus());
+    } catch { /* noop */ }
+
+    return () => {
+      try { precompManagerRef.current?.stop(); } catch { /* noop */ }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveCfg?.precomputation?.enabled, isWorkerReady]);
 
   /**
    * Get current cache statistics
@@ -731,6 +879,10 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     invalidateCacheForStudent,
     clearCache,
     cacheStats: getCacheStats(),
-    cacheSize: cache.size
+    cacheSize: cache.size,
+    precomputeEnabled: !!liveCfg?.precomputation?.enabled,
+    precomputeStatus,
+    startPrecomputation: () => { try { precompManagerRef.current?.resume(); setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null); } catch { /* noop */ } },
+    stopPrecomputation: () => { try { precompManagerRef.current?.stop(); setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null); } catch { /* noop */ } },
   };
 };

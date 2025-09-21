@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { VirtualScrollArea } from '@/components/VirtualScrollArea';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { logger } from '@/lib/logger';
 import { generateTimestampId } from '@/lib/uuid';
 
@@ -338,14 +338,11 @@ export function ModelDiagnosticsPanel(props: ModelDiagnosticsPanelProps): React.
                 {tAnalytics('dev.modelDiagnostics.latestRuns')} ({filteredCount})
               </h2>
               <div className="mt-2 border rounded-md">
-                <VirtualScrollArea
-                  items={runs}
-                  itemHeight={itemHeight}
-                  containerHeight={historyContainerHeight}
-                  overscan={6}
-                  renderItem={(item) => renderRunItem(item)}
-                  className="rounded-md"
-                />
+                <ScrollArea className="rounded-md" style={{ height: `${historyContainerHeight}px` }}>
+                  <div>
+                    {runs.map((run) => renderRunItem(run) as React.ReactElement)}
+                  </div>
+                </ScrollArea>
               </div>
             </div>
           </div>

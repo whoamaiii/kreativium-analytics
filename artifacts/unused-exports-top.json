@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2025-09-21T08:58:00.206Z",
+  "generatedAt": "2025-09-21T09:04:35.433Z",
   "root": "/Users/quentinthiessen/Desktop/kreativiummedgemma",
-  "totalFilesScanned": 391,
-  "totalExports": 943,
-  "unusedExportsCount": 199,
+  "totalFilesScanned": 384,
+  "totalExports": 936,
+  "unusedExportsCount": 192,
   "unusedExports": [
     {
       "file": "src/components/analysis/CorrelationHeatmap.tsx",
@@ -56,11 +56,6 @@
       "exportKind": "default"
     },
     {
-      "file": "src/components/AnalyticsConfigBoundary.tsx",
-      "exportName": "AnalyticsConfigBoundary",
-      "exportKind": "function"
-    },
-    {
       "file": "src/components/charts/EChartContainer.tsx",
       "exportName": "EChartContainer",
       "exportKind": "const"
@@ -83,36 +78,6 @@
     {
       "file": "src/components/EnhancedDataVisualization.tsx",
       "exportName": "EnhancedDataVisualization",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/EnhancedPersonalizedInsights.tsx",
-      "exportName": "EnhancedPersonalizedInsights",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/LoadingState.tsx",
-      "exportName": "LoadingState",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/NoData.tsx",
-      "exportName": "NoData",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/PatternDetectionEmptyState.tsx",
-      "exportName": "PatternDetectionEmptyState",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/PremiumEmptyState.tsx",
-      "exportName": "PremiumEmptyState",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/PremiumHeader.tsx",
-      "exportName": "PremiumHeader",
       "exportKind": "const"
     },
     {
@@ -1082,15 +1047,6 @@
         }
       ]
     },
-    "src/components/AnalyticsConfigBoundary.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "AnalyticsConfigBoundary",
-          "kind": "function"
-        }
-      ]
-    },
     "src/components/charts/EChartContainer.tsx": {
       "count": 1,
       "exports": [
@@ -1132,60 +1088,6 @@
       "exports": [
         {
           "name": "EnhancedDataVisualization",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/EnhancedPersonalizedInsights.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "EnhancedPersonalizedInsights",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/LoadingState.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "LoadingState",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/NoData.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "NoData",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/PatternDetectionEmptyState.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "PatternDetectionEmptyState",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/PremiumEmptyState.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "PremiumEmptyState",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/PremiumHeader.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "PremiumHeader",
           "kind": "const"
         }
       ]

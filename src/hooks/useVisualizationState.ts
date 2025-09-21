@@ -14,8 +14,8 @@ export interface HighlightState {
   relatedIds: string[];
 }
 
-export const useVisualizationState = (availableEmotions: string[]) => {
-  const [selectedChartType, setSelectedChartType] = useState<ChartType>('line');
+export const useVisualizationState = (availableEmotions: string[], initialChartType: ChartType = 'line') => {
+  const [selectedChartType, setSelectedChartType] = useState<ChartType>(initialChartType);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('30d');
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(availableEmotions);
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('dashboard');

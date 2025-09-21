@@ -143,6 +143,71 @@ export interface AnalyticsConfiguration {
   taxonomy: {
     positiveEmotions: string[];
   };
+
+  // Charts configuration (centralizes chart-related magic numbers)
+  charts: {
+    // Threshold settings
+    emotionThreshold: number;
+    sensoryThreshold: number;
+
+    // Display settings
+    movingAverageWindow: number;
+
+    // Correlation settings
+    correlationLabelThreshold: number;
+
+    // Axis settings
+    yAxisMax: number;
+    yAxisInterval: number;
+
+    // Zoom settings
+    dataZoomMinSpan: number;
+
+    // Visual settings
+    lineWidths: {
+      average: number;
+      movingAverage: number;
+      positive: number;
+      negative: number;
+      sensory: number;
+    };
+  };
+
+  // Background precomputation behavior and device/user constraints
+  precomputation: PrecomputationConfig;
+}
+
+// Precomputation configuration for background analytics scheduling
+export interface PrecomputationConfig {
+  // Master enable switch
+  enabled: boolean;
+
+  // Device behavior toggles
+  enableOnBattery: boolean; // allow precomputation when on battery power
+  enableOnSlowNetwork: boolean; // allow precomputation on slow networks
+
+  // Queue management
+  maxQueueSize: number;
+  batchSize: number;
+  idleTimeout: number; // ms for requestIdleCallback timeout
+
+  // Device constraints
+  respectBatteryLevel: boolean;
+  respectCPUUsage: boolean;
+  respectNetworkConditions: boolean;
+
+  // Priority settings
+  commonTimeframes: number[]; // days to look back
+  prioritizeRecentStudents: boolean;
+
+  // Performance limits
+  maxConcurrentTasks: number;
+  taskStaggerDelay: number; // ms between task dispatches
+  maxPrecomputeTime: number; // ms per idle processing slice
+
+  // User preferences
+  precomputeOnlyWhenIdle: boolean;
+  pauseOnUserActivity: boolean;
 }
 
 // Default configuration
@@ -257,6 +322,51 @@ export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfiguration = {
   },
   taxonomy: {
     positiveEmotions: ['happy', 'calm', 'excited', 'content', 'peaceful', 'cheerful', 'relaxed', 'optimistic'],
+  },
+  charts: {
+    // Threshold settings
+    emotionThreshold: 7,
+    sensoryThreshold: 5,
+
+    // Display settings
+    movingAverageWindow: 7,
+
+    // Correlation settings
+    correlationLabelThreshold: 0.25,
+
+    // Axis settings
+    yAxisMax: 10,
+    yAxisInterval: 2,
+
+    // Zoom settings
+    dataZoomMinSpan: 7,
+
+    // Visual settings
+    lineWidths: {
+      average: 3,
+      movingAverage: 2,
+      positive: 2,
+      negative: 2,
+      sensory: 2,
+    },
+  },
+  precomputation: {
+    enabled: true,
+    enableOnBattery: false,
+    enableOnSlowNetwork: false,
+    maxQueueSize: 50,
+    batchSize: 5,
+    idleTimeout: 5000,
+    respectBatteryLevel: true,
+    respectCPUUsage: true,
+    respectNetworkConditions: true,
+    commonTimeframes: [7, 14, 30],
+    prioritizeRecentStudents: true,
+    maxConcurrentTasks: 1,
+    taskStaggerDelay: 100,
+    maxPrecomputeTime: 16,
+    precomputeOnlyWhenIdle: true,
+    pauseOnUserActivity: true,
   },
 };
 
@@ -396,7 +506,8 @@ export class AnalyticsConfigManager {
       const importedConfig = JSON.parse(configString);
       // Validate the imported config structure
       if (this.validateConfig(importedConfig)) {
-        this.config = importedConfig;
+        // Merge over defaults so new sections (like charts) are included
+        this.config = this.deepMerge(DEFAULT_ANALYTICS_CONFIG, importedConfig as Partial<AnalyticsConfiguration>);
         this.saveConfig();
         this.notifyListeners();
         return true;
@@ -505,7 +616,9 @@ export class AnalyticsConfigManager {
       !!cfg.confidence &&
       !!cfg.healthScore &&
       !!cfg.analytics &&
-      !!cfg.taxonomy
+      !!cfg.taxonomy &&
+      !!cfg.charts &&
+      !!cfg.precomputation
     );
   }
 }

@@ -208,8 +208,7 @@ describe('Correlation and significance tests', () => {
       [20, 3, 0.9970],
     ]
 
-    // TODO(kb-analytics): Re-enable once tCDF implementation is tuned to match reference values across df ranges
-    it.skip('matches reference values within reasonable absolute tolerance (pure JS numeric)', () => {
+    it('matches reference values within reasonable absolute tolerance (pure JS numeric)', () => {
       for (const [df, t, expected] of cases) {
         const got = tCDF(t, df)
         expect(Math.abs(got - expected)).toBeLessThanOrEqual(0.025)
@@ -223,8 +222,7 @@ describe('Correlation and significance tests', () => {
   })
 
   describe('pValueForCorrelation', () => {
-    // TODO(kb-analytics): Re-enable once pValueForCorrelation numerical precision is aligned with reference
-    it.skip('agrees with known correlation/sample-size pairs (two-tailed p-values)', () => {
+    it('agrees with known correlation/sample-size pairs (two-tailed p-values)', () => {
       // r=0 -> p=1, perfect correlation -> p=0
       expect(pValueForCorrelation(0, 10)).toBe(1)
       expect(pValueForCorrelation(1, 10)).toBe(0)
@@ -251,8 +249,7 @@ describe('Correlation and significance tests', () => {
 })
 
 describe('Robust regression - huberRegression', () => {
-  // TODO(kb-analytics): Re-enable once huberRegression convergence is tuned or test thresholds are revisited
-  it.skip('is robust to outliers: slope closer to ground truth than OLS, outlier weights < 1, converges, R^2 in [0,1]', () => {
+  it('is robust to outliers: slope closer to ground truth than OLS, outlier weights < 1, converges, R^2 in [0,1]', () => {
     // Ground truth: y = 2x + 1
     const x = [0, 1, 2, 3, 4, 5, 6]
     const y = x.map((xi) => 1 + 2 * xi)
@@ -311,4 +308,3 @@ describe('Robust regression - huberRegression', () => {
     expect(r2.converged).toBe(false)
   })
 })
-

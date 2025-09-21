@@ -381,13 +381,4 @@ export function useBatchPerformanceMonitor() {
 /**
  * Export all performance monitoring utilities
  */
-export const PerformanceMonitor = {
-  usePerformanceMonitor,
-  useWhyDidYouUpdate,
-  onRenderCallback,
-  useComputationTimer,
-  useMemoryLeakDetector,
-  useBatchPerformanceMonitor,
-};
-
-export default PerformanceMonitor;
+// Intentionally remove default and aggregate exports per plan to reduce unused exports

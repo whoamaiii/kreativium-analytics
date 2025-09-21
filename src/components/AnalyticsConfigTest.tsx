@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { CheckCircle, XCircle, RefreshCw, Settings } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface TestResult {
   name: string;
@@ -16,6 +17,7 @@ const AnalyticsConfigTest: React.FC = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [currentConfig, setCurrentConfig] = useState(analyticsConfig.getConfig());
   const { cacheSize, clearCache } = useAnalyticsWorker();
+  const { tAnalytics } = useTranslation();
 
   useEffect(() => {
     // Subscribe to configuration changes
@@ -240,37 +242,37 @@ const AnalyticsConfigTest: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Analytics Configuration Tests
+          {String(tAnalytics('configTest.title'))}
         </CardTitle>
         <CardDescription>
-          Verify that configuration changes and cache invalidation work correctly
+          {String(tAnalytics('configTest.description'))}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Current Configuration</p>
+            <p className="text-sm text-muted-foreground">{String(tAnalytics('configTest.currentConfiguration'))}</p>
             <div className="flex gap-2">
               <Badge variant="outline">
-                Alert Level: {currentConfig.alertSensitivity.level}
+                {tAnalytics('configTest.alertLevel', { level: currentConfig.alertSensitivity.level })}
               </Badge>
               <Badge variant="outline">
-                Min Data Points: {currentConfig.patternAnalysis.minDataPoints}
+                {tAnalytics('configTest.minDataPoints', { count: currentConfig.patternAnalysis.minDataPoints })}
               </Badge>
               <Badge variant="outline">
-                Cache Size: {cacheSize}
+                {tAnalytics('configTest.cacheSize', { size: cacheSize })}
               </Badge>
             </div>
           </div>
           <Button onClick={runTests} className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" />
-            Run Tests
+            {String(tAnalytics('configTest.runTests'))}
           </Button>
         </div>
 
         {testResults.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-sm font-medium">Test Results</h4>
+            <h4 className="text-sm font-medium">{String(tAnalytics('configTest.testResults'))}</h4>
             {testResults.map((result) => (
               <div
                 key={`${result.name}-${result.status}`}
@@ -290,35 +292,35 @@ const AnalyticsConfigTest: React.FC = () => {
         )}
 
         <div className="pt-4 border-t">
-          <p className="text-sm text-muted-foreground mb-2">Quick Actions</p>
+          <p className="text-sm text-muted-foreground mb-2">{String(tAnalytics('configTest.quickActions'))}</p>
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
               variant="outline"
               onClick={() => analyticsConfig.setPreset('conservative')}
             >
-              Set Conservative
+              {String(tAnalytics('configTest.setConservative'))}
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => analyticsConfig.setPreset('sensitive')}
             >
-              Set Sensitive
+              {String(tAnalytics('configTest.setSensitive'))}
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={() => analyticsConfig.resetToDefaults()}
             >
-              Reset to Defaults
+              {String(tAnalytics('configTest.resetDefaults'))}
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={clearCache}
             >
-              Clear Cache
+              {String(tAnalytics('configTest.clearCache'))}
             </Button>
           </div>
         </div>

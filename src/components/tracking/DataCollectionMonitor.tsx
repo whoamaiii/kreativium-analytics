@@ -18,7 +18,6 @@ import {
   Info
 } from 'lucide-react';
 import { sessionManager, SessionStatistics } from '@/lib/sessionManager';
-import { useTracking } from '@/contexts/TrackingContext';
 import { differenceInDays, addDays, format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -62,16 +61,19 @@ export const DataCollectionMonitor: React.FC<DataCollectionMonitorProps> = ({
   showRecommendations = true,
   showStatistics = true,
 }) => {
-  const { currentSession, sessionConfig } = useTracking();
   const [statistics, setStatistics] = useState<SessionStatistics | null>(null);
   const [activeStrategies, setActiveStrategies] = useState<string[]>([]);
   const [expandedStrategy, setExpandedStrategy] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load session statistics
-    const stats = sessionManager.getStatistics(studentId);
-    setStatistics(stats);
-  }, [studentId, currentSession]);
+    const load = () => {
+      const stats = sessionManager.getStatistics(studentId);
+      setStatistics(stats);
+    };
+    load();
+    const interval = setInterval(load, 5000);
+    return () => clearInterval(interval);
+  }, [studentId]);
 
   // Define collection goals based on current statistics
   const collectionGoals = useMemo<CollectionGoal[]>(() => {

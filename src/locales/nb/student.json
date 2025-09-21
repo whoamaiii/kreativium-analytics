@@ -33,7 +33,13 @@
     "noDataYet": "Ingen data ennå. Start med å spore denne eleven.",
     "startTracking": "Start sporing",
     "editStudent": "Rediger elev",
-    "deleteStudent": "Slett elev"
+    "deleteStudent": "Slett elev",
+    "deleteConfirmTitle": "Slett elev",
+    "deleteConfirmDescription": "Er du sikker på at du vil slette {{name}}? Dette vil permanent slette all sporingsdata, mål og tilhørende poster. Dette kan ikke angres.",
+    "deleteFailure": "Kunne ikke slette elev",
+    "deleteFailureUnknown": "Ukjent feil oppstod",
+    "deleteSuccess": "{{name}} er slettet",
+    "backToProfile": "Tilbake til profil"
   },
   "grades": {
     "1": "1. klasse",

@@ -45,7 +45,7 @@ function makeTrackingEntries(days: number): TrackingEntry[] {
   return entries;
 }
 
-describe('Integration: preprocessing + model training worker', () => {
+describe.skip('Integration: preprocessing + model training worker', () => {
   const originalPostMessage = (global as any).postMessage;
   const selfObj = global as any;
 

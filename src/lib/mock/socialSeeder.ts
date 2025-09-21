@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '@/lib/uuid';
 import { dataStorage } from '@/lib/dataStorage';
 import type { TrackingEntry, EmotionEntry } from '@/types/student';
 
@@ -11,7 +11,7 @@ export async function seedSocialDemoData(studentId: string, count = 6): Promise<
   for (let i = 0; i < count; i++) {
     const t = new Date(now - (count - i) * 36e5);
     const emo: EmotionEntry = {
-      id: uuidv4(),
+      id: generateUUID(),
       studentId,
       emotion: 'negative',
       intensity: 7 + (i % 3),
@@ -20,7 +20,7 @@ export async function seedSocialDemoData(studentId: string, count = 6): Promise<
       notes: i % 2 === 0 ? 'Konflikt i friminutt' : 'Vanskelig gruppesamarbeid',
     };
     const entry: TrackingEntry = {
-      id: uuidv4(),
+      id: generateUUID(),
       studentId,
       timestamp: t,
       emotions: [emo],

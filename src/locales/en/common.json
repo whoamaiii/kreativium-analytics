@@ -117,8 +117,10 @@
     "analytics": "Analytics",
     "settings": "Settings",
     "reports": "Reports",
+    "globalMenu": "Global menu",
     "devTools": "Developer Tools",
-    "tegnTilTale": "Tegn til Tale"
+    "tegnTilTale": "Tegn til Tale",
+    "kreativiumAI": "Kreativium AI"
   },
   "tegn": {
     "menu": "Menu",
@@ -156,6 +158,25 @@
     "description": "If you need help or support, please contact us at:",
     "email": "support@example.com"
   },
+  "devTools": {
+    "title": "Developer Tools",
+    "unavailable": "This section is not available in production.",
+    "storage": {
+      "title": "Storage Management",
+      "description": "Inspect and manage local data storage. Clear old or non-essential data safely.",
+      "open": "Open Storage Manager",
+      "loading": "Loading…"
+    },
+    "diagnostics": {
+      "title": "Model Diagnostics",
+      "description": "Run time-series cross-validation and inspect recent evaluation runs. Loaded on demand to keep main bundle small.",
+      "open": "Open Diagnostics Panel",
+      "loading": "Loading diagnostics…"
+    },
+    "env": {
+      "loading": "Loading env…"
+    }
+  },
   "time": {
     "today": "Today",
     "yesterday": "Yesterday",
@@ -170,7 +191,8 @@
     "saved": "Saved",
     "error": "Error",
     "success": "Success",
-    "empty": "No data available"
+    "empty": "No data available",
+    "resolving": "Resolving..."
   },
   "language": {
     "norwegian": "Norsk bokmål",
@@ -196,7 +218,15 @@
     "emotion": "Emotion",
     "sensory": "Sensory",
     "goal": "Goal",
-    "clearAllFilters": "Clear All Filters"
+    "clearAllFilters": "Clear All Filters",
+    "filterTag": "{{label}}: {{value}}",
+    "filterTagQuoted": "{{label}}: \"{{value}}\"",
+    "dateRangeTag": "{{start}} – {{end}}",
+    "resultsSummary": "{{resultsLabel}}: {{students}} {{studentsLabel}}, {{emotions}} {{emotionsLabel}}, {{sensory}} {{sensoryLabel}}, {{goals}} {{goalsLabel}}",
+    "studentsLabel": "students",
+    "emotionsLabel": "emotions",
+    "sensoryInputsLabel": "sensory inputs",
+    "goalsLabel": "goals"
   },
   "accessibility": {
     "skipToContent": "Skip to main content"

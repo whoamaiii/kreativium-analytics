@@ -21,6 +21,7 @@ function validateShape(cfg: unknown): cfg is AnalyticsConfiguration {
     'healthScore',
     'analytics',
     'taxonomy',
+    'precomputation',
   ];
   for (const k of requiredRoots) {
     if (!(k in c)) return false;
@@ -36,6 +37,17 @@ function validateShape(cfg: unknown): cfg is AnalyticsConfiguration {
     c.confidence?.WEIGHTS?.EMOTION,
   ].every((n: any) => typeof n === 'number' && Number.isFinite(n));
   if (!numbersOk) return false;
+  // Precomputation numeric sanity checks
+  const pc = c.precomputation || {};
+  const pcNumbersOk = [
+    pc.maxQueueSize,
+    pc.batchSize,
+    pc.idleTimeout,
+    pc.maxConcurrentTasks,
+    pc.taskStaggerDelay,
+    pc.maxPrecomputeTime,
+  ].every((n: any) => typeof n === 'number' && Number.isFinite(n));
+  if (!pcNumbersOk) return false;
   return true;
 }
 

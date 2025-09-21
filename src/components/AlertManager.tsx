@@ -53,7 +53,7 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
   const handleMarkAsViewed = (alertId: string) => {
     alertSystem.markAlertAsViewed(alertId);
     loadAlerts();
-    toast.success('Alert marked as viewed');
+    toast.success(String(tAnalytics('alerts.markedViewed')));
   };
 
   /**
@@ -76,10 +76,10 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
       setSelectedAlert(null);
       setResolveNotes('');
       loadAlerts();
-      toast.success('Alert resolved successfully');
+      toast.success(String(tAnalytics('alerts.resolveSuccess')));
     } catch (error) {
       logger.error('Failed to resolve alert', error);
-      toast.error('Failed to resolve alert. Please try again.');
+      toast.error(String(tAnalytics('alerts.resolveFailure')));
     } finally {
       setIsResolving(false);
     }
@@ -153,10 +153,10 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                   </p>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>{alertEntry.alert.timestamp.toLocaleDateString()}</span>
-                    <span>{alertEntry.alert.dataPoints} data points</span>
+                    <span>{tAnalytics('alerts.dataPointsLabel', { count: alertEntry.alert.dataPoints ?? 0 })}</span>
                     {alertEntry.resolved && (
                       <Badge variant="outline" className="text-success-foreground bg-success">
-                        Resolved
+                        {String(tAnalytics('alerts.resolvedLabel'))}
                       </Badge>
                     )}
                   </div>
@@ -196,7 +196,7 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                       <DialogHeader>
                         <DialogTitle>{String(tAnalytics('alerts.resolveTitle'))}</DialogTitle>
                         <DialogDescription>
-                          Review details and add resolution notes before confirming.
+                          {String(tAnalytics('alerts.resolveDescription'))}
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
@@ -229,7 +229,7 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                             id="resolution-notes"
                             value={resolveNotes}
                             onChange={(e) => setResolveNotes(e.target.value)}
-                            placeholder="Describe actions taken or observations..."
+                            placeholder={String(tAnalytics('alerts.resolutionNotesPlaceholder'))}
                             rows={3}
                           />
                         </div>

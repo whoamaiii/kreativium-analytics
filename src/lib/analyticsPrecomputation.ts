@@ -1,14 +1,10 @@
 import { TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/student";
 import { AnalyticsData } from "@/workers/analytics.worker";
-import { subDays, startOfDay, endOfDay } from "date-fns";
-
-interface PrecomputationConfig {
-  enabled: boolean;
-  maxQueueSize: number;
-  batchSize: number;
-  idleTimeout: number;
-  commonTimeframes: number[]; // days to look back
-}
+import { subDays, startOfDay } from "date-fns";
+import { analyticsConfig } from '@/lib/analyticsConfig';
+import type { PrecomputationConfig } from '@/lib/analyticsConfig';
+import { deviceConstraints } from '@/lib/deviceConstraints';
+import { logger } from '@/lib/logger';
 
 interface PrecomputationTask {
   id: string;
@@ -22,26 +18,48 @@ interface PrecomputationTask {
  * to improve performance by having results ready when users need them
  */
 export class AnalyticsPrecomputationManager {
-  private config: PrecomputationConfig;
+  private overrides: Partial<PrecomputationConfig>;
   private taskQueue: PrecomputationTask[] = [];
   private isProcessing = false;
   private idleCallbackId: number | null = null;
   private processedTasks = new Set<string>();
   private onAnalyze: (data: AnalyticsData) => void;
+  private lastScheduleAt: number = 0;
+  private schedulingInFlight = false;
 
   constructor(
     onAnalyze: (data: AnalyticsData) => void,
     config: Partial<PrecomputationConfig> = {}
   ) {
     this.onAnalyze = onAnalyze;
-    this.config = {
-      enabled: true,
-      maxQueueSize: 50,
-      batchSize: 5,
-      idleTimeout: 5000,
-      commonTimeframes: [7, 14, 30], // Last 7, 14, and 30 days
-      ...config
-    };
+    this.overrides = { ...config };
+  }
+
+  private getConfig(): PrecomputationConfig {
+    try {
+      const live = analyticsConfig.getConfig();
+      return { ...(live.precomputation as PrecomputationConfig), ...(this.overrides || {}) };
+    } catch {
+      // Reasonable defaults in case of runtime access issues
+      return {
+        enabled: true,
+        enableOnBattery: false,
+        enableOnSlowNetwork: false,
+        maxQueueSize: 50,
+        batchSize: 5,
+        idleTimeout: 5000,
+        respectBatteryLevel: true,
+        respectCPUUsage: true,
+        respectNetworkConditions: true,
+        commonTimeframes: [7, 14, 30],
+        prioritizeRecentStudents: true,
+        maxConcurrentTasks: 1,
+        taskStaggerDelay: 100,
+        maxPrecomputeTime: 16,
+        precomputeOnlyWhenIdle: true,
+        pauseOnUserActivity: true,
+      };
+    }
   }
 
   /**
@@ -52,7 +70,9 @@ export class AnalyticsPrecomputationManager {
     allEmotions: EmotionEntry[],
     allSensoryInputs: SensoryEntry[]
   ): void {
-    if (!this.config.enabled || this.isProcessing) return;
+    const cfg = this.getConfig();
+    if (!cfg.enabled || this.isProcessing || this.schedulingInFlight) return;
+    this.schedulingInFlight = true;
 
     // Clear existing queue
     this.taskQueue = [];
@@ -65,7 +85,7 @@ export class AnalyticsPrecomputationManager {
 
     // Generate tasks for each student and timeframe
     studentIds.forEach(studentId => {
-      this.config.commonTimeframes.forEach(days => {
+      cfg.commonTimeframes.forEach(days => {
         const task = this.createPrecomputationTask(
           studentId,
           days,
@@ -81,7 +101,7 @@ export class AnalyticsPrecomputationManager {
     });
 
     // Also add combined analytics for all students
-    this.config.commonTimeframes.forEach(days => {
+    cfg.commonTimeframes.forEach(days => {
       const task = this.createCombinedAnalyticsTask(
         days,
         allEntries,
@@ -94,16 +114,38 @@ export class AnalyticsPrecomputationManager {
       }
     });
 
-    // Sort by priority (smaller timeframes first)
-    this.taskQueue.sort((a, b) => a.priority - b.priority);
+    // Sort by priority (smaller timeframes first) and optionally prioritize recent students
+    if (cfg.prioritizeRecentStudents) {
+      const lastByStudent = new Map<string, number>();
+      allEntries.forEach(e => {
+        if (!e.studentId) return;
+        const t = new Date(e.timestamp).getTime();
+        const prev = lastByStudent.get(e.studentId) || 0;
+        if (t > prev) lastByStudent.set(e.studentId, t);
+      });
+      const NOW = Date.now();
+      const recentCutoff = NOW - 7 * 24 * 60 * 60 * 1000;
+      this.taskQueue.sort((a, b) => {
+        const aStudent = (a.id.startsWith('student:') ? a.id.split(':')[1] : null);
+        const bStudent = (b.id.startsWith('student:') ? b.id.split(':')[1] : null);
+        const aRecent = aStudent ? ((lastByStudent.get(aStudent) || 0) >= recentCutoff ? 0 : 1) : 2;
+        const bRecent = bStudent ? ((lastByStudent.get(bStudent) || 0) >= recentCutoff ? 0 : 1) : 2;
+        if (aRecent !== bRecent) return aRecent - bRecent; // recent students first
+        return a.priority - b.priority;
+      });
+    } else {
+      this.taskQueue.sort((a, b) => a.priority - b.priority);
+    }
 
     // Limit queue size
-    if (this.taskQueue.length > this.config.maxQueueSize) {
-      this.taskQueue = this.taskQueue.slice(0, this.config.maxQueueSize);
+    if (this.taskQueue.length > cfg.maxQueueSize) {
+      this.taskQueue = this.taskQueue.slice(0, cfg.maxQueueSize);
     }
 
     // Schedule processing during idle time
     this.scheduleIdleProcessing();
+    this.lastScheduleAt = Date.now();
+    this.schedulingInFlight = false;
   }
 
   /**
@@ -183,39 +225,58 @@ export class AnalyticsPrecomputationManager {
       cancelIdleCallback(this.idleCallbackId);
     }
 
-    if ('requestIdleCallback' in window) {
+    const cfg = this.getConfig();
+    if ('requestIdleCallback' in window && cfg.precomputeOnlyWhenIdle) {
       this.idleCallbackId = requestIdleCallback(
         (deadline) => this.processQueue(deadline),
-        { timeout: this.config.idleTimeout }
+        { timeout: cfg.idleTimeout }
       );
     } else {
-      // Fallback for browsers without requestIdleCallback
-      setTimeout(() => this.processQueue(), 1000);
+      // Fallback for browsers without requestIdleCallback or when allowed outside idle
+      setTimeout(() => this.processQueue(), Math.max(250, cfg.idleTimeout));
     }
   }
 
   /**
    * Process queued tasks during idle time
    */
-  private processQueue(deadline?: IdleDeadline): void {
+  private async processQueue(deadline?: IdleDeadline): Promise<void> {
+    const cfg = this.getConfig();
     if (this.taskQueue.length === 0) {
       this.isProcessing = false;
       return;
     }
 
+    // Respect device constraints
+    try {
+      const allowed = await deviceConstraints.canPrecompute(cfg);
+      if (!allowed) {
+        this.isProcessing = false;
+        this.scheduleIdleProcessing();
+        return;
+      }
+    } catch { /* noop */ }
+
     this.isProcessing = true;
     let processed = 0;
+    const hardStopAt = Date.now() + Math.max(8, cfg.maxPrecomputeTime);
+    const batchLimit = Math.max(1, Math.min(cfg.batchSize, cfg.maxConcurrentTasks));
 
     // Process tasks while we have time
     while (
       this.taskQueue.length > 0 && 
-      processed < this.config.batchSize &&
+      processed < batchLimit &&
       (!deadline || deadline.timeRemaining() > 10)
     ) {
+      if (Date.now() > hardStopAt) break;
       const task = this.taskQueue.shift();
       if (task) {
-        this.onAnalyze(task.data);
-        this.processedTasks.add(task.id);
+        try {
+          this.onAnalyze(task.data);
+          this.processedTasks.add(task.id);
+        } catch (err) {
+          try { logger.error('[PrecomputationManager] Task failed', err as Error); } catch { /* noop */ }
+        }
         processed++;
       }
     }
@@ -301,7 +362,8 @@ export class AnalyticsPrecomputationManager {
    * Stop all precomputation
    */
   stop(): void {
-    this.config.enabled = false;
+    const cfg = this.getConfig();
+    this.overrides = { ...this.overrides, enabled: false };
     this.taskQueue = [];
     if (this.idleCallbackId !== null) {
       cancelIdleCallback(this.idleCallbackId);
@@ -314,7 +376,7 @@ export class AnalyticsPrecomputationManager {
    * Resume precomputation
    */
   resume(): void {
-    this.config.enabled = true;
+    this.overrides = { ...this.overrides, enabled: true };
   }
 
   /**
@@ -327,7 +389,7 @@ export class AnalyticsPrecomputationManager {
     processedCount: number;
   } {
     return {
-      enabled: this.config.enabled,
+      enabled: this.getConfig().enabled,
       queueSize: this.taskQueue.length,
       isProcessing: this.isProcessing,
       processedCount: this.processedTasks.size

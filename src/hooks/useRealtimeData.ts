@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useReducer } from 'r
 import { EmotionEntry, SensoryEntry, TrackingEntry, EnvironmentalEntry } from '@/types/student';
 import { differenceInMinutes, subMinutes } from 'date-fns';
 import { logger } from '@/lib/logger';
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 
 interface RealtimeDataOptions {
   enabled: boolean;
@@ -9,6 +10,7 @@ interface RealtimeDataOptions {
   updateInterval: number; // in milliseconds
   smoothTransitions: boolean;
   simulateData?: boolean; // For demo purposes
+  currentStudentId?: string; // Optional: context to attribute realtime data and targeted invalidation
 }
 
 interface RealtimeDataState {
@@ -29,6 +31,9 @@ type RealtimeDataAction =
   | { type: 'SET_HISTORICAL_DATA'; payload: { emotions: EmotionEntry[]; sensoryInputs: SensoryEntry[]; trackingEntries: TrackingEntry[] } }
   | { type: 'CLEAR_NEW_DATA_INDICATOR' }
   | { type: 'RESET_STATE'; payload: RealtimeDataState };
+
+// Per-hook debounced cache clear timers keyed by studentId (or '__global__')
+const GLOBAL_KEY = '__global__';
 
 const realtimeDataReducer = (state: RealtimeDataState, action: RealtimeDataAction): RealtimeDataState => {
   switch (action.type) {
@@ -73,12 +78,14 @@ export interface RealtimeDataReturn extends RealtimeDataState {
 }
 
 // Simulate real-time data generation
-const generateRealtimeEmotionEntry = (): EmotionEntry => {
+const generateRealtimeEmotionEntry = (studentId?: string): EmotionEntry => {
   const emotions = ['happy', 'calm', 'anxious', 'frustrated', 'excited', 'sad'];
   const triggers = ['noise', 'crowd', 'task', 'transition', 'social'];
   
   return {
     id: `emotion-${Date.now()}-${Math.random()}`,
+    // Attach student context if available for targeted invalidation
+    ...(studentId ? { studentId } as Partial<EmotionEntry> : {}),
     timestamp: new Date(),
     emotion: emotions[Math.floor(Math.random() * emotions.length)],
     intensity: Math.floor(Math.random() * 8) + 3, // 3-10
@@ -89,12 +96,13 @@ const generateRealtimeEmotionEntry = (): EmotionEntry => {
   };
 };
 
-const generateRealtimeSensoryEntry = (): SensoryEntry => {
+const generateRealtimeSensoryEntry = (studentId?: string): SensoryEntry => {
   const sensoryTypes = ['visual', 'auditory', 'tactile', 'vestibular', 'proprioceptive'];
   const responses = ['seeking', 'avoiding', 'neutral'];
   
   return {
     id: `sensory-${Date.now()}-${Math.random()}`,
+    ...(studentId ? { studentId } as Partial<SensoryEntry> : {}),
     timestamp: new Date(),
     sensoryType: sensoryTypes[Math.floor(Math.random() * sensoryTypes.length)],
     response: responses[Math.floor(Math.random() * responses.length)],
@@ -127,13 +135,13 @@ const generateEnvironmentalEntry = (): EnvironmentalEntry => {
   };
 };
 
-const generateRealtimeTrackingEntry = (): TrackingEntry => {
+const generateRealtimeTrackingEntry = (studentId?: string): TrackingEntry => {
   return {
     id: `tracking-${Date.now()}-${Math.random()}`,
-    studentId: 'current-student',
+    studentId: studentId || 'current-student',
     timestamp: new Date(),
-    emotions: [generateRealtimeEmotionEntry()],
-    sensoryInputs: [generateRealtimeSensoryEntry()],
+    emotions: [generateRealtimeEmotionEntry(studentId)],
+    sensoryInputs: [generateRealtimeSensoryEntry(studentId)],
     environmentalData: generateEnvironmentalEntry(),
     notes: ''
   };
@@ -158,10 +166,17 @@ export const useRealtimeData = (
   }), [initialData]);
 
   const [state, dispatch] = useReducer(realtimeDataReducer, initialState);
+  const clearTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const newDataTimestamps = useRef<Set<number>>(new Set());
+
+  // Mirror frequently read options into refs to avoid stale closures
+  const updateIntervalRef = useRef<number>(options.updateInterval);
+  const currentStudentIdRef = useRef<string | undefined>(options.currentStudentId);
+  useEffect(() => { updateIntervalRef.current = options.updateInterval; }, [options.updateInterval]);
+  useEffect(() => { currentStudentIdRef.current = options.currentStudentId; }, [options.currentStudentId]);
 
   // Track which data points are "live" (recently added)
   const liveDataThreshold = 5000; // 5 seconds
@@ -205,7 +220,29 @@ export const useRealtimeData = (
       });
       newDataTimestamps.current = newTimestamps;
 
-      dispatch({ type: 'INSERT_DATA', payload: { emotion: newEmotion, sensory: newSensory, tracking: newTracking } });
+      // Enrich payloads to include studentId when possible
+      const trackingWithStudent = newTracking;
+      const emotionWithStudent = newEmotion as (EmotionEntry & { studentId?: string }) | undefined;
+      const sensoryWithStudent = newSensory as (SensoryEntry & { studentId?: string }) | undefined;
+      dispatch({ type: 'INSERT_DATA', payload: { emotion: emotionWithStudent, sensory: sensoryWithStudent, tracking: trackingWithStudent } });
+
+      // Schedule debounced cache invalidation targeted by student when known
+      try {
+        const derivedStudentId = trackingWithStudent?.studentId
+          || emotionWithStudent?.studentId
+          || sensoryWithStudent?.studentId
+          || currentStudentIdRef.current
+          || undefined;
+        const key = derivedStudentId || GLOBAL_KEY;
+        const existing = clearTimersRef.current.get(key);
+        if (existing) clearTimeout(existing);
+        const delay = Math.max(250, Math.min(1000, updateIntervalRef.current || 1000));
+        const timer = setTimeout(() => {
+          try { analyticsCoordinator.broadcastCacheClear(derivedStudentId); } catch { /* noop */ }
+          clearTimersRef.current.delete(key);
+        }, delay);
+        clearTimersRef.current.set(key, timer);
+      } catch { /* noop */ }
     };
 
     if (options.smoothTransitions) {
@@ -221,11 +258,11 @@ export const useRealtimeData = (
     const rand = Math.random();
     
     if (rand < 0.4) { // 40% chance of emotion data
-      smoothInsertData(generateRealtimeEmotionEntry(), undefined, undefined);
+      smoothInsertData(generateRealtimeEmotionEntry(options.currentStudentId), undefined, undefined);
     } else if (rand < 0.7) { // 30% chance of sensory data
-      smoothInsertData(undefined, generateRealtimeSensoryEntry(), undefined);
+      smoothInsertData(undefined, generateRealtimeSensoryEntry(options.currentStudentId), undefined);
     } else if (rand < 0.9) { // 20% chance of tracking data
-      smoothInsertData(undefined, undefined, generateRealtimeTrackingEntry());
+      smoothInsertData(undefined, undefined, generateRealtimeTrackingEntry(options.currentStudentId));
     }
     // 10% chance of no new data this cycle
   }, [smoothInsertData]);
@@ -280,6 +317,12 @@ export const useRealtimeData = (
 
     dispatch({ type: 'STOP_STREAM' });
 
+    // Clear any pending debounced invalidations when stopping
+    try {
+      clearTimersRef.current.forEach((t) => clearTimeout(t));
+      clearTimersRef.current.clear();
+    } catch { /* noop */ }
+
     // In a real implementation, close WebSocket/SSE connection
   }, []);
 
@@ -314,21 +357,21 @@ export const useRealtimeData = (
         
         if (Math.random() > 0.3) {
           historicalEmotions.push({
-            ...generateRealtimeEmotionEntry(),
+            ...generateRealtimeEmotionEntry(options.currentStudentId),
             timestamp
           });
         }
 
         if (Math.random() > 0.4) {
           historicalSensory.push({
-            ...generateRealtimeSensoryEntry(),
+            ...generateRealtimeSensoryEntry(options.currentStudentId),
             timestamp
           });
         }
 
         if (Math.random() > 0.5) {
           historicalTracking.push({
-            ...generateRealtimeTrackingEntry(),
+            ...generateRealtimeTrackingEntry(options.currentStudentId),
             timestamp
           });
         }
@@ -418,6 +461,12 @@ export const useRealtimeData = (
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = null;
       }
+
+      // Clear any pending debounced invalidations for this hook instance
+      try {
+        clearTimersRef.current.forEach((t) => clearTimeout(t));
+        clearTimersRef.current.clear();
+      } catch { /* noop */ }
     };
   }, []); // Empty dependency array ensures this only runs on unmount
 

@@ -3,7 +3,7 @@
  * This runs in the main thread but with throttling to prevent UI blocking
  */
 
-import { AnalyticsData, AnalyticsResults } from '@/workers/analytics.worker';
+import { AnalyticsData, AnalyticsResults } from '@/types/analytics';
 import { patternAnalysis } from '@/lib/patternAnalysis';
 import { enhancedPatternAnalysis } from '@/lib/enhancedPatternAnalysis';
 import { logger } from '@/lib/logger';
@@ -64,7 +64,9 @@ export class AnalyticsWorkerFallback {
         predictiveInsights: [],
         anomalies: [],
         insights: [],
-        suggestedInterventions: [] // Default to empty array
+        // Required by AnalyticsResults: always present, defaults to empty array
+        // Ensures consistent result shape across all analytics paths
+        suggestedInterventions: []
       };
 
       // Basic pattern analysis (simplified version)
@@ -109,7 +111,7 @@ export class AnalyticsWorkerFallback {
             data.emotions,
             data.sensoryInputs,
             data.entries,
-            []
+            data.goals ?? []
           );
           results.predictiveInsights = predictiveInsights;
         } catch (e) {

@@ -78,9 +78,19 @@ export function loadAiConfig(overrides?: Partial<AiConfig>): AiConfig {
   const apiKey = typeof env.VITE_OPENROUTER_API_KEY === 'string' && (env.VITE_OPENROUTER_API_KEY as string).trim().length > 0
     ? (env.VITE_OPENROUTER_API_KEY as string)
     : (OPENROUTER_API_KEY || undefined);
+  const originIsLocal = (() => {
+    try {
+      if (typeof window === 'undefined') return env.MODE === 'development';
+      const o = window.location.origin.toLowerCase();
+      return /^(https?:\/\/)?(localhost|127\.0\.0\.1)/.test(o);
+    } catch {
+      return env.MODE === 'development';
+    }
+  })();
+  const defaultBaseUrl = originIsLocal ? '/ai' : 'https://openrouter.ai/api/v1';
   const baseUrl = typeof env.VITE_AI_BASE_URL === 'string' && (env.VITE_AI_BASE_URL as string).trim().length > 0
     ? (env.VITE_AI_BASE_URL as string)
-    : 'https://openrouter.ai/api/v1';
+    : defaultBaseUrl;
   const localOnly = (() => {
     const v = (env.VITE_AI_LOCAL_ONLY ?? '').toString().toLowerCase();
     return v === '1' || v === 'true' || v === 'yes' || AI_LOCAL_ONLY;
@@ -125,7 +135,7 @@ export function loadAiConfig(overrides?: Partial<AiConfig>): AiConfig {
   }
 
   if (typeof merged.baseUrl !== 'string' || merged.baseUrl.trim() === '') {
-    merged.baseUrl = 'https://openrouter.ai/api/v1';
+    merged.baseUrl = originIsLocal ? '/ai' : 'https://openrouter.ai/api/v1';
   }
 
   // Validate modelName against allowedModels (case-insensitive).

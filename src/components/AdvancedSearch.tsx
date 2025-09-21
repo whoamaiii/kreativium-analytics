@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -199,6 +199,34 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     });
   };
 
+  const formatFilterTag = useCallback((labelKey: string, value: string, options?: { quoted?: boolean }) => {
+    const label = String(tCommon(labelKey));
+    return options?.quoted
+      ? tCommon('interface.filterTagQuoted', { label, value })
+      : tCommon('interface.filterTag', { label, value });
+  }, [tCommon]);
+
+  const formatDateRangeTag = useCallback((from: Date, to: Date) => {
+    return tCommon('interface.dateRangeTag', {
+      start: format(from, 'MMM dd'),
+      end: format(to, 'MMM dd')
+    });
+  }, [tCommon]);
+
+  const resultsSummary = useMemo(() => (
+    tCommon('interface.resultsSummary', {
+      resultsLabel: tCommon('interface.results'),
+      students: filteredResults.students.length,
+      studentsLabel: tCommon('interface.studentsLabel'),
+      emotions: filteredResults.emotions.length,
+      emotionsLabel: tCommon('interface.emotionsLabel'),
+      sensory: filteredResults.sensoryInputs.length,
+      sensoryLabel: tCommon('interface.sensoryInputsLabel'),
+      goals: filteredResults.goals.length,
+      goalsLabel: tCommon('interface.goalsLabel')
+    })
+  ), [filteredResults.students.length, filteredResults.emotions.length, filteredResults.sensoryInputs.length, filteredResults.goals.length, tCommon]);
+
   const removeFilter = (type: string, value?: string) => {
     switch (type) {
       case "query":
@@ -267,7 +295,7 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
           <div className="flex flex-wrap gap-2 pt-2">
             {filters.query && (
               <Badge variant="secondary" className="flex items-center gap-1">
-                {String(tCommon('interface.search'))}: "{filters.query}"
+                {formatFilterTag('interface.search', filters.query, { quoted: true })}
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter("query")}
@@ -276,7 +304,7 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             )}
             {filters.emotions.map(emotion => (
               <Badge key={emotion} variant="secondary" className="flex items-center gap-1">
-                {String(tCommon('interface.emotion'))}: {emotion}
+                {formatFilterTag('interface.emotion', emotion)}
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter("emotion", emotion)}
@@ -285,7 +313,7 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             ))}
             {filters.sensoryTypes.map(sensory => (
               <Badge key={sensory} variant="secondary" className="flex items-center gap-1">
-                {String(tCommon('interface.sensory'))}: {sensory}
+                {formatFilterTag('interface.sensory', sensory)}
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter("sensory", sensory)}
@@ -295,7 +323,7 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             {filters.dateRange?.from && filters.dateRange?.to && (
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {format(filters.dateRange.from, "MMM dd")} - {format(filters.dateRange.to, "MMM dd")}
+                {formatDateRangeTag(filters.dateRange.from, filters.dateRange.to)}
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter("date")}
@@ -304,7 +332,7 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             )}
             {filters.goalStatus.map(status => (
               <Badge key={status} variant="secondary" className="flex items-center gap-1">
-                {String(tCommon('interface.goal'))}: {status}
+                {formatFilterTag('interface.goal', status)}
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter("goal", status)}
@@ -460,8 +488,8 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
             <div className="pt-4 border-t border-border/50">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <span>
-                  {String(tCommon('interface.results'))}: {filteredResults.students.length} students, {filteredResults.emotions.length} emotions, {filteredResults.sensoryInputs.length} sensory inputs, {filteredResults.goals.length} goals
-                </span>
+                {String(resultsSummary)}
+              </span>
                 {activeFiltersCount > 0 && (
                   <Button variant="ghost" size="sm" onClick={clearAllFilters}>
                     {String(tCommon('interface.clearAllFilters'))}

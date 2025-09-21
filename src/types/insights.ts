@@ -85,4 +85,6 @@ export interface InsightsOptions {
   tags?: string[];
   /** Runtime config overrides. */
   config?: AnalyticsRuntimeConfig;
+  /** Marks the task as a background prewarm/precompute; UIs should not update on completion. */
+  prewarm?: boolean;
 }

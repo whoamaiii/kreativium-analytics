@@ -6,6 +6,7 @@ import type { AnalyticsResults } from '@/types/analytics';
 import type { AnalyticsResultsAI, TimeRange } from './analysisEngine';
 import { validateOrRepairAiReport } from './llmUtils';
 import { ZodSchema, z } from 'zod';
+import type { EvidenceSource } from '@/lib/evidence/types';
 
 export interface ChunkContext {
   range: TimeRange;
@@ -85,18 +86,44 @@ export function chunkByDays<T extends { timestamp: Date }>(items: T[], start: Da
   return chunks;
 }
 
-export async function summarizeChunk(ctx: ChunkContext): Promise<ChunkSummary> {
+type MapReduceOptions = {
+  evidence?: EvidenceSource[];
+  aiProfile?: string;
+};
+
+function formatEvidenceForPrompt(evidence?: EvidenceSource[], limit = 5): string | undefined {
+  if (!evidence || evidence.length === 0) return undefined;
+  const lines = evidence.slice(0, limit).map((src) => {
+    const tags = src.tags && src.tags.length ? ` [${src.tags.join(', ')}]` : '';
+    const label = src.title || src.id || 'Kilde';
+    return `- ${label}${tags}`;
+  });
+  return lines.length ? `Relevante kilder:\n${lines.join('\n')}` : undefined;
+}
+
+export async function summarizeChunk(ctx: ChunkContext, opts?: MapReduceOptions): Promise<ChunkSummary> {
   const header = `Oppsummer denne perioden kort i norsk JSON. Ingen kodeblokker.\n`+
     `Periode: ${fmtDate(ctx.range.start)} – ${fmtDate(ctx.range.end)}\n`+
     `Antall: entries=${ctx.entries.length}, emotions=${ctx.emotions.length}, sensory=${ctx.sensoryInputs.length}, goals=${ctx.goals.length}`;
   const dataset = `Snapshot (inntil 8):\n${sampleSnapshot(ctx.entries, 8)}`;
+  const contextLines: string[] = [];
+  if (opts?.aiProfile) contextLines.push(`AI-profil: ${opts.aiProfile}`);
+  const evidenceBlock = formatEvidenceForPrompt(opts?.evidence);
+  if (evidenceBlock) contextLines.push(evidenceBlock);
+  const contextBlock = contextLines.length ? contextLines.join('\n') : undefined;
+
   const instructions = [
     'Returner KUN gyldig JSON med feltene: keyFindings[], patterns[], correlations[], anomalies[], suggestedInterventions[], predictiveInsights[].',
     'Vær kortfattet og konkret. Ingen PII. Alle tall i [0,1] der det passer.'
   ].join('\n');
 
   const sys = 'Svar kun på norsk. Returner KUN gyldig JSON uten kodeblokker. Ikke vis tankestrøm.';
-  const user = [header, '', dataset, '', instructions].join('\n');
+  const sections = [header, '', dataset];
+  if (contextBlock) {
+    sections.push('', contextBlock);
+  }
+  sections.push('', instructions);
+  const user = sections.join('\n');
 
   const { data } = await openRouterClient.chatJSON<unknown>(
     { system: sys, user },
@@ -105,15 +132,26 @@ export async function summarizeChunk(ctx: ChunkContext): Promise<ChunkSummary> {
   return data as ChunkSummary;
 }
 
-export async function reduceSummariesToFinalReport(summaries: ChunkSummary[], goals: Goal[], overallRange: TimeRange): Promise<{ ok: true; report: AnalyticsResults } | { ok: false; error: Error }>{
+export async function reduceSummariesToFinalReport(
+  summaries: ChunkSummary[],
+  goals: Goal[],
+  overallRange: TimeRange,
+  opts?: MapReduceOptions
+): Promise<{ ok: true; report: AnalyticsResults } | { ok: false; error: Error }>{
   try {
     const sys = 'Svar kun på norsk. Returner KUN gyldig JSON uten kodeblokker. Ikke vis tankestrøm.';
+    const contextLines: string[] = [];
+    if (opts?.aiProfile) contextLines.push(`AI-profil: ${opts.aiProfile}`);
+    const evidenceBlock = formatEvidenceForPrompt(opts?.evidence, 8);
+    if (evidenceBlock) contextLines.push(evidenceBlock);
+    const contextBlock = contextLines.length ? contextLines.join('\n') : undefined;
     const user = [
       'Du får en liste med del-oppsummeringer (JSON) fra flere tidsperioder for samme elev.',
       'Slå dem sammen til ÉN helhetlig analyse i følgende JSON-skjema:',
       '{ summary?, keyFindings[], patterns[], correlations[], hypothesizedCauses[], suggestedInterventions[], anomalies[], predictiveInsights[], dataLineage[], confidence{} }',
       'Vær konservativ og fjern duplikater. Vektlegg konsistente mønstre som går igjen på tvers av perioder.',
       `Analyseperiode: ${fmtDate(overallRange.start)} – ${fmtDate(overallRange.end)}. Mål: praktiske tiltak og mønstre.`,
+      contextBlock ?? '',
       'Del-oppsummeringer (JSON):',
       JSON.stringify(summaries).slice(0, 120000), // guard token size
       'Inkluder dataLineage med én post per kilde-type (emotion, sensor, tracking, goal) hvis relevant.'
@@ -134,7 +172,12 @@ export async function reduceSummariesToFinalReport(summaries: ChunkSummary[], go
 }
 
 export async function analyzeLargePeriod(
-  entries: TrackingEntry[], emotions: EmotionEntry[], sensoryInputs: SensoryEntry[], goals: Goal[], overallRange: TimeRange
+  entries: TrackingEntry[],
+  emotions: EmotionEntry[],
+  sensoryInputs: SensoryEntry[],
+  goals: Goal[],
+  overallRange: TimeRange,
+  opts?: MapReduceOptions
 ): Promise<AnalyticsResults | null> {
   try {
     const start = overallRange.start instanceof Date ? overallRange.start : new Date(overallRange.start);
@@ -150,12 +193,12 @@ export async function analyzeLargePeriod(
       // Skip empty chunks to save tokens
       if ((eIn.length + emoIn.length + senIn.length) === 0) continue;
       const ctx: ChunkContext = { range: c.range, entries: eIn, emotions: emoIn, sensoryInputs: senIn, goals };
-      const summary = await summarizeChunk(ctx);
+      const summary = await summarizeChunk(ctx, opts);
       summaries.push(summary);
     }
 
     if (summaries.length === 0) return null;
-    const final = await reduceSummariesToFinalReport(summaries, goals, overallRange);
+    const final = await reduceSummariesToFinalReport(summaries, goals, overallRange, opts);
     if (!final.ok) return null;
     return final.report;
   } catch (error) {
@@ -163,4 +206,3 @@ export async function analyzeLargePeriod(
     return null;
   }
 }
-

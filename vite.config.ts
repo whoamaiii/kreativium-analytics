@@ -17,6 +17,22 @@ export default defineConfig(({ mode }) => {
       clientPort: 5173,
       protocol: 'ws',
     },
+    // Dev-only proxy to avoid browser CORS and OpenRouter Sites allowlist during local development
+    // Usage: set VITE_AI_BASE_URL="/ai" (default for dev recommended) so client calls are proxied
+    proxy: {
+      '/ai': {
+        target: 'https://openrouter.ai/api/v1',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (p) => p.replace(/^\/ai/, ''),
+        headers: {
+          // Inject API key server-side so it is not exposed in browser requests
+          Authorization: env.VITE_OPENROUTER_API_KEY ? `Bearer ${env.VITE_OPENROUTER_API_KEY}` : '',
+          'HTTP-Referer': 'http://127.0.0.1:5173',
+          'X-Title': 'Sensory Compass',
+        },
+      },
+    },
   },
   preview: {
     host: "127.0.0.1",
@@ -68,7 +84,7 @@ export default defineConfig(({ mode }) => {
           'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
           'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
           
-          // Charts chunk - echarts, recharts (as per task requirements)
+          // Charts chunk - echarts and recharts (kept for consistency)
           'charts': ['echarts', 'echarts-for-react', 'recharts'],
           
           // 3D chunk - three, @react-three/* (as per task requirements)

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { benchmarkComponentRender, calculateRenderImprovement, trainToyModel } from './performanceTester';
 
 // Mock the LoadingSpinner for testing

@@ -1,7 +1,9 @@
 // Shared analytics-related types
 // No default exports per project rules
 
-export type TabKey = 'charts' | 'patterns' | 'correlations' | 'alerts';
+export type TabKey = 'overview' | 'explore' | 'alerts';
+/** Preset options within the Explore tab */
+export type ExplorePreset = 'charts' | 'patterns' | 'correlations';
 /**
  * Export formats for analytics report generation
  */
@@ -13,6 +15,7 @@ export type ExportFormat = 'pdf' | 'csv' | 'json';
 import { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 import { PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalysis';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from './student';
+import type { Goal } from './student';
 import type { AnalyticsInputs, AnalyticsRuntimeConfig } from '@/types/insights';
 import type { AnalyticsConfiguration as SourceAnalyticsConfiguration } from '@/lib/analyticsConfig';
 import type { PRESET_CONFIGS as SOURCE_PRESETS } from '@/lib/analyticsConfig';
@@ -111,6 +114,7 @@ export interface AnalyticsData {
   entries: TrackingEntry[];
   emotions: EmotionEntry[];
   sensoryInputs: SensoryEntry[];
+  goals?: Goal[];
   cacheKey?: string;
   /** Optional runtime analytics configuration to use for this run. */
   config?: AnalyticsConfiguration;

@@ -13,6 +13,7 @@ import { AnalyticsData, AnalyticsResults, AnalyticsConfiguration, WorkerCacheEnt
 import { createCachedPatternAnalysis } from '@/lib/cachedPatternAnalysis';
 import { logger } from '@/lib/logger';
 import { generateInsightsFromWorkerInputs } from '@/lib/insights';
+import { computeInsights } from '@/lib/insights/unified';
 import { ANALYTICS_CONFIG, analyticsConfig } from '@/lib/analyticsConfig';
 import { generateAnalyticsSummary } from '@/lib/analyticsSummary';
 
@@ -226,12 +227,15 @@ export async function handleMessage(e: MessageEvent<any>) {
     return;
   }
   let filteredData: AnalyticsData;
+  let isPrewarm = false;
   if (msg && msg.type === 'Insights/Compute' && msg.payload) {
-    const { inputs, config } = msg.payload;
+    const { inputs, config, prewarm } = msg.payload;
+    isPrewarm = !!prewarm;
     filteredData = {
       entries: inputs.entries,
       emotions: inputs.emotions,
       sensoryInputs: inputs.sensoryInputs,
+      goals: (inputs as any).goals ?? [],
       cacheKey: msg.cacheKey,
       config: (config as any) ?? null
     } as unknown as AnalyticsData;
@@ -253,6 +257,7 @@ export async function handleMessage(e: MessageEvent<any>) {
         entries: filteredData?.entries?.length ?? 0,
         emotions: filteredData?.emotions?.length ?? 0,
         sensory: filteredData?.sensoryInputs?.length ?? 0,
+        goals: (filteredData as any)?.goals?.length ?? 0,
       });
       workerCache.set(logKey, true, ['logging']);
     }
@@ -365,7 +370,7 @@ try {
         filteredData.emotions,
         filteredData.sensoryInputs,
         filteredData.entries,
-        []
+        (filteredData as any).goals ?? []
       );
 
       // Send partial update for predictive insights
@@ -401,63 +406,23 @@ try {
       });
     }
 
-// Compute insights via canonical path
-let insights: string[];
-// Summary facade toggle source: features.enableSummaryFacade from runtime config; default aligns with project defaults.
-const useSummaryFacade = (currentConfig?.features?.enableSummaryFacade ?? ANALYTICS_CONFIG.features?.enableSummaryFacade) === true;
-if (useSummaryFacade) {
-  const summary = await generateAnalyticsSummary({
-    entries: filteredData.entries,
-    emotions: filteredData.emotions,
-    sensoryInputs: filteredData.sensoryInputs,
-    results: {
-      patterns: [...emotionPatterns, ...sensoryPatterns],
-      correlations,
-      predictiveInsights,
-    },
-  });
-  insights = summary.insights;
-  // Low-noise telemetry: log at most once per minute when facade used
-  try {
-    const minuteKey = `_logged_facade_used_${new Date().getMinutes()}`;
-    if (!workerCache.has(minuteKey)) {
-      logger.debug('[analytics.worker] Using summary facade for insights', {
-        entries: filteredData.entries?.length ?? 0,
-        emotions: filteredData.emotions?.length ?? 0,
-        sensory: filteredData.sensoryInputs?.length ?? 0,
-      });
-      workerCache.set(minuteKey, true, ['logging']);
-    }
-  } catch (e) {
-    try { logger.warn('[analytics.worker] Summary facade debug logging failed', e as Error); } catch {}
-  }
-} else {
-  insights = generateInsightsFromWorkerInputs(
-    {
-      patterns: [...emotionPatterns, ...sensoryPatterns],
-      correlations,
+    // Final compute via unified pipeline (ensures consistent goal handling)
+    const unified = await computeInsights({
+      entries: filteredData.entries,
       emotions: filteredData.emotions,
       sensoryInputs: filteredData.sensoryInputs,
-      trackingEntries: filteredData.entries,
-    },
-    { insightConfig: (currentConfig?.insights ?? ANALYTICS_CONFIG.insights) }
-  );
-}
+      goals: (filteredData as any).goals ?? [],
+    }, { config: currentConfig as any });
 
     const results: AnalyticsResults = {
-      patterns,
-      correlations,
-      environmentalCorrelations: correlations, // Include environmental correlations
-      predictiveInsights,
-      anomalies,
-      insights,
-      suggestedInterventions: [], // Default to empty array
-      cacheKey: filteredData.cacheKey, // Include cache key if provided
+      ...unified,
+      suggestedInterventions: (unified as any).suggestedInterventions ?? [],
+      cacheKey: filteredData.cacheKey,
       updatedCharts: ['insightList']
     };
 
     // Post the final results back to the main thread.
-    enqueueMessage({ type: 'complete', cacheKey: filteredData.cacheKey, payload: results, chartsUpdated: ['insightList'], progress: { stage: 'complete', percent: 100 } });
+    enqueueMessage({ type: 'complete', cacheKey: filteredData.cacheKey, payload: ({ ...results, prewarm: isPrewarm } as any), chartsUpdated: ['insightList'], progress: { stage: 'complete', percent: 100 } } as unknown as AnalyticsWorkerMessage);
 
   } catch (error) {
     try {

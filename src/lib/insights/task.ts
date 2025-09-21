@@ -74,6 +74,7 @@ function resolveTtlSeconds(options?: InsightsOptions): number {
 export interface InsightsWorkerPayload {
   inputs: ComputeInsightsInputs;
   config?: InsightsConfigSubset; // minimal subset only
+  prewarm?: boolean; // signal to worker/consumers this is a background precompute
 }
 
 export type InsightsWorkerTask = Omit<AnalyticsWorkerTask, 'type' | 'payload'> & {
@@ -102,6 +103,7 @@ export function buildInsightsTask(inputs: ComputeInsightsInputs, options?: Insig
     payload: {
       inputs,
       config: cfgSubset,
+      prewarm: options?.prewarm === true ? true : undefined,
     },
     cacheKey,
     ttlSeconds,

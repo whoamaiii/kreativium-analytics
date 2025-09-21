@@ -186,7 +186,7 @@ export function ComparisonSummary({
         if (typeof saved.ir === 'number') setIntRemovedLimit(saved.ir);
       }
     } catch { /* noop */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [studentName, currentLabel, baselineLabel]);
 
   useEffect(() => {
@@ -217,7 +217,7 @@ export function ComparisonSummary({
         if (saved && typeof saved.at === 'number') setLastExport(saved);
       }
     } catch { /* noop */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [studentName, currentLabel, baselineLabel]);
 
   useEffect(() => {

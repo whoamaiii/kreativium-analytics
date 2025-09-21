@@ -94,8 +94,7 @@ describe('analytics.loader: environment variable parsing and profile application
     vi.clearAllMocks();
   });
 
-  // TODO(kb-analytics): Temporarily skipped due to module resolution of @/config/analytics.config in test env
-  it.skip('parses boolean/number env vars into schema overrides', async () => {
+  it('parses boolean/number env vars into schema overrides', async () => {
     (import.meta as any).env = {
       VITE_ANALYTICS_CHARTS_LINE_WIDTH: '5',
       VITE_ANALYTICS_CHARTS_SHOW_LEGEND: 'true',
@@ -132,7 +131,7 @@ describe('analytics.loader: environment variable parsing and profile application
     spy.mockRestore();
   });
 
-  it.skip('applies VITE_USE_MOCK profile to enable correlation and shorten cache', async () => {
+  it('applies VITE_USE_MOCK profile to enable correlation and shorten cache', async () => {
     (import.meta as any).env = { VITE_USE_MOCK: 'true' };
     const { loadAnalyticsConfig } = await import('@/config/loaders/analytics.loader');
 
