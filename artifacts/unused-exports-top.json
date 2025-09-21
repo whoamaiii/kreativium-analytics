@@ -1,44 +1,14 @@
 {
-  "generatedAt": "2025-09-21T09:04:35.433Z",
+  "generatedAt": "2025-09-21T09:06:27.985Z",
   "root": "/Users/quentinthiessen/Desktop/kreativiummedgemma",
   "totalFilesScanned": 384,
   "totalExports": 936,
-  "unusedExportsCount": 192,
+  "unusedExportsCount": 163,
   "unusedExports": [
-    {
-      "file": "src/components/analysis/CorrelationHeatmap.tsx",
-      "exportName": "CorrelationHeatmap",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/analysis/PatternAnalysisView.tsx",
-      "exportName": "PatternAnalysisView",
-      "exportKind": "const"
-    },
     {
       "file": "src/components/analytics/FiltersDrawer.tsx",
       "exportName": "default",
       "exportKind": "default"
-    },
-    {
-      "file": "src/components/analytics/panels/AlertsPanel.tsx",
-      "exportName": "AlertsPanel",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/analytics/panels/AlertsPanel.tsx",
-      "exportName": "default",
-      "exportKind": "default"
-    },
-    {
-      "file": "src/components/analytics/panels/ExplorePanel.tsx",
-      "exportName": "ExplorePanel",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/analytics/panels/OverviewPanel.tsx",
-      "exportName": "OverviewPanel",
-      "exportKind": "const"
     },
     {
       "file": "src/components/analytics/PrecomputationScheduler.tsx",
@@ -54,16 +24,6 @@
       "file": "src/components/analytics/QuickQuestions.tsx",
       "exportName": "default",
       "exportKind": "default"
-    },
-    {
-      "file": "src/components/charts/EChartContainer.tsx",
-      "exportName": "EChartContainer",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/charts/TrendsChart.tsx",
-      "exportName": "TrendsChart",
-      "exportKind": "const"
     },
     {
       "file": "src/components/ComparisonSummary.tsx",
@@ -106,18 +66,8 @@
       "exportKind": "re-export"
     },
     {
-      "file": "src/components/ReportBuilder.tsx",
-      "exportName": "ReportBuilder",
-      "exportKind": "const"
-    },
-    {
       "file": "src/components/settings/AnalyticsConfig.tsx",
       "exportName": "AnalyticsConfig",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/StorageManager.tsx",
-      "exportName": "StorageManager",
       "exportKind": "const"
     },
     {
@@ -169,21 +119,6 @@
       "file": "src/components/Visualization3D.poc.stub.tsx",
       "exportName": "Visualization3D",
       "exportKind": "const"
-    },
-    {
-      "file": "src/components/Visualization3D.tsx",
-      "exportName": "Visualization3D",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/config/loaders/analytics.loader.ts",
-      "exportName": "getAnalyticsConfigCacheStamp",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/config/loaders/analytics.loader.ts",
-      "exportName": "loadAnalyticsConfig",
-      "exportKind": "function"
     },
     {
       "file": "src/config/schemas/analytics.schema.ts",
@@ -311,31 +246,6 @@
       "exportKind": "re-export"
     },
     {
-      "file": "src/lib/ai/utils.ts",
-      "exportName": "delay",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/ai/utils.ts",
-      "exportName": "backoffDelay",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/ai/utils.ts",
-      "exportName": "extractFirstJsonObject",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/ai/utils.ts",
-      "exportName": "sanitizeBodyForLog",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/ai/utils.ts",
-      "exportName": "sanitizeHeadersForLog",
-      "exportKind": "function"
-    },
-    {
       "file": "src/lib/aiConfig.ts",
       "exportName": "DEFAULT_AI_CONFIG",
       "exportKind": "const"
@@ -386,11 +296,6 @@
       "exportKind": "function"
     },
     {
-      "file": "src/lib/analyticsConfigOverride.ts",
-      "exportName": "applyDevelopmentAnalyticsConfig",
-      "exportKind": "function"
-    },
-    {
       "file": "src/lib/analyticsCoordinator.ts",
       "exportName": "AnalyticsWorkerCoordinator",
       "exportKind": "class"
@@ -401,49 +306,9 @@
       "exportKind": "const"
     },
     {
-      "file": "src/lib/analyticsManager.ts",
-      "exportName": "ensureUniversalAnalyticsInitialization",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/analyticsManager.ts",
-      "exportName": "buildCacheKey",
-      "exportKind": "re-export"
-    },
-    {
-      "file": "src/lib/analyticsManager.ts",
-      "exportName": "buildTask",
-      "exportKind": "re-export"
-    },
-    {
       "file": "src/lib/analyticsManagerLite.ts",
       "exportName": "analyticsManagerLite",
       "exportKind": "const"
-    },
-    {
-      "file": "src/lib/analyticsProfiles.ts",
-      "exportName": "clearAllProfiles",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/analyticsProfiles.ts",
-      "exportName": "clearStudentProfile",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/analyticsProfiles.ts",
-      "exportName": "getProfileCacheStats",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/analyticsProfiles.ts",
-      "exportName": "resetProfiles",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/analyticsWorkerFallback.ts",
-      "exportName": "AnalyticsWorkerFallback",
-      "exportKind": "class"
     },
     {
       "file": "src/lib/buttonVariants.ts",
@@ -524,11 +389,6 @@
       "file": "src/lib/DataFilter.ts",
       "exportName": "initialFilterCriteria",
       "exportKind": "const"
-    },
-    {
-      "file": "src/lib/dataStorage.ts",
-      "exportName": "DataStorageManager",
-      "exportKind": "class"
     },
     {
       "file": "src/lib/dataValidation.ts",
@@ -786,11 +646,6 @@
       "exportKind": "class"
     },
     {
-      "file": "src/lib/mock/mockSeeders.ts",
-      "exportName": "seedDemoData",
-      "exportKind": "function"
-    },
-    {
       "file": "src/lib/modelEvaluation.ts",
       "exportName": "invalidateEvaluationCacheByTag",
       "exportKind": "function"
@@ -967,61 +822,12 @@
     }
   ],
   "summaryByFile": {
-    "src/components/analysis/CorrelationHeatmap.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "CorrelationHeatmap",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/analysis/PatternAnalysisView.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "PatternAnalysisView",
-          "kind": "const"
-        }
-      ]
-    },
     "src/components/analytics/FiltersDrawer.tsx": {
       "count": 1,
       "exports": [
         {
           "name": "default",
           "kind": "default"
-        }
-      ]
-    },
-    "src/components/analytics/panels/AlertsPanel.tsx": {
-      "count": 2,
-      "exports": [
-        {
-          "name": "AlertsPanel",
-          "kind": "const"
-        },
-        {
-          "name": "default",
-          "kind": "default"
-        }
-      ]
-    },
-    "src/components/analytics/panels/ExplorePanel.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "ExplorePanel",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/analytics/panels/OverviewPanel.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "OverviewPanel",
-          "kind": "const"
         }
       ]
     },
@@ -1044,24 +850,6 @@
         {
           "name": "default",
           "kind": "default"
-        }
-      ]
-    },
-    "src/components/charts/EChartContainer.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "EChartContainer",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/charts/TrendsChart.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "TrendsChart",
-          "kind": "const"
         }
       ]
     },
@@ -1137,29 +925,11 @@
         }
       ]
     },
-    "src/components/ReportBuilder.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "ReportBuilder",
-          "kind": "const"
-        }
-      ]
-    },
     "src/components/settings/AnalyticsConfig.tsx": {
       "count": 1,
       "exports": [
         {
           "name": "AnalyticsConfig",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/StorageManager.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "StorageManager",
           "kind": "const"
         }
       ]
@@ -1251,28 +1021,6 @@
         {
           "name": "Visualization3D",
           "kind": "const"
-        }
-      ]
-    },
-    "src/components/Visualization3D.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "Visualization3D",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/config/loaders/analytics.loader.ts": {
-      "count": 2,
-      "exports": [
-        {
-          "name": "getAnalyticsConfigCacheStamp",
-          "kind": "function"
-        },
-        {
-          "name": "loadAnalyticsConfig",
-          "kind": "function"
         }
       ]
     },
@@ -1446,31 +1194,6 @@
         }
       ]
     },
-    "src/lib/ai/utils.ts": {
-      "count": 5,
-      "exports": [
-        {
-          "name": "delay",
-          "kind": "const"
-        },
-        {
-          "name": "backoffDelay",
-          "kind": "function"
-        },
-        {
-          "name": "extractFirstJsonObject",
-          "kind": "function"
-        },
-        {
-          "name": "sanitizeBodyForLog",
-          "kind": "function"
-        },
-        {
-          "name": "sanitizeHeadersForLog",
-          "kind": "function"
-        }
-      ]
-    },
     "src/lib/aiConfig.ts": {
       "count": 2,
       "exports": [
@@ -1536,15 +1259,6 @@
         }
       ]
     },
-    "src/lib/analyticsConfigOverride.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "applyDevelopmentAnalyticsConfig",
-          "kind": "function"
-        }
-      ]
-    },
     "src/lib/analyticsCoordinator.ts": {
       "count": 1,
       "exports": [
@@ -1563,59 +1277,12 @@
         }
       ]
     },
-    "src/lib/analyticsManager.ts": {
-      "count": 3,
-      "exports": [
-        {
-          "name": "ensureUniversalAnalyticsInitialization",
-          "kind": "const"
-        },
-        {
-          "name": "buildCacheKey",
-          "kind": "re-export"
-        },
-        {
-          "name": "buildTask",
-          "kind": "re-export"
-        }
-      ]
-    },
     "src/lib/analyticsManagerLite.ts": {
       "count": 1,
       "exports": [
         {
           "name": "analyticsManagerLite",
           "kind": "const"
-        }
-      ]
-    },
-    "src/lib/analyticsProfiles.ts": {
-      "count": 4,
-      "exports": [
-        {
-          "name": "clearAllProfiles",
-          "kind": "function"
-        },
-        {
-          "name": "clearStudentProfile",
-          "kind": "function"
-        },
-        {
-          "name": "getProfileCacheStats",
-          "kind": "function"
-        },
-        {
-          "name": "resetProfiles",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/lib/analyticsWorkerFallback.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "AnalyticsWorkerFallback",
-          "kind": "class"
         }
       ]
     },
@@ -1715,15 +1382,6 @@
         {
           "name": "initialFilterCriteria",
           "kind": "const"
-        }
-      ]
-    },
-    "src/lib/dataStorage.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "DataStorageManager",
-          "kind": "class"
         }
       ]
     },
@@ -2008,15 +1666,6 @@
         {
           "name": "MLModels",
           "kind": "class"
-        }
-      ]
-    },
-    "src/lib/mock/mockSeeders.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "seedDemoData",
-          "kind": "function"
         }
       ]
     },

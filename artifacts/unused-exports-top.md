@@ -1,29 +1,13 @@
 # Unused Exports Report
 
-Generated: 2025-09-21T09:04:35.433Z
+Generated: 2025-09-21T09:06:27.985Z
 Files scanned: 384
 Total exports: 936
-Unused exports: 192
+Unused exports: 163
 
-
-## src/components/analysis/CorrelationHeatmap.tsx
-- const: CorrelationHeatmap
-
-## src/components/analysis/PatternAnalysisView.tsx
-- const: PatternAnalysisView
 
 ## src/components/analytics/FiltersDrawer.tsx
 - default: default
-
-## src/components/analytics/panels/AlertsPanel.tsx
-- const: AlertsPanel
-- default: default
-
-## src/components/analytics/panels/ExplorePanel.tsx
-- const: ExplorePanel
-
-## src/components/analytics/panels/OverviewPanel.tsx
-- const: OverviewPanel
 
 ## src/components/analytics/PrecomputationScheduler.tsx
 - const: PrecomputationScheduler
@@ -31,12 +15,6 @@ Unused exports: 192
 
 ## src/components/analytics/QuickQuestions.tsx
 - default: default
-
-## src/components/charts/EChartContainer.tsx
-- const: EChartContainer
-
-## src/components/charts/TrendsChart.tsx
-- const: TrendsChart
 
 ## src/components/ComparisonSummary.tsx
 - default: default
@@ -62,14 +40,8 @@ Unused exports: 192
 ## src/components/profile-sections/ReportsSection.tsx
 - re-export: ReportsSection
 
-## src/components/ReportBuilder.tsx
-- const: ReportBuilder
-
 ## src/components/settings/AnalyticsConfig.tsx
 - const: AnalyticsConfig
-
-## src/components/StorageManager.tsx
-- const: StorageManager
 
 ## src/components/tracking/DataCollectionMonitor.tsx
 - const: DataCollectionMonitor
@@ -100,13 +72,6 @@ Unused exports: 192
 
 ## src/components/Visualization3D.poc.stub.tsx
 - const: Visualization3D
-
-## src/components/Visualization3D.tsx
-- const: Visualization3D
-
-## src/config/loaders/analytics.loader.ts
-- function: getAnalyticsConfigCacheStamp
-- function: loadAnalyticsConfig
 
 ## src/config/schemas/analytics.schema.ts
 - const: featureFlagsSchema
@@ -161,13 +126,6 @@ Unused exports: 192
 - re-export: normalizePreset
 - re-export: VALID_PRESETS
 
-## src/lib/ai/utils.ts
-- const: delay
-- function: backoffDelay
-- function: extractFirstJsonObject
-- function: sanitizeBodyForLog
-- function: sanitizeHeadersForLog
-
 ## src/lib/aiConfig.ts
 - const: DEFAULT_AI_CONFIG
 - function: getAllowedModels
@@ -188,31 +146,14 @@ Unused exports: 192
 ## src/lib/analytics/cache-key.ts
 - function: stableSerialize
 
-## src/lib/analyticsConfigOverride.ts
-- function: applyDevelopmentAnalyticsConfig
-
 ## src/lib/analyticsCoordinator.ts
 - class: AnalyticsWorkerCoordinator
 
 ## src/lib/analyticsExportOptimized.ts
 - const: analyticsExport
 
-## src/lib/analyticsManager.ts
-- const: ensureUniversalAnalyticsInitialization
-- re-export: buildCacheKey
-- re-export: buildTask
-
 ## src/lib/analyticsManagerLite.ts
 - const: analyticsManagerLite
-
-## src/lib/analyticsProfiles.ts
-- function: clearAllProfiles
-- function: clearStudentProfile
-- function: getProfileCacheStats
-- function: resetProfiles
-
-## src/lib/analyticsWorkerFallback.ts
-- class: AnalyticsWorkerFallback
 
 ## src/lib/buttonVariants.ts
 - const: buttonVariants
@@ -243,9 +184,6 @@ Unused exports: 192
 ## src/lib/DataFilter.ts
 - const: applyFilters
 - const: initialFilterCriteria
-
-## src/lib/dataStorage.ts
-- class: DataStorageManager
 
 ## src/lib/dataValidation.ts
 - function: validateTrackingData
@@ -329,9 +267,6 @@ Unused exports: 192
 
 ## src/lib/mlModels.ts
 - class: MLModels
-
-## src/lib/mock/mockSeeders.ts
-- function: seedDemoData
 
 ## src/lib/modelEvaluation.ts
 - function: invalidateEvaluationCacheByTag

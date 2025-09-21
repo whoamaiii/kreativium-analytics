@@ -1,15 +1,13 @@
 {
   "totalSrcFiles": 384,
   "totalSrcLoc": 71255,
-  "unusedFilesCount": 39,
-  "unusedFilesLoc": 6523,
-  "deadCodePercentByFiles": 10.16,
-  "unusedExportsCount": 192,
-  "unusedExportsFiles": 101,
+  "unusedFilesCount": 32,
+  "unusedFilesLoc": 4519,
+  "deadCodePercentByFiles": 8.33,
+  "unusedExportsCount": 163,
+  "unusedExportsFiles": 83,
   "unusedDependencies": [
     "@types/three",
-    "html2canvas",
-    "jspdf",
     "tailwindcss-animate",
     "xxhashjs"
   ],
@@ -41,14 +39,6 @@
       "loc": 120
     },
     {
-      "file": "src/components/ReportBuilder.tsx",
-      "loc": 663
-    },
-    {
-      "file": "src/components/StorageManager.tsx",
-      "loc": 184
-    },
-    {
       "file": "src/components/UniversalAnalyticsStatus.tsx",
       "loc": 198
     },
@@ -57,24 +47,8 @@
       "loc": 11
     },
     {
-      "file": "src/components/Visualization3D.tsx",
-      "loc": 615
-    },
-    {
-      "file": "src/components/analysis/CorrelationHeatmap.tsx",
-      "loc": 103
-    },
-    {
-      "file": "src/components/analysis/PatternAnalysisView.tsx",
-      "loc": 260
-    },
-    {
       "file": "src/components/analytics/PrecomputationScheduler.tsx",
       "loc": 77
-    },
-    {
-      "file": "src/components/charts/TrendsChart.tsx",
-      "loc": 101
     },
     {
       "file": "src/components/profile-sections/GoalsSection.tsx",
@@ -159,10 +133,6 @@
     {
       "file": "src/hooks/useStudentExport.ts",
       "loc": 156
-    },
-    {
-      "file": "src/lib/analyticsConfigOverride.ts",
-      "loc": 78
     },
     {
       "file": "src/lib/buttonVariants.ts",
