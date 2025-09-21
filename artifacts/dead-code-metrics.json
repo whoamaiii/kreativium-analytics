@@ -1,11 +1,11 @@
 {
-  "totalSrcFiles": 383,
-  "totalSrcLoc": 71198,
-  "unusedFilesCount": 28,
-  "unusedFilesLoc": 3972,
-  "deadCodePercentByFiles": 7.31,
-  "unusedExportsCount": 152,
-  "unusedExportsFiles": 77,
+  "totalSrcFiles": 366,
+  "totalSrcLoc": 68200,
+  "unusedFilesCount": 11,
+  "unusedFilesLoc": 974,
+  "deadCodePercentByFiles": 3.01,
+  "unusedExportsCount": 135,
+  "unusedExportsFiles": 61,
   "unusedDependencies": [
     "@types/three",
     "tailwindcss-animate",
@@ -31,66 +31,6 @@
   ],
   "unusedFiles": [
     {
-      "file": "src/components/DetailedConfidenceExplanation.tsx",
-      "loc": 439
-    },
-    {
-      "file": "src/components/UniversalAnalyticsStatus.tsx",
-      "loc": 198
-    },
-    {
-      "file": "src/components/analytics/PrecomputationScheduler.tsx",
-      "loc": 77
-    },
-    {
-      "file": "src/components/profile-sections/GoalsSection.tsx",
-      "loc": 39
-    },
-    {
-      "file": "src/components/profile-sections/ProfileErrorState.tsx",
-      "loc": 60
-    },
-    {
-      "file": "src/components/profile-sections/ProfileLoadingState.tsx",
-      "loc": 40
-    },
-    {
-      "file": "src/components/profile-sections/ProgressSection.tsx",
-      "loc": 42
-    },
-    {
-      "file": "src/components/profile-sections/ReportsSection.tsx",
-      "loc": 109
-    },
-    {
-      "file": "src/components/settings/AnalyticsConfig.tsx",
-      "loc": 397
-    },
-    {
-      "file": "src/components/tracking/DataCollectionMonitor.tsx",
-      "loc": 542
-    },
-    {
-      "file": "src/components/tracking/SessionIndicator.tsx",
-      "loc": 260
-    },
-    {
-      "file": "src/components/tracking/SessionRecovery.tsx",
-      "loc": 268
-    },
-    {
-      "file": "src/components/ui/FloatingActionButton.tsx",
-      "loc": 67
-    },
-    {
-      "file": "src/components/ui/PremiumStatsCard.tsx",
-      "loc": 124
-    },
-    {
-      "file": "src/components/ui/StudentCard.tsx",
-      "loc": 66
-    },
-    {
       "file": "src/hooks/useAnalyticsStatus.ts",
       "loc": 113
     },
@@ -107,10 +47,6 @@
       "loc": 158
     },
     {
-      "file": "src/hooks/useProgressiveChartData.ts",
-      "loc": 186
-    },
-    {
       "file": "src/hooks/useRenderProfiler.ts",
       "loc": 151
     },
@@ -121,10 +57,6 @@
     {
       "file": "src/lib/buttonVariants.ts",
       "loc": 33
-    },
-    {
-      "file": "src/lib/chartTransforms.ts",
-      "loc": 84
     },
     {
       "file": "src/lib/deprecation.ts",

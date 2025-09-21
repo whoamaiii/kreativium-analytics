@@ -1,62 +1,19 @@
 # Unused Exports Report
 
-Generated: 2025-09-21T09:20:33.815Z
-Files scanned: 383
-Total exports: 925
-Unused exports: 152
+Generated: 2025-09-21T09:23:03.417Z
+Files scanned: 366
+Total exports: 906
+Unused exports: 135
 
-
-## src/components/analytics/PrecomputationScheduler.tsx
-- const: PrecomputationScheduler
-- default: default
 
 ## src/components/ComparisonSummary.tsx
 - default: default
 
-## src/components/DetailedConfidenceExplanation.tsx
-- const: DetailedConfidenceExplanation
-
-## src/components/profile-sections/GoalsSection.tsx
-- re-export: GoalsSection
-
-## src/components/profile-sections/ProfileErrorState.tsx
-- function: ProfileErrorState
-
-## src/components/profile-sections/ProfileLoadingState.tsx
-- function: ProfileLoadingState
-
-## src/components/profile-sections/ProgressSection.tsx
-- re-export: ProgressSection
-
-## src/components/profile-sections/ReportsSection.tsx
-- re-export: ReportsSection
-
-## src/components/settings/AnalyticsConfig.tsx
-- const: AnalyticsConfig
-
-## src/components/tracking/DataCollectionMonitor.tsx
-- const: DataCollectionMonitor
-
-## src/components/tracking/SessionIndicator.tsx
-- const: SessionIndicator
-
-## src/components/tracking/SessionRecovery.tsx
-- const: SessionRecovery
-
-## src/components/ui/FloatingActionButton.tsx
-- const: FloatingActionButton
-
-## src/components/ui/PremiumStatsCard.tsx
-- const: PremiumStatsCard
+## src/components/ui/alert.tsx
+- re-export: AlertTitle
 
 ## src/components/ui/sidebar.tsx
 - re-export: SidebarInset
-
-## src/components/ui/StudentCard.tsx
-- const: StudentCard
-
-## src/components/UniversalAnalyticsStatus.tsx
-- const: UniversalAnalyticsStatus
 
 ## src/config/schemas/analytics.schema.ts
 - const: featureFlagsSchema
@@ -85,9 +42,6 @@ Unused exports: 152
 
 ## src/hooks/usePinnedAlerts.ts
 - function: usePinnedAlerts
-
-## src/hooks/useProgressiveChartData.ts
-- function: useProgressiveChartData
 
 ## src/hooks/useRealtimeData.ts
 - const: useRealtimeVisualization
@@ -147,10 +101,6 @@ Unused exports: 152
 - function: buildCorrelationHeatmapOption
 - function: buildEmotionTrendsOption
 - function: buildScatterOption
-
-## src/lib/chartTransforms.ts
-- function: aggregateEntriesByDay
-- function: computeIntensityBins
 
 ## src/lib/chartUtils.ts
 - const: ChartEmotionRowSchema
@@ -264,6 +214,7 @@ Unused exports: 152
 
 ## src/lib/sessionManager.ts
 - class: SessionManager
+- const: sessionManager
 
 ## src/lib/startupValidation.ts
 - function: validateApiKeyPresence

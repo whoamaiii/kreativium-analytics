@@ -1,99 +1,24 @@
 {
-  "generatedAt": "2025-09-21T09:20:33.815Z",
+  "generatedAt": "2025-09-21T09:23:03.417Z",
   "root": "/Users/quentinthiessen/Desktop/kreativiummedgemma",
-  "totalFilesScanned": 383,
-  "totalExports": 925,
-  "unusedExportsCount": 152,
+  "totalFilesScanned": 366,
+  "totalExports": 906,
+  "unusedExportsCount": 135,
   "unusedExports": [
-    {
-      "file": "src/components/analytics/PrecomputationScheduler.tsx",
-      "exportName": "PrecomputationScheduler",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/analytics/PrecomputationScheduler.tsx",
-      "exportName": "default",
-      "exportKind": "default"
-    },
     {
       "file": "src/components/ComparisonSummary.tsx",
       "exportName": "default",
       "exportKind": "default"
     },
     {
-      "file": "src/components/DetailedConfidenceExplanation.tsx",
-      "exportName": "DetailedConfidenceExplanation",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/profile-sections/GoalsSection.tsx",
-      "exportName": "GoalsSection",
+      "file": "src/components/ui/alert.tsx",
+      "exportName": "AlertTitle",
       "exportKind": "re-export"
-    },
-    {
-      "file": "src/components/profile-sections/ProfileErrorState.tsx",
-      "exportName": "ProfileErrorState",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/components/profile-sections/ProfileLoadingState.tsx",
-      "exportName": "ProfileLoadingState",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/components/profile-sections/ProgressSection.tsx",
-      "exportName": "ProgressSection",
-      "exportKind": "re-export"
-    },
-    {
-      "file": "src/components/profile-sections/ReportsSection.tsx",
-      "exportName": "ReportsSection",
-      "exportKind": "re-export"
-    },
-    {
-      "file": "src/components/settings/AnalyticsConfig.tsx",
-      "exportName": "AnalyticsConfig",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/tracking/DataCollectionMonitor.tsx",
-      "exportName": "DataCollectionMonitor",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/tracking/SessionIndicator.tsx",
-      "exportName": "SessionIndicator",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/tracking/SessionRecovery.tsx",
-      "exportName": "SessionRecovery",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/ui/FloatingActionButton.tsx",
-      "exportName": "FloatingActionButton",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/ui/PremiumStatsCard.tsx",
-      "exportName": "PremiumStatsCard",
-      "exportKind": "const"
     },
     {
       "file": "src/components/ui/sidebar.tsx",
       "exportName": "SidebarInset",
       "exportKind": "re-export"
-    },
-    {
-      "file": "src/components/ui/StudentCard.tsx",
-      "exportName": "StudentCard",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/UniversalAnalyticsStatus.tsx",
-      "exportName": "UniversalAnalyticsStatus",
-      "exportKind": "const"
     },
     {
       "file": "src/config/schemas/analytics.schema.ts",
@@ -153,11 +78,6 @@
     {
       "file": "src/hooks/usePinnedAlerts.ts",
       "exportName": "usePinnedAlerts",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/useProgressiveChartData.ts",
-      "exportName": "useProgressiveChartData",
       "exportKind": "function"
     },
     {
@@ -293,16 +213,6 @@
     {
       "file": "src/lib/chartBuilders.ts",
       "exportName": "buildScatterOption",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/chartTransforms.ts",
-      "exportName": "aggregateEntriesByDay",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/chartTransforms.ts",
-      "exportName": "computeIntensityBins",
       "exportKind": "function"
     },
     {
@@ -641,6 +551,11 @@
       "exportKind": "class"
     },
     {
+      "file": "src/lib/sessionManager.ts",
+      "exportName": "sessionManager",
+      "exportKind": "const"
+    },
+    {
       "file": "src/lib/startupValidation.ts",
       "exportName": "validateApiKeyPresence",
       "exportKind": "function"
@@ -767,19 +682,6 @@
     }
   ],
   "summaryByFile": {
-    "src/components/analytics/PrecomputationScheduler.tsx": {
-      "count": 2,
-      "exports": [
-        {
-          "name": "PrecomputationScheduler",
-          "kind": "const"
-        },
-        {
-          "name": "default",
-          "kind": "default"
-        }
-      ]
-    },
     "src/components/ComparisonSummary.tsx": {
       "count": 1,
       "exports": [
@@ -789,111 +691,12 @@
         }
       ]
     },
-    "src/components/DetailedConfidenceExplanation.tsx": {
+    "src/components/ui/alert.tsx": {
       "count": 1,
       "exports": [
         {
-          "name": "DetailedConfidenceExplanation",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/profile-sections/GoalsSection.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "GoalsSection",
+          "name": "AlertTitle",
           "kind": "re-export"
-        }
-      ]
-    },
-    "src/components/profile-sections/ProfileErrorState.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "ProfileErrorState",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/components/profile-sections/ProfileLoadingState.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "ProfileLoadingState",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/components/profile-sections/ProgressSection.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "ProgressSection",
-          "kind": "re-export"
-        }
-      ]
-    },
-    "src/components/profile-sections/ReportsSection.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "ReportsSection",
-          "kind": "re-export"
-        }
-      ]
-    },
-    "src/components/settings/AnalyticsConfig.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "AnalyticsConfig",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/tracking/DataCollectionMonitor.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "DataCollectionMonitor",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/tracking/SessionIndicator.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "SessionIndicator",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/tracking/SessionRecovery.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "SessionRecovery",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/ui/FloatingActionButton.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "FloatingActionButton",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/ui/PremiumStatsCard.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "PremiumStatsCard",
-          "kind": "const"
         }
       ]
     },
@@ -903,24 +706,6 @@
         {
           "name": "SidebarInset",
           "kind": "re-export"
-        }
-      ]
-    },
-    "src/components/ui/StudentCard.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "StudentCard",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/UniversalAnalyticsStatus.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "UniversalAnalyticsStatus",
-          "kind": "const"
         }
       ]
     },
@@ -1008,15 +793,6 @@
       "exports": [
         {
           "name": "usePinnedAlerts",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/hooks/useProgressiveChartData.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "useProgressiveChartData",
           "kind": "function"
         }
       ]
@@ -1205,19 +981,6 @@
         },
         {
           "name": "buildScatterOption",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/lib/chartTransforms.ts": {
-      "count": 2,
-      "exports": [
-        {
-          "name": "aggregateEntriesByDay",
-          "kind": "function"
-        },
-        {
-          "name": "computeIntensityBins",
           "kind": "function"
         }
       ]
@@ -1597,11 +1360,15 @@
       ]
     },
     "src/lib/sessionManager.ts": {
-      "count": 1,
+      "count": 2,
       "exports": [
         {
           "name": "SessionManager",
           "kind": "class"
+        },
+        {
+          "name": "sessionManager",
+          "kind": "const"
         }
       ]
     },
