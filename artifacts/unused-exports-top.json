@@ -1,15 +1,10 @@
 {
-  "generatedAt": "2025-09-21T09:06:27.985Z",
+  "generatedAt": "2025-09-21T09:20:33.815Z",
   "root": "/Users/quentinthiessen/Desktop/kreativiummedgemma",
-  "totalFilesScanned": 384,
-  "totalExports": 936,
-  "unusedExportsCount": 163,
+  "totalFilesScanned": 383,
+  "totalExports": 925,
+  "unusedExportsCount": 152,
   "unusedExports": [
-    {
-      "file": "src/components/analytics/FiltersDrawer.tsx",
-      "exportName": "default",
-      "exportKind": "default"
-    },
     {
       "file": "src/components/analytics/PrecomputationScheduler.tsx",
       "exportName": "PrecomputationScheduler",
@@ -21,11 +16,6 @@
       "exportKind": "default"
     },
     {
-      "file": "src/components/analytics/QuickQuestions.tsx",
-      "exportName": "default",
-      "exportKind": "default"
-    },
-    {
       "file": "src/components/ComparisonSummary.tsx",
       "exportName": "default",
       "exportKind": "default"
@@ -33,11 +23,6 @@
     {
       "file": "src/components/DetailedConfidenceExplanation.tsx",
       "exportName": "DetailedConfidenceExplanation",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/EnhancedDataVisualization.tsx",
-      "exportName": "EnhancedDataVisualization",
       "exportKind": "const"
     },
     {
@@ -101,11 +86,6 @@
       "exportKind": "re-export"
     },
     {
-      "file": "src/components/ui/sonner.tsx",
-      "exportName": "Toaster",
-      "exportKind": "re-export"
-    },
-    {
       "file": "src/components/ui/StudentCard.tsx",
       "exportName": "StudentCard",
       "exportKind": "const"
@@ -113,11 +93,6 @@
     {
       "file": "src/components/UniversalAnalyticsStatus.tsx",
       "exportName": "UniversalAnalyticsStatus",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/components/Visualization3D.poc.stub.tsx",
-      "exportName": "Visualization3D",
       "exportKind": "const"
     },
     {
@@ -173,36 +148,6 @@
     {
       "file": "src/hooks/useMockDataSeeding.ts",
       "exportName": "useMockDataSeeding",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/usePerformanceMonitor.ts",
-      "exportName": "onRenderCallback",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/usePerformanceMonitor.ts",
-      "exportName": "useBatchPerformanceMonitor",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/usePerformanceMonitor.ts",
-      "exportName": "useComputationTimer",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/usePerformanceMonitor.ts",
-      "exportName": "useMemoryLeakDetector",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/usePerformanceMonitor.ts",
-      "exportName": "usePerformanceMonitor",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/usePerformanceMonitor.ts",
-      "exportName": "useWhyDidYouUpdate",
       "exportKind": "function"
     },
     {
@@ -822,15 +767,6 @@
     }
   ],
   "summaryByFile": {
-    "src/components/analytics/FiltersDrawer.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "default",
-          "kind": "default"
-        }
-      ]
-    },
     "src/components/analytics/PrecomputationScheduler.tsx": {
       "count": 2,
       "exports": [
@@ -838,15 +774,6 @@
           "name": "PrecomputationScheduler",
           "kind": "const"
         },
-        {
-          "name": "default",
-          "kind": "default"
-        }
-      ]
-    },
-    "src/components/analytics/QuickQuestions.tsx": {
-      "count": 1,
-      "exports": [
         {
           "name": "default",
           "kind": "default"
@@ -867,15 +794,6 @@
       "exports": [
         {
           "name": "DetailedConfidenceExplanation",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/EnhancedDataVisualization.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "EnhancedDataVisualization",
           "kind": "const"
         }
       ]
@@ -988,15 +906,6 @@
         }
       ]
     },
-    "src/components/ui/sonner.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "Toaster",
-          "kind": "re-export"
-        }
-      ]
-    },
     "src/components/ui/StudentCard.tsx": {
       "count": 1,
       "exports": [
@@ -1011,15 +920,6 @@
       "exports": [
         {
           "name": "UniversalAnalyticsStatus",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/components/Visualization3D.poc.stub.tsx": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "Visualization3D",
           "kind": "const"
         }
       ]
@@ -1099,35 +999,6 @@
       "exports": [
         {
           "name": "useMockDataSeeding",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/hooks/usePerformanceMonitor.ts": {
-      "count": 6,
-      "exports": [
-        {
-          "name": "onRenderCallback",
-          "kind": "function"
-        },
-        {
-          "name": "useBatchPerformanceMonitor",
-          "kind": "function"
-        },
-        {
-          "name": "useComputationTimer",
-          "kind": "function"
-        },
-        {
-          "name": "useMemoryLeakDetector",
-          "kind": "function"
-        },
-        {
-          "name": "usePerformanceMonitor",
-          "kind": "function"
-        },
-        {
-          "name": "useWhyDidYouUpdate",
           "kind": "function"
         }
       ]

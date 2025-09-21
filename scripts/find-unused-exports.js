@@ -45,6 +45,14 @@ const EXCLUDE_EXPORT_FILE_PATTERNS = [
   /(^|\/)src\/components\/lazy\//i,
 ];
 
+// Explicit allowlist for files/exports we intentionally keep even if currently unused
+// These are typically dev-only utilities, POCs, or optional features.
+// Paths are relative to project root and normalized with forward slashes.
+const ALLOWLIST_FILES = [
+  'src/hooks/usePerformanceMonitor.ts',
+  'src/components/Visualization3D.poc.stub.tsx',
+];
+
 // Files we skip entirely when scanning source/imports
 const EXCLUDE_SCAN_DIR_PATTERNS = [
   /(^|\/)node_modules(\/|$)/,
@@ -61,6 +69,19 @@ function normalizePath(p) {
 function isExcludedByPattern(filePath, patterns) {
   const normalized = normalizePath(filePath);
   return patterns.some((re) => re.test(normalized));
+}
+
+function hasKeepPragma(sourceText) {
+  // File-level pragma to keep exports/files out of unused-exports reports
+  // Usage: add a top-level comment in the file: `/* @unused-exports-keep */`
+  return /@unused-exports-keep/.test(sourceText);
+}
+
+function isAllowlistedFile(absFilePath, sourceText) {
+  const rel = normalizePath(path.relative(projectRoot, absFilePath));
+  if (ALLOWLIST_FILES.includes(rel)) return true;
+  if (sourceText && hasKeepPragma(sourceText)) return true;
+  return false;
 }
 
 async function ensureDirExists(dir) {
@@ -171,9 +192,10 @@ async function analyze(files) {
   for (const file of files) {
     const sourceText = await fsp.readFile(file, 'utf8');
     const sf = createSourceFile(file, sourceText);
+    const keepAll = isAllowlistedFile(file, sourceText);
 
-    // Collect exports in this file (skip excluded exporters)
-    if (!isExcludedByPattern(file, EXCLUDE_EXPORT_FILE_PATTERNS)) {
+    // Collect exports in this file (skip excluded exporters or allowlisted files)
+    if (!isExcludedByPattern(file, EXCLUDE_EXPORT_FILE_PATTERNS) && !keepAll) {
       ts.forEachChild(sf, (node) => {
         // export default ...
         if (
@@ -274,49 +296,50 @@ async function analyze(files) {
           return;
         }
       });
+    } else if (keepAll) {
+      // Treat allowlisted files as if all of their exports are used
+      fileToUsedExports[file] = 'ALL';
     }
 
-    // Collect imports used by this file
-    ts.forEachChild(sf, (node) => {
+    // Collect imports used by this file (recursive traversal)
+    function visit(node) {
       if (ts.isImportDeclaration(node)) {
         const moduleSpecifier = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
           ? node.moduleSpecifier.text
           : null;
-        if (!moduleSpecifier) return;
-        const resolved = tryResolveModule(file, moduleSpecifier);
-        if (!resolved) {
-          // External dependency usage
-          const topLevel = moduleSpecifier.startsWith('@')
-            ? moduleSpecifier.split('/').slice(0, 2).join('/')
-            : moduleSpecifier.split('/')[0];
-          usedExternalModules.add(topLevel);
-          return;
-        }
-
-        if (!node.importClause) {
-          // import 'polyfill'; ignore
-          return;
-        }
-
-        const importClause = node.importClause;
-        if (importClause.name) {
-          // default import used
-          if (fileToUsedExports[resolved] !== 'ALL') {
-            const set = (fileToUsedExports[resolved] ??= new Set());
-            set.add('default');
-          }
-        }
-
-        if (importClause.namedBindings) {
-          if (ts.isNamespaceImport(importClause.namedBindings)) {
-            // import * as ns from 'module' -> consider all exports as used
-            fileToUsedExports[resolved] = 'ALL';
-          } else if (ts.isNamedImports(importClause.namedBindings)) {
-            for (const el of importClause.namedBindings.elements) {
-              const importedName = el.propertyName ? el.propertyName.getText(sf) : el.name.getText(sf);
-              if (fileToUsedExports[resolved] !== 'ALL') {
-                const set = (fileToUsedExports[resolved] ??= new Set());
-                set.add(importedName);
+        if (moduleSpecifier) {
+          const resolved = tryResolveModule(file, moduleSpecifier);
+          if (!resolved) {
+            // External dependency usage
+            const topLevel = moduleSpecifier.startsWith('@')
+              ? moduleSpecifier.split('/').slice(0, 2).join('/')
+              : moduleSpecifier.split('/')[0];
+            usedExternalModules.add(topLevel);
+          } else {
+            if (!node.importClause) {
+              // import 'polyfill'; ignore
+            } else {
+              const importClause = node.importClause;
+              if (importClause.name) {
+                // default import used
+                if (fileToUsedExports[resolved] !== 'ALL') {
+                  const set = (fileToUsedExports[resolved] ??= new Set());
+                  set.add('default');
+                }
+              }
+              if (importClause.namedBindings) {
+                if (ts.isNamespaceImport(importClause.namedBindings)) {
+                  // import * as ns from 'module' -> consider all exports as used
+                  fileToUsedExports[resolved] = 'ALL';
+                } else if (ts.isNamedImports(importClause.namedBindings)) {
+                  for (const el of importClause.namedBindings.elements) {
+                    const importedName = el.propertyName ? el.propertyName.getText(sf) : el.name.getText(sf);
+                    if (fileToUsedExports[resolved] !== 'ALL') {
+                      const set = (fileToUsedExports[resolved] ??= new Set());
+                      set.add(importedName);
+                    }
+                  }
+                }
               }
             }
           }
@@ -332,7 +355,6 @@ async function analyze(files) {
             const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
             usedExternalModules.add(topLevel);
           } else {
-            // Treat internal dynamic imports as using all exports
             fileToUsedExports[resolved] = 'ALL';
           }
         }
@@ -347,12 +369,13 @@ async function analyze(files) {
             const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
             usedExternalModules.add(topLevel);
           } else {
-            // Treat internal requires as using all exports
             fileToUsedExports[resolved] = 'ALL';
           }
         }
       }
-    });
+      ts.forEachChild(node, visit);
+    }
+    visit(sf);
   }
 
   return { fileToExports, fileToUsedExports, usedExternalModules };

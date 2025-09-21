@@ -643,6 +643,4 @@ export const FiltersDrawer: React.FC<FiltersDrawerProps> = ({ open, onOpenChange
   );
 };
 
-export default React.memo(FiltersDrawer);
-
-
+ 

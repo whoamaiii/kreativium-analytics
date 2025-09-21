@@ -1,11 +1,11 @@
 {
-  "totalSrcFiles": 384,
-  "totalSrcLoc": 71255,
-  "unusedFilesCount": 32,
-  "unusedFilesLoc": 4519,
-  "deadCodePercentByFiles": 8.33,
-  "unusedExportsCount": 163,
-  "unusedExportsFiles": 83,
+  "totalSrcFiles": 383,
+  "totalSrcLoc": 71198,
+  "unusedFilesCount": 28,
+  "unusedFilesLoc": 3972,
+  "deadCodePercentByFiles": 7.31,
+  "unusedExportsCount": 152,
+  "unusedExportsFiles": 77,
   "unusedDependencies": [
     "@types/three",
     "tailwindcss-animate",
@@ -35,16 +35,8 @@
       "loc": 439
     },
     {
-      "file": "src/components/EnhancedDataVisualization.tsx",
-      "loc": 120
-    },
-    {
       "file": "src/components/UniversalAnalyticsStatus.tsx",
       "loc": 198
-    },
-    {
-      "file": "src/components/Visualization3D.poc.stub.tsx",
-      "loc": 11
     },
     {
       "file": "src/components/analytics/PrecomputationScheduler.tsx",
@@ -99,10 +91,6 @@
       "loc": 66
     },
     {
-      "file": "src/components/ui/sonner.tsx",
-      "loc": 31
-    },
-    {
       "file": "src/hooks/useAnalyticsStatus.ts",
       "loc": 113
     },
@@ -117,10 +105,6 @@
     {
       "file": "src/hooks/useMockDataSeeding.ts",
       "loc": 158
-    },
-    {
-      "file": "src/hooks/usePerformanceMonitor.ts",
-      "loc": 385
     },
     {
       "file": "src/hooks/useProgressiveChartData.ts",

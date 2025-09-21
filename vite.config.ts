@@ -84,8 +84,8 @@ export default defineConfig(({ mode }) => {
           'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select'],
           'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
           
-          // Charts chunk - echarts and recharts (kept for consistency)
-          'charts': ['echarts', 'echarts-for-react', 'recharts'],
+          // Charts chunk - echarts only (recharts removed as unused)
+          'charts': ['echarts', 'echarts-for-react'],
           
           // 3D chunk - three, @react-three/* (as per task requirements)
           '3d': ['three', '@react-three/fiber', '@react-three/drei'],

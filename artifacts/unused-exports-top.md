@@ -1,19 +1,13 @@
 # Unused Exports Report
 
-Generated: 2025-09-21T09:06:27.985Z
-Files scanned: 384
-Total exports: 936
-Unused exports: 163
+Generated: 2025-09-21T09:20:33.815Z
+Files scanned: 383
+Total exports: 925
+Unused exports: 152
 
-
-## src/components/analytics/FiltersDrawer.tsx
-- default: default
 
 ## src/components/analytics/PrecomputationScheduler.tsx
 - const: PrecomputationScheduler
-- default: default
-
-## src/components/analytics/QuickQuestions.tsx
 - default: default
 
 ## src/components/ComparisonSummary.tsx
@@ -21,9 +15,6 @@ Unused exports: 163
 
 ## src/components/DetailedConfidenceExplanation.tsx
 - const: DetailedConfidenceExplanation
-
-## src/components/EnhancedDataVisualization.tsx
-- const: EnhancedDataVisualization
 
 ## src/components/profile-sections/GoalsSection.tsx
 - re-export: GoalsSection
@@ -61,17 +52,11 @@ Unused exports: 163
 ## src/components/ui/sidebar.tsx
 - re-export: SidebarInset
 
-## src/components/ui/sonner.tsx
-- re-export: Toaster
-
 ## src/components/ui/StudentCard.tsx
 - const: StudentCard
 
 ## src/components/UniversalAnalyticsStatus.tsx
 - const: UniversalAnalyticsStatus
-
-## src/components/Visualization3D.poc.stub.tsx
-- const: Visualization3D
 
 ## src/config/schemas/analytics.schema.ts
 - const: featureFlagsSchema
@@ -97,14 +82,6 @@ Unused exports: 163
 
 ## src/hooks/useMockDataSeeding.ts
 - function: useMockDataSeeding
-
-## src/hooks/usePerformanceMonitor.ts
-- function: onRenderCallback
-- function: useBatchPerformanceMonitor
-- function: useComputationTimer
-- function: useMemoryLeakDetector
-- function: usePerformanceMonitor
-- function: useWhyDidYouUpdate
 
 ## src/hooks/usePinnedAlerts.ts
 - function: usePinnedAlerts

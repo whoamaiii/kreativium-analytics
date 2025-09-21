@@ -10,6 +10,8 @@
  * @module hooks/usePerformanceMonitor
  */
 
+/* @unused-exports-keep: Dev-only performance hooks intentionally kept for instrumentation */
+
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { logger } from '@/lib/logger';
 

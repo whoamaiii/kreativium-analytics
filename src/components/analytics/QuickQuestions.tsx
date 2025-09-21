@@ -270,6 +270,4 @@ export const QuickQuestions: React.FC<QuickQuestionsProps> = ({ onNavigate, onFi
   );
 };
 
-export default React.memo(QuickQuestions);
-
-
+ 
