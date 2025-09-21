@@ -1,9 +1,9 @@
 # Unused Exports Report
 
-Generated: 2025-09-21T09:23:03.417Z
-Files scanned: 366
-Total exports: 906
-Unused exports: 135
+Generated: 2025-09-21T09:48:39.283Z
+Files scanned: 360
+Total exports: 885
+Unused exports: 114
 
 
 ## src/components/ComparisonSummary.tsx
@@ -28,29 +28,11 @@ Unused exports: 135
 - const: TrackingProvider
 - const: useTracking
 
-## src/hooks/useAnalyticsStatus.ts
-- const: useAnalyticsStatus
-
-## src/hooks/useAsyncHandler.ts
-- function: useAsyncHandler
-
-## src/hooks/useChartStore.ts
-- const: useChartStore
-
-## src/hooks/useMockDataSeeding.ts
-- function: useMockDataSeeding
-
 ## src/hooks/usePinnedAlerts.ts
 - function: usePinnedAlerts
 
 ## src/hooks/useRealtimeData.ts
 - const: useRealtimeVisualization
-
-## src/hooks/useRenderProfiler.ts
-- function: useRenderProfiler
-
-## src/hooks/useStudentExport.ts
-- function: useStudentExport
 
 ## src/hooks/useSyncedExplorePreset.ts
 - re-export: isValidPreset
@@ -86,9 +68,6 @@ Unused exports: 135
 ## src/lib/analyticsManagerLite.ts
 - const: analyticsManagerLite
 
-## src/lib/buttonVariants.ts
-- const: buttonVariants
-
 ## src/lib/cachedPatternAnalysis.ts
 - class: CachedPatternAnalysisEngine
 
@@ -118,10 +97,6 @@ Unused exports: 135
 ## src/lib/dateRange.ts
 - function: computeDateRange
 - function: isCustomRangeInvalid
-
-## src/lib/deprecation.ts
-- function: clearDeprecationWarnings
-- function: deprecate
 
 ## src/lib/deviceConstraints.ts
 - function: canPrecompute
@@ -158,17 +133,6 @@ Unused exports: 135
 - const: ZPatternResult
 - function: validatePatternResults
 
-## src/lib/explanations/sourceUtils.ts
-- const: buildCopyFromSource
-- const: CITATION_LIMIT
-- const: clampText
-- const: collectEnvironmentDetails
-- const: describeSource
-- const: describeSourceForPrompt
-- const: formatSourceTimestamp
-- const: SOCIAL_CONTEXT_RE
-- const: sourcePrimaryLabel
-
 ## src/lib/exportTemplates.ts
 - function: getChartA11yDescription
 - function: getChartConfig
@@ -184,9 +148,6 @@ Unused exports: 135
 
 ## src/lib/hash.ts
 - function: hashStringToHex64
-
-## src/lib/inlineWorker.ts
-- function: createInlineWorker
 
 ## src/lib/key.ts
 - function: hashOfObject
@@ -252,10 +213,6 @@ Unused exports: 135
 
 ## src/types/filters.ts
 - const: LIGHTING_CONDITION_TOKENS
-
-## src/types/typeGuards.ts
-- function: isEmotionEntry
-- function: isSensoryEntry
 
 ## src/utils/accessibility.ts
 - function: getFocusableElements

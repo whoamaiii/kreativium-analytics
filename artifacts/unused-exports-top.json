@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2025-09-21T09:23:03.417Z",
+  "generatedAt": "2025-09-21T09:48:39.283Z",
   "root": "/Users/quentinthiessen/Desktop/kreativiummedgemma",
-  "totalFilesScanned": 366,
-  "totalExports": 906,
-  "unusedExportsCount": 135,
+  "totalFilesScanned": 360,
+  "totalExports": 885,
+  "unusedExportsCount": 114,
   "unusedExports": [
     {
       "file": "src/components/ComparisonSummary.tsx",
@@ -56,26 +56,6 @@
       "exportKind": "const"
     },
     {
-      "file": "src/hooks/useAnalyticsStatus.ts",
-      "exportName": "useAnalyticsStatus",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/hooks/useAsyncHandler.ts",
-      "exportName": "useAsyncHandler",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/useChartStore.ts",
-      "exportName": "useChartStore",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/hooks/useMockDataSeeding.ts",
-      "exportName": "useMockDataSeeding",
-      "exportKind": "function"
-    },
-    {
       "file": "src/hooks/usePinnedAlerts.ts",
       "exportName": "usePinnedAlerts",
       "exportKind": "function"
@@ -84,16 +64,6 @@
       "file": "src/hooks/useRealtimeData.ts",
       "exportName": "useRealtimeVisualization",
       "exportKind": "const"
-    },
-    {
-      "file": "src/hooks/useRenderProfiler.ts",
-      "exportName": "useRenderProfiler",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/hooks/useStudentExport.ts",
-      "exportName": "useStudentExport",
-      "exportKind": "function"
     },
     {
       "file": "src/hooks/useSyncedExplorePreset.ts",
@@ -176,11 +146,6 @@
       "exportKind": "const"
     },
     {
-      "file": "src/lib/buttonVariants.ts",
-      "exportName": "buttonVariants",
-      "exportKind": "const"
-    },
-    {
       "file": "src/lib/cachedPatternAnalysis.ts",
       "exportName": "CachedPatternAnalysisEngine",
       "exportKind": "class"
@@ -258,16 +223,6 @@
     {
       "file": "src/lib/dateRange.ts",
       "exportName": "isCustomRangeInvalid",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/deprecation.ts",
-      "exportName": "clearDeprecationWarnings",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/deprecation.ts",
-      "exportName": "deprecate",
       "exportKind": "function"
     },
     {
@@ -386,51 +341,6 @@
       "exportKind": "function"
     },
     {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "buildCopyFromSource",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "CITATION_LIMIT",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "clampText",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "collectEnvironmentDetails",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "describeSource",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "describeSourceForPrompt",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "formatSourceTimestamp",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "SOCIAL_CONTEXT_RE",
-      "exportKind": "const"
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "exportName": "sourcePrimaryLabel",
-      "exportKind": "const"
-    },
-    {
       "file": "src/lib/exportTemplates.ts",
       "exportName": "getChartA11yDescription",
       "exportKind": "function"
@@ -478,11 +388,6 @@
     {
       "file": "src/lib/hash.ts",
       "exportName": "hashStringToHex64",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/lib/inlineWorker.ts",
-      "exportName": "createInlineWorker",
       "exportKind": "function"
     },
     {
@@ -651,16 +556,6 @@
       "exportKind": "const"
     },
     {
-      "file": "src/types/typeGuards.ts",
-      "exportName": "isEmotionEntry",
-      "exportKind": "function"
-    },
-    {
-      "file": "src/types/typeGuards.ts",
-      "exportName": "isSensoryEntry",
-      "exportKind": "function"
-    },
-    {
       "file": "src/utils/accessibility.ts",
       "exportName": "getFocusableElements",
       "exportKind": "function"
@@ -752,42 +647,6 @@
         }
       ]
     },
-    "src/hooks/useAnalyticsStatus.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "useAnalyticsStatus",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/hooks/useAsyncHandler.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "useAsyncHandler",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/hooks/useChartStore.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "useChartStore",
-          "kind": "const"
-        }
-      ]
-    },
-    "src/hooks/useMockDataSeeding.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "useMockDataSeeding",
-          "kind": "function"
-        }
-      ]
-    },
     "src/hooks/usePinnedAlerts.ts": {
       "count": 1,
       "exports": [
@@ -803,24 +662,6 @@
         {
           "name": "useRealtimeVisualization",
           "kind": "const"
-        }
-      ]
-    },
-    "src/hooks/useRenderProfiler.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "useRenderProfiler",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/hooks/useStudentExport.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "useStudentExport",
-          "kind": "function"
         }
       ]
     },
@@ -933,15 +774,6 @@
         }
       ]
     },
-    "src/lib/buttonVariants.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "buttonVariants",
-          "kind": "const"
-        }
-      ]
-    },
     "src/lib/cachedPatternAnalysis.ts": {
       "count": 1,
       "exports": [
@@ -1037,19 +869,6 @@
         },
         {
           "name": "isCustomRangeInvalid",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/lib/deprecation.ts": {
-      "count": 2,
-      "exports": [
-        {
-          "name": "clearDeprecationWarnings",
-          "kind": "function"
-        },
-        {
-          "name": "deprecate",
           "kind": "function"
         }
       ]
@@ -1176,47 +995,6 @@
         }
       ]
     },
-    "src/lib/explanations/sourceUtils.ts": {
-      "count": 9,
-      "exports": [
-        {
-          "name": "buildCopyFromSource",
-          "kind": "const"
-        },
-        {
-          "name": "CITATION_LIMIT",
-          "kind": "const"
-        },
-        {
-          "name": "clampText",
-          "kind": "const"
-        },
-        {
-          "name": "collectEnvironmentDetails",
-          "kind": "const"
-        },
-        {
-          "name": "describeSource",
-          "kind": "const"
-        },
-        {
-          "name": "describeSourceForPrompt",
-          "kind": "const"
-        },
-        {
-          "name": "formatSourceTimestamp",
-          "kind": "const"
-        },
-        {
-          "name": "SOCIAL_CONTEXT_RE",
-          "kind": "const"
-        },
-        {
-          "name": "sourcePrimaryLabel",
-          "kind": "const"
-        }
-      ]
-    },
     "src/lib/exportTemplates.ts": {
       "count": 3,
       "exports": [
@@ -1268,15 +1046,6 @@
       "exports": [
         {
           "name": "hashStringToHex64",
-          "kind": "function"
-        }
-      ]
-    },
-    "src/lib/inlineWorker.ts": {
-      "count": 1,
-      "exports": [
-        {
-          "name": "createInlineWorker",
           "kind": "function"
         }
       ]
@@ -1490,19 +1259,6 @@
         {
           "name": "LIGHTING_CONDITION_TOKENS",
           "kind": "const"
-        }
-      ]
-    },
-    "src/types/typeGuards.ts": {
-      "count": 2,
-      "exports": [
-        {
-          "name": "isEmotionEntry",
-          "kind": "function"
-        },
-        {
-          "name": "isSensoryEntry",
-          "kind": "function"
         }
       ]
     },

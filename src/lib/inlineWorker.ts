@@ -1,3 +1,4 @@
+/* @unused-exports-keep: utility for inline Worker creation used by future features */
 // Alternative worker implementation using inline worker for better compatibility
 import { AnalyticsData, AnalyticsResults } from '@/workers/analytics.worker';
 import { logger } from './logger';

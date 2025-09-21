@@ -1,3 +1,4 @@
+/* @unused-exports-keep: referenced via local component imports and variant tests */
 import { cva } from "class-variance-authority"
 
 export const buttonVariants = cva(

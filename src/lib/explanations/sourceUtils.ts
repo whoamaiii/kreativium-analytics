@@ -1,3 +1,4 @@
+/* @unused-exports-keep: retained for analytics PDF and explanation features */
 import type { SourceItem } from '@/types/analytics';
 
 export const SOCIAL_CONTEXT_RE = /(sosial|sosiale|venn|venner|kompis|klasse|klasserom|gruppe|grupp(e|eoppgave)?|team|pararbeid|friminutt|pause|lunsj|frokost|middag|kveld(s)?stell|morgen(s)?rutine|morgenstell|morgenrutine|kantine|ute|inne|hjemme|avlast|interaksj|samarbeid|samspill|konflikt|lek|leke|presentasjon|diskusjon|overgang(er)?|medelever|familie|besøk)/i;

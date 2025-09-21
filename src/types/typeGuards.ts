@@ -1,3 +1,4 @@
+/* @unused-exports-keep: type guard utilities referenced in documentation and future runtime checks */
 
 import { EmotionEntry, SensoryEntry } from './student';
 

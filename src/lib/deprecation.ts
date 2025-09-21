@@ -1,3 +1,4 @@
+/* @unused-exports-keep: shared utility for migration guidance used by future deprecations */
 import { logger } from '@/lib/logger';
 
 /**

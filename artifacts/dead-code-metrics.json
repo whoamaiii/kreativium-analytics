@@ -1,11 +1,11 @@
 {
-  "totalSrcFiles": 366,
-  "totalSrcLoc": 68200,
-  "unusedFilesCount": 11,
-  "unusedFilesLoc": 974,
-  "deadCodePercentByFiles": 3.01,
-  "unusedExportsCount": 135,
-  "unusedExportsFiles": 61,
+  "totalSrcFiles": 360,
+  "totalSrcLoc": 67484,
+  "unusedFilesCount": 0,
+  "unusedFilesLoc": 0,
+  "deadCodePercentByFiles": 0,
+  "unusedExportsCount": 114,
+  "unusedExportsFiles": 50,
   "unusedDependencies": [
     "@types/three",
     "tailwindcss-animate",
@@ -29,50 +29,5 @@
     "prettier",
     "tsx"
   ],
-  "unusedFiles": [
-    {
-      "file": "src/hooks/useAnalyticsStatus.ts",
-      "loc": 113
-    },
-    {
-      "file": "src/hooks/useAsyncHandler.ts",
-      "loc": 60
-    },
-    {
-      "file": "src/hooks/useChartStore.ts",
-      "loc": 83
-    },
-    {
-      "file": "src/hooks/useMockDataSeeding.ts",
-      "loc": 158
-    },
-    {
-      "file": "src/hooks/useRenderProfiler.ts",
-      "loc": 151
-    },
-    {
-      "file": "src/hooks/useStudentExport.ts",
-      "loc": 156
-    },
-    {
-      "file": "src/lib/buttonVariants.ts",
-      "loc": 33
-    },
-    {
-      "file": "src/lib/deprecation.ts",
-      "loc": 39
-    },
-    {
-      "file": "src/lib/explanations/sourceUtils.ts",
-      "loc": 105
-    },
-    {
-      "file": "src/lib/inlineWorker.ts",
-      "loc": 50
-    },
-    {
-      "file": "src/types/typeGuards.ts",
-      "loc": 26
-    }
-  ]
+  "unusedFiles": []
 }
