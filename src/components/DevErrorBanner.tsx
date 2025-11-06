@@ -17,6 +17,8 @@ export const DevErrorBanner = () => {
   const [isHidden, setIsHidden] = useState(false);
   const originalConsoleError = useRef<typeof console.error | null>(null);
   const isIntercepting = useRef(false);
+  const lastMsgRef = useRef<string | null>(null);
+  const lastMsgTsRef = useRef<number>(0);
 
   useEffect(() => {
     // Only intercept in development
@@ -39,8 +41,17 @@ export const DevErrorBanner = () => {
           }
           return String(a);
         }).join(' ');
-        setLastError({ message: msg, timestamp: Date.now() });
-        setErrorCount(c => c + 1);
+        const now = Date.now();
+        const same = lastMsgRef.current === msg && (now - lastMsgTsRef.current) < 800;
+        if (!same) {
+          lastMsgRef.current = msg;
+          lastMsgTsRef.current = now;
+          // Defer state updates to next macrotask to avoid nested update cascades
+          window.setTimeout(() => {
+            setLastError({ message: msg, timestamp: now });
+            setErrorCount(c => c + 1);
+          }, 0);
+        }
         
         // Record through central logger; recursion guarded above
         logger.error('Dev error captured', ...args);
@@ -55,8 +66,17 @@ export const DevErrorBanner = () => {
     };
 
     const onWindowError = (e: ErrorEvent) => {
-      setLastError({ message: e.message || 'Unhandled error', details: e.error?.stack, timestamp: Date.now() });
-      setErrorCount(c => c + 1);
+      const now = Date.now();
+      const msg = e.message || 'Unhandled error';
+      const same = lastMsgRef.current === msg && (now - lastMsgTsRef.current) < 800;
+      if (!same) {
+        lastMsgRef.current = msg;
+        lastMsgTsRef.current = now;
+        window.setTimeout(() => {
+          setLastError({ message: msg, details: e.error?.stack, timestamp: now });
+          setErrorCount(c => c + 1);
+        }, 0);
+      }
       // Log window errors through central logger
       logger.error('Window error', e.error || new Error(e.message));
     };
@@ -64,8 +84,16 @@ export const DevErrorBanner = () => {
       const reason = e.reason;
       const msg = reason?.message || String(reason) || 'Unhandled promise rejection';
       const stack = reason?.stack ? String(reason.stack) : undefined;
-      setLastError({ message: msg, details: stack, timestamp: Date.now() });
-      setErrorCount(c => c + 1);
+      const now = Date.now();
+      const same = lastMsgRef.current === msg && (now - lastMsgTsRef.current) < 800;
+      if (!same) {
+        lastMsgRef.current = msg;
+        lastMsgTsRef.current = now;
+        window.setTimeout(() => {
+          setLastError({ message: msg, details: stack, timestamp: now });
+          setErrorCount(c => c + 1);
+        }, 0);
+      }
       // Log unhandled rejections through central logger
       logger.error('Unhandled promise rejection', reason instanceof Error ? reason : new Error(msg));
     };

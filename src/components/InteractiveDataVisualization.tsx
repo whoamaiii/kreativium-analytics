@@ -16,11 +16,11 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 import { GridLayout, FocusLayout, ComparisonLayout } from './layouts/VisualizationLayouts';
 const TrendsChartLazy = lazy(() => import('./charts/TrendsChart').then(m => ({ default: m.TrendsChart })));
 const CorrelationHeatmapLazy = lazy(() => import('./analysis/CorrelationHeatmap').then(m => ({ default: m.CorrelationHeatmap })));
-const PatternAnalysisViewLazy = lazy(() => import('./analysis/PatternAnalysisView').then(m => ({ default: m.PatternAnalysisView })));
+import { LazyPatternsPanel } from '@/components/lazy/LazyPatternsPanel';
 const EChartContainerLazy = lazy(() => import('@/components/charts/EChartContainer').then(m => ({ default: m.EChartContainer })));
 import { analyticsExport, ExportFormat } from "@/lib/analyticsExport";
 import type { AnalyticsExportData } from "@/lib/analyticsExport";
-import { toast } from "sonner";
+import { toast } from '@/hooks/use-toast';
 import { logger } from "@/lib/logger";
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { Badge } from '@/components/ui/badge';
@@ -231,7 +231,10 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
 
   const togglePictureInPicture = useCallback(() => {
     visualizationState.setIsPictureInPicture(!visualizationState.isPictureInPicture);
-    toast(visualizationState.isPictureInPicture ? 'Exited picture-in-picture mode' : 'Entered picture-in-picture mode');
+    toast({
+      title: visualizationState.isPictureInPicture ? 'Exited picture-in-picture mode' : 'Entered picture-in-picture mode',
+      description: '',
+    });
   }, [visualizationState]);
 
   const handleExport = async (format: ExportFormat) => {
@@ -254,10 +257,17 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
         analytics: { patterns: analysisData.patterns, correlations: analysisData.correlationMatrix?.significantPairs.map(p => ({ ...p, id: crypto.randomUUID(), description: '', recommendations: [] })) || [], insights: analysisData.patterns.map(p => p.description), predictiveInsights: analysisData.predictiveInsights, anomalies: analysisData.anomalies }
       };
       await analyticsExport.exportTo(format, exportData);
-      toast.success(`Interactive analytics ${format.toUpperCase()} exported successfully`);
+      toast({
+        title: `Interactive analytics ${format.toUpperCase()} exported successfully`,
+        description: '',
+      });
     } catch (error) {
       logger.error('Export failed', { error });
-      toast.error('Failed to export interactive analytics data');
+      toast({
+        title: 'Failed to export interactive analytics data',
+        description: '',
+        variant: 'destructive',
+      });
     } finally {
       setIsExporting(false);
     }
@@ -299,16 +309,13 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
           </Suspense>
         );
       case 'patterns':
-        if (!DEV_VIZ_ENABLED) {
-          return (
-            <div className="p-4 border rounded-md text-muted-foreground" role="note" aria-live="polite">
-              {String(tAnalytics('patterns.usePatternsPresetMessage', { defaultValue: 'For pattern analysis, please use the Patterns preset.' }))}
-            </div>
-          );
-        }
         return (
           <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label="Loading patterns" />}> 
-            <PatternAnalysisViewLazy {...analysisData} highlightState={highlightState} handleHighlight={() => {}} filteredData={filteredData} />
+            <LazyPatternsPanel
+              filteredData={{ entries: filteredData.trackingEntries, emotions: filteredData.emotions, sensoryInputs: filteredData.sensoryInputs }}
+              useAI
+              student={currentStudent}
+            />
           </Suspense>
         );
       case '3d':
@@ -399,7 +406,25 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
               onCreateGoal={() => { /* wire later: route to goals with draft */ }}
               onAddIntervention={() => { /* wire later */ }}
               onScheduleBreak={() => { /* wire later */ }}
-              onJumpToTracking={() => { /* wire later */ }}
+            onJumpToTracking={() => { /* wire later */ }}
+            onOpenPattern={(patternId) => {
+              try {
+                visualizationState.setLayoutMode('focus');
+                visualizationState.setFocusedVisualization('patterns');
+              } catch {}
+              try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('tab', 'explore');
+                if (patternId) url.searchParams.set('patternId', patternId);
+                url.searchParams.set('explain', '1');
+                window.history.replaceState(window.history.state, '', url.toString());
+              } catch {}
+              // Smooth scroll to the panel area if present
+              try {
+                const el = document.querySelector('[data-analytics-panel="patterns"]') as HTMLElement | null;
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              } catch {}
+            }}
             />
           </div>
         )}

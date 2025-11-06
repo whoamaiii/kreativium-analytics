@@ -12,7 +12,7 @@ import { Progress } from "@/components/ui/progress";
 import { Student, Goal, TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/student";
 import { FileText, Download, Printer, Mail, Calendar, TrendingUp, Crosshair } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { downloadBlob } from "@/lib/utils";
 import { useTranslation } from '@/hooks/useTranslation';
 

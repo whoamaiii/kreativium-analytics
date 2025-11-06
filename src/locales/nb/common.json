@@ -1,7 +1,24 @@
 {
-  "settings": "Innstillinger",
+  "settings": {
+    "accessibility": "Tilgjengelighet og bevegelse",
+    "motion": "Reduser bevegelse",
+    "motionDesc": "Begrens animasjoner og konfetti",
+    "sound": "Lydvolum",
+    "soundDesc": "Lyd for suksess og nivåopp",
+    "hints": "Aktiver hint",
+    "hintsDesc": "Tillat hint i runder",
+    "calibration": "Kalibrering",
+    "calibrationDesc": "Nullstill og kjør kalibrering på nytt",
+    "resetCalibration": "Nullstill",
+    "detector": "Detektor",
+    "detectorDesc": "Velg deteksjonsmotor (krever omstart)",
+    "quietRewards": "Stille belønninger",
+    "quietRewardsDesc": "Bruk subtile visuelle effekter i stedet for lyd",
+    "highContrast": "Høy kontrast",
+    "highContrastDesc": "Øk kontrast for lesbarhet"
+  },
   "export": "Eksporter",
-  "exporting": "Eksporterer...",
+  "exporting": "Eksporterer",
   "exportAsPdf": "Eksporter som PDF",
   "exportAsCsv": "Eksporter som CSV",
   "exportAsJson": "Eksporter som JSON",
@@ -18,11 +35,19 @@
     "submit": "Send inn",
     "tryAgain": "Prøv igjen",
     "reload": "Last på nytt",
-    "home": "Hjem"
+    "home": "Hjem",
+    "help": "Hjelp"
+  },
+  "achievements": {
+    "title": "Klistremerker",
+    "none": "Ingen klistremerker ennå"
   },
   "reports": {
-"builder": {
-      "ui": { "headerTitle": "Rapportbygger", "headerDesc": "Generer tilpassede rapporter." },
+    "builder": {
+      "ui": {
+        "headerTitle": "Rapportbygger",
+        "headerDesc": "Generer tilpassede rapporter."
+      },
       "form": {
         "reportTemplate": "Rapportmal",
         "reportTitle": "Rapporttittel",
@@ -51,8 +76,14 @@
         "next-steps": "Neste steg",
         "interventions": "Tiltak"
       },
-      "errors": { "invalidDateRange": "Ugyldig datoområde", "startBeforeEnd": "Startdato må være før sluttdato" },
-      "toast": { "reportGenerated": "Rapport generert!", "csvExported": "CSV eksportert!" },
+      "errors": {
+        "invalidDateRange": "Ugyldig datoområde",
+        "startBeforeEnd": "Startdato må være før sluttdato"
+      },
+      "toast": {
+        "reportGenerated": "Rapport generert!",
+        "csvExported": "CSV eksportert!"
+      },
       "title": "Rapportbygger",
       "description": "Velg en elev og mal for å generere en tilpasset rapport.",
       "configure": "Konfigurasjon",
@@ -70,10 +101,22 @@
     "sectionsCount": "{{count}} seksjoner",
     "createReport": "Opprett rapport",
     "templates": {
-      "progress-summary": { "name": "Fremgangsrapport", "description": "Helhetlig oversikt over elevens fremgang på alle mål" },
-      "iep-meeting": { "name": "IEP-møterapport", "description": "Detaljert rapport for IEP-teammøter" },
-      "behavioral-analysis": { "name": "Atferdsanalyse", "description": "Fokus på emosjonelle og sensoriske mønstre" },
-      "quarterly-review": { "name": "Kvartalsrapport", "description": "Tremåneders gjennomgang av fremgang" }
+      "progress-summary": {
+        "name": "Fremgangsrapport",
+        "description": "Helhetlig oversikt over elevens fremgang på alle mål"
+      },
+      "iep-meeting": {
+        "name": "IEP-møterapport",
+        "description": "Detaljert rapport for IEP-teammøter"
+      },
+      "behavioral-analysis": {
+        "name": "Atferdsanalyse",
+        "description": "Fokus på emosjonelle og sensoriske mønstre"
+      },
+      "quarterly-review": {
+        "name": "Kvartalsrapport",
+        "description": "Tremåneders gjennomgang av fremgang"
+      }
     },
     "analyticsPdf": {
       "button": "Eksporter analyse-PDF",
@@ -99,8 +142,10 @@
         "qtd": "Kvartal til dato",
         "custom": "Egendefinert"
       },
-    "summary": {
-        "errors": { "invalidRange": "Velg en gyldig start- og sluttdato." },
+      "summary": {
+        "errors": {
+          "invalidRange": "Velg en gyldig start- og sluttdato."
+        },
         "progress": "Forbereder eksport: {{percent}}%",
         "withRangeAnon": "Eksporterer data fra {{start}} til {{end}} (anonymisert)",
         "withRange": "Eksporterer data fra {{start}} til {{end}}",
@@ -109,7 +154,6 @@
       }
     }
   },
-
   "navigation": {
     "dashboard": "Hovedside",
     "students": "Elever",
@@ -119,8 +163,152 @@
     "reports": "Rapporter",
     "globalMenu": "Hovedmeny",
     "devTools": "Utviklerverktøy",
+    "monitoring": "Overvåking",
     "tegnTilTale": "Tegn til Tale",
-    "kreativiumAI": "Kreativium AI"
+    "kreativiumAI": "Kreativium AI",
+    "emotionLab": "Følelseslab",
+    "emotionGame": "Følelsesspill"
+  },
+  "keyboardShortcuts": {
+    "pauseResume": "Mellomrom: pause/fortsett",
+    "hint": "H: hint"
+  },
+  "emotionLab": {
+    "consentText": "Dette verktøyet kjører lokalt i nettleseren. Ingen video forlater enheten. Gi samtykke for å aktivere kamera og analysere ansiktsuttrykk. Du kan trekke det tilbake når som helst.",
+    "hideOverlay": "Skjul overlegg",
+    "showOverlay": "Vis overlegg",
+    "model": "Modell",
+    "origin": "Kilde",
+    "fps": "Bilder/s",
+    "loadingModels": "Laster modeller…",
+    "cameraOff": "Kamera er av. Slå på for å starte.",
+    "expressions": {
+      "neutral": "nøytral",
+      "happy": "glad",
+      "sad": "trist",
+      "angry": "sint",
+      "fearful": "redd",
+      "disgusted": "frastøtt",
+      "surprised": "overrasket"
+    },
+    "videoFeedLabel": "Live videostrøm fra kameraet"
+  },
+  "game": {
+    "title": "Følelsesspill",
+    "target": "Mål",
+    "hint": "Hint",
+    "pause": "Pause",
+    "skip": "Hopp over",
+    "streakReset": "Nullstill streak",
+    "tutorial": {
+      "title": "Kort veiledning",
+      "gotIt": "Skjønner",
+      "steps": {
+        "enableCameraTitle": "1. Skru på kamera",
+        "enableCameraBody": "Gi kameratilgang og sentrer ansiktet i rammen.",
+        "matchTitle": "2. Gjenta følelsen",
+        "matchBody": "Kopier måluttrykket til ringen fylles.",
+        "celebrateTitle": "3. Feire",
+        "celebrateBody": "Tjen stjerner og XP; serier gir bonus."
+      }
+    },
+    "calibration": {
+      "title": "Kalibrering",
+      "description": "Hold et nøytralt uttrykk i 10–15 sekunder mens vi kalibrerer kamera og lys.",
+      "finish": "Fullfør",
+      "skip": "Hopp over",
+      "link": "Kalibrering"
+    },
+    "round": "Runde",
+    "streak": "Streak",
+    "xp": "XP",
+    "worlds": {
+      "calmForest": "Rolig skog",
+      "rainbowStarHold": "Regnbuestjerner"
+    },
+    "complete": {
+      "title": "Nivå fullført!",
+      "desc": "Bra jobbet! Hent premien din og velg hva du vil gjøre videre.",
+      "next": "Neste nivå",
+      "replay": "Øv igjen",
+      "free": "Frilek"
+    },
+    "themes": {
+      "rainbowLand": "Regnbueland",
+      "space": "Rom"
+    },
+    "newWorld": "Ny verden",
+    "modes": {
+      "label": "Modus",
+      "classic": "Klassisk",
+      "timeAttack": "Tidsjakt",
+      "confidence": "Selvtillit",
+      "mirror": "Speil"
+    },
+    "practice": {
+      "label": "Øv",
+      "placeholder": "Velg følelse",
+      "mixed": "Blandet"
+    },
+    "hintCount": "{{count}} hint igjen",
+    "mirror": {
+      "almostThere": "Nesten der!"
+    },
+    "announcements": {
+      "resumed": "Spillet er gjenopptatt",
+      "paused": "Spillet er satt på pause",
+      "roundStart": "Ny runde starter",
+      "nextRound": "Neste runde"
+    },
+    "secondsShort": "s",
+    "comboLabel": "Kombinasjon x{{count}}"
+  },
+  "confidencePrompt": {
+    "title": "Hvor sikker var du?",
+    "description": "Bruk skyveknappen for å angi hvor sikker du var på at du matchet måluttrykket.",
+    "ariaLabel": "Selvtillit",
+    "submit": "Send inn"
+  },
+  "roundSummary": {
+    "title": "Rundesammendrag",
+    "target": "Mål",
+    "time": "Tid",
+    "stability": "Stabilitet",
+    "intensity": "Intensitet",
+    "confidence": "Selvtillit",
+    "actual": "Faktisk",
+    "calibrationError": "Kalibreringsfeil",
+    "continue": "Fortsett"
+  },
+  "sessionSummary": {
+    "title": "Øktoppsummering",
+    "accuracyPerEmotion": "Treffsikkerhet per følelse",
+    "timeToSuccess": "Snitt tid til suksess",
+    "hintRate": "Hint-rate",
+    "calibrationError": "Snitt kalibreringsfeil",
+    "noData": "Ingen data for denne økten ennå"
+  },
+  "chooseRight": {
+    "prompt": "Trykk på riktig følelse",
+    "instruction": "Trykk på",
+    "correct": "Riktig!",
+    "hint": "Se etter riktig ansikt"
+  },
+  "nameIt": {
+    "prompt": "Hva heter denne følelsen?",
+    "say": "Si ordet",
+    "choose": "Velg riktig ord"
+  },
+  "calmPause": {
+    "breathe": "Pust rolig inn og ut",
+    "neutralGoal": "Mål: nøytral i 10–20 sekunder"
+  },
+  "missions": {
+    "title": "Daglige oppdrag",
+    "holdNeutral": "Hold 3 rolige nøytral i dag",
+    "chooseRight": "Velg riktig 5 ganger",
+    "nameIt": "Navngi 5 følelser",
+    "streak": "Streak"
   },
   "tegn": {
     "menu": "Meny",
@@ -150,7 +338,24 @@
     "totalXP": "Total XP",
     "xpToNext": "{{remaining}} XP til neste nivå",
     "levelProgressLabel": "Nivå {{level}} – {{progress}}/100 XP",
-    "xpProgressAria": "Erfaringsfremgang"
+    "xpProgressAria": "Erfaringsfremgang",
+    "playWord": "Hør ordet",
+    "playWordActive": "Spiller...",
+    "playWordAria": "Spill av opplesing av \"{{word}}\"",
+    "speechUnsupported": "Tekst-til-tale er ikke tilgjengelig i denne nettleseren.",
+    "showAnswer": "Vis fasit",
+    "hideAnswer": "Skjul fasit",
+    "nextPrompt": "Neste tegn",
+    "didIt": "Jeg gjorde det!",
+    "cameraAssist": "Aktiver kameraet for å øve foran linsen.",
+    "cameraAssistActive": "Kameraet er aktivt. Følg bevegelsene dine i forhåndsvisningen.",
+    "cameraEnable": "Skru på kamera",
+    "cameraDisable": "Skru av kamera",
+    "cameraUnsupported": "Kameraøvelser støttes ikke i denne nettleseren.",
+    "cameraPermissionDenied": "Tilgang til kameraet ble avslått. Kontroller nettleserinnstillinger.",
+    "cameraNotFound": "Ingen kamera ble funnet.",
+    "cameraError": "Kunne ikke starte kameraet. Prøv igjen.",
+    "cameraInactiveOverlay": "Kameraet er av. Slå det på for å se deg selv."
   },
   "help": {
     "button": "Hjelp & støtte",
@@ -197,6 +402,7 @@
   "language": {
     "norwegian": "Norsk bokmål",
     "english": "English",
+    "change": "Endre språk",
     "changeLanguage": "Endre språk"
   },
   "notFound": {
@@ -229,7 +435,8 @@
     "goalsLabel": "mål"
   },
   "accessibility": {
-    "skipToContent": "Hopp til hovedinnhold"
+    "skipToContent": "Hopp til hovedinnhold",
+    "headerControls": "Hovedkontroller i toppfeltet"
   },
   "loading": "Laster...",
   "error": {
@@ -259,9 +466,20 @@
     "collapse": "Skjul",
     "dismiss": "Avvis"
   },
-  "export": "Eksporter",
-  "exporting": "Eksporterer",
-  "exportAsPdf": "Eksporter som PDF",
-  "exportAsCsv": "Eksporter som CSV",
-  "exportAsJson": "Eksporter som JSON"
+  "sessionFlow": {
+    "roundLabel": "Runde",
+    "steps": {
+      "chooseRight": "Velg riktig",
+      "nameIt": "Navngi",
+      "calmPause": "Ro-pause",
+      "missions": "Daglige oppdrag"
+    },
+    "start": "Start",
+    "choices": "Valg",
+    "nextStep": "Neste steg",
+    "next": "Neste",
+    "replay": "Spill igjen",
+    "freePlay": "Fri lek",
+    "pickActivity": "Velg aktivitet"
+  }
 }

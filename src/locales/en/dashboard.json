@@ -21,6 +21,16 @@
     "tip2": "Use environmental data to identify triggers",
     "tip3": "Review reports for trends and progress"
   },
+  "overview": {
+    "title": "Overview"
+  },
+  "students": {
+    "title": "Students"
+  },
+  "actions": {
+    "newEntry": "New Entry",
+    "addStudent": "Add Student"
+  },
   "studentCard": {
     "grade": "Grade {{grade}}",
     "noGrade": "No grade",

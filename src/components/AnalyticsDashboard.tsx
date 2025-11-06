@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback, memo, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback, memo, Suspense, lazy } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,10 +8,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AnalyticsSettings } from "@/components/AnalyticsSettings";
+// Lazy-load settings to avoid pulling ML/TFJS code until needed
+const AnalyticsSettings = lazy(() => import("@/components/AnalyticsSettings").then(m => ({ default: m.AnalyticsSettings })));
 import { LazyOverviewPanel } from '@/components/lazy/LazyOverviewPanel';
-import { LazyExplorePanel } from '@/components/lazy/LazyExplorePanel';
+import { LazyChartsPanel } from '@/components/lazy/LazyChartsPanel';
+import { LazyPatternsPanel } from '@/components/lazy/LazyPatternsPanel';
+import { LazyCorrelationsPanel } from '@/components/lazy/LazyCorrelationsPanel';
 import { LazyAlertsPanel } from '@/components/lazy/LazyAlertsPanel';
+import { LazyCalibrationDashboard } from '@/components/lazy/LazyCalibrationDashboard';
 import {
   TrendingUp,
   Brain,
@@ -23,13 +27,15 @@ import {
   FileJson,
   Settings,
   RefreshCw,
+  Gauge,
+  AlertTriangle,
 } from "lucide-react";
 import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/student";
 import { useAnalyticsWorker } from "@/hooks/useAnalyticsWorker";
 import { analyticsManager } from "@/lib/analyticsManager";
 import { useTranslation } from "@/hooks/useTranslation";
 import { analyticsExport, ExportFormat } from "@/lib/analyticsExport";
-import { toast } from "sonner";
+import { toast } from '@/hooks/use-toast';
 import { logger } from "@/lib/logger";
 import { doOnce } from "@/lib/rateLimit";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -40,13 +46,14 @@ import { ExportDialog, type ExportOptions } from '@/components/ExportDialog';
 import { FiltersDrawer } from '@/components/analytics/FiltersDrawer';
 import { QuickQuestions } from '@/components/analytics/QuickQuestions';
 import type { FilterCriteria } from '@/lib/filterUtils';
+import { AnalyticsActions } from '@/components/analytics/AnalyticsActions';
 
 // Typed tab keys to avoid stringly-typed errors
 
 // Centralized mapping of tabs to i18n keys and data-testids
 // Labels come from the analytics namespace: analytics.tabs.*
 // moved to ./analyticsTabs to satisfy react-refresh rule
-import { TABS } from './analyticsTabs';
+import { ANALYTICS_TABS as TABS } from '@/config/analyticsTabs';
 
 /**
  * @interface AnalyticsDashboardProps
@@ -186,13 +193,19 @@ export const AnalyticsDashboard = memo(({
       const mod = await import('@/lib/mock/mockSeeders');
       const { seedDemoData } = mod as typeof import('@/lib/mock/mockSeeders');
       const { totalStudentsAffected, totalEntriesCreated } = await seedDemoData({ forExistingStudents: true, createNewStudents: 1, batchesPerStudent: 1 });
-      toast.success(String(tAnalytics('dev.seed.success', { students: totalStudentsAffected, entries: totalEntriesCreated })));
+      toast({
+        title: String(tAnalytics('dev.seed.success', { students: totalStudentsAffected, entries: totalEntriesCreated })),
+        description: String(tAnalytics('dev.seed.success', { students: totalStudentsAffected, entries: totalEntriesCreated })),
+      });
       // Invalidate analysis cache for this student and re-run to reflect new data if provided by parent
       invalidateCacheForStudent(student.id);
       runAnalysisRef.current(normalizedData, { useAI, student: analyticsStudent });
     } catch (e) {
       logger.error('[AnalyticsDashboard] Demo seed failed', { error: e });
-      toast.error(String(tAnalytics('dev.seed.failure')));
+      toast({
+        title: String(tAnalytics('dev.seed.failure')),
+        description: String(tAnalytics('dev.seed.failure')),
+      });
     } finally {
       setIsSeeding(false);
     }
@@ -331,7 +344,10 @@ export const AnalyticsDashboard = memo(({
             const { chartRegistry } = await import('@/lib/chartRegistry');
             const registrations = chartRegistry.all();
             if (registrations.length === 0) {
-              toast.error(String(tAnalytics('export.noCharts')));
+              toast({
+                title: String(tAnalytics('export.noCharts')),
+                description: String(tAnalytics('export.noCharts')),
+              });
               return [] as Array<{ title: string; type?: string; dataURL?: string; svgString?: string }>;
             }
 
@@ -361,12 +377,18 @@ export const AnalyticsDashboard = memo(({
 
             const usableExports = exports.filter(item => item.dataURL || item.svgString);
             if (usableExports.length === 0) {
-              toast.error(String(tAnalytics('export.noCharts')));
+              toast({
+                title: String(tAnalytics('export.noCharts')),
+                description: String(tAnalytics('export.noCharts')),
+              });
             }
             return usableExports;
           } catch (collectError) {
             logger.error('Failed to collect chart exports', collectError);
-            toast.error(String(tAnalytics('export.noCharts')));
+            toast({
+              title: String(tAnalytics('export.noCharts')),
+              description: String(tAnalytics('export.noCharts')),
+            });
             return [] as Array<{ title: string; type?: string; dataURL?: string; svgString?: string }>;
           }
         };
@@ -399,11 +421,17 @@ export const AnalyticsDashboard = memo(({
           csv: 'export.success.csv',
           json: 'export.success.json',
         };
-        toast.success(String(tAnalytics(successMessageKey[format])));
+        toast({
+          title: String(tAnalytics(successMessageKey[format])),
+          description: String(tAnalytics(successMessageKey[format])),
+        });
       });
     } catch (error) {
       logger.error('Export failed:', error);
-      toast.error(String(tAnalytics('export.failure')));
+      toast({
+        title: String(tAnalytics('export.failure')),
+        description: String(tAnalytics('export.failure')),
+      });
     } finally {
       setIsExporting(false);
     }
@@ -493,64 +521,9 @@ export const AnalyticsDashboard = memo(({
                 {String(tAnalytics('insights.newInsightsAvailable', { defaultValue: 'New insights available' }))}
               </Badge>
             )}
-            {isDevSeedEnabled && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSeedDemo}
-                disabled={isSeeding}
-                aria-label={String(tAnalytics('dev.seed.aria'))}
-                title={String(tAnalytics('dev.seed.button'))}
-              >
-                {isSeeding ? String(tAnalytics('dev.seed.seeding')) : String(tAnalytics('dev.seed.button'))}
-              </Button>
-            )}
-            {hasNewInsights && (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleManualRefresh}
-                aria-label={String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}
-                title={String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{String(tAnalytics('actions.refreshInsights', { defaultValue: 'Refresh insights' }))}</span>
-              </Button>
-            )}
-            {/* Optional auto-refresh toggle */}
-            <Button
-              variant={autoRefresh ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setAutoRefresh(v => !v)}
-              aria-pressed={autoRefresh}
-              aria-label={String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
-              title={String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
-            >
-              {String(tAnalytics('actions.autoRefresh', { defaultValue: 'Auto refresh' }))}
-            </Button>
-            {/* Filters toggle with active count */}
-            <Button
-              variant={filtersOpen ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFiltersOpen(true)}
-              aria-label={String(tAnalytics('filters.title'))}
-              title={String(tAnalytics('filters.title'))}
-            >
-              {String(tAnalytics('filters.title'))}
-              {/* Simple active count heuristic */}
-              {(() => {
-                const count =
-                  (filters.emotions.types.length > 0 ? 1 : 0) +
-                  (filters.sensory.types.length > 0 || filters.sensory.responses.length > 0 ? 1 : 0) +
-                  (filters.environmental.locations.length + filters.environmental.activities.length + filters.environmental.conditions.lighting.length + filters.environmental.weather.length + filters.environmental.timeOfDay.length > 0 ? 1 : 0) +
-                  (filters.patterns.patternTypes.length > 0 || filters.patterns.anomaliesOnly || filters.patterns.minConfidence > 0 ? 1 : 0) +
-                  (filters.dateRange.start || filters.dateRange.end ? 1 : 0);
-                return count > 0 ? <Badge variant="secondary" className="ml-2">{count}</Badge> : null;
-              })()}
-            </Button>
             {/* Quick Questions */}
             <QuickQuestions
-              className="hidden sm:inline-flex"
+              className="hidden lg:inline-flex"
               onNavigate={(tab, preset) => {
                 setActiveTab(tab);
                 try {
@@ -565,100 +538,61 @@ export const AnalyticsDashboard = memo(({
                 setFiltersOpen(false);
               }}
             />
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={String(tCommon('settings'))}
-              title={String(tCommon('settings'))}
-              onClick={() => setShowSettings(true)}
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{String(tCommon('settings'))}</span>
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" disabled={exportState.isLoading} aria-label={String(tCommon('export'))} title={String(tCommon('export'))}>
-                  <Download className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">{exportState.isLoading ? String(tCommon('exporting')) : String(tCommon('export'))}</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => handleExport('pdf')}
-                  disabled={exportState.isLoading}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  {String(tCommon('exportAsPdf'))}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleExport('csv')}
-                  disabled={exportState.isLoading}
-                >
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  {String(tCommon('exportAsCsv'))}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleExport('json')}
-                  disabled={exportState.isLoading}
-                >
-                  <FileJson className="h-4 w-4 mr-2" />
-                  {String(tCommon('exportAsJson'))}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            
+            {/* Consolidated Actions Component */}
+            <AnalyticsActions
+              onExport={handleExport}
+              onSettings={() => setShowSettings(true)}
+              onRefresh={handleManualRefresh}
+              onFilters={() => setFiltersOpen(true)}
+              isExporting={exportState.isLoading}
+              isAnalyzing={isAnalyzing}
+              hasNewInsights={hasNewInsights}
+            />
           </div>
         </CardHeader>
       </Card>
 
-      {/* Summary cards providing a quick overview of the data volume. */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{String(tAnalytics('metrics.totalSessions'))}</p>
-                <p className="text-2xl font-bold">{filteredData.entries.length}</p>
-              </div>
-              <BarChart3 className="h-8 w-8 text-muted-foreground" />
+      {/* Compact summary bar - single row with improved visual hierarchy */}
+      <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-lg border shadow-sm">
+        <div className="flex items-center gap-8 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-md bg-primary/10">
+              <BarChart3 className="h-5 w-5 text-primary" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{String(tStudent('interface.emotionsTracked'))}</p>
-                <p className="text-2xl font-bold">{filteredData.emotions.length}</p>
-              </div>
-              <Brain className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{String(tAnalytics('metrics.sessions'))}</p>
+              <p className="text-2xl font-bold text-foreground">{filteredData.entries.length}</p>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{String(tStudent('interface.sensoryInputs'))}</p>
-                <p className="text-2xl font-bold">{filteredData.sensoryInputs.length}</p>
-              </div>
-              <Eye className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-md bg-purple-500/10">
+              <Brain className="h-5 w-5 text-purple-600" />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{String(tAnalytics('metrics.patternsFound'))}</p>
-                <p className="text-2xl font-bold">{patterns.length}</p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{String(tAnalytics('metrics.emotions'))}</p>
+              <p className="text-2xl font-bold text-foreground">{filteredData.emotions.length}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-md bg-blue-500/10">
+              <Eye className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{String(tAnalytics('metrics.sensory'))}</p>
+              <p className="text-2xl font-bold text-foreground">{filteredData.sensoryInputs.length}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-md bg-green-500/10">
+              <TrendingUp className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{String(tAnalytics('metrics.patterns'))}</p>
+              <p className="text-2xl font-bold text-foreground">{patterns.length}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* AI Metadata Summary */}
@@ -707,20 +641,39 @@ export const AnalyticsDashboard = memo(({
         </Card>
       )}
 
-      {/* Main tabbed interface for displaying detailed analysis results. */}
+      {/* Flattened tabbed interface - single level navigation with enhanced visual hierarchy */}
       <Tabs value={activeTab} onValueChange={setActiveTab as (v: string) => void} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 relative z-10" aria-label={String(tAnalytics('tabs.label'))}>
-          {TABS.map(({ key, labelKey, testId, ariaLabelKey }) => (
-            <TabsTrigger
-              key={key}
-              value={key}
-              aria-label={ariaLabelKey ? String(tAnalytics(ariaLabelKey)) : String(tAnalytics(labelKey))}
-              data-testid={testId}
-            >
-              {String(tAnalytics(labelKey))}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex flex-col gap-4 mb-6">
+          <TabsList className="inline-flex h-auto w-full sm:w-auto gap-2 p-1.5 bg-muted/50 rounded-lg flex-wrap shadow-sm" aria-label={String(tAnalytics('tabs.label'))}>
+            {TABS.map(({ key, labelKey, testId, ariaLabelKey }) => (
+              <TabsTrigger
+                key={key}
+                value={key}
+                aria-label={ariaLabelKey ? String(tAnalytics(ariaLabelKey)) : String(tAnalytics(labelKey))}
+                data-testid={testId}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-md data-[state=active]:font-semibold hover:bg-background/50"
+              >
+                {key === 'overview' && <Eye className="h-4 w-4" />}
+                {key === 'charts' && <BarChart3 className="h-4 w-4" />}
+                {key === 'patterns' && <Brain className="h-4 w-4" />}
+                {key === 'correlations' && <TrendingUp className="h-4 w-4" />}
+                {key === 'alerts' && <AlertTriangle className="h-4 w-4" />}
+                {key === 'monitoring' && <Gauge className="h-4 w-4" />}
+                <span className="hidden sm:inline">{String(tAnalytics(labelKey))}</span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          
+          {/* Context-aware help text */}
+          <div className="text-sm text-muted-foreground hidden lg:block">
+            {activeTab === 'overview' && String(tAnalytics('tabs.help.overview', { defaultValue: 'Quick insights and key metrics' }))}
+            {activeTab === 'charts' && String(tAnalytics('explore.help.charts', { defaultValue: 'Visual trends and patterns' }))}
+            {activeTab === 'patterns' && String(tAnalytics('explore.help.patterns', { defaultValue: 'AI-powered pattern analysis' }))}
+            {activeTab === 'correlations' && String(tAnalytics('explore.help.correlations', { defaultValue: 'Relationship insights' }))}
+            {activeTab === 'alerts' && String(tAnalytics('tabs.help.alerts', { defaultValue: 'Important patterns and notifications' }))}
+            {activeTab === 'monitoring' && String(tAnalytics('tabs.help.monitoring', { defaultValue: 'Calibration, fairness, and learning metrics' }))}
+          </div>
+        </div>
 
         <TabsContent id="analytics-tabpanel" value="overview" className="space-y-6" tabIndex={-1}>
           <div ref={visualizationRef}>
@@ -732,10 +685,26 @@ export const AnalyticsDashboard = memo(({
           </div>
         </TabsContent>
 
-        <TabsContent value="explore" className="space-y-6" aria-busy={isAnalyzing}>
+        <TabsContent value="charts" className="space-y-6">
           <ErrorBoundary showToast={false}>
-            <Suspense fallback={<div className="h-[280px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
-              <LazyExplorePanel studentName={student.name} filteredData={filteredData} useAI={useAI} student={student} />
+            <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
+              <LazyChartsPanel studentName={student.name} filteredData={filteredData} />
+            </Suspense>
+          </ErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="patterns" className="space-y-6">
+          <ErrorBoundary showToast={false}>
+            <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
+              <LazyPatternsPanel filteredData={filteredData} useAI={useAI} student={student} />
+            </Suspense>
+          </ErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="correlations" className="space-y-6">
+          <ErrorBoundary showToast={false}>
+            <Suspense fallback={<div className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
+              <LazyCorrelationsPanel filteredData={filteredData} />
             </Suspense>
           </ErrorBoundary>
         </TabsContent>
@@ -744,6 +713,14 @@ export const AnalyticsDashboard = memo(({
           <ErrorBoundary showToast={false}>
             <Suspense fallback={<div className="h-[200px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
               <LazyAlertsPanel filteredData={filteredData} studentId={student?.id ?? ''} />
+            </Suspense>
+          </ErrorBoundary>
+        </TabsContent>
+
+        <TabsContent value="monitoring" className="space-y-6">
+          <ErrorBoundary showToast={false}>
+            <Suspense fallback={<div className="h-[260px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.loading'))} />}> 
+              <LazyCalibrationDashboard />
             </Suspense>
           </ErrorBoundary>
         </TabsContent>

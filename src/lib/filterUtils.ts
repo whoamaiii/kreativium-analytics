@@ -36,65 +36,160 @@ export interface FilterCriteria {
   realtime: boolean;
 }
 
-// Preset filter configurations
-export const FILTER_PRESETS: Array<{ name: string; description: string; criteria: Partial<FilterCriteria> }> = [
+// Enhanced smart filter presets with better UX
+export const FILTER_PRESETS: Array<{ 
+  name: string; 
+  description: string; 
+  icon: string; 
+  category: 'concern' | 'positive' | 'context' | 'time';
+  criteria: Partial<FilterCriteria> 
+}> = [
   {
-    name: 'High Intensity Events',
-    description: 'Focus on high-intensity emotions and sensory responses',
+    name: '😰 High Anxiety Moments',
+    description: 'Show intense anxious or overwhelmed responses',
+    icon: '😰',
+    category: 'concern',
     criteria: {
       emotions: {
-        types: [],
-        intensityRange: [4, 5], // Max app intensity is 5
+        types: ['anxious', 'overwhelmed', 'frustrated'],
+        intensityRange: [3, 5],
         includeTriggers: [],
         excludeTriggers: []
       },
       sensory: {
         types: [],
         responses: [],
-        intensityRange: [4, 5] // Max app intensity is 5
+        intensityRange: [0, 5]
       }
     }
   },
   {
-    name: 'Challenging Environments',
-    description: 'Filter for difficult environmental conditions',
+    name: '🏫 Classroom Challenges',
+    description: 'Focus on classroom and instruction time',
+    icon: '🏫',
+    category: 'context',
     criteria: {
       environmental: {
-        locations: [],
-        activities: [],
+        locations: ['classroom'],
+        activities: ['instruction', 'testing', 'group-work'],
         conditions: {
-          noiseLevel: [7, 10],
-          temperature: [25, 40],
+          noiseLevel: [0, 10],
+          temperature: [-10, 40],
           lighting: []
         },
-        weather: ['stormy', 'rainy'],
+        weather: [],
         timeOfDay: []
+      },
+      emotions: {
+        types: ['anxious', 'overwhelmed', 'frustrated', 'tired'],
+        intensityRange: [2, 5],
+        includeTriggers: [],
+        excludeTriggers: []
       }
     }
   },
   {
-    name: 'Positive Patterns',
-    description: 'Show only positive emotions and seeking behaviors',
+    name: '⭐ Positive Progress',
+    description: 'Highlight calm, happy, and focused moments',
+    icon: '⭐',
+    category: 'positive',
     criteria: {
       emotions: {
-        types: ['happy', 'calm', 'excited', 'proud', 'focused'],
+        types: ['happy', 'calm', 'focused', 'content'],
         intensityRange: [0, 5],
         includeTriggers: [],
         excludeTriggers: []
       },
       sensory: {
         types: [],
-        responses: ['seeking'],
+        responses: [],
         intensityRange: [0, 5]
       }
     }
   },
   {
-    name: 'Recent Activity',
-    description: 'Last 24 hours of data',
+    name: '🔍 Sensory Seeking',
+    description: 'Active sensory exploration patterns',
+    icon: '🔍',
+    category: 'positive',
+    criteria: {
+      sensory: {
+        types: [],
+        responses: ['seeking'],
+        intensityRange: [0, 5]
+      },
+      emotions: {
+        types: [],
+        intensityRange: [0, 5],
+        includeTriggers: [],
+        excludeTriggers: []
+      }
+    }
+  },
+  {
+    name: '🚫 Sensory Avoidance',
+    description: 'Identify avoidance behaviors',
+    icon: '🚫',
+    category: 'concern',
+    criteria: {
+      sensory: {
+        types: [],
+        responses: ['avoiding'],
+        intensityRange: [0, 5]
+      },
+      emotions: {
+        types: [],
+        intensityRange: [0, 5],
+        includeTriggers: [],
+        excludeTriggers: []
+      }
+    }
+  },
+  {
+    name: '🔄 Transition Times',
+    description: 'Focus on transitions between activities',
+    icon: '🔄',
+    category: 'context',
+    criteria: {
+      environmental: {
+        locations: [],
+        activities: ['transition'],
+        conditions: {
+          noiseLevel: [0, 10],
+          temperature: [-10, 40],
+          lighting: []
+        },
+        weather: [],
+        timeOfDay: []
+      },
+      emotions: {
+        types: [],
+        intensityRange: [0, 5],
+        includeTriggers: ['transition', 'task-change'],
+        excludeTriggers: []
+      }
+    }
+  },
+  {
+    name: '📊 This Week',
+    description: 'Last 7 days of activity',
+    icon: '📊',
+    category: 'time',
     criteria: {
       dateRange: {
-        start: subDays(new Date(), 1),
+        start: subDays(new Date(), 7),
+        end: new Date()
+      }
+    }
+  },
+  {
+    name: '📅 Today',
+    description: 'Only today\'s entries',
+    icon: '📅',
+    category: 'time',
+    criteria: {
+      dateRange: {
+        start: startOfDay(new Date()),
         end: new Date()
       }
     }

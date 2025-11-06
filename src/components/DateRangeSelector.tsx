@@ -1,12 +1,9 @@
 import { useState } from "react";
-import { format, subDays, subWeeks, subMonths, startOfDay, endOfDay } from "date-fns";
-import { Calendar as CalendarIcon, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format, subDays, subMonths, startOfDay, endOfDay } from "date-fns";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
 export interface TimeRange {
   start: Date;
@@ -25,8 +22,8 @@ export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: D
     from: selectedRange.start,
     to: selectedRange.end,
   });
-  const [isOpen, setIsOpen] = useState(false);
 
+  // Canonical presets; keep in sync across the app
   const presetRanges = [
     {
       label: "Last 7 days",
@@ -110,7 +107,6 @@ export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: D
         end: endOfDay(range.to),
         label: `${format(range.from, "MMM d")} - ${format(range.to, "MMM d, yyyy")}`
       });
-      setIsOpen(false);
     }
   };
 
@@ -131,43 +127,11 @@ export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: D
       </Select>
 
       {/* Custom Date Range */}
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            className={cn(
-              "w-[280px] justify-start text-left font-normal bg-input",
-              !dateRange && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {dateRange?.from ? (
-              dateRange.to ? (
-                <>
-                  {format(dateRange.from, "LLL dd, y")} -{" "}
-                  {format(dateRange.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(dateRange.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date range</span>
-            )}
-            <ChevronDown className="ml-auto h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={dateRange?.from}
-            selected={dateRange}
-            onSelect={handleCustomDateSelect}
-            numberOfMonths={2}
-            className={cn("p-3 pointer-events-auto")}
-          />
-        </PopoverContent>
-      </Popover>
+      <DatePickerWithRange
+        value={dateRange}
+        onChange={handleCustomDateSelect}
+        className={cn("w-[280px]")}
+      />
 
       {/* Current Selection Display */}
       <div className="text-sm text-muted-foreground">

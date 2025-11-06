@@ -1,0 +1,8 @@
+Place MediaPipe Face Landmarker model here:
+- face_landmarker.task
+
+Path used by the app: /models/mediapipe/face_landmarker.task
+
+Download from MediaPipe Tasks repository and verify license compliance.
+
+

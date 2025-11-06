@@ -9,32 +9,27 @@
 
 import { describe, it, expect, beforeEach, vi, beforeAll, afterEach } from 'vitest';
 
-// Prevent ML models from initializing IndexedDB in Node tests
+const mlModelsMock = vi.hoisted(() => ({
+  init: vi.fn().mockResolvedValue(undefined),
+  getModelStatus: vi.fn().mockResolvedValue(new Map()),
+  predictEmotions: vi.fn().mockResolvedValue([] as any),
+  predictSensoryResponse: vi.fn().mockResolvedValue(null),
+  deleteModel: vi.fn().mockResolvedValue(undefined),
+  performBaselineClustering: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock('@/lib/mlModels', () => ({
-  mlModels: {
-    init: vi.fn().mockResolvedValue(undefined),
-    getModelStatus: vi.fn().mockResolvedValue(new Map()),
-    predictEmotions: vi.fn().mockResolvedValue([]),
-    predictSensoryResponse: vi.fn().mockResolvedValue(null),
-  }
+  __esModule: true,
+  getMlModels: vi.fn().mockResolvedValue(mlModelsMock),
+  resetMlModelsInstanceForTests: vi.fn(),
 }));
 
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import { createCachedPatternAnalysis } from '@/lib/cachedPatternAnalysis';
 import { enhancedPatternAnalysis } from '@/lib/enhancedPatternAnalysis';
-import { mlModels } from '@/lib/mlModels';
+import { getMlModels } from '@/lib/mlModels';
 import type { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import { startOfDay, addDays, subDays } from 'date-fns';
-
-// Prevent ML models from initializing IndexedDB in Node tests
-vi.mock('@/lib/mlModels', () => ({
-  mlModels: {
-    init: vi.fn().mockResolvedValue(undefined),
-    getModelStatus: vi.fn().mockResolvedValue(new Map()),
-    predictEmotions: vi.fn().mockResolvedValue([]),
-    predictSensoryResponse: vi.fn().mockResolvedValue(null),
-  }
-}));
 
 /**
  * Polyfill minimal localStorage/sessionStorage for Node test environment.
@@ -63,6 +58,23 @@ beforeAll(() => {
       get length() { return store.size; }
     };
   }
+});
+
+type MlModelsMock = typeof mlModelsMock;
+let mlModels: MlModelsMock;
+
+beforeEach(async () => {
+  for (const key of Object.keys(mlModelsMock) as Array<keyof MlModelsMock>) {
+    mlModelsMock[key].mockReset();
+  }
+  mlModelsMock.init.mockResolvedValue(undefined);
+  mlModelsMock.getModelStatus.mockResolvedValue(new Map());
+  mlModelsMock.predictEmotions.mockResolvedValue([]);
+  mlModelsMock.predictSensoryResponse.mockResolvedValue(null);
+  mlModelsMock.deleteModel.mockResolvedValue(undefined);
+  mlModelsMock.performBaselineClustering.mockResolvedValue([]);
+
+  mlModels = await getMlModels() as MlModelsMock;
 });
 
 // -----------------------------------------------------------------------------
@@ -197,9 +209,9 @@ describe('Anomaly detection thresholding and severity buckets', () => {
 describe('Predictive mapping severity changes with highIntensityThreshold', () => {
   it('maps severity using highIntensityThreshold and derived medium cut', async () => {
     // Arrange ML mocks to enable ML path
-    const statusSpy = vi.spyOn(mlModels, 'getModelStatus').mockResolvedValue(new Map([['emotion-prediction', true]]));
+    mlModels.getModelStatus.mockResolvedValue(new Map([['emotion-prediction', true]]));
     const mkPred = (val: number) => [{ timestamp: new Date(), emotions: { happy: val, calm: val, sad: val, anxious: val }, confidence: 0.9 } as any];
-    const predsSpy = vi.spyOn(mlModels, 'predictEmotions').mockImplementation(async () => mkPred(4));
+    mlModels.predictEmotions.mockImplementation(async () => mkPred(4));
 
     // Data for currentAvgIntensity baseline
     const now = new Date();
@@ -224,8 +236,6 @@ describe('Predictive mapping severity changes with highIntensityThreshold', () =
     const mlInsight2 = insights.find(i => i.source === 'ml' && i.type === 'prediction');
     expect(mlInsight2?.severity).toBe('low');
 
-    statusSpy.mockRestore();
-    predsSpy.mockRestore();
   });
 });
 

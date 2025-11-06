@@ -34,9 +34,9 @@ export const FiltersDrawer: React.FC<FiltersDrawerProps> = ({ open, onOpenChange
   const { tAnalytics } = useTranslation();
   const { draft, setDraft, applyFilters, resetFilters, activeCounts, modifiedSinceApply } = useAdvancedFilters(initialFilters);
 
-  // Collapsible state per section
+  // Progressive disclosure - only show essential sections by default
   const [openEmotions, setOpenEmotions] = useState(true);
-  const [openSensory, setOpenSensory] = useState(true);
+  const [openSensory, setOpenSensory] = useState(false);
   const [openEnvironmental, setOpenEnvironmental] = useState(false);
   const [openPatterns, setOpenPatterns] = useState(false);
   const [openAdvanced, setOpenAdvanced] = useState(false);
@@ -71,55 +71,193 @@ export const FiltersDrawer: React.FC<FiltersDrawerProps> = ({ open, onOpenChange
             <SheetDescription>{activeCounts.total > 0 ? labels.activeFilters : labels.noActive}</SheetDescription>
           </SheetHeader>
 
-          {/* Presets */}
-          <div className="px-6 py-3">
-            <div className="mb-2 text-sm font-medium">{String(tAnalytics('filters.advanced.presets'))}</div>
-            <div className="flex flex-wrap gap-2">
-              {FILTER_PRESETS.filter(p => !p.criteria.dateRange).map(preset => (
-                <Button key={preset.name} variant="outline" size="sm" onClick={() => {
-                  const clampRange = (r?: [number, number], max = 5): [number, number] | undefined =>
-                    r ? [Math.max(0, Math.min(r[0], max)), Math.max(0, Math.min(r[1], max))] as [number, number] : undefined;
-                  setDraft(() => ({
-                    ...draft,
-                    emotions: preset.criteria.emotions ? {
-                      ...draft.emotions,
-                      ...preset.criteria.emotions,
-                      intensityRange: clampRange(preset.criteria.emotions.intensityRange, 5) ?? draft.emotions.intensityRange,
-                    } : draft.emotions,
-                    sensory: preset.criteria.sensory ? {
-                      ...draft.sensory,
-                      ...preset.criteria.sensory,
-                      intensityRange: clampRange(preset.criteria.sensory.intensityRange, 5) ?? draft.sensory.intensityRange,
-                    } : draft.sensory,
-                    ...preset.criteria as Partial<FilterCriteria>,
-                    dateRange: { start: null, end: null },
-                  }) as FilterCriteria);
-                }}>
-                  {preset.name}
-                </Button>
-              ))}
+          {/* Smart Filter Presets Section */}
+          <div className="px-6 py-4 bg-gradient-to-br from-muted/30 to-muted/10">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <span className="text-lg">⚡</span>
+                {String(tAnalytics('filters.quickFilters', { defaultValue: 'Smart Filters' }))}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-1">{String(tAnalytics('filters.quickFiltersDesc', { defaultValue: 'One-click filter combinations for common patterns' }))}</p>
+            </div>
+            
+            {/* Concern Filters */}
+            <div className="mb-4">
+              <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Focus Areas</div>
+              <div className="grid grid-cols-2 gap-2">
+                {FILTER_PRESETS.filter(p => p.category === 'concern').map(preset => (
+                  <Button 
+                    key={preset.name} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-auto p-3 text-left justify-start hover:bg-destructive/10 hover:border-destructive/50 transition-colors"
+                    onClick={() => {
+                      const clampRange = (r?: [number, number], max = 5): [number, number] | undefined =>
+                        r ? [Math.max(0, Math.min(r[0], max)), Math.max(0, Math.min(r[1], max))] as [number, number] : undefined;
+                      setDraft(() => ({
+                        ...draft,
+                        emotions: preset.criteria.emotions ? {
+                          ...draft.emotions,
+                          ...preset.criteria.emotions,
+                          intensityRange: clampRange(preset.criteria.emotions.intensityRange, 5) ?? draft.emotions.intensityRange,
+                        } : draft.emotions,
+                        sensory: preset.criteria.sensory ? {
+                          ...draft.sensory,
+                          ...preset.criteria.sensory,
+                          intensityRange: clampRange(preset.criteria.sensory.intensityRange, 5) ?? draft.sensory.intensityRange,
+                        } : draft.sensory,
+                        environmental: preset.criteria.environmental ? {
+                          ...draft.environmental,
+                          ...preset.criteria.environmental,
+                        } : draft.environmental,
+                        dateRange: preset.criteria.dateRange ?? { start: null, end: null },
+                      }) as FilterCriteria);
+                    }}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-xs">{preset.name}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{preset.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Positive Filters */}
+            <div className="mb-4">
+              <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Positive Patterns</div>
+              <div className="grid grid-cols-2 gap-2">
+                {FILTER_PRESETS.filter(p => p.category === 'positive').map(preset => (
+                  <Button 
+                    key={preset.name} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-auto p-3 text-left justify-start hover:bg-green-500/10 hover:border-green-500/50 transition-colors"
+                    onClick={() => {
+                      const clampRange = (r?: [number, number], max = 5): [number, number] | undefined =>
+                        r ? [Math.max(0, Math.min(r[0], max)), Math.max(0, Math.min(r[1], max))] as [number, number] : undefined;
+                      setDraft(() => ({
+                        ...draft,
+                        emotions: preset.criteria.emotions ? {
+                          ...draft.emotions,
+                          ...preset.criteria.emotions,
+                          intensityRange: clampRange(preset.criteria.emotions.intensityRange, 5) ?? draft.emotions.intensityRange,
+                        } : draft.emotions,
+                        sensory: preset.criteria.sensory ? {
+                          ...draft.sensory,
+                          ...preset.criteria.sensory,
+                          intensityRange: clampRange(preset.criteria.sensory.intensityRange, 5) ?? draft.sensory.intensityRange,
+                        } : draft.sensory,
+                        environmental: preset.criteria.environmental ? {
+                          ...draft.environmental,
+                          ...preset.criteria.environmental,
+                        } : draft.environmental,
+                        dateRange: preset.criteria.dateRange ?? { start: null, end: null },
+                      }) as FilterCriteria);
+                    }}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-xs">{preset.name}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{preset.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Context Filters */}
+            <div className="mb-4">
+              <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Context</div>
+              <div className="grid grid-cols-2 gap-2">
+                {FILTER_PRESETS.filter(p => p.category === 'context').map(preset => (
+                  <Button 
+                    key={preset.name} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-auto p-3 text-left justify-start hover:bg-blue-500/10 hover:border-blue-500/50 transition-colors"
+                    onClick={() => {
+                      const clampRange = (r?: [number, number], max = 5): [number, number] | undefined =>
+                        r ? [Math.max(0, Math.min(r[0], max)), Math.max(0, Math.min(r[1], max))] as [number, number] : undefined;
+                      setDraft(() => ({
+                        ...draft,
+                        emotions: preset.criteria.emotions ? {
+                          ...draft.emotions,
+                          ...preset.criteria.emotions,
+                          intensityRange: clampRange(preset.criteria.emotions.intensityRange, 5) ?? draft.emotions.intensityRange,
+                        } : draft.emotions,
+                        sensory: preset.criteria.sensory ? {
+                          ...draft.sensory,
+                          ...preset.criteria.sensory,
+                          intensityRange: clampRange(preset.criteria.sensory.intensityRange, 5) ?? draft.sensory.intensityRange,
+                        } : draft.sensory,
+                        environmental: preset.criteria.environmental ? {
+                          ...draft.environmental,
+                          ...preset.criteria.environmental,
+                        } : draft.environmental,
+                        dateRange: preset.criteria.dateRange ?? { start: null, end: null },
+                      }) as FilterCriteria);
+                    }}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-xs">{preset.name}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{preset.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </div>
+            
+            {/* Time Filters */}
+            <div>
+              <div className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">Time Range</div>
+              <div className="flex gap-2">
+                {FILTER_PRESETS.filter(p => p.category === 'time').map(preset => (
+                  <Button 
+                    key={preset.name} 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 h-auto p-3 hover:bg-primary/10 hover:border-primary/50 transition-colors"
+                    onClick={() => {
+                      setDraft(() => ({
+                        ...draft,
+                        dateRange: preset.criteria.dateRange ?? { start: null, end: null },
+                      }) as FilterCriteria);
+                    }}
+                  >
+                    <div className="text-center w-full">
+                      <div className="font-medium text-xs">{preset.name}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">{preset.description}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
 
           <Separator />
 
-          {/* Emotions */}
+          {/* Emotions Section */}
           <section className="px-6 py-4" aria-label={String(tAnalytics('aria.filters.section', { section: tAnalytics('filters.categories.emotions') }))}>
             <Collapsible open={openEmotions} onOpenChange={setOpenEmotions}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <button
                   type="button"
                   aria-label={String(tAnalytics('aria.filters.section', { section: tAnalytics('filters.categories.emotions') }))}
-                  className="text-sm font-medium"
+                  className="flex items-center gap-2 text-sm font-semibold text-foreground hover:text-primary transition-colors"
                   onClick={() => setOpenEmotions(v => !v)}
                 >
+                  <div className={`w-2 h-2 rounded-full ${openEmotions ? 'bg-primary' : 'bg-muted-foreground'}`} />
                   {String(tAnalytics('filters.categories.emotions'))}
+                  <span className="text-xs text-muted-foreground ml-1">
+                    {openEmotions ? '−' : '+'}
+                  </span>
                 </button>
-                <div className="flex items-center">
+                <div className="flex items-center gap-2">
                   {sectionBadge(activeCounts.emotions)}
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="h-6 px-2 text-xs"
                     aria-label={String(tAnalytics('filters.clear'))}
                     onClick={() => setDraft(prev => ({
                       ...prev,

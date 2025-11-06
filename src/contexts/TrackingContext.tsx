@@ -4,7 +4,7 @@ import { dataStorage } from '@/lib/dataStorage';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/saveTrackingEntry';
 import { logger } from '@/lib/logger';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { validateTrackingEntry } from '@/lib/tracking/validation';
 import { assessEntryQuality } from '@/lib/tracking/dataQuality';
 

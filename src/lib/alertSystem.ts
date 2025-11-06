@@ -2,7 +2,17 @@ import { TriggerAlert } from './patternAnalysis';
 import { EmotionEntry, SensoryEntry, TrackingEntry, Student } from '@/types/student';
 import { patternAnalysis } from './patternAnalysis';
 import { logger } from './logger';
-import { storageUtils } from './storageUtils';
+import { safeGet, safeSet } from '@/lib/storage';
+
+function persistOrThrow(key: string, value: string): void {
+  safeSet(key, value);
+  if (typeof window !== 'undefined') {
+    const stored = safeGet(key);
+    if (stored !== value) {
+      throw new Error('Failed to persist alert data');
+    }
+  }
+}
 
 export interface AlertSettings {
   enableHighIntensityAlerts: boolean;
@@ -154,7 +164,7 @@ class AlertSystemManager {
       }
       
       // Use safe storage to handle quota issues
-      storageUtils.safeSetItem(this.STORAGE_KEY, JSON.stringify(historyToSave));
+      persistOrThrow(this.STORAGE_KEY, JSON.stringify(historyToSave));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Error saving alerts:', err);
@@ -171,7 +181,7 @@ class AlertSystemManager {
           viewed: false,
           resolved: false
         }));
-        storageUtils.safeSetItem(this.STORAGE_KEY, JSON.stringify([...minimalHistory, ...newHistoryEntries]));
+        persistOrThrow(this.STORAGE_KEY, JSON.stringify([...minimalHistory, ...newHistoryEntries]));
        } catch (retryError) {
         const err2 = retryError instanceof Error ? retryError : new Error(String(retryError));
         logger.error('Failed to save alerts even after cleanup:', err2);
@@ -187,7 +197,7 @@ class AlertSystemManager {
    */
   getAllAlerts(): AlertHistoryEntry[] {
     try {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
+      const stored = safeGet(this.STORAGE_KEY);
       if (!stored) return [];
       
       const alerts = JSON.parse(stored) as StoredAlertHistoryEntry[];
@@ -248,7 +258,7 @@ class AlertSystemManager {
           ? { ...entry, viewed: true }
           : entry
       );
-      storageUtils.safeSetItem(this.STORAGE_KEY, JSON.stringify(updatedAlerts));
+      persistOrThrow(this.STORAGE_KEY, JSON.stringify(updatedAlerts));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Error marking alert as viewed:', err);
@@ -276,7 +286,7 @@ class AlertSystemManager {
             }
           : entry
       );
-      storageUtils.safeSetItem(this.STORAGE_KEY, JSON.stringify(updatedAlerts));
+      persistOrThrow(this.STORAGE_KEY, JSON.stringify(updatedAlerts));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Error resolving alert:', err);
@@ -292,7 +302,7 @@ class AlertSystemManager {
     try {
       const alerts = this.getAllAlerts();
       const filteredAlerts = alerts.filter(entry => entry.alert.id !== alertId);
-      storageUtils.safeSetItem(this.STORAGE_KEY, JSON.stringify(filteredAlerts));
+      persistOrThrow(this.STORAGE_KEY, JSON.stringify(filteredAlerts));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Error deleting alert:', err);
@@ -306,7 +316,7 @@ class AlertSystemManager {
    */
   getSettings(): AlertSettings {
     try {
-      const stored = localStorage.getItem(this.SETTINGS_KEY);
+      const stored = safeGet(this.SETTINGS_KEY);
       if (!stored) return this.defaultSettings;
       
       return { ...this.defaultSettings, ...JSON.parse(stored) };
@@ -326,7 +336,7 @@ class AlertSystemManager {
     try {
       const currentSettings = this.getSettings();
       const updatedSettings = { ...currentSettings, ...newSettings };
-      storageUtils.safeSetItem(this.SETTINGS_KEY, JSON.stringify(updatedSettings));
+      persistOrThrow(this.SETTINGS_KEY, JSON.stringify(updatedSettings));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       logger.error('Error updating alert settings:', err);
@@ -386,7 +396,7 @@ class AlertSystemManager {
         entry.alert.timestamp >= cutoffDate || !entry.resolved
       );
 
-      storageUtils.safeSetItem(this.STORAGE_KEY, JSON.stringify(filteredAlerts));
+      persistOrThrow(this.STORAGE_KEY, JSON.stringify(filteredAlerts));
       logger.info(`Cleaned up ${alerts.length - filteredAlerts.length} old alerts`);
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));

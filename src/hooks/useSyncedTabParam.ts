@@ -5,7 +5,7 @@ import type { ExplorePreset } from '@/types/analytics';
 import { logger } from '@/lib/logger';
 
 
-const VALID_TABS: ReadonlyArray<TabKey> = ['overview', 'explore', 'alerts'] as const;
+const VALID_TABS: ReadonlyArray<TabKey> = ['overview', 'explore', 'alerts', 'monitoring'] as const;
 
 const LEGACY_TAB_MAP: Record<string, TabKey> = {
   // Previously separate tabs now consolidated under Explore

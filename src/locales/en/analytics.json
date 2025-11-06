@@ -171,12 +171,30 @@
     "selectQuestion": "Select a question to explore",
     "navigatingTo": "Navigating to {{preset}} analysis...",
     "questions": {
-      "peakTiming": { "question": "When do peaks happen?", "description": "Find high-intensity moments and their timing patterns" },
-      "activityLoad": { "question": "Which activities raise load?", "description": "Discover which activities correlate with increased stress" },
-      "difficultTriggers": { "question": "What triggers difficult moments?", "description": "Identify patterns in challenging emotional experiences" },
-      "sensoryChanges": { "question": "How do sensory needs change?", "description": "Track sensory preferences and responses over time" },
-      "timePatterns": { "question": "What patterns emerge over time?", "description": "Discover long-term trends and recurring patterns" },
-      "bestEnvironments": { "question": "Which environments work best?", "description": "Find environmental conditions that support success" }
+      "peakTiming": {
+        "question": "When do peaks happen?",
+        "description": "Find high-intensity moments and their timing patterns"
+      },
+      "activityLoad": {
+        "question": "Which activities raise load?",
+        "description": "Discover which activities correlate with increased stress"
+      },
+      "difficultTriggers": {
+        "question": "What triggers difficult moments?",
+        "description": "Identify patterns in challenging emotional experiences"
+      },
+      "sensoryChanges": {
+        "question": "How do sensory needs change?",
+        "description": "Track sensory preferences and responses over time"
+      },
+      "timePatterns": {
+        "question": "What patterns emerge over time?",
+        "description": "Discover long-term trends and recurring patterns"
+      },
+      "bestEnvironments": {
+        "question": "Which environments work best?",
+        "description": "Find environmental conditions that support success"
+      }
     },
     "categories": {
       "timing": "Timing Analysis",
@@ -343,9 +361,18 @@
     "sensitivity": {
       "title": "Alert Sensitivity",
       "description": "Control how sensitive the system is to potential issues",
-      "low": { "title": "Low Sensitivity", "desc": "Only alert for significant patterns with high confidence" },
-      "medium": { "title": "Medium Sensitivity", "desc": "Balanced approach to pattern detection and alerts" },
-      "high": { "title": "High Sensitivity", "desc": "Alert for subtle patterns and potential concerns early" },
+      "low": {
+        "title": "Low Sensitivity",
+        "desc": "Only alert for significant patterns with high confidence"
+      },
+      "medium": {
+        "title": "Medium Sensitivity",
+        "desc": "Balanced approach to pattern detection and alerts"
+      },
+      "high": {
+        "title": "High Sensitivity",
+        "desc": "Alert for subtle patterns and potential concerns early"
+      },
       "currentMultipliers": "Current Multipliers",
       "emotion": "Emotion",
       "frequency": "Frequency",
@@ -434,7 +461,6 @@
       "invalidateOnChange": "Clear cached results when settings change"
     }
   },
-
   "dev": {
     "seed": {
       "button": "Seed Demo Data",
@@ -517,7 +543,11 @@
     "pinAlert": "Pin Alert",
     "unpinAlert": "Unpin Alert",
     "noPinnedAlerts": "No pinned alerts",
-    "severityGroups": { "high": "High Priority", "medium": "Medium Priority", "low": "Low Priority" },
+    "severityGroups": {
+      "high": "High Priority",
+      "medium": "Medium Priority",
+      "low": "Low Priority"
+    },
     "alertCounts": "({count} alerts)",
     "totalUnresolved": "Total Unresolved: {count}",
     "actions": {
@@ -534,7 +564,6 @@
       "confirmClearPinnedDescription": "This will remove all pinned alerts from the sidebar. You can pin them again later."
     }
   },
-
   "configTest": {
     "title": "Analytics Configuration Tests",
     "description": "Verify that configuration changes and cache invalidation work correctly",
@@ -550,7 +579,6 @@
     "resetDefaults": "Reset to Defaults",
     "clearCache": "Clear Cache"
   },
-
   "ai": {
     "meta": {
       "provider": "Provider",
@@ -566,7 +594,6 @@
       "heuristic": "Heuristic"
     }
   },
-
   "insights": {
     "title": "Insights",
     "patterns": "Patterns Detected",
@@ -601,7 +628,7 @@
   },
   "confidence": {
     "low": "Low confidence",
-    "medium": "Medium confidence", 
+    "medium": "Medium confidence",
     "high": "High confidence",
     "explanations": {
       "insufficientData": "Insufficient data points ({{count}} of {{minimum}} needed)",
@@ -730,11 +757,18 @@
     "correlationChanges": "Correlation changes",
     "newInterventions": "New interventions",
     "removedInterventions": "Removed interventions",
-    "keyFindings": "Key findings",
+    "keyFindings": {
+      "title": "Key findings",
+      "empty": "No key findings reported."
+    },
     "analysisTimestamp": "Analysis timestamp",
     "timestampDifference": "Difference in analysis timestamp",
     "none": "None",
-    "patterns": "Patterns",
+    "patterns": {
+      "title": "Patterns",
+      "empty": "No patterns identified.",
+      "fallback": "Pattern"
+    },
     "correlations": "Correlations",
     "insights": "Insights",
     "anomalies": "Anomalies",
@@ -768,7 +802,70 @@
     "toolbarShare": "Share",
     "toolbarShareTooltip": "Share the AI report via system share",
     "toolbarShareAria": "Share AI report",
-    "shareAnnounce": "Report shared or copied"
+    "shareAnnounce": "Report shared or copied",
+    "aiHeader": {
+      "title": "Kreativium AI",
+      "subtitle": "Local LLM for patterns, correlations, and supports",
+      "modelLabel": "Model:",
+      "localBadge": "Local model",
+      "remoteBadge": "Remote"
+    },
+    "aiMetadataTitle": "AI metadata • {{model}}",
+    "aiMetadataModelLabel": "Model: {{model}}",
+    "aiMetadataLatencyLabel": "Latency: {{ms}} ms",
+    "aiMetadataTokensLabel": "Tokens: prompt {{prompt}} • completion {{completion}} • total {{total}}",
+    "aiMetadataCacheLabel": "Cache: read {{read}} • write {{write}}",
+    "aiMetadataJsonValidity": "JSON validity (global): {{percentage}}%",
+    "metadataCaveatsLabel": "Caveats:",
+    "form": {
+      "studentLabel": "Student",
+      "studentPlaceholder": "Select student",
+      "presetLabel": "Time range",
+      "presetPlaceholder": "Select range",
+      "presets": {
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "90d": "Last 90 days",
+        "all": "All history"
+      },
+      "iepLabel": "IEP-safe mode",
+      "iepTooltip1": "IEP-safe mode focuses recommendations on educational supports",
+      "iepTooltip2": "and avoids medical or clinical guidance",
+      "studentSelectAria": "Select student",
+      "presetSelectAria": "Select time range"
+    },
+    "toggle": {
+      "on": "On",
+      "off": "Off"
+    },
+    "actions": {
+      "testAi": "Test AI",
+      "runAnalysis": "Run analysis",
+      "refreshAnalysis": "Refresh (bypass cache)"
+    },
+    "compare": {
+      "loading": "Comparing..."
+    },
+    "dataQuality": {
+      "cardTitle": "Data quality",
+      "dataPoints": "Data points",
+      "lastRecorded": "Last recorded",
+      "daysSince": "Days since",
+      "completeness": "Completeness",
+      "timeOfDayBalance": "Balance (time of day)",
+      "morning": "morning",
+      "afternoon": "afternoon",
+      "evening": "evening",
+      "score": "score",
+      "noData": "No data found for the selected range."
+    },
+    "interventions": {
+      "title": "Interventions and recommendations",
+      "actionsLabel": "Sources:",
+      "empty": "No recommendations reported.",
+      "openSourceAria": "Open source: {{title}}",
+      "yearLabel": "Year:"
+    }
   },
   "patternDetection": {
     "guidance": {

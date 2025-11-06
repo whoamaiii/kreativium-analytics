@@ -346,6 +346,53 @@ export function pValueForCorrelation(r: number, n: number): number {
 }
 
 /**
+ * Fisher's exact test (two-tailed) for a 2x2 contingency table.
+ * Returns the exact two-tailed p-value using the hypergeometric distribution.
+ * The two-tailed p-value is computed by summing probabilities of all tables
+ * with probability less than or equal to the observed table under fixed margins.
+ */
+export function fisherExactTwoTailed(a: number, b: number, c: number, d: number): number {
+  const A = Math.max(0, Math.floor(a));
+  const B = Math.max(0, Math.floor(b));
+  const C = Math.max(0, Math.floor(c));
+  const D = Math.max(0, Math.floor(d));
+  const row1 = A + B;
+  const row2 = C + D;
+  const col1 = A + C;
+  const col2 = B + D;
+  const N = row1 + row2;
+  if (N === 0) return 1;
+
+  // Hypergeometric probability mass function for given x in cell (0,0)
+  function logChoose(n: number, k: number): number {
+    if (k < 0 || k > n) return -Infinity;
+    return logGamma(n + 1) - logGamma(k + 1) - logGamma(n - k + 1);
+  }
+  function logHypergeom(x: number): number {
+    return (
+      logChoose(col1, x) +
+      logChoose(col2, row1 - x) -
+      logChoose(N, row1)
+    );
+  }
+
+  const minX = Math.max(0, row1 - col2);
+  const maxX = Math.min(row1, col1);
+  const observed = A;
+  const logPObs = logHypergeom(observed);
+
+  // Sum probabilities of tables with probability <= observed (two-sided definition)
+  let sum = 0;
+  for (let x = minX; x <= maxX; x++) {
+    const lp = logHypergeom(x);
+    if (lp <= logPObs + 1e-12) {
+      sum += Math.exp(lp);
+    }
+  }
+  return clamp(sum, 0, 1);
+}
+
+/**
  * Robust linear regression using Huber loss via Iteratively Reweighted Least Squares (IRLS).
  * Model: y = intercept + slope * x
  *

@@ -7,6 +7,7 @@ import './index.css'
 import { i18n, initI18n } from './i18n'
 import { I18nextProvider } from 'react-i18next'
 import { validateStartupConfiguration } from '@/lib/startupValidation'
+import { WeeklyAlertMetrics, scheduleWeeklyTask } from '@/lib/monitoring/weeklyAlertMetrics'
 
 // Seed a stable runtime env snapshot for all modules/routes
 setRuntimeEnvFromVite();
@@ -50,6 +51,64 @@ try {
   });
 } catch (e) {
   logger.warn('[main] Failed to initiate startup validation', e as Error);
+}
+
+if (typeof window !== 'undefined') {
+  const win = window as typeof window & {
+    __alertsWeeklyMetricsCleanup?: () => void;
+    __alertsWeeklyMetricsBootstrapped?: boolean;
+  };
+
+  if (win.__alertsWeeklyMetricsCleanup) {
+    try { win.__alertsWeeklyMetricsCleanup(); } catch {}
+    win.__alertsWeeklyMetricsCleanup = undefined;
+    win.__alertsWeeklyMetricsBootstrapped = false;
+  }
+
+  if (!win.__alertsWeeklyMetricsBootstrapped) {
+    const metrics = new WeeklyAlertMetrics();
+    try {
+      metrics.runWeeklyEvaluation();
+    } catch (error) {
+      logger.warn('[main] Failed to run initial weekly alert evaluation', error as Error);
+    }
+
+    let stopTask: (() => void) | undefined;
+    try {
+      stopTask = scheduleWeeklyTask(() => {
+        try { metrics.runWeeklyEvaluation(); } catch (error) { logger.warn('[main] Scheduled weekly evaluation failed', error as Error); }
+      });
+    } catch (error) {
+      logger.warn('[main] Failed to schedule weekly alert evaluation', error as Error);
+    }
+
+    const beforeUnloadHandler = () => {
+      try { stopTask?.(); } catch {}
+    };
+
+    window.addEventListener('beforeunload', beforeUnloadHandler);
+
+    win.__alertsWeeklyMetricsCleanup = () => {
+      try { stopTask?.(); } catch {}
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+      win.__alertsWeeklyMetricsBootstrapped = false;
+    };
+    win.__alertsWeeklyMetricsBootstrapped = true;
+
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => {
+        try { win.__alertsWeeklyMetricsCleanup?.(); } catch {}
+        win.__alertsWeeklyMetricsCleanup = undefined;
+        win.__alertsWeeklyMetricsBootstrapped = false;
+      });
+    }
+    // Register Service Worker for offline caching of models/static assets
+    try {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      }
+    } catch {}
+  }
 }
 
 createRoot(document.getElementById("root")!).render(

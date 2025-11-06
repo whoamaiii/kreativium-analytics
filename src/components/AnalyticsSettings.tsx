@@ -22,9 +22,9 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { analyticsConfig, AnalyticsConfiguration, PRESET_CONFIGS } from '@/lib/analyticsConfig';
-import { mlModels, ModelMetadata, ModelType } from '@/lib/mlModels';
+import { getMlModels, ModelMetadata, ModelType } from '@/lib/mlModels';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -68,12 +68,16 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
   const loadModelStatus = async () => {
     setIsLoadingModels(true);
     try {
-      await mlModels.init();
-      const status = await mlModels.getModelStatus();
+      const ml = await getMlModels();
+      await ml.init();
+      const status = await ml.getModelStatus();
       setModelStatus(status);
     } catch (error) {
       logger.error('Failed to load ML model status', { error });
-      toast.error("Failed to load ML models: Could not retrieve model status. Some features may be unavailable.");
+      toast({
+        title: "Failed to load ML models: Could not retrieve model status. Some features may be unavailable.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoadingModels(false);
     }
@@ -104,20 +108,29 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
     setSelectedPreset(preset);
     analyticsConfig.setPreset(preset);
     setHasUnsavedChanges(false);
-    toast.success(`Applied ${PRESET_CONFIGS[preset].name} configuration`);
+    toast({
+      title: `Applied ${PRESET_CONFIGS[preset].name} configuration`,
+      description: `Applied ${PRESET_CONFIGS[preset].name} configuration`,
+    });
   };
 
   const handleSave = () => {
     analyticsConfig.updateConfig(config);
     setHasUnsavedChanges(false);
-    toast.success("Analytics configuration has been updated");
+    toast({
+      title: "Analytics configuration has been updated",
+      description: "Analytics configuration has been updated",
+    });
   };
 
   const handleReset = () => {
     analyticsConfig.resetToDefaults();
     setSelectedPreset('balanced');
     setHasUnsavedChanges(false);
-    toast.success("Settings have been reset to defaults");
+    toast({
+      title: "Settings have been reset to defaults",
+      description: "Settings have been reset to defaults",
+    });
   };
 
   const handleExport = () => {
@@ -132,7 +145,10 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    toast.success("Configuration saved to analytics-config.json");
+    toast({
+      title: "Configuration saved to analytics-config.json",
+      description: "Configuration saved to analytics-config.json",
+    });
   };
 
   const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
@@ -143,13 +159,21 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
     if (!file) return;
 
     if (file.size > MAX_IMPORT_BYTES) {
-      toast.error('Configuration file exceeds the 5 MB limit');
+      toast({
+        title: 'Configuration file exceeds the 5 MB limit',
+        description: 'Configuration file exceeds the 5 MB limit',
+        variant: 'destructive',
+      });
       event.target.value = '';
       return;
     }
 
     if (file.type && !ALLOWED_IMPORT_TYPES.has(file.type)) {
-      toast.error('Only JSON configuration files are supported');
+      toast({
+        title: 'Only JSON configuration files are supported',
+        description: 'Only JSON configuration files are supported',
+        variant: 'destructive',
+      });
       event.target.value = '';
       return;
     }
@@ -160,12 +184,23 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
         const content = e.target?.result as string;
         if (analyticsConfig.importConfig(content)) {
           setHasUnsavedChanges(false);
-          toast.success("Successfully imported configuration");
+          toast({
+            title: "Successfully imported configuration",
+            description: "Successfully imported configuration",
+          });
         } else {
-          toast.error("Invalid configuration file");
+          toast({
+            title: "Invalid configuration file",
+            description: "Invalid configuration file",
+            variant: 'destructive',
+          });
         }
       } catch (_error) {
-        toast.error("Failed to read configuration file");
+        toast({
+          title: "Failed to read configuration file",
+          description: "Failed to read configuration file",
+          variant: 'destructive',
+        });
       }
       event.target.value = '';
     };
@@ -182,7 +217,10 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
       if (cancelled) return;
       setIsTraining(null);
       await loadModelStatus();
-      toast.success(`${trainingRequested} model has been updated`);
+      toast({
+        title: `${trainingRequested} model has been updated`,
+        description: `${trainingRequested} model has been updated`,
+      });
       setTrainingRequested(null);
     }, 3000);
     return () => {
@@ -193,7 +231,10 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
 
   const handleModelRetrain = async (modelType: ModelType) => {
     setIsTraining(modelType);
-    toast(`Training ${modelType} model in background...`);
+    toast({
+      title: `Training ${modelType} model in background...`,
+      description: `Training ${modelType} model in background...`,
+    });
     // Defer the actual completion via effect-managed timeout
     setTrainingRequested(modelType);
   };
@@ -201,12 +242,20 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
   const handleDeleteModel = async (modelType: ModelType) => {
     setIsDeletingModel(modelType);
     try {
-      await mlModels.deleteModel(modelType);
+      const ml = await getMlModels();
+      await ml.deleteModel(modelType);
       await loadModelStatus();
       
-      toast.success(`${modelType} model has been removed`);
+      toast({
+        title: `${modelType} model has been removed`,
+        description: `${modelType} model has been removed`,
+      });
     } catch (_error) {
-      toast.error("Failed to delete model");
+      toast({
+        title: "Failed to delete model",
+        description: "Failed to delete model",
+        variant: 'destructive',
+      });
     } finally {
       setIsDeletingModel(null);
     }

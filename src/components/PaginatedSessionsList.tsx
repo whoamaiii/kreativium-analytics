@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TrackingEntry } from '@/types/student';
 import { useDataPagination } from '@/hooks/useDataPagination';
 import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
-import { PageButton } from '@/components/ui/PageButton';
+import { PageButton } from '@/components/ui/page-button';
 
 interface PaginatedSessionsListProps {
   sessions: TrackingEntry[];

@@ -112,13 +112,13 @@ const getWorkerInstances = (): Array<{ postMessage: Mock }> => {
 
 // Make worker import controllable per test via globals
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __WORKER_THROW_CONSTRUCTOR__: boolean | undefined;
-  // eslint-disable-next-line no-var
+   
   var __WORKER_BEHAVIOR__: 'error' | 'timeout' | 'readySoon' | undefined;
-  // eslint-disable-next-line no-var
+   
   var __WORKER_INSTANCES__: any[] | undefined;
-  // eslint-disable-next-line no-var
+   
   var __WORKER_CTOR_CALLS__: number | undefined;
 }
 

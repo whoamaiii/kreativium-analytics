@@ -19,7 +19,9 @@
     "cancelSession": "Avbryt økt",
     "validationError": "Vennligst registrer minst en følelse eller sensorisk inngang før du lagrer økten.",
     "sessionSaved": "Økt lagret vellykket!",
-    "saveError": "Kunne ikke lagre økt. Prøv igjen."
+    "saveError": "Kunne ikke lagre økt. Prøv igjen.",
+    "summaryTitle": "Gjennomgang av sesjon",
+    "minutesSuffix": "min"
   },
   "emotions": {
     "title": "Følelser",
@@ -91,9 +93,17 @@
   "environmental": {
     "title": "Miljødata",
     "noiseLevel": "Støynivå",
-    "lighting": "Belysning",
+    "lighting": {
+      "dim": "Dempet",
+      "normal": "Normal",
+      "bright": "Lys"
+    },
     "crowdLevel": "Folkemengde",
-    "temperature": "Temperatur",
+    "temperature": {
+      "cool": "Kjølig",
+      "comfortable": "Behagelig",
+      "warm": "Varm"
+    },
     "notes": "Miljønotater",
     "notesPlaceholder": "Beskriv miljøfaktorer som kan påvirke eleven...",
     "levels": {
@@ -101,20 +111,10 @@
       "moderate": "Moderat",
       "high": "Høy"
     },
-    "lighting": {
-      "dim": "Dempet",
-      "normal": "Normal",
-      "bright": "Lys"
-    },
-    "temperature": {
-      "cool": "Kjølig",
-      "comfortable": "Behagelig",
-      "warm": "Varm"
-    },
     "weather": "Vær",
     "weatherOptions": {
       "sunny": "Solrikt",
-      "cloudy": "Overskyet", 
+      "cloudy": "Overskyet",
       "rainy": "Regnværd",
       "snowy": "Snøværd"
     },

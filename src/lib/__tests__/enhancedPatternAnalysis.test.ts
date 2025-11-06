@@ -7,14 +7,20 @@
 
 import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest';
 
+const mlModelsMock = vi.hoisted(() => ({
+  init: vi.fn().mockResolvedValue(undefined),
+  getModelStatus: vi.fn().mockResolvedValue(new Map()),
+  predictEmotions: vi.fn().mockResolvedValue([]),
+  predictSensoryResponse: vi.fn().mockResolvedValue(null),
+  deleteModel: vi.fn().mockResolvedValue(undefined),
+  performBaselineClustering: vi.fn().mockResolvedValue([]),
+}));
+
 // Mock ML models early to avoid IndexedDB and async init in Node
 vi.mock('@/lib/mlModels', () => ({
-  mlModels: {
-    init: vi.fn().mockResolvedValue(undefined),
-    getModelStatus: vi.fn().mockResolvedValue(new Map()),
-    predictEmotions: vi.fn().mockResolvedValue([]),
-    predictSensoryResponse: vi.fn().mockResolvedValue(null),
-  }
+  __esModule: true,
+  getMlModels: vi.fn().mockResolvedValue(mlModelsMock),
+  resetMlModelsInstanceForTests: vi.fn(),
 }));
 
 import { enhancedPatternAnalysis } from '@/lib/enhancedPatternAnalysis';

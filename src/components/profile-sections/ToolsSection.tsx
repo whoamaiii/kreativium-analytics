@@ -93,20 +93,42 @@ export function ToolsSection({
         </p>
       </div>
 
-      {/* Tool Navigation */}
-      <div className="flex flex-wrap gap-2">
+      {/* Enhanced Tool Navigation */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {toolSections.map((section) => (
           <button
             key={section.id}
             onClick={() => onToolSectionChange(section.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors ${
+            className={`group flex flex-col items-start gap-2 p-4 rounded-xl border-2 transition-all duration-200 hover:scale-[1.02] ${
               activeToolSection === section.id
-                ? 'bg-accent text-accent-foreground border-accent'
-                : 'bg-background hover:bg-accent/50 border-border'
+                ? 'bg-primary text-primary-foreground border-primary shadow-lg ring-2 ring-primary/20'
+                : 'bg-card hover:bg-accent/50 border-border hover:border-accent'
             }`}
           >
-            <section.icon className="h-4 w-4" />
-            {String(section.title)}
+            <div className="flex items-center gap-3 w-full">
+              <div className={`p-2 rounded-lg ${
+                activeToolSection === section.id 
+                  ? 'bg-primary-foreground/20' 
+                  : 'bg-muted group-hover:bg-accent'
+              }`}>
+                <section.icon className="h-5 w-5" />
+              </div>
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-medium text-sm">{String(section.title)}</div>
+                <div className={`text-xs mt-0.5 ${
+                  activeToolSection === section.id 
+                    ? 'text-primary-foreground/70' 
+                    : 'text-muted-foreground'
+                }`}>
+                  {section.id === 'search' && 'Finn spesifikke data og mønstre'}
+                  {section.id === 'templates' && 'Rask registrering med forhåndsdefinerte maler'}
+                  {section.id === 'compare' && 'Sammenlign data på tvers av perioder'}
+                </div>
+              </div>
+              {activeToolSection === section.id && (
+                <div className="w-2 h-2 rounded-full bg-current flex-shrink-0" />
+              )}
+            </div>
           </button>
         ))}
       </div>

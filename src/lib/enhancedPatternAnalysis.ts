@@ -22,7 +22,7 @@
 import { EmotionEntry, SensoryEntry, TrackingEntry, Goal } from "@/types/student";
 import { isWithinInterval, subDays, format, differenceInDays } from "date-fns";
 import { analyticsConfig } from "@/lib/analyticsConfig";
-import { mlModels, EmotionPrediction, SensoryPrediction, BaselineCluster } from "@/lib/mlModels";
+import { getMlModels, EmotionPrediction, SensoryPrediction, BaselineCluster } from "@/lib/mlModels";
 import { logger } from '@/lib/logger';
 import { pearsonCorrelation, pValueForCorrelation, zScoresMedian, huberRegression } from '@/lib/statistics';
 
@@ -77,21 +77,33 @@ export interface CorrelationMatrix {
   }>;
 }
 
+type MlModelsInstance = Awaited<ReturnType<typeof getMlModels>>;
+
 class EnhancedPatternAnalysisEngine {
   private mlModelsInitialized: boolean = false;
+  private mlModelsInstance: MlModelsInstance | null = null;
 
   constructor() {
     // Initialize ML models
     this.initializeMLModels();
   }
 
+  private async ensureMlModels(): Promise<MlModelsInstance> {
+    if (!this.mlModelsInstance) {
+      this.mlModelsInstance = await getMlModels();
+    }
+    return this.mlModelsInstance;
+  }
+
   private async initializeMLModels(): Promise<void> {
     try {
-      await mlModels.init();
+      const ml = await this.ensureMlModels();
+      await ml.init();
       this.mlModelsInitialized = true;
     } catch (error) {
       logger.error('Failed to initialize ML models:', error);
       this.mlModelsInitialized = false;
+      this.mlModelsInstance = null;
     }
   }
 
@@ -133,9 +145,10 @@ class EnhancedPatternAnalysisEngine {
     // ML emotional prediction if available
     if (this.mlModelsInitialized && trackingEntries.length >= 7) {
       try {
-        const modelStatus = await mlModels.getModelStatus();
+        const ml = await this.ensureMlModels();
+        const modelStatus = await ml.getModelStatus();
         if (modelStatus.get('emotion-prediction')) {
-          const mlEmotionPredictions = await mlModels.predictEmotions(
+          const mlEmotionPredictions = await ml.predictEmotions(
             trackingEntries.slice(-14), // Use last 14 days for better context
             7
           );
@@ -207,7 +220,8 @@ class EnhancedPatternAnalysisEngine {
     // ML sensory prediction if available
     if (this.mlModelsInitialized && trackingEntries.length > 0) {
       try {
-        const modelStatus = await mlModels.getModelStatus();
+        const ml = await this.ensureMlModels();
+        const modelStatus = await ml.getModelStatus();
         if (modelStatus.get('sensory-response') && trackingEntries[trackingEntries.length - 1].environmentalData) {
           const latestEnvironment = {
             lighting: trackingEntries[trackingEntries.length - 1].environmentalData?.roomConditions?.lighting as 'bright' | 'dim' | 'moderate' || 'moderate',
@@ -224,7 +238,7 @@ class EnhancedPatternAnalysisEngine {
             textures: false
           };
 
-          const mlSensoryPrediction = await mlModels.predictSensoryResponse(
+          const mlSensoryPrediction = await ml.predictSensoryResponse(
             latestEnvironment,
             new Date()
           );
@@ -921,7 +935,8 @@ class EnhancedPatternAnalysisEngine {
     }
 
     try {
-      const clusters = await mlModels.performBaselineClustering(trackingEntries, 3);
+      const ml = await this.ensureMlModels();
+      const clusters = await ml.performBaselineClustering(trackingEntries, 3);
       return clusters;
     } catch (error) {
       logger.error('Baseline clustering failed:', error);

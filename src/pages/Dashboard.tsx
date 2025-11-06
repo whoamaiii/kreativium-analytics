@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Student } from "@/types/student";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +22,15 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { tDashboard, tCommon, tSettings } = useTranslation();
   const { students, isLoading, todayEntries, totalEntries, weeklyTrend } = useDashboardData();
+
+  const createScopedDashboardTranslator = useCallback(
+    (prefix: string) => (key: string, options?: Record<string, unknown>) => tDashboard(`${prefix}.${key}`, options),
+    [tDashboard]
+  );
+
+  const overviewCopy = useMemo(() => createScopedDashboardTranslator('overview'), [createScopedDashboardTranslator]);
+  const studentsCopy = useMemo(() => createScopedDashboardTranslator('students'), [createScopedDashboardTranslator]);
+  const actionsCopy = useMemo(() => createScopedDashboardTranslator('actions'), [createScopedDashboardTranslator]);
 
   const handleAddStudent = () => {
     navigate('/add-student');
@@ -107,7 +117,7 @@ const Dashboard = () => {
                 <div className="flex items-center gap-3">
                   {POC_MODE && <POCBadge />}
                   
-                  <div className="flex items-center gap-2" role="toolbar" aria-label={tCommon('a11y.headerControls')}>
+                  <div className="flex items-center gap-2" role="toolbar" aria-label={tCommon('accessibility.headerControls')}>
                     <GlobalMenu />
                     <HelpAndSupport />
                     <LanguageSettings />
@@ -123,7 +133,7 @@ const Dashboard = () => {
                 className="flex justify-between items-center mb-8 motion-safe:animate-fade-in" 
                 data-animation-delay="0.2s"
               >
-                <h2 className="text-3xl font-bold tracking-tight text-foreground">{String(tDashboard('overview.title'))}</h2>
+                <h2 className="text-3xl font-bold tracking-tight text-foreground">{String(overviewCopy('title'))}</h2>
                 <div className="flex items-center space-x-4">
                   <Button
                     variant="glass"
@@ -147,6 +157,17 @@ const Dashboard = () => {
                     {String(tSettings('data.export'))}
                   </Button>
                   <Button
+                    variant="outline"
+                    onClick={() => navigate('/emotion-game')}
+                    className="flex items-center justify-center group"
+                    aria-label={tCommon('navigation.emotionGame')}
+                    data-testid="dashboard-emotion-game-button"
+                  >
+                    {/* Reuse Sparkles for now to avoid new icon import */}
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    {String(tCommon('navigation.emotionGame'))}
+                  </Button>
+                  <Button
                     variant="glass"
                     size="lg"
                     onClick={() => navigate('/tegn')}
@@ -164,7 +185,7 @@ const Dashboard = () => {
                     className="flex items-center justify-center group"
                   >
                     <Plus className="mr-2 h-4 w-4 group-hover:animate-bounce" />
-                    {String(tDashboard('actions.newEntry'))}
+                    {String(actionsCopy('newEntry'))}
                   </Button>
                 </div>
               </div>
@@ -203,7 +224,7 @@ const Dashboard = () => {
                   className="flex justify-between items-center mb-8 text-foreground motion-safe:animate-fade-in" 
                   data-animation-delay="0.6s"
                 >
-                  <h2 className="text-3xl font-bold tracking-tight">{String(tDashboard('students.title'))}</h2>
+                  <h2 className="text-3xl font-bold tracking-tight">{String(studentsCopy('title'))}</h2>
                   <Button 
                     variant="default" 
                     onClick={handleAddStudent}
@@ -211,7 +232,7 @@ const Dashboard = () => {
                     className="flex items-center justify-center group"
                   >
                     <Plus className="mr-2 h-4 w-4 group-hover:animate-bounce transition-transform" />
-                    {String(tDashboard('actions.addStudent'))}
+                    {String(actionsCopy('addStudent'))}
                   </Button>
                 </div>
 

@@ -2,6 +2,7 @@
  * Utility functions for managing localStorage
  */
 import { logger } from '@/lib/logger';
+import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
 
 export const storageUtils = {
   /**
@@ -16,7 +17,7 @@ export const storageUtils = {
     }
     return {
       used,
-      available: used < 5000000 // 5MB approximate limit
+      available: used < MAX_LOCAL_STORAGE_BYTES // 5MB approximate limit
     };
   },
 

@@ -19,7 +19,7 @@ import { exportSystem } from "@/lib/exportSystem";
 import { analyticsExport, type AnalyticsExportData } from "@/lib/analyticsExport";
 import { downloadBlob } from "@/lib/utils";
 import { ArrowLeft, Download, Save, FileText, Calendar, Loader } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from '@/hooks/use-toast';
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { GlobalMenu } from "@/components/GlobalMenu";
@@ -96,6 +96,10 @@ const StudentProfile = () => {
     reloadGoals,
     reloadData,
   } = useStudentData(studentId);
+  // Persist selected studentId for global modules (games) to scope progress writes
+  useEffect(() => {
+    try { if (studentId) localStorage.setItem('current.studentId', studentId); } catch {}
+  }, [studentId]);
 
   // DIAGNOSTIC: After data hook
   if (import.meta.env.DEV) {
@@ -186,7 +190,8 @@ const StudentProfile = () => {
         window.dispatchEvent(new CustomEvent('mockDataLoaded'));
         
         // Show non-intrusive success message
-        toast.success('Demo data created successfully', {
+        toast({
+          title: 'Demo data created successfully',
           description: 'Sample data has been generated for demonstration purposes',
         });
         
@@ -196,7 +201,8 @@ const StudentProfile = () => {
         }
       } catch (error) {
         logger.error('Failed to auto-seed mock data', { error, studentId });
-        toast.error('Failed to create demo data', {
+        toast({
+          title: 'Failed to create demo data',
           description: 'Please try loading mock data manually',
         });
       } finally {
@@ -210,7 +216,10 @@ const StudentProfile = () => {
   // Effect to handle errors from the data fetching hook.
   useEffect(() => {
     if (studentError) {
-      toast.error(studentError);
+      toast({
+        title: studentError,
+        description: 'Please try again.',
+      });
       navigate('/');
     }
   }, [studentError, navigate]);
@@ -248,7 +257,10 @@ const StudentProfile = () => {
         if (!signal.aborted) {
           logger.error('Error generating insights', { error });
           setInsights(null);
-          toast.error('Failed to generate insights');
+          toast({
+            title: 'Failed to generate insights',
+            description: 'Please try again.',
+          });
         }
       } finally {
         if (!signal.aborted) {
@@ -354,7 +366,9 @@ const StudentProfile = () => {
           } as unknown as AnalyticsExportData;
 
           await analyticsExport.exportTo('pdf', exportData);
-          toast.success('Report exported as PDF');
+          toast({
+            title: 'Report exported as PDF',
+          });
           return;
         }
         case 'csv': {
@@ -378,11 +392,15 @@ const StudentProfile = () => {
       }
       
       downloadBlob(blob, filename);
-      toast.success(`Data exported successfully as ${format.toUpperCase()}`);
+      toast({
+        title: `Data exported successfully as ${format.toUpperCase()}`,
+      });
     } catch (error: unknown) {
       logger.error('Export error', { error });
       const errorMessage = error instanceof Error ? error.message : 'Please try again.';
-      toast.error(`Export failed: ${errorMessage}`);
+      toast({
+        title: `Export failed: ${errorMessage}`,
+      });
     }
   }, [student, filteredData, goals]);
   
@@ -402,10 +420,14 @@ const StudentProfile = () => {
       const backupBlob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
       const filename = `sensory_tracker_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
       downloadBlob(backupBlob, filename);
-      toast.success('Backup created successfully');
+      toast({
+        title: 'Backup created successfully',
+      });
     } catch (error) {
       logger.error('Backup error', { error });
-      toast.error('Backup failed. Please try again.');
+      toast({
+        title: 'Backup failed. Please try again.',
+      });
     }
   }, [student, trackingEntries, allEmotions, allSensoryInputs, goals]);
 

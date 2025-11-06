@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { TestingToolsSection } from '@/components/TestingToolsSection';
 import { IS_PROD, POC_MODE } from '@/lib/env';
 import { Database, Wrench, Stethoscope } from 'lucide-react';
-import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 
 const StorageManager = lazy(() => import('@/components/StorageManager').then(m => ({ default: m.StorageManager })));

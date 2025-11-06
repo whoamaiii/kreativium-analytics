@@ -3,15 +3,16 @@ import { logger } from '@/lib/logger';
 
 export function useLocalStorage<T>(
   key: string,
-  initialValue: T
+  initialValue: T | (() => T)
 ): [T, (value: T | ((val: T) => T)) => void, () => void] {
   // State to store our value
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       // Get from local storage by key
-      const item = window.localStorage.getItem(key);
-      // Parse stored json or if none return initialValue
-      return item ? JSON.parse(item) : initialValue;
+      const item = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(key) : null;
+      // Parse stored json or if none return initialValue (support lazy init)
+      if (item) return JSON.parse(item);
+      return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
     } catch (error) {
       // If error also return initialValue
       logger.error(`Error reading localStorage key "${key}":`, error);
@@ -47,7 +48,9 @@ export function useLocalStorage<T>(
       // Save state
       setStoredValue(valueToStore);
       // Save to local storage
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      }
     } catch (error) {
       // A more advanced implementation would handle the error case
       logger.error(`Error setting localStorage key "${key}":`, error);
@@ -57,7 +60,9 @@ export function useLocalStorage<T>(
   const removeValue = () => {
     try {
       setStoredValue(initialValue);
-      window.localStorage.removeItem(key);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.removeItem(key);
+      }
     } catch (error) {
       logger.error(`Error removing localStorage key "${key}":`, error);
     }

@@ -1,4 +1,4 @@
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { logger } from './logger';
 import {
   AppError,
@@ -180,11 +180,10 @@ class ErrorHandler {
   private showErrorToast(error: AppError, options?: ErrorHandlerOptions) {
     const { userMessage, recoverable } = error;
 
-    toast.error(userMessage || 'An error occurred', {
-      description: recoverable
-        ? 'The application will attempt to recover automatically.'
-        : 'Please refresh the page or contact support if the issue persists.',
-      duration: recoverable ? 5000 : 10000,
+    toast({
+      title: 'Error',
+      description: userMessage || 'An error occurred',
+      variant: 'destructive',
       action: recoverable
         ? {
             label: 'Retry',
@@ -242,7 +241,8 @@ class ErrorHandler {
     for (const strategy of applicableStrategies) {
       try {
         await strategy.recover(error);
-        toast.success('Issue resolved', {
+        toast({
+          title: 'Success',
           description: 'The application has recovered from the error.',
         });
         return true;

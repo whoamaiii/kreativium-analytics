@@ -1,7 +1,9 @@
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { useCallback, useMemo } from 'react';
+import { logger } from '@/lib/logger';
 
-const namespace = 'translation';
+const namespace = 'common';
+const missingTranslationKeysLogged = new Set<string>();
 
 // Define the complete return type interface
 interface TranslationHookReturn {
@@ -25,6 +27,20 @@ interface TranslationHookReturn {
 export const useTranslation = (): TranslationHookReturn => {
   const { t, i18n } = useI18nTranslation(namespace);
 
+  const guardedT = useCallback((key: string, options?: Record<string, unknown>) => {
+    const result = t(key, options);
+    const nsOption = (options as { ns?: string } | undefined)?.ns;
+    const effectiveNamespace = typeof nsOption === 'string' ? nsOption : namespace;
+    const fullKey = effectiveNamespace ? `${effectiveNamespace}:${key}` : key;
+
+    if (result === key && !missingTranslationKeysLogged.has(fullKey)) {
+      missingTranslationKeysLogged.add(fullKey);
+      logger.warn('Missing translation key', { key: fullKey });
+    }
+
+    return result;
+  }, [t]);
+
   const changeLanguage = useCallback((lng: 'nb' | 'en') => {
     i18n.changeLanguage(lng);
     localStorage.setItem('sensoryTracker_language', lng);
@@ -34,12 +50,12 @@ export const useTranslation = (): TranslationHookReturn => {
   const locale = currentLanguage === 'nb' ? 'nb-NO' : 'en-US';
 
   // Helper functions for common translations
-  const tCommon = useCallback((key: string, options?: Record<string, unknown>) => t(key, { ns: 'common', ...options }), [t]);
-  const tDashboard = useCallback((key: string, options?: Record<string, unknown>) => t(key, { ns: 'dashboard', ...options }), [t]);
-  const tStudent = useCallback((key: string, options?: Record<string, unknown>) => t(key, { ns: 'student', ...options }), [t]);
-  const tTracking = useCallback((key: string, options?: Record<string, unknown>) => t(key, { ns: 'tracking', ...options }), [t]);
-  const tAnalytics = useCallback((key: string, options?: Record<string, unknown>) => t(key, { ns: 'analytics', ...options }), [t]);
-  const tSettings = useCallback((key: string, options?: Record<string, unknown>) => t(key, { ns: 'settings', ...options }), [t]);
+  const tCommon = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'common', ...options }), [guardedT]);
+  const tDashboard = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'dashboard', ...options }), [guardedT]);
+  const tStudent = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'student', ...options }), [guardedT]);
+  const tTracking = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'tracking', ...options }), [guardedT]);
+  const tAnalytics = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'analytics', ...options }), [guardedT]);
+  const tSettings = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'settings', ...options }), [guardedT]);
 
   // Locale-aware date/time formatting
   const formatDate = useCallback((date: Date): string => {
@@ -70,7 +86,7 @@ export const useTranslation = (): TranslationHookReturn => {
 
   // Include i18n in deps to ensure fresh reference
   return useMemo(() => ({
-    t,
+    t: guardedT,
     tCommon,
     tDashboard,
     tStudent,
@@ -84,5 +100,5 @@ export const useTranslation = (): TranslationHookReturn => {
     formatNumber,
     formatCurrency,
     i18n,
-  }), [t, tCommon, tDashboard, tStudent, tTracking, tAnalytics, tSettings, changeLanguage, currentLanguage, formatDate, formatDateTime, formatNumber, formatCurrency, i18n]);
+  }), [guardedT, tCommon, tDashboard, tStudent, tTracking, tAnalytics, tSettings, changeLanguage, currentLanguage, formatDate, formatDateTime, formatNumber, formatCurrency, i18n]);
 };

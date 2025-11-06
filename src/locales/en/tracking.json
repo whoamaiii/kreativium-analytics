@@ -19,7 +19,9 @@
     "cancelSession": "Cancel Session",
     "validationError": "Please record at least one emotion or sensory input before saving the session.",
     "sessionSaved": "Session saved successfully!",
-    "saveError": "Failed to save session. Please try again."
+    "saveError": "Failed to save session. Please try again.",
+    "summaryTitle": "Session Data Review",
+    "minutesSuffix": "min"
   },
   "emotions": {
     "title": "Emotions",
@@ -91,9 +93,17 @@
   "environmental": {
     "title": "Environmental Data",
     "noiseLevel": "Noise Level",
-    "lighting": "Lighting",
+    "lighting": {
+      "dim": "Dim",
+      "normal": "Normal",
+      "bright": "Bright"
+    },
     "crowdLevel": "Crowd Level",
-    "temperature": "Temperature",
+    "temperature": {
+      "cool": "Cool",
+      "comfortable": "Comfortable",
+      "warm": "Warm"
+    },
     "notes": "Environmental Notes",
     "notesPlaceholder": "Describe environmental factors that may affect the student...",
     "levels": {
@@ -101,20 +111,10 @@
       "moderate": "Moderate",
       "high": "High"
     },
-    "lighting": {
-      "dim": "Dim",
-      "normal": "Normal",
-      "bright": "Bright"
-    },
-    "temperature": {
-      "cool": "Cool",
-      "comfortable": "Comfortable",
-      "warm": "Warm"
-    },
     "weather": "Weather",
     "weatherOptions": {
       "sunny": "Sunny",
-      "cloudy": "Cloudy", 
+      "cloudy": "Cloudy",
       "rainy": "Rainy",
       "snowy": "Snowy"
     },

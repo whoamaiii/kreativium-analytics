@@ -2,19 +2,14 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 // Badge and correlations elements removed to avoid duplicate correlation tabs
-import {
-  TrendingUp,
-  Eye,
-  Clock,
-  Brain,
-  Activity,
-} from 'lucide-react';
+import { TrendingUp, Clock, Brain, Activity } from 'lucide-react';
 // Removed correlation utilities since correlations tab was removed here
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface DashboardLayoutProps {
   renderTrendsChart: () => React.ReactNode;
   renderPatternAnalysis: () => React.ReactNode;
+  renderCorrelationHeatmap: () => React.ReactNode;
   render3dVisualization: () => React.ReactNode;
   renderTimeline: () => React.ReactNode;
   filteredData: {
@@ -26,27 +21,35 @@ interface DashboardLayoutProps {
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   renderTrendsChart,
   renderPatternAnalysis: _renderPatternAnalysis,
-  render3dVisualization,
+  renderCorrelationHeatmap,
+  render3dVisualization: _render3dVisualization,
   renderTimeline,
   filteredData,
 }) => {
   const { tAnalytics } = useTranslation();
   return (
     <Tabs defaultValue="trends" className="w-full">
-      <TabsList className="grid w-full grid-cols-3" aria-label={tAnalytics('aria.tabs.charts')}>
-        <TabsTrigger value="trends" className="flex items-center gap-2">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+        <TabsList className="grid w-full grid-cols-4" aria-label={tAnalytics('aria.tabs.charts')}>
+          <TabsTrigger value="trends" className="flex items-center gap-2">
           <TrendingUp className="h-4 w-4" />
           {String(tAnalytics('tabs.charts'))}
-        </TabsTrigger>
-        <TabsTrigger value="3d" className="flex items-center gap-2">
-          <Eye className="h-4 w-4" />
-          {String(tAnalytics('visualization3d.tooltip.intensity'))}
-        </TabsTrigger>
-        <TabsTrigger value="timeline" className="flex items-center gap-2">
+          </TabsTrigger>
+          <TabsTrigger value="correlations" className="flex items-center gap-2">
+            {/* Using Activity icon to suggest relationships */}
+            <Activity className="h-4 w-4" />
+            {String(tAnalytics('tabs.correlations', { defaultValue: 'Correlations' }))}
+          </TabsTrigger>
+          <TabsTrigger value="patterns" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            {String(tAnalytics('tabs.patterns', { defaultValue: 'Patterns' }))}
+          </TabsTrigger>
+          <TabsTrigger value="timeline" className="flex items-center gap-2">
           <Clock className="h-4 w-4" />
           {String(tAnalytics('charts.dailyActivity'))}
-        </TabsTrigger>
-      </TabsList>
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="trends" className="space-y-6">
         {renderTrendsChart()}
@@ -81,7 +84,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     }%
                   </p>
                 </div>
-                <Eye className="h-8 w-8 text-muted-foreground" />
+                <TrendingUp className="h-8 w-8 text-muted-foreground" />
               </div>
             </CardContent>
           </Card>
@@ -106,9 +109,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         </div>
       </TabsContent>
 
-      <TabsContent value="3d">
-        {render3dVisualization()}
+      <TabsContent value="correlations">
+        {renderCorrelationHeatmap()}
       </TabsContent>
+
+      <TabsContent value="patterns">
+        {_renderPatternAnalysis()}
+      </TabsContent>
+
+      {/* Removed 3D/Intensity tab per user preference */}
 
       <TabsContent value="timeline">
         {renderTimeline()}

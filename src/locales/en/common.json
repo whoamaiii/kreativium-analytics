@@ -1,7 +1,24 @@
 {
-  "settings": "Settings",
+  "settings": {
+    "accessibility": "Accessibility & Motion",
+    "motion": "Reduce motion",
+    "motionDesc": "Limit animations and confetti",
+    "sound": "Sound volume",
+    "soundDesc": "Success and level-up effects",
+    "hints": "Enable hints",
+    "hintsDesc": "Allow in-round hint prompts",
+    "calibration": "Calibration",
+    "calibrationDesc": "Reset and re-run calibration flow",
+    "resetCalibration": "Reset",
+    "detector": "Detector",
+    "detectorDesc": "Choose detection backend (requires reload)",
+    "quietRewards": "Quiet rewards",
+    "quietRewardsDesc": "Use subtle visuals instead of sounds",
+    "highContrast": "High contrast",
+    "highContrastDesc": "Increase contrast for legibility"
+  },
   "export": "Export",
-  "exporting": "Exporting...",
+  "exporting": "Exporting",
   "exportAsPdf": "Export as PDF",
   "exportAsCsv": "Export as CSV",
   "exportAsJson": "Export as JSON",
@@ -18,11 +35,19 @@
     "submit": "Submit",
     "tryAgain": "Try Again",
     "reload": "Reload",
-    "home": "Home"
+    "home": "Home",
+    "help": "Help"
+  },
+  "achievements": {
+    "title": "Stickers",
+    "none": "No stickers yet"
   },
   "reports": {
-"builder": {
-      "ui": { "headerTitle": "Report builder", "headerDesc": "Generate tailored reports." },
+    "builder": {
+      "ui": {
+        "headerTitle": "Report builder",
+        "headerDesc": "Generate tailored reports."
+      },
       "form": {
         "reportTemplate": "Report Template",
         "reportTitle": "Report Title",
@@ -51,8 +76,14 @@
         "next-steps": "Next Steps",
         "interventions": "Interventions"
       },
-      "errors": { "invalidDateRange": "Invalid date range selected", "startBeforeEnd": "Start date must be before end date" },
-      "toast": { "reportGenerated": "Report generated successfully!", "csvExported": "CSV exported successfully!" },
+      "errors": {
+        "invalidDateRange": "Invalid date range selected",
+        "startBeforeEnd": "Start date must be before end date"
+      },
+      "toast": {
+        "reportGenerated": "Report generated successfully!",
+        "csvExported": "CSV exported successfully!"
+      },
       "title": "Report builder",
       "description": "Select a student and template to generate a tailored report.",
       "configure": "Configuration",
@@ -70,10 +101,22 @@
     "sectionsCount": "{{count}} sections",
     "createReport": "Create report",
     "templates": {
-      "progress-summary": { "name": "Progress Summary Report", "description": "Comprehensive overview of student progress across all goals" },
-      "iep-meeting": { "name": "IEP Meeting Report", "description": "Detailed report for IEP team meetings" },
-      "behavioral-analysis": { "name": "Behavioral Analysis Report", "description": "Focus on emotional and sensory patterns" },
-      "quarterly-review": { "name": "Quarterly Review", "description": "Three-month progress review" }
+      "progress-summary": {
+        "name": "Progress Summary Report",
+        "description": "Comprehensive overview of student progress across all goals"
+      },
+      "iep-meeting": {
+        "name": "IEP Meeting Report",
+        "description": "Detailed report for IEP team meetings"
+      },
+      "behavioral-analysis": {
+        "name": "Behavioral Analysis Report",
+        "description": "Focus on emotional and sensory patterns"
+      },
+      "quarterly-review": {
+        "name": "Quarterly Review",
+        "description": "Three-month progress review"
+      }
     },
     "analyticsPdf": {
       "button": "Export analytics PDF",
@@ -100,7 +143,9 @@
         "custom": "Custom"
       },
       "summary": {
-        "errors": { "invalidRange": "Please select a valid start and end date." },
+        "errors": {
+          "invalidRange": "Please select a valid start and end date."
+        },
         "progress": "Preparing export: {{percent}}%",
         "withRangeAnon": "Exporting data from {{start}} to {{end}} (anonymized)",
         "withRange": "Exporting data from {{start}} to {{end}}",
@@ -109,7 +154,6 @@
       }
     }
   },
-
   "navigation": {
     "dashboard": "Dashboard",
     "students": "Students",
@@ -119,8 +163,133 @@
     "reports": "Reports",
     "globalMenu": "Global menu",
     "devTools": "Developer Tools",
+    "monitoring": "Monitoring",
     "tegnTilTale": "Tegn til Tale",
-    "kreativiumAI": "Kreativium AI"
+    "kreativiumAI": "Kreativium AI",
+    "emotionLab": "Emotion Lab",
+    "emotionGame": "Emotion Game"
+  },
+  "keyboardShortcuts": {
+    "pauseResume": "Space: pause/resume",
+    "hint": "H: hint"
+  },
+  "emotionLab": {
+    "consentText": "This tool runs locally in your browser. No video leaves your device. Please provide consent to activate the camera and analyze facial expressions. You can revoke anytime.",
+    "hideOverlay": "Hide overlay",
+    "showOverlay": "Show overlay",
+    "model": "Model",
+    "origin": "Origin",
+    "fps": "FPS",
+    "loadingModels": "Loading models…",
+    "cameraOff": "Camera is off. Enable to start.",
+    "expressions": {
+      "neutral": "neutral",
+      "happy": "happy",
+      "sad": "sad",
+      "angry": "angry",
+      "fearful": "fearful",
+      "disgusted": "disgusted",
+      "surprised": "surprised"
+    },
+    "videoFeedLabel": "Live video feed from camera"
+  },
+  "game": {
+    "title": "Emotion Game",
+    "target": "Target",
+    "hint": "Hint",
+    "pause": "Pause",
+    "skip": "Skip",
+    "streakReset": "Reset streak",
+    "tutorial": {
+      "title": "Quick tutorial",
+      "gotIt": "Got it",
+      "steps": {
+        "enableCameraTitle": "1. Enable camera",
+        "enableCameraBody": "Allow camera access and center your face in the guide.",
+        "matchTitle": "2. Match the emotion",
+        "matchBody": "Copy the target expression until the ring fills.",
+        "celebrateTitle": "3. Celebrate",
+        "celebrateBody": "Earn stars and XP; streaks give bonus rewards."
+      }
+    },
+    "calibration": {
+      "title": "Calibration",
+      "description": "Stay neutral for about 10–15 seconds while we calibrate your camera and lighting.",
+      "finish": "Finish",
+      "skip": "Skip",
+      "link": "Calibration"
+    },
+    "modes": {
+      "label": "Modes",
+      "classic": "Classic",
+      "timeAttack": "Time Attack",
+      "confidence": "Confidence",
+      "mirror": "Mirror"
+    },
+    "practice": {
+      "label": "Practice",
+      "placeholder": "Choose emotion",
+      "mixed": "Mixed"
+    },
+    "hintCount": "{{count}} hints remaining",
+    "mirror": {
+      "almostThere": "Almost there!"
+    },
+    "announcements": {
+      "resumed": "Game resumed",
+      "paused": "Game paused",
+      "roundStart": "New round starting",
+      "nextRound": "Next round"
+    },
+    "secondsShort": "s",
+    "comboLabel": "Combo x{{count}}"
+  },
+  "confidencePrompt": {
+    "title": "How confident were you?",
+    "description": "Use the slider to report your confidence in matching the target expression.",
+    "ariaLabel": "Confidence",
+    "submit": "Submit"
+  },
+  "roundSummary": {
+    "title": "Round summary",
+    "target": "Target",
+    "time": "Time",
+    "stability": "Stability",
+    "intensity": "Intensity",
+    "confidence": "Confidence",
+    "actual": "Actual",
+    "calibrationError": "Calibration error",
+    "continue": "Continue"
+  },
+  "sessionSummary": {
+    "title": "Session summary",
+    "accuracyPerEmotion": "Accuracy per emotion",
+    "timeToSuccess": "Avg time to success",
+    "hintRate": "Hint rate",
+    "calibrationError": "Avg calibration error",
+    "noData": "No session data yet"
+  },
+  "chooseRight": {
+    "prompt": "Tap the correct emotion",
+    "instruction": "Tap",
+    "correct": "Correct!",
+    "hint": "Look for the matching face"
+  },
+  "nameIt": {
+    "prompt": "What is this emotion called?",
+    "say": "Say the word",
+    "choose": "Choose the correct word"
+  },
+  "calmPause": {
+    "breathe": "Breathe in and out calmly",
+    "neutralGoal": "Goal: neutral for 10–20 seconds"
+  },
+  "missions": {
+    "title": "Daily Missions",
+    "holdNeutral": "Hold 3 calm neutrals today",
+    "chooseRight": "Choose right 5 times",
+    "nameIt": "Name 5 emotions",
+    "streak": "Streak"
   },
   "tegn": {
     "menu": "Menu",
@@ -150,7 +319,24 @@
     "totalXP": "Total XP",
     "xpToNext": "{{remaining}} XP to next level",
     "levelProgressLabel": "Level {{level}} – {{progress}}/100 XP",
-    "xpProgressAria": "Experience progress"
+    "xpProgressAria": "Experience progress",
+    "playWord": "Hear the word",
+    "playWordActive": "Playing…",
+    "playWordAria": "Play narration for \"{{word}}\"",
+    "speechUnsupported": "Text-to-speech is not available in this browser.",
+    "showAnswer": "Show answer",
+    "hideAnswer": "Hide answer",
+    "nextPrompt": "Next sign",
+    "didIt": "I did it!",
+    "cameraAssist": "Enable the camera to practice in front of the lens.",
+    "cameraAssistActive": "Camera is active. Follow your movements in the preview.",
+    "cameraEnable": "Turn on camera",
+    "cameraDisable": "Turn off camera",
+    "cameraUnsupported": "Camera practice is not supported in this browser.",
+    "cameraPermissionDenied": "Camera access was denied. Check your browser settings.",
+    "cameraNotFound": "No camera was found.",
+    "cameraError": "Could not start the camera. Please try again.",
+    "cameraInactiveOverlay": "Camera is off. Turn it on to see yourself."
   },
   "help": {
     "button": "Help & Support",
@@ -197,6 +383,7 @@
   "language": {
     "norwegian": "Norsk bokmål",
     "english": "English",
+    "change": "Change language",
     "changeLanguage": "Change language"
   },
   "notFound": {
@@ -229,7 +416,8 @@
     "goalsLabel": "goals"
   },
   "accessibility": {
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "headerControls": "Primary header controls"
   },
   "loading": "Loading...",
   "error": {
@@ -259,9 +447,20 @@
     "collapse": "Collapse",
     "dismiss": "Dismiss"
   },
-  "export": "Export",
-  "exporting": "Exporting",
-  "exportAsPdf": "Export as PDF",
-  "exportAsCsv": "Export as CSV",
-  "exportAsJson": "Export as JSON"
+  "sessionFlow": {
+    "roundLabel": "Round",
+    "steps": {
+      "chooseRight": "Choose the right response",
+      "nameIt": "Name the feeling",
+      "calmPause": "Calm pause",
+      "missions": "Daily missions"
+    },
+    "start": "Start",
+    "choices": "Choices",
+    "nextStep": "Next step",
+    "next": "Next",
+    "replay": "Replay",
+    "freePlay": "Free play",
+    "pickActivity": "Pick an activity"
+  }
 }

@@ -5,6 +5,22 @@ i18n, and performance practices.
 
 ---
 
+## How to Run
+
+To run the `main.py` script, execute:
+
+```bash
+python main.py
+```
+
+## How to Test
+
+To run the tests for this project with pytest:
+
+```bash
+pytest test_main.py
+```
+
 ## Quickstart
 
 1. Install dependencies
@@ -131,3 +147,20 @@ Model configurations are stored in `dist/models/gemma3-270m-it/` with:
 
 This is a continuation of the KreativiumV17 project, representing the beta v2 iteration with
 enhanced ML capabilities and improved analytics.
+
+## Detector options
+
+You can choose the expression detector backend under Settings:
+- FaceAPI (Worker) – default; runs on a Web Worker using ImageBitmap and OffscreenCanvas
+- FaceAPI (Main thread) – compatibility path
+- MediaPipe (Experimental) – uses MediaPipe Tasks Face Landmarker with blendshapes→emotion mapping
+
+The selection is persisted in localStorage under `emotion.detectorType`.
+
+## Game mechanics (Sprint 1+)
+
+- Timed rounds: each round has a countdown (>=8s); timeout triggers a gentle fail and advances.
+- Combo: consecutive successes increase a combo multiplier (capped), boosting XP.
+- Perfect window: very high probability at completion grants a small bonus.
+- Hints: limited per day; remaining count shown on the Hint button; toggle daily limits in Settings.
+- Offline: Service Worker caches `/models/**` and static assets for quicker loads.

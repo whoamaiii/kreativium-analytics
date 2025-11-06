@@ -89,6 +89,13 @@ export interface AnalyticsConfiguration {
     anomalyMultiplier: number;
   };
 
+  alerts?: {
+    cusum?: {
+      kFactor: number;
+      decisionInterval: number;
+    };
+  };
+
   // Cache Settings
   cache: {
     ttl: number; // Time to live in milliseconds
@@ -276,6 +283,12 @@ export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfiguration = {
     emotionIntensityMultiplier: 1.0,
     frequencyMultiplier: 1.0,
     anomalyMultiplier: 1.0,
+  },
+  alerts: {
+    cusum: {
+      kFactor: 0.5,
+      decisionInterval: 5,
+    },
   },
   cache: {
     ttl: 10 * 60 * 1000, // 10 minutes

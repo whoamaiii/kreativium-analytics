@@ -1,4 +1,4 @@
-import { PremiumStudentCard } from '@/components/ui/PremiumStudentCard';
+import { PremiumStudentCard } from '@/components/student/premium-student-card';
 import { Student } from '@/types/student';
 
 interface StudentsGridProps {

@@ -1,7 +1,8 @@
 // Shared analytics-related types
 // No default exports per project rules
 
-export type TabKey = 'overview' | 'explore' | 'alerts';
+// Flattened tabs - removed 'explore' parent, added charts/patterns/correlations directly
+export type TabKey = 'overview' | 'charts' | 'patterns' | 'correlations' | 'alerts' | 'monitoring';
 /** Preset options within the Explore tab */
 export type ExplorePreset = 'charts' | 'patterns' | 'correlations';
 /**
@@ -15,6 +16,7 @@ export type ExportFormat = 'pdf' | 'csv' | 'json';
 import { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 import { PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalysis';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from './student';
+import type { AlertEvent } from '@/lib/alerts/types';
 import type { Goal } from './student';
 import type { AnalyticsInputs, AnalyticsRuntimeConfig } from '@/types/insights';
 import type { AnalyticsConfiguration as SourceAnalyticsConfiguration } from '@/lib/analyticsConfig';
@@ -165,18 +167,53 @@ export type AnalyticsResultsPartial = Partial<AnalyticsResults> & { cacheKey?: s
 /**
  * Worker message envelope for incremental communication
  */
-export type WorkerMessageType = 'progress' | 'partial' | 'complete' | 'error';
+export type WorkerMessageType = 'progress' | 'partial' | 'complete' | 'error' | 'alerts';
 
-export interface AnalyticsWorkerMessage {
-  type: WorkerMessageType;
-  cacheKey?: string;
-  payload?: AnalyticsResultsPartial;
-  error?: string;
-  /** Which charts should update in response to this message */
-  chartsUpdated?: AnalyticsChartKey[];
-  /** Optional progress metadata for UI feedback and watchdog heartbeats */
-  progress?: { stage: string; percent: number };
-}
+type WorkerProgress = { stage: string; percent: number };
+
+export type AnalyticsWorkerMessage =
+  | {
+    type: 'progress';
+    cacheKey?: string;
+    chartsUpdated?: AnalyticsChartKey[];
+    progress?: WorkerProgress;
+  }
+  | {
+    type: 'partial';
+    cacheKey?: string;
+    payload?: AnalyticsResultsPartial;
+    chartsUpdated?: AnalyticsChartKey[];
+    progress?: WorkerProgress;
+  }
+  | {
+    type: 'complete';
+    cacheKey?: string;
+    payload: (AnalyticsResults & { prewarm?: boolean });
+    chartsUpdated?: AnalyticsChartKey[];
+    progress?: WorkerProgress;
+  }
+  | {
+    type: 'error';
+    cacheKey?: string;
+    error: string;
+    payload?: AnalyticsResultsPartial;
+    chartsUpdated?: AnalyticsChartKey[];
+    progress?: WorkerProgress;
+  }
+  | {
+    type: 'alerts';
+    cacheKey?: string;
+    payload: { alerts: AlertEvent[]; studentId?: string; prewarm?: boolean };
+  }
+  // Lightweight meta channel for diagnostics; worker may ignore
+  | {
+    type: 'game:event';
+    payload: unknown;
+  }
+  | {
+    type: 'game:session_summary';
+    payload: unknown;
+  };
 
 // -----------------------------------------------------------------------------
 // Configuration Types (exported explicitly)

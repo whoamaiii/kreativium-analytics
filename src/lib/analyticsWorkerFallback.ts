@@ -9,6 +9,11 @@ import { enhancedPatternAnalysis } from '@/lib/enhancedPatternAnalysis';
 import { logger } from '@/lib/logger';
 import type { Student } from '@/types/student';
 import { analyticsManager } from '@/lib/analyticsManager';
+import { AlertDetectionEngine } from '@/lib/alerts/engine';
+import { BaselineService } from '@/lib/alerts/baseline';
+import type { AlertEvent, ThresholdAdjustmentTrace } from '@/lib/alerts/types';
+import { AlertTelemetryService } from '@/lib/alerts/telemetry';
+import { safeGet, safeSet } from '@/lib/storage';
 
 export class AnalyticsWorkerFallback {
   private isProcessing = false;
@@ -18,6 +23,15 @@ export class AnalyticsWorkerFallback {
     resolve: (value: AnalyticsResults) => void;
     reject: (error: Error) => void;
   }> = [];
+  private readonly baselineService: BaselineService;
+  private readonly alertEngine: AlertDetectionEngine;
+  private readonly telemetry: AlertTelemetryService;
+
+  constructor(opts?: { baselineService?: BaselineService; telemetry?: AlertTelemetryService }) {
+    this.baselineService = opts?.baselineService ?? new BaselineService();
+    this.alertEngine = new AlertDetectionEngine({ baselineService: this.baselineService });
+    this.telemetry = opts?.telemetry ?? new AlertTelemetryService();
+  }
 
   async processAnalytics(data: AnalyticsData, options?: { useAI?: boolean; student?: Student }): Promise<AnalyticsResults> {
     return new Promise((resolve, reject) => {
@@ -132,6 +146,20 @@ export class AnalyticsWorkerFallback {
         }
       }
 
+      await new Promise(resolve => setTimeout(resolve, 0)); // Yield to UI before detection
+
+      try {
+        const detectionAlerts = this.runAlertDetection(data);
+        if (detectionAlerts.length) {
+          const studentId = this.extractStudentId(data);
+          if (studentId) {
+            this.persistAlerts(studentId, detectionAlerts);
+          }
+        }
+      } catch (e) {
+        logger.warn('Fallback: Alert detection step failed', e);
+      }
+
       // Generate basic insights
       if (data.entries.length < 5) {
         results.insights.push(
@@ -152,6 +180,97 @@ export class AnalyticsWorkerFallback {
       // Process next item in queue
       setTimeout(() => this.processQueue(), 100);
     }
+  }
+
+  private extractStudentId(data: AnalyticsData): string | null {
+    return (
+      data.entries?.[0]?.studentId ||
+      data.emotions?.[0]?.studentId ||
+      data.sensoryInputs?.[0]?.studentId ||
+      null
+    );
+  }
+
+  private runAlertDetection(data: AnalyticsData): AlertEvent[] {
+    const studentId = this.extractStudentId(data);
+    if (!studentId) return [];
+    try {
+      const baseline = this.baselineService.updateBaseline({
+        studentId,
+        emotions: data.emotions,
+        sensory: data.sensoryInputs,
+        tracking: data.entries,
+      });
+      return this.alertEngine.runDetection({
+        studentId,
+        emotions: data.emotions,
+        sensory: data.sensoryInputs,
+        tracking: data.entries,
+        baseline,
+        now: new Date(),
+      });
+    } catch (error) {
+      logger.warn('Fallback: alert detection failed', error);
+      return [];
+    }
+  }
+
+  private persistAlerts(studentId: string, alerts: AlertEvent[]): void {
+    if (!alerts.length) return;
+    try {
+      const existing = this.loadAlerts(studentId);
+      const existingMap = new Map(existing.map((alert) => [alert.id, alert] as const));
+      const combined = new Map<string, AlertEvent>();
+      existing.forEach((alert) => combined.set(alert.id, alert));
+      alerts.forEach((alert) => combined.set(alert.id, alert));
+      const newAlerts = alerts.filter((alert) => !existingMap.has(alert.id));
+      const merged = Array.from(combined.values()).sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+      safeSet(this.alertsKey(studentId), JSON.stringify(merged));
+
+      newAlerts.forEach((alert) => {
+        try {
+          const metadata = (alert.metadata ?? {}) as Record<string, unknown>;
+          const thresholdAdjustments = metadata.thresholdTrace as Record<string, ThresholdAdjustmentTrace> | undefined;
+          this.telemetry.logAlertCreated(alert, {
+            predictedRelevance: alert.confidence,
+            detectorTypes: (metadata.detectorTypes as string[]) ?? undefined,
+            experimentKey: typeof metadata.experimentKey === 'string' ? metadata.experimentKey : undefined,
+            experimentVariant: typeof metadata.experimentVariant === 'string' ? metadata.experimentVariant : undefined,
+            thresholdAdjustments,
+            metadataSnapshot: alert.metadata,
+          });
+        } catch (error) {
+          logger.warn('Fallback: failed to log alert telemetry', error);
+        }
+      });
+
+      if (typeof window !== 'undefined') {
+        try {
+          window.dispatchEvent(new CustomEvent('alerts:updated', { detail: { studentId } }));
+        } catch {
+          // ignore dispatch failures (e.g., server-side)
+        }
+      }
+    } catch (error) {
+      logger.warn('Fallback: failed to persist alerts', error);
+    }
+  }
+
+  private loadAlerts(studentId: string): AlertEvent[] {
+    try {
+      const raw = safeGet(this.alertsKey(studentId));
+      if (!raw) return [];
+      const parsed = JSON.parse(raw) as AlertEvent[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private alertsKey(studentId: string): string {
+    return `alerts:list:${studentId}`;
   }
 
   private deriveStudentFromData(data: AnalyticsData): Student | undefined {

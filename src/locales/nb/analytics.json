@@ -175,12 +175,30 @@
     "selectQuestion": "Velg et spørsmål å utforske",
     "navigatingTo": "Navigerer til {{preset}} analyse...",
     "questions": {
-      "peakTiming": { "question": "Når skjer toppene?", "description": "Finn høyintensive øyeblikk og deres tidsmønstre" },
-      "activityLoad": { "question": "Hvilke aktiviteter øker belastningen?", "description": "Oppdag hvilke aktiviteter korrelerer med økt stress" },
-      "difficultTriggers": { "question": "Hva utløser vanskelige øyeblikk?", "description": "Identifiser mønstre i utfordrende følelsesmessige opplevelser" },
-      "sensoryChanges": { "question": "Hvordan endrer sensoriske behov seg?", "description": "Spor sensoriske preferanser og responser over tid" },
-      "timePatterns": { "question": "Hvilke mønstre dukker opp over tid?", "description": "Oppdag langsiktige trender og gjentakende mønstre" },
-      "bestEnvironments": { "question": "Hvilke miljøer fungerer best?", "description": "Finn miljøforhold som støtter suksess" }
+      "peakTiming": {
+        "question": "Når skjer toppene?",
+        "description": "Finn høyintensive øyeblikk og deres tidsmønstre"
+      },
+      "activityLoad": {
+        "question": "Hvilke aktiviteter øker belastningen?",
+        "description": "Oppdag hvilke aktiviteter korrelerer med økt stress"
+      },
+      "difficultTriggers": {
+        "question": "Hva utløser vanskelige øyeblikk?",
+        "description": "Identifiser mønstre i utfordrende følelsesmessige opplevelser"
+      },
+      "sensoryChanges": {
+        "question": "Hvordan endrer sensoriske behov seg?",
+        "description": "Spor sensoriske preferanser og responser over tid"
+      },
+      "timePatterns": {
+        "question": "Hvilke mønstre dukker opp over tid?",
+        "description": "Oppdag langsiktige trender og gjentakende mønstre"
+      },
+      "bestEnvironments": {
+        "question": "Hvilke miljøer fungerer best?",
+        "description": "Finn miljøforhold som støtter suksess"
+      }
     },
     "categories": {
       "timing": "Tidsanalyse",
@@ -347,9 +365,18 @@
     "sensitivity": {
       "title": "Varslingssensitivitet",
       "description": "Kontroller hvor sensitivt systemet er for potensielle problemer",
-      "low": { "title": "Lav sensitivitet", "desc": "Varsle bare for betydelige mønstre med høy sikkerhet" },
-      "medium": { "title": "Middels sensitivitet", "desc": "Balansert tilnærming til mønstergjenkjenning og varsler" },
-      "high": { "title": "Høy sensitivitet", "desc": "Varsle tidlig for subtile mønstre og potensielle bekymringer" },
+      "low": {
+        "title": "Lav sensitivitet",
+        "desc": "Varsle bare for betydelige mønstre med høy sikkerhet"
+      },
+      "medium": {
+        "title": "Middels sensitivitet",
+        "desc": "Balansert tilnærming til mønstergjenkjenning og varsler"
+      },
+      "high": {
+        "title": "Høy sensitivitet",
+        "desc": "Varsle tidlig for subtile mønstre og potensielle bekymringer"
+      },
       "currentMultipliers": "Nåværende multiplikatorer",
       "emotion": "Følelser",
       "frequency": "Frekvens",
@@ -438,7 +465,6 @@
       "invalidateOnChange": "Tøm mellomlager når innstillinger endres"
     }
   },
-
   "dev": {
     "seed": {
       "button": "Generer demodata",
@@ -521,7 +547,11 @@
     "pinAlert": "Fest varsel",
     "unpinAlert": "Løsne varsel",
     "noPinnedAlerts": "Ingen festede varsler",
-    "severityGroups": { "high": "Høy prioritet", "medium": "Middels prioritet", "low": "Lav prioritet" },
+    "severityGroups": {
+      "high": "Høy prioritet",
+      "medium": "Middels prioritet",
+      "low": "Lav prioritet"
+    },
     "alertCounts": "({count} varsler)",
     "totalUnresolved": "Totalt uløste: {count}",
     "actions": {
@@ -538,7 +568,6 @@
       "confirmClearPinnedDescription": "Dette fjerner alle festede varsler fra sidepanelet. Du kan feste dem igjen senere."
     }
   },
-
   "configTest": {
     "title": "Tester av analyseoppsett",
     "description": "Kontroller at konfigurasjonsendringer og cache-invalidering fungerer riktig",
@@ -554,7 +583,6 @@
     "resetDefaults": "Tilbakestill til standard",
     "clearCache": "Tøm cache"
   },
-
   "ai": {
     "meta": {
       "provider": "Leverandør",
@@ -570,7 +598,6 @@
       "heuristic": "Heuristisk"
     }
   },
-
   "insights": {
     "title": "Innsikt",
     "patterns": "Mønstre oppdaget",
@@ -744,11 +771,18 @@
     "correlationChanges": "Korrelasjonsendringer",
     "newInterventions": "Nye tiltak",
     "removedInterventions": "Fjernede tiltak",
-    "keyFindings": "Nøkkelfunn",
+    "keyFindings": {
+      "title": "Nøkkelfunn",
+      "empty": "Ingen nøkkelfunn rapportert."
+    },
     "analysisTimestamp": "Analyse-tidspunkt",
     "timestampDifference": "Forskjell i analysetidspunkt",
     "none": "Ingen",
-    "patterns": "Mønstre",
+    "patterns": {
+      "title": "Mønstre",
+      "empty": "Ingen mønstre identifisert.",
+      "fallback": "Mønster"
+    },
     "correlations": "Korrelasjoner",
     "insights": "Innsikter",
     "anomalies": "Avvik",
@@ -782,7 +816,70 @@
     "toolbarShare": "Del",
     "toolbarShareTooltip": "Del AI‑rapporten via systemdeling",
     "toolbarShareAria": "Del AI‑rapport",
-    "shareAnnounce": "Rapport delt eller kopiert"
+    "shareAnnounce": "Rapport delt eller kopiert",
+    "aiHeader": {
+      "title": "Kreativium‑AI",
+      "subtitle": "Lokal LLM for mønstre, korrelasjoner og tiltak",
+      "modelLabel": "Modell:",
+      "localBadge": "Lokal modell",
+      "remoteBadge": "Ekstern"
+    },
+    "aiMetadataTitle": "AI‑metadata • {{model}}",
+    "aiMetadataModelLabel": "Modell: {{model}}",
+    "aiMetadataLatencyLabel": "Latens: {{ms}} ms",
+    "aiMetadataTokensLabel": "Tokens: prompt {{prompt}} • completion {{completion}} • total {{total}}",
+    "aiMetadataCacheLabel": "Cache: read {{read}} • write {{write}}",
+    "aiMetadataJsonValidity": "JSON‑gyldighet (global): {{percentage}}%",
+    "metadataCaveatsLabel": "Forbehold:",
+    "form": {
+      "studentLabel": "Elev",
+      "studentPlaceholder": "Velg elev",
+      "presetLabel": "Tidsrom",
+      "presetPlaceholder": "Velg tidsrom",
+      "presets": {
+        "7d": "Siste 7 dager",
+        "30d": "Siste 30 dager",
+        "90d": "Siste 90 dager",
+        "all": "Hele historikken"
+      },
+      "iepLabel": "IEP-trygg modus",
+      "iepTooltip1": "IEP-trygg modus sikrer pedagogiske anbefalinger",
+      "iepTooltip2": "uten medisinske/kliniske råd",
+      "studentSelectAria": "Velg elev",
+      "presetSelectAria": "Velg tidsrom"
+    },
+    "toggle": {
+      "on": "På",
+      "off": "Av"
+    },
+    "actions": {
+      "testAi": "Test AI",
+      "runAnalysis": "Kjør analyse",
+      "refreshAnalysis": "Oppdater (forbi cache)"
+    },
+    "compare": {
+      "loading": "Sammenligning..."
+    },
+    "dataQuality": {
+      "cardTitle": "Datakvalitet",
+      "dataPoints": "Datapunkter",
+      "lastRecorded": "Sist registrert",
+      "daysSince": "Dager siden",
+      "completeness": "Fullstendighet",
+      "timeOfDayBalance": "Balanse (tid på dagen)",
+      "morning": "morgen",
+      "afternoon": "etterm.",
+      "evening": "kveld",
+      "score": "score",
+      "noData": "Ingen data funnet for valgt periode."
+    },
+    "interventions": {
+      "title": "Tiltak og anbefalinger",
+      "actionsLabel": "Kilder:",
+      "empty": "Ingen anbefalinger rapportert.",
+      "openSourceAria": "Åpne kilde: {{title}}",
+      "yearLabel": "År:"
+    }
   },
   "patternDetection": {
     "guidance": {

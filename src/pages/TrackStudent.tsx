@@ -6,7 +6,7 @@ import { SensoryTracker } from "@/components/SensoryTracker";
 import { EnvironmentalTracker } from "@/components/EnvironmentalTracker";
 import { Student, EmotionEntry, SensoryEntry, TrackingEntry, EnvironmentalEntry } from "@/types/student";
 import { ArrowLeft, Save, User } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from '@/hooks/use-toast';
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { logger } from "@/lib/logger";
@@ -32,31 +32,48 @@ const TrackStudent = () => {
     if (foundStudent) {
       setStudent(foundStudent);
     } else {
-      toast.error(String(tTracking('session.validationError')));
+      toast({
+        title: String(tTracking('session.validationError')),
+        description: String(tTracking('session.validationError')),
+        variant: 'destructive',
+      });
       navigate('/');
     }
   }, [studentId, navigate, tTracking]);
 
   const handleEmotionAdd = (emotion: Omit<EmotionEntry, 'id' | 'timestamp'>) => {
     setEmotions([...emotions, emotion]);
-    toast.success("Emotion recorded!");
+    toast({
+      title: "Emotion recorded!",
+      description: "Emotion recorded!",
+    });
   };
 
   const handleSensoryAdd = (sensory: Omit<SensoryEntry, 'id' | 'timestamp'>) => {
     setSensoryInputs([...sensoryInputs, sensory]);
-    toast.success("Sensory input recorded!");
+    toast({
+      title: "Sensory input recorded!",
+      description: "Sensory input recorded!",
+    });
   };
 
   const handleEnvironmentalAdd = (environmental: Omit<EnvironmentalEntry, 'id' | 'timestamp'>) => {
     setEnvironmentalData(environmental);
-    toast.success("Environmental conditions recorded!");
+    toast({
+      title: "Environmental conditions recorded!",
+      description: "Environmental conditions recorded!",
+    });
   };
 
   const handleSaveSession = async () => {
     if (!student) return;
     
     if (emotions.length === 0 && sensoryInputs.length === 0) {
-      toast.error(String(tTracking('session.validationError')));
+      toast({
+        title: String(tTracking('session.validationError')),
+        description: String(tTracking('session.validationError')),
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -90,15 +107,26 @@ const TrackStudent = () => {
       // Unified save flow
       const result = await saveTrackingEntryUnified(trackingEntry, { minDataPoints: 1 });
       if (!result.success) {
-        result.errors?.forEach(err => toast.error(err));
+        result.errors?.forEach(err => toast({
+          title: err,
+          description: err,
+          variant: 'destructive',
+        }));
         return;
       }
 
-      toast.success(String(tTracking('session.sessionSaved')));
+      toast({
+        title: String(tTracking('session.sessionSaved')),
+        description: String(tTracking('session.sessionSaved')),
+      });
       navigate(`/student/${student.id}`);
     } catch (error) {
       logger.error('Failed to save tracking session', { error });
-      toast.error(String(tTracking('session.saveError')));
+      toast({
+        title: String(tTracking('session.saveError')),
+        description: String(tTracking('session.saveError')),
+        variant: 'destructive',
+      });
     } finally {
       setIsLoading(false);
     }

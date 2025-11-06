@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
 import { TrendingUp, AlertTriangle, Target, Lightbulb, ArrowLeftRight } from 'lucide-react';
+import { stableKeyFromPattern } from '@/lib/key';
 
 type AnalysisBundle = {
   patterns?: Array<{ pattern?: string; description?: string; confidence?: number; type?: string; dataPoints?: number }>;
@@ -26,6 +27,7 @@ interface Props {
   onAddIntervention?: () => void;
   onScheduleBreak?: () => void;
   onJumpToTracking?: () => void;
+  onOpenPattern?: (patternId?: string) => void;
   className?: string;
 }
 
@@ -45,6 +47,7 @@ export const TeacherInsightsPanel: React.FC<Props> = ({
   onAddIntervention,
   onScheduleBreak,
   onJumpToTracking,
+  onOpenPattern,
   className = ''
 }) => {
   const sessions = filteredData?.entries?.length ?? 0;
@@ -79,7 +82,19 @@ export const TeacherInsightsPanel: React.FC<Props> = ({
         )}
 
         {topPattern && (
-          <div className="p-3 rounded-lg border">
+          <button
+            type="button"
+            className="p-3 rounded-lg border text-left w-full hover:bg-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            onClick={() => {
+              try {
+                const id = stableKeyFromPattern(topPattern as any);
+                onOpenPattern && onOpenPattern(id);
+              } catch {
+                onOpenPattern && onOpenPattern();
+              }
+            }}
+            aria-label="Open pattern details"
+          >
             <div className="flex items-center justify-between">
               <div className="font-medium flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
@@ -88,7 +103,7 @@ export const TeacherInsightsPanel: React.FC<Props> = ({
               {scoreToBadge(topPattern.confidence)}
             </div>
             <div className="text-sm mt-1">{topPattern.description || topPattern.pattern}</div>
-          </div>
+          </button>
         )}
 
         {topCorr && (

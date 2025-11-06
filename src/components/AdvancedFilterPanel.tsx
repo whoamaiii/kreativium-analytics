@@ -12,6 +12,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import { format, subDays } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -340,31 +341,15 @@ export const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4">
                   <div>
-                    <Label>{String(tAnalytics('filters.emotionTypes'))}</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {uniqueEmotions.map(emotion => (
-                        <div key={emotion} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={emotion}
-                            checked={criteria.emotions.types.includes(emotion)}
-                            onCheckedChange={(checked) => {
-                              const types = checked
-                                ? [...criteria.emotions.types, emotion]
-                                : criteria.emotions.types.filter(t => t !== emotion);
-                              updateFilter({
-                                emotions: { ...criteria.emotions, types }
-                              });
-                            }}
-                          />
-                          <label
-                            htmlFor={emotion}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {emotion}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
+                    <CategoryBrowser
+                      label={String(tAnalytics('filters.emotionTypes'))}
+                      options={uniqueEmotions}
+                      selected={criteria.emotions.types}
+                      onChange={(types) => updateFilter({ emotions: { ...criteria.emotions, types } })}
+                      columns={3}
+                      searchable
+                      showCount
+                    />
                   </div>
 
                   <div>
@@ -421,31 +406,15 @@ export const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
                 </AccordionTrigger>
                 <AccordionContent className="space-y-4">
                   <div>
-                    <Label>{String(tAnalytics('filters.sensoryTypes'))}</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {uniqueSensoryTypes.map(type => (
-                        <div key={type} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`sensory-${type}`}
-                            checked={criteria.sensory.types.includes(type)}
-                            onCheckedChange={(checked) => {
-                              const types = checked
-                                ? [...criteria.sensory.types, type]
-                                : criteria.sensory.types.filter(t => t !== type);
-                              updateFilter({
-                                sensory: { ...criteria.sensory, types }
-                              });
-                            }}
-                          />
-                          <label
-                            htmlFor={`sensory-${type}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {type}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
+                    <CategoryBrowser
+                      label={String(tAnalytics('filters.sensoryTypes'))}
+                      options={uniqueSensoryTypes}
+                      selected={criteria.sensory.types}
+                      onChange={(types) => updateFilter({ sensory: { ...criteria.sensory, types } })}
+                      columns={3}
+                      searchable
+                      showCount
+                    />
                   </div>
 
                   <div>

@@ -8,7 +8,7 @@ import { SmartDataEntry } from "@/components/SmartDataEntry";
 import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/student";
 import { dataStorage } from "@/lib/dataStorage";
 import { ArrowLeft, Save, X, Clock, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { analyticsManager } from "@/lib/analyticsManager";
 import { format } from "date-fns";
@@ -78,7 +78,7 @@ const EnhancedTrackStudent = () => {
         sensoryInputs: recentSensoryInputs
       });
     }
-  }, [studentId, navigate]);
+  }, [studentId, navigate, tCommon]);
 
   const handleEmotionAdd = (emotion: Omit<EmotionEntry, 'id' | 'timestamp'>) => {
     const newEmotion: EmotionEntry = {
@@ -233,7 +233,9 @@ const EnhancedTrackStudent = () => {
                 <div className="text-sm text-muted-foreground">{String(tStudent('interface.sensoryInputs'))}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary">{sessionDuration}m</div>
+                <div className="text-2xl font-bold text-primary">
+                  {sessionDuration}{String(tTracking('session.minutesSuffix'))}
+                </div>
                 <div className="text-sm text-muted-foreground">{String(tTracking('session.sessionTime'))}</div>
               </div>
             </div>
@@ -258,7 +260,7 @@ const EnhancedTrackStudent = () => {
         {(sessionEmotions.length > 0 || sessionSensoryInputs.length > 0) && (
           <Card>
             <CardHeader>
-              <CardTitle>Session Data Review</CardTitle>
+              <CardTitle>{String(tTracking('session.summaryTitle'))}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Current Session Emotions */}

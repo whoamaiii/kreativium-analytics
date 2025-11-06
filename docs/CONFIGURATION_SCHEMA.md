@@ -206,6 +206,14 @@ Notes
   see docs/CONFIG_TROUBLESHOOTING.md and the validateAnalyticsRuntimeConfig helper.
 - Local storage quota errors are caught and will log via the central logger without crashing the UI.
 
+UI conventions (source-of-truth locations)
+
+- Toasts: import from `@/hooks/use-toast` only; `<Toaster />` lives in `src/components/ui/sonner-toaster.tsx`.
+- Analytics panels live under `src/components/analytics-panels/` and are code-split via `src/components/lazy/*` wrappers.
+- Analytics tab keys are defined in `src/config/analyticsTabs.ts`. Do not re-export from other locations.
+- Date range selection composes `DateRangeSelector` with `ui/date-range-picker` for consistent behavior and accessibility.
+- UI primitives live in `src/components/ui/` and are presentation-only.
+
 ---
 
 Schema version

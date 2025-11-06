@@ -16,6 +16,9 @@ import { generateInsightsFromWorkerInputs } from '@/lib/insights';
 import { computeInsights } from '@/lib/insights/unified';
 import { ANALYTICS_CONFIG, analyticsConfig } from '@/lib/analyticsConfig';
 import { generateAnalyticsSummary } from '@/lib/analyticsSummary';
+import { AlertDetectionEngine } from '@/lib/alerts/engine';
+import { BaselineService } from '@/lib/alerts/baseline';
+import type { AlertEvent } from '@/lib/alerts/types';
 
 // Type is now imported from @/types/analytics
 
@@ -138,6 +141,53 @@ const workerCache = {
 // Create cached pattern analysis instance
 const cachedAnalysis = createCachedPatternAnalysis(workerCache);
 
+const baselineService = new BaselineService();
+const alertDetectionEngine = new AlertDetectionEngine({ baselineService });
+
+function extractStudentId(data: AnalyticsData): string | null {
+  const entryId = data.entries?.[0]?.studentId;
+  if (entryId) return entryId;
+  const emotionId = data.emotions?.[0]?.studentId;
+  if (emotionId) return emotionId;
+  const sensoryId = data.sensoryInputs?.[0]?.studentId;
+  if (sensoryId) return sensoryId;
+  return null;
+}
+
+function runAlertDetection(data: AnalyticsData, opts?: { prewarm?: boolean }): AlertEvent[] {
+  try {
+    const studentId = extractStudentId(data);
+    if (!studentId) return [];
+    const baseline = baselineService.updateBaseline({
+      studentId,
+      emotions: data.emotions,
+      sensory: data.sensoryInputs,
+      tracking: data.entries,
+    });
+    return alertDetectionEngine.runDetection({
+      studentId,
+      emotions: data.emotions,
+      sensory: data.sensoryInputs,
+      tracking: data.entries,
+      baseline,
+      now: new Date(),
+    }).map((alert) => ({
+      ...alert,
+      metadata: {
+        ...(alert.metadata ?? {}),
+        prewarm: opts?.prewarm ?? false,
+      },
+    }));
+  } catch (error) {
+    try {
+      logger.warn('[analytics.worker] Alert detection failed', error as Error);
+    } catch {
+      /* noop */
+    }
+    return [];
+  }
+}
+
 /**
  * Compute a stable hash for the subset of config that affects analysis output.
  */
@@ -205,6 +255,28 @@ export async function handleMessage(e: MessageEvent<any>) {
   // B) Typed task envelope built via buildInsightsTask
   // C) Legacy AnalyticsData directly
   const msg = e.data as any;
+
+  // Lightweight event ingestion channel from game UI
+  if (msg && msg.type === 'game:event' && msg.payload) {
+    try {
+      // For now, aggregate into an in-memory counter and expose via alerts channel for observability
+      const ev = msg.payload as { kind: string; ts: number };
+      const key = `game:event:count:${ev.kind}`;
+      const prev = (workerCache.get(key) as number | undefined) ?? 0;
+      workerCache.set(key, prev + 1, ['game-events'], 300000);
+    } catch {}
+    return;
+  }
+
+  if (msg && msg.type === 'game:session_summary' && msg.payload) {
+    try {
+      const key = 'game:session:last';
+      workerCache.set(key, msg.payload, ['game-session'], 600000);
+      // Optionally surface via alerts channel for UI hooks wanting summaries quickly
+      enqueueMessage({ type: 'alerts', payload: { alerts: [], prewarm: true } } as unknown as AnalyticsWorkerMessage);
+    } catch {}
+    return;
+  }
 
   // Intercept cache control messages first
   if (msg && typeof msg.type === 'string' && msg.type.startsWith('CACHE/')) {
@@ -421,8 +493,29 @@ try {
       updatedCharts: ['insightList']
     };
 
+    const detectionAlerts = runAlertDetection(filteredData, { prewarm: isPrewarm });
+    const detectionStudentId = extractStudentId(filteredData);
+    if (detectionAlerts.length) {
+      enqueueMessage({
+        type: 'alerts',
+        cacheKey: filteredData.cacheKey,
+        payload: {
+          alerts: detectionAlerts,
+          studentId: detectionStudentId ?? undefined,
+          prewarm: isPrewarm,
+        },
+      });
+    }
+
     // Post the final results back to the main thread.
-    enqueueMessage({ type: 'complete', cacheKey: filteredData.cacheKey, payload: ({ ...results, prewarm: isPrewarm } as any), chartsUpdated: ['insightList'], progress: { stage: 'complete', percent: 100 } } as unknown as AnalyticsWorkerMessage);
+    const completePayload: AnalyticsResults & { prewarm?: boolean } = { ...results, prewarm: isPrewarm };
+    enqueueMessage({
+      type: 'complete',
+      cacheKey: filteredData.cacheKey,
+      payload: completePayload,
+      chartsUpdated: ['insightList'],
+      progress: { stage: 'complete', percent: 100 },
+    });
 
   } catch (error) {
     try {

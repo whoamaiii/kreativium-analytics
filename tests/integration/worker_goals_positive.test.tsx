@@ -55,7 +55,7 @@ const createAnalyticsData = (entries: TrackingEntry[], overrides: Partial<Analyt
 
 // Test worker that echoes back goals received in payload
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __WORKER_CAPTURED_MESSAGES__: Array<{ cacheKey?: string; payload?: InsightsWorkerTask['payload'] }> | undefined;
 }
 

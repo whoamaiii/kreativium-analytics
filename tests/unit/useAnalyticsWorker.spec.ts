@@ -24,7 +24,7 @@ interface CapturedPost {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
+   
   var __WORKER_INSTANCES__: unknown[] | undefined;
 }
 

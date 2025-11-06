@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -17,10 +20,11 @@
     "preview": "vite preview",
     "preview:poc": "vite preview --mode poc",
     "test": "vitest",
+    "test:smoke": "vitest run tests/unit/visualSnapshot.test.tsx tests/unit/interactiveFeatures.test.tsx tests/unit/exportAiReport.test.ts tests/unit/evidence/select.weighted.test.ts tests/unit/dataTransformations.test.ts tests/unit/dataTransformations.performance.test.ts tests/unit/analyticsWorkerFallback.test.ts tests/unit/sanitizePlainNorwegian.test.ts tests/unit/exportFilters.test.ts tests/unit/heuristicAnalysisEngine.test.ts src/components/AnalyticsDashboard.test.tsx src/lib/__tests__/analyticsWorkerFallback.spec.ts src/lib/__tests__/chartkit.spec.ts src/lib/__tests__/evidence.index.spec.ts src/lib/__tests__/dataPreprocessing.test.ts",
     "test:config": "vitest run src/config/__tests__/analytics.config.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint:locales": "node scripts/lint-locales.js",
-    "e2e:install": "npx --yes playwright@latest install --with-deps",
+    "e2e:install": "npx playwright install --with-deps",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:debug": "playwright test --debug",
@@ -47,9 +51,11 @@
     "depcheck": "node -e \"require('fs').mkdirSync('artifacts',{recursive:true})\" && depcheck --json > artifacts/depcheck-report.json",
     "verify:deps": "npm run typecheck && npm run build && vitest run",
     "validate:lazy": "tsx scripts/validate-lazy-imports.ts",
-    "lint:all": "npm run lint && npm run validate:lazy"
+    "lint:all": "npm run lint && npm run validate:lazy",
+    "models:copy": "tsx scripts/copy-faceapi-models.ts"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.22-rc.20250304",
     "@radix-ui/react-accordion": "^1.2.0",
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-avatar": "^1.1.0",
@@ -74,6 +80,8 @@
     "@react-three/fiber": "^8.18.0",
     "@tanstack/react-query": "^5.56.2",
     "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@vladmandic/face-api": "^1.7.15",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
@@ -124,6 +132,7 @@
     "eslint-plugin-react": "^7.36.1",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
+    "eslint-plugin-unused-imports": "^4.2.0",
     "globals": "^15.9.0",
     "husky": "^9.1.6",
     "jsdom": "^26.1.0",
@@ -138,8 +147,7 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^7.1.2",
-    "vitest": "^3.2.4",
-    "eslint-plugin-unused-imports": "^4.2.0"
+    "vitest": "^3.2.4"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

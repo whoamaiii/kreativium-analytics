@@ -33,6 +33,67 @@ if (!('requestAnimationFrame' in window)) {
   window.cancelAnimationFrame = (id: number) => clearTimeout(id as unknown as any);
 }
 
+// Canvas/WebGL mocks for libraries like three.js and echarts
+if (!(globalThis as any).HTMLCanvasElement) {
+  (globalThis as any).HTMLCanvasElement = class {} as any;
+}
+
+if (!(HTMLCanvasElement.prototype as any).getContext) {
+  // @ts-expect-error test shim
+  HTMLCanvasElement.prototype.getContext = vi.fn((type: string) => {
+    if (type === '2d') {
+      return {
+        fillRect: vi.fn(),
+        clearRect: vi.fn(),
+        getImageData: vi.fn(() => ({ data: new Uint8ClampedArray() })),
+        putImageData: vi.fn(),
+        createImageData: vi.fn(() => ([] as unknown) as ImageData),
+        setTransform: vi.fn(),
+        drawImage: vi.fn(),
+        save: vi.fn(),
+        fillText: vi.fn(),
+        restore: vi.fn(),
+        beginPath: vi.fn(),
+        moveTo: vi.fn(),
+        lineTo: vi.fn(),
+        closePath: vi.fn(),
+        stroke: vi.fn(),
+        translate: vi.fn(),
+        scale: vi.fn(),
+        rotate: vi.fn(),
+        arc: vi.fn(),
+        fill: vi.fn(),
+        measureText: vi.fn(() => ({ width: 0 })),
+        transform: vi.fn(),
+        rect: vi.fn(),
+        clip: vi.fn(),
+      } as unknown as CanvasRenderingContext2D;
+    }
+    // Return a minimal WebGL-like object when asked for webgl/webgl2
+    if (type === 'webgl' || type === 'experimental-webgl' || type === 'webgl2') {
+      return {
+        getExtension: vi.fn(),
+        createShader: vi.fn(),
+        shaderSource: vi.fn(),
+        compileShader: vi.fn(),
+        createProgram: vi.fn(),
+        attachShader: vi.fn(),
+        linkProgram: vi.fn(),
+        useProgram: vi.fn(),
+        getShaderParameter: vi.fn(),
+        getProgramParameter: vi.fn(),
+        getShaderInfoLog: vi.fn(),
+        getProgramInfoLog: vi.fn(),
+        clearColor: vi.fn(),
+        clear: vi.fn(),
+        drawArrays: vi.fn(),
+        viewport: vi.fn(),
+      } as unknown as WebGLRenderingContext;
+    }
+    return null;
+  });
+}
+
 // ResizeObserver mock
 if (!(globalThis as any).ResizeObserver) {
   (globalThis as any).ResizeObserver = class {

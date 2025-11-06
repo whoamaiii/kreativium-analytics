@@ -9,7 +9,6 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { hashOfString } from '@/lib/key';
 
 // Keep charting dependencies inside this chunk to align with manualChunks strategy
-import React from 'react';
 const EChartContainer = React.lazy(() => import('@/components/charts/EChartContainer').then(m => ({ default: m.EChartContainer })));
 import type { EChartsOption } from 'echarts';
 import { buildCorrelationHeatmapOption } from '@/components/charts/ChartKit';

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { AlertTriangle, CheckCircle, Eye, TrendingUp } from "lucide-react";
 import { alertSystem, AlertHistoryEntry } from "@/lib/alertSystem";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
 

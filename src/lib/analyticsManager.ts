@@ -1,7 +1,5 @@
-import { Student, EmotionEntry, SensoryEntry } from "@/types/student";
+import { Student } from "@/types/student";
 import { computeInsights, type ComputeInsightsInputs } from "@/lib/insights/unified";
-import { generateAnalyticsSummary } from "@/lib/analyticsSummary";
-import { alertSystem } from "@/lib/alertSystem";
 import { dataStorage, IDataStorage } from "@/lib/dataStorage";
 // Mock seeding has been moved to optional utilities under lib/mock; not used here
 import { ANALYTICS_CONFIG, DEFAULT_ANALYTICS_CONFIG, analyticsConfig, STORAGE_KEYS } from "@/lib/analyticsConfig";
@@ -9,10 +7,10 @@ import { logger } from "@/lib/logger";
 import type { AnalyticsResults } from "@/types/analytics";
 // AI analysis integration
 import { HeuristicAnalysisEngine, LLMAnalysisEngine } from "@/lib/analysis";
-import type { AnalysisEngine, AnalyticsResultsAI, AnalysisOptions, AiMetadata } from "@/lib/analysis";
+import type { AnalysisEngine } from "@/lib/analysis";
 
-// Compatibility type alias to maintain narrow typing while supporting AI metadata
-type AnalyticsResultsCompat = AnalyticsResults & { ai?: AiMetadata };
+import { AnalyticsRunner } from "@/lib/analytics/runner";
+import type { AnalyticsResultsCompat } from "@/lib/analytics/types";
 import { loadAiConfig } from "@/lib/aiConfig";
 import { getProfileMap, initializeStudentProfile, saveProfiles } from "@/lib/analyticsProfiles";
 import { analyticsCoordinator } from "@/lib/analyticsCoordinator";
@@ -171,7 +169,7 @@ let __lastFacadeLogMinute: number | null = null;
 const __ttlDeprecationWarnWindow = new Map<string, number>();
 class AnalyticsManagerService {
   private static instance: AnalyticsManagerService;
-private analyticsProfiles: AnalyticsProfileMap;
+  private analyticsProfiles: AnalyticsProfileMap;
   /**
    * @deprecated Manager-level TTL cache is deprecated. New code should rely on
    * useAnalyticsWorker + usePerformanceCache at the hook level (with worker-internal
@@ -180,10 +178,15 @@ private analyticsProfiles: AnalyticsProfileMap;
    */
   private analyticsCache: AnalyticsCache = new Map();
   private storage: IDataStorage;
+  private analyticsRunner: AnalyticsRunner;
 
   private constructor(storage: IDataStorage, profiles: AnalyticsProfileMap) {
     this.storage = storage;
     this.analyticsProfiles = profiles;
+    this.analyticsRunner = new AnalyticsRunner({
+      storage: this.storage,
+      createAnalysisEngine: this.createAnalysisEngine.bind(this),
+    });
   }
 
   /**
@@ -360,7 +363,7 @@ private analyticsProfiles: AnalyticsProfileMap;
       }
     }
 
-    const results = await this.generateAnalytics(student, options?.useAI);
+    const results = await this.analyticsRunner.run(student, options?.useAI);
     if (!this.isManagerTtlCacheDisabled()) {
       this.analyticsCache.set(student.id, { results, timestamp: new Date() });
     } else {
@@ -381,136 +384,6 @@ private analyticsProfiles: AnalyticsProfileMap;
     }
 
     return results;
-  }
-
-  /**
-   * Generates fresh analytics for a student using the selected analysis engine.
-   * 
-   * @private
-   * @async
-   * @method generateAnalytics
-   * @param {Student} student - The student to analyze
-   * @param {boolean} [useAI] - Optional runtime AI toggle
-   * @returns {Promise<AnalyticsResultsCompat>} Complete analytics results
-   * 
-   * @description Delegates analytics generation to a pluggable analysis engine
-   * (heuristic or AI) with graceful fallback and summary facade integration.
-   * 
-   * @throws {Error} Analytics generation failed for student
-   */
-  private async generateAnalytics(student: Student, useAI?: boolean): Promise<AnalyticsResultsCompat> {
-    // Early guard for invalid input
-    if (!student || !student.id) {
-      logger.error('[analyticsManager] generateAnalytics: invalid student', { student });
-      return {
-        patterns: [],
-        correlations: [],
-        environmentalCorrelations: [],
-        predictiveInsights: [],
-        anomalies: [],
-        insights: [],
-        error: 'INVALID_STUDENT',
-      } as AnalyticsResultsCompat;
-    }
-
-    try {
-      const trackingEntries = this.storage.getEntriesForStudent(student.id) || [];
-      const goals = this.storage.getGoalsForStudent(student.id) || [];
-      const emotions: EmotionEntry[] = trackingEntries.flatMap(entry => entry.emotions || []);
-      const sensoryInputs: SensoryEntry[] = trackingEntries.flatMap(entry => entry.sensoryInputs || []);
-
-      // Build engine via factory with priority: runtime > config > env
-      const engine = this.createAnalysisEngine(useAI);
-
-      // Always include lightweight AI metadata for lineage/traceability
-      const opts: AnalysisOptions = { includeAiMetadata: true };
-      const results = await engine.analyzeStudent(student.id, undefined, opts);
-
-      // Edge case: if useAI was requested but heuristic was used, add caveat
-      if (useAI === true && engine instanceof HeuristicAnalysisEngine && opts.includeAiMetadata) {
-        if (!results.ai) results.ai = {};
-        if (!results.ai.caveats) results.ai.caveats = [];
-        results.ai.caveats.push('AI disabled or unavailable; heuristic used');
-      }
-
-      // Optionally replace insights via summary facade when enabled
-      try {
-        const liveConfig = (() => {
-          try { return analyticsConfig.getConfig(); } catch { return null; }
-        })();
-        const useSummaryFacade = (liveConfig?.features?.enableSummaryFacade ?? ANALYTICS_CONFIG.features?.enableSummaryFacade) === true;
-        if (useSummaryFacade) {
-          const summary = await generateAnalyticsSummary({
-            entries: trackingEntries,
-            emotions,
-            sensoryInputs,
-            results: {
-              patterns: (results as AnalyticsResultsCompat).patterns ?? [],
-              correlations: (results as AnalyticsResultsCompat).correlations ?? [],
-              predictiveInsights: (results as AnalyticsResultsCompat).predictiveInsights ?? [],
-            },
-          });
-          // Replace insights; attach optional metadata for downstream health score
-          (results as AnalyticsResultsCompat).insights = summary.insights;
-          (results as unknown as AnalyticsResultsCompat & { hasMinimumData?: boolean; confidence?: number }).hasMinimumData = summary.hasMinimumData;
-          (results as unknown as AnalyticsResultsCompat & { hasMinimumData?: boolean; confidence?: number }).confidence = summary.confidence;
-          // Low-noise telemetry: log at most once per minute when facade used
-          try {
-            const nowMinute = new Date().getMinutes();
-            if (__lastFacadeLogMinute !== nowMinute) {
-              logger.debug('[analyticsManager] Using summary facade for insights', {
-                studentId: student.id,
-                entries: trackingEntries.length,
-                emotions: emotions.length,
-                sensory: sensoryInputs.length,
-              });
-              __lastFacadeLogMinute = nowMinute;
-            }
-          } catch (e) {
-            try { logger.warn('[analyticsManager] Summary facade debug logging failed', e as Error); } catch {}
-          }
-        }
-      } catch (e) {
-        logger.warn('[analyticsManager] Summary facade failed, keeping original insights:', e);
-        // fail-soft: keep original insights when summary facade fails
-      }
-      
-      // Trigger alerts if we have tracking data - this is the only side effect
-      if (trackingEntries.length > 0) {
-        await alertSystem.generateAlertsForStudent(student, emotions, sensoryInputs, trackingEntries);
-      }
-      
-      return results as AnalyticsResultsCompat;
-    } catch (error) {
-      logger.error(`[analyticsManager] generateAnalytics failed for student ${student.id}`, { error: error instanceof Error ? { message: error.message, stack: error.stack, name: error.name } : error });
-      // Attempt heuristic fallback on failure
-      try {
-        const fallback = await new HeuristicAnalysisEngine().analyzeStudent(student.id, undefined, { includeAiMetadata: true });
-        if ((fallback as any)?.error) {
-          return {
-            patterns: [],
-            correlations: [],
-            environmentalCorrelations: [],
-            predictiveInsights: [],
-            anomalies: [],
-            insights: [],
-            error: 'ANALYTICS_GENERATION_FAILED',
-          } as AnalyticsResultsCompat;
-        }
-        return fallback as AnalyticsResultsCompat;
-      } catch {
-        // Return minimal safe result to prevent UI crashes
-        return {
-          patterns: [],
-          correlations: [],
-          environmentalCorrelations: [],
-          predictiveInsights: [],
-          anomalies: [],
-          insights: [],
-          error: 'ANALYTICS_GENERATION_FAILED',
-        } as AnalyticsResultsCompat;
-      }
-    }
   }
 
   /**

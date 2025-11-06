@@ -138,13 +138,13 @@ describe('toMLSessions', () => {
 describe('prepareEmotionDataset', () => {
   beforeEach(() => {
     // Open a TF scope for allocations in each test
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (tf.engine() as any).startScope?.();
   });
   afterEach(() => {
     // Make sure no stray tensors left allocated
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (tf.engine() as any).endScope?.();
     } catch {
       // ignore if scope was not started
@@ -255,12 +255,12 @@ describe('prepareEmotionDataset', () => {
 
 describe('prepareSensoryDataset', () => {
   beforeEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     (tf.engine() as any).startScope?.();
   });
   afterEach(() => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       (tf.engine() as any).endScope?.();
     } catch {
       // ignore if scope was not started

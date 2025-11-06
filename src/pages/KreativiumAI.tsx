@@ -1,403 +1,177 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sparkles, Play, RefreshCw, Database, Clock, Info, AlertTriangle, Loader2, Download, Share2, Clipboard as ClipboardIcon } from 'lucide-react';
-import { dataStorage } from '@/lib/dataStorage';
-import type { Student } from '@/types/student';
-import { LLMAnalysisEngine } from '@/lib/analysis/llmAnalysisEngine';
-import type { AnalyticsResultsAI, TimeRange } from '@/lib/analysis/analysisEngine';
-import { loadAiConfig } from '@/lib/aiConfig';
-import { openRouterClient } from '@/lib/ai/openrouterClient';
-import { logger } from '@/lib/logger';
+import { Sparkles, Play, RefreshCw, Database, Clock, AlertTriangle, Loader2 } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
-import { computeComparisonRange, formatComparisonPeriodLabel, type ComparisonMode } from '@/lib/analysis/dateHelpers';
+import { formatComparisonPeriodLabel } from '@/lib/analysis/dateHelpers';
 import { ComparisonSummary } from '@/components/ComparisonSummary';
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatAiReportText, downloadPdfFromText } from '@/lib/ai/exportAiReport';
 import { aiMetrics } from '@/lib/ai/metrics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { announceToScreenReader } from '@/utils/accessibility';
-import { resolveSources } from '@/lib/evidence';
-import type { EvidenceSource } from '@/lib/evidence';
-
-type Preset = 'all' | '7d' | '30d' | '90d';
-
-type DataQualityBuckets = Record<'morning' | 'afternoon' | 'evening', number>;
-
-interface DataQualitySummary {
-  total: number;
-  last: Date | null;
-  daysSince: number | null;
-  completeness: number;
-  balance: number;
-  buckets: DataQualityBuckets;
-  avgIntensity: number | null;
-}
-
-interface ConcreteTimeRange extends TimeRange {
-  start: Date;
-  end: Date;
-}
-
-function computeRange(preset: Preset): ConcreteTimeRange | undefined {
-  if (preset === 'all') return undefined;
-  const now = new Date();
-  const end = new Date(now);
-  const start = new Date(now);
-  const days = preset === '7d' ? 7 : preset === '30d' ? 30 : 90;
-  start.setDate(now.getDate() - days);
-  return {
-    start,
-    end,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  };
-}
-
-function toConcreteTimeRange(range: TimeRange): ConcreteTimeRange {
-  const start = range.start instanceof Date ? range.start : new Date(range.start);
-  const end = range.end instanceof Date ? range.end : new Date(range.end);
-  return {
-    start,
-    end,
-    timezone: range.timezone,
-  };
-}
-
-function formatRangeCacheKey(range: ConcreteTimeRange | undefined): string {
-  if (!range) return 'all';
-  return `${range.start.toISOString()}_${range.end.toISOString()}`;
-}
+import { useKreativiumAiState } from '@/hooks/useKreativiumAiState';
+import type { Preset } from '@/hooks/useKreativiumAiState';
+import { AiReportToolbar } from '@/components/analytics/AiReportToolbar';
+import { AiMetadataCard } from '@/components/analytics/AiMetadataCard';
 
 function formatDateForDisplay(date: Date): string {
   return date.toLocaleDateString();
 }
 
-function getToolbarStorageKey(students: Student[], currentStudentId: string, range: ConcreteTimeRange | undefined): string {
-  const studentName = students.find((st) => st.id === currentStudentId)?.name || 'elev';
-  const normalizedStudent = studentName.toLowerCase();
-  const rangeLabel = range
-    ? `${formatDateForDisplay(range.start)}_${formatDateForDisplay(range.end)}`.toLowerCase()
-    : 'alle';
-  return `ai_toolbar_last_${normalizedStudent}_${rangeLabel}`;
-}
+const getOptionalStringField = <T extends Record<string, unknown>, K extends keyof T>(
+  obj: T | undefined,
+  key: K
+): string | undefined => {
+  if (!obj) return undefined;
+  const value = obj[key];
+  return typeof value === 'string' ? value : undefined;
+};
 
-function computeDataQualityMetrics(studentId: string, timeframe?: ConcreteTimeRange): DataQualitySummary | null {
-  try {
-    if (!studentId) return null;
-    const entriesAll = dataStorage.getEntriesForStudent(studentId) || [];
-    const start = timeframe?.start;
-    const end = timeframe?.end;
-    const inRange = start || end
-      ? entriesAll.filter((entry) => {
-          const timestamp = entry.timestamp.getTime();
-          const startMs = start ? start.getTime() : -Infinity;
-          const endMs = end ? end.getTime() : Infinity;
-          return timestamp >= startMs && timestamp <= endMs;
-        })
-      : entriesAll;
-    const total = inRange.length;
-    const last = inRange[0]?.timestamp || null;
-    const daysSince = last ? Math.max(0, Math.round((Date.now() - last.getTime()) / (1000 * 60 * 60 * 24))) : null;
-    const completeCount = inRange.filter(e => (e.emotions?.length || 0) > 0 && (e.sensoryInputs?.length || 0) > 0).length;
-    const completeness = total > 0 ? Math.round((completeCount / total) * 100) : 0;
-    const buckets: DataQualityBuckets = { morning: 0, afternoon: 0, evening: 0 };
-    let totalIntensity = 0;
-    let intensityCount = 0;
-    for (const e of inRange) {
-      const h = e.timestamp.getHours();
-      if (h < 12) buckets.morning++;
-      else if (h < 16) buckets.afternoon++;
-      else buckets.evening++;
-      
-      // Calculate average intensity from emotions
-      if (e.emotions?.length) {
-        for (const emotion of e.emotions) {
-          if (typeof emotion.intensity === 'number') {
-            totalIntensity += emotion.intensity;
-            intensityCount++;
-          }
-        }
-      }
-    }
-    const counts = Object.values(buckets);
-    const max = counts.length ? Math.max(...counts) : 0;
-    const min = counts.length ? Math.min(...counts) : 0;
-    const balance = max > 0 ? Math.round((min / max) * 100) : 0;
-    const avgIntensity = intensityCount > 0 ? totalIntensity / intensityCount : null;
-    return { total, last, daysSince, completeness, balance, buckets, avgIntensity };
-  } catch {
-    return null;
-  }
-}
+type NavigatorWithShare = Navigator & {
+  share?: (data: ShareData) => Promise<void>;
+};
 
 export default function KreativiumAI(): JSX.Element {
   const { tAnalytics } = useTranslation();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [studentId, setStudentId] = useState<string>('');
-  const [preset, setPreset] = useState<Preset>('30d');
-  const [isTesting, setIsTesting] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isAnalyzingBaseline, setIsAnalyzingBaseline] = useState(false);
-  const [error, setError] = useState<string>('');
-  const [results, setResults] = useState<AnalyticsResultsAI | null>(null);
-  const [baselineResults, setBaselineResults] = useState<AnalyticsResultsAI | null>(null);
-  // const [lastModelUsed, setLastModelUsed] = useState<string>('');
-  const [fromUiCache, setFromUiCache] = useState<boolean>(false);
-  const resultsCacheRef = useRef<Map<string, { current: AnalyticsResultsAI, baseline: AnalyticsResultsAI | null }>>(new Map());
-  const [compareEnabled, setCompareEnabled] = useState<boolean>(false);
-  const [compareMode, setCompareMode] = useState<'previous' | 'lastMonth' | 'lastYear'>('previous');
-  const [toolbarLast, setToolbarLast] = useState<{ type: 'copy' | 'pdf' | 'share' | null; at: number | null }>({ type: null, at: null });
-  const [iepSafeMode, setIepSafeMode] = useState<boolean>(true);  // Default ON for safety
-  const [resolvedSources, setResolvedSources] = useState<Map<string, EvidenceSource>>(new Map());
+  const {
+    students,
+    studentId,
+    setStudentId,
+    preset,
+    setPreset,
+    timeframe,
+    comparisonRange,
+    compareEnabled,
+    setCompareEnabled,
+    compareMode,
+    onCompareModeChange,
+    iepSafeMode,
+    setIepSafeMode,
+    isTesting,
+    isAnalyzing,
+    isAnalyzingBaseline,
+    error,
+    clearError,
+    results,
+    baselineResults,
+    analyze,
+    refreshAnalyze,
+    testAI,
+    fromUiCache,
+    dataQuality,
+    baselineDataQuality,
+    hasSmallBaseline,
+    keyFindings,
+    resolvedSources,
+    toolbarLast,
+    setToolbarLast,
+    aiConfig,
+    isLocal,
+    displayModelName,
+  } = useKreativiumAiState();
 
-  // Clear cache when IEP mode changes
-  useEffect(() => {
-    setResults(null);
-    setBaselineResults(null);
-    resultsCacheRef.current.clear();
-  }, [iepSafeMode]);
+  const toolbarLabels = React.useMemo(() => ({
+    copy: String(tAnalytics('interface.toolbarCopy')),
+    copyTooltip: String(tAnalytics('interface.toolbarCopyTooltip')),
+    copyAria: String(tAnalytics('interface.toolbarCopyAria')),
+    pdf: String(tAnalytics('interface.toolbarPdf')),
+    pdfTooltip: String(tAnalytics('interface.toolbarPdfTooltip')),
+    pdfAria: String(tAnalytics('interface.toolbarPdfAria')),
+    share: String(tAnalytics('interface.toolbarShare')),
+    shareTooltip: String(tAnalytics('interface.toolbarShareTooltip')),
+    shareAria: String(tAnalytics('interface.toolbarShareAria')),
+    lastExportShort: String(tAnalytics('interface.lastExportShort')),
+  }), [tAnalytics]);
 
-  const ai = loadAiConfig();
-  const isLocal = (() => {
-    const url = ai.baseUrl || '';
-    const quick = url.includes('localhost') || url.includes('127.0.0.1');
-    if (quick) return true;
+  const fromCacheLabel = React.useMemo(() => String(tAnalytics('interface.fromCache')), [tAnalytics]);
+
+  const globalJsonValidity = React.useMemo(() => {
     try {
-      const u = new URL(url);
-      const h = (u.hostname || '').toLowerCase();
-      if (h === 'localhost' || h === '127.0.0.1') return true;
-      if (/^10\./.test(h)) return true;
-      if (/^192\.168\./.test(h)) return true;
-      if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(h)) return true;
-      return Boolean(ai.localOnly);
+      const summary = aiMetrics.summary();
+      const pct = Math.round((summary.jsonValidity || 0) * 100);
+      return String(
+        tAnalytics('interface.aiMetadataJsonValidity', {
+          percentage: pct,
+          defaultValue: 'JSON‑gyldighet (global): {{percentage}}%',
+        })
+      );
     } catch {
-      return Boolean(ai.localOnly) || quick;
+      return null;
     }
-  })();
+  }, [tAnalytics]);
 
-  // Cosmetic model label: always show "Kreativium-AI" as requested
-  const displayModelName = 'Kreativium-AI';
+  const caveatsLabel = React.useMemo(
+    () => String(tAnalytics('interface.metadataCaveatsLabel', { defaultValue: 'Forbehold:' })),
+    [tAnalytics]
+  );
 
-  useEffect(() => {
-    try {
-      const s = dataStorage.getStudents();
-      setStudents(s);
-      if (s.length && !studentId) setStudentId(s[0].id);
-    } catch (e) {
-      logger.error('[KreativiumAI] load students failed', e as Error);
-      setStudents([]);
-    }
-  }, [studentId]);
+  const headerTexts = React.useMemo(() => ({
+    title: String(tAnalytics('interface.aiHeader.title', { defaultValue: 'Kreativium‑AI' })),
+    subtitle: String(tAnalytics('interface.aiHeader.subtitle', { defaultValue: 'Lokal LLM for mønstre, korrelasjoner og tiltak' })),
+    modelLabel: String(tAnalytics('interface.aiHeader.modelLabel', { defaultValue: 'Modell:' })),
+    localBadge: String(tAnalytics('interface.aiHeader.localBadge', { defaultValue: 'Local model' })),
+    remoteBadge: String(tAnalytics('interface.aiHeader.remoteBadge', { defaultValue: 'Remote' })),
+  }), [tAnalytics]);
 
-  const timeframe = useMemo<ConcreteTimeRange | undefined>(() => computeRange(preset), [preset]);
+  const dataQualityTexts = React.useMemo(() => ({
+    cardTitle: String(tAnalytics('interface.dataQuality.cardTitle', { defaultValue: 'Datakvalitet' })),
+    dataPoints: String(tAnalytics('interface.dataQuality.dataPoints', { defaultValue: 'Datapunkter' })),
+    lastRecorded: String(tAnalytics('interface.dataQuality.lastRecorded', { defaultValue: 'Sist registrert' })),
+    daysSince: String(tAnalytics('interface.dataQuality.daysSince', { defaultValue: 'Dager siden' })),
+    completeness: String(tAnalytics('interface.dataQuality.completeness', { defaultValue: 'Fullstendighet' })),
+    timeOfDayBalance: String(tAnalytics('interface.dataQuality.timeOfDayBalance', { defaultValue: 'Balanse (tid på dagen)' })),
+    morning: String(tAnalytics('interface.dataQuality.morning', { defaultValue: 'morgen' })),
+    afternoon: String(tAnalytics('interface.dataQuality.afternoon', { defaultValue: 'etterm.' })),
+    evening: String(tAnalytics('interface.dataQuality.evening', { defaultValue: 'kveld' })),
+    score: String(tAnalytics('interface.dataQuality.score', { defaultValue: 'score' })),
+    noData: String(tAnalytics('interface.dataQuality.noData', { defaultValue: 'Ingen data funnet for valgt periode.' })),
+  }), [tAnalytics]);
 
-  const cacheKey = useMemo(() => {
-    const rangeKey = formatRangeCacheKey(timeframe);
-    const cmp = compareEnabled && timeframe ? `|cmp:${compareMode}` : '';
-    return `${studentId || 'none'}|${preset}|${rangeKey}${cmp}|iep:${iepSafeMode ? 'on' : 'off'}`;
-  }, [studentId, preset, timeframe, compareEnabled, compareMode, iepSafeMode]);
+  const interventionsTexts = React.useMemo(() => ({
+    title: String(tAnalytics('interface.interventions.title', { defaultValue: 'Tiltak og anbefalinger' })),
+    actionsLabel: String(tAnalytics('interface.interventions.actionsLabel', { defaultValue: 'Källor:' })),
+    empty: String(tAnalytics('interface.interventions.empty', { defaultValue: 'Ingen anbefalinger rapportert.' })),
+  }), [tAnalytics]);
 
-  // Persist toolbar last action per student+range in session
-  useEffect(() => {
-    try {
-      const key = getToolbarStorageKey(students, studentId, timeframe);
-      const raw = sessionStorage.getItem(key);
-      if (raw) {
-        const saved = JSON.parse(raw) as { type: 'copy' | 'pdf' | 'share' | null; at: number | null };
-        if (saved && typeof saved.at === 'number') setToolbarLast(saved);
-      }
-    } catch {
-      /* ignore toolbar state restoration errors */
-    }
-  }, [students, studentId, timeframe]);
+  const keyFindingsTexts = React.useMemo(() => ({
+    title: String(tAnalytics('interface.keyFindings.title', { defaultValue: 'Nøkkelfunn' })),
+    empty: String(tAnalytics('interface.keyFindings.empty', { defaultValue: 'Ingen nøkkelfunn rapportert.' })),
+  }), [tAnalytics]);
 
-  useEffect(() => {
-    try {
-      const key = getToolbarStorageKey(students, studentId, timeframe);
-      sessionStorage.setItem(key, JSON.stringify(toolbarLast));
-    } catch {
-      /* ignore toolbar state persistence errors */
-    }
-  }, [toolbarLast, students, studentId, timeframe]);
+  const patternsTexts = React.useMemo(() => ({
+    title: String(tAnalytics('interface.patterns.title', { defaultValue: 'Mønstre' })),
+    empty: String(tAnalytics('interface.patterns.empty', { defaultValue: 'Ingen mønstre identifisert.' })),
+    fallback: String(tAnalytics('interface.patterns.fallback', { defaultValue: 'Mønster' })),
+  }), [tAnalytics]);
 
-  const dataQuality = useMemo(() => computeDataQualityMetrics(studentId, timeframe), [studentId, timeframe]);
-
-  const baselineDataQuality = useMemo(() => {
-    if (!compareEnabled || !timeframe) return null;
-    const baselineRange = toConcreteTimeRange(computeComparisonRange(timeframe, compareMode));
-    return computeDataQualityMetrics(studentId, baselineRange);
-  }, [studentId, compareEnabled, timeframe, compareMode]);
-
-  const hasSmallBaseline = useMemo(() => {
-    if (!baselineDataQuality) return false;
-    const minimumDataPoints = 5;
-    return baselineDataQuality.total < minimumDataPoints;
-  }, [baselineDataQuality]);
-
-  const keyFindings = useMemo(() => getStringArray(results?.keyFindings), [results]);
-
-  async function testAI() {
-    setIsTesting(true);
-    setError('');
-    try {
-      const resp = await openRouterClient.chat([
-        { role: 'system', content: 'Svar kun på norsk. Vær kort.' },
-        { role: 'user', content: 'Si kun ordet: pong' },
-      ], { modelName: ai.modelName, baseUrl: ai.baseUrl, timeoutMs: 10_000, maxTokens: 8, temperature: 0, localOnly: ai.localOnly ?? false });
-      setResults(null);
-      // Model name is displayed via displayModelName; keep minimal state
-      if (!resp?.content?.toLowerCase().includes('pong')) {
-        setError('AI svarte, men ikke som forventet. Sjekk modell og base URL.');
-      }
-    } catch (e) {
-      setError((e as Error)?.message || 'Kunne ikke kontakte AI.');
-    } finally {
-      setIsTesting(false);
-    }
-  }
-
-  async function analyze() {
-    if (!studentId) {
-      setError('Velg en elev først.');
-      return;
-    }
-    setError('');
-    setResults(null);
-    setBaselineResults(null);
-    
-    // UI cache first - check before setting loading states
-    const uiHit = resultsCacheRef.current.get(cacheKey);
-    if (uiHit) {
-      setResults(uiHit.current);
-      setBaselineResults(uiHit.baseline);
-      setFromUiCache(true);
-      return;
-    }
-    
-    setIsAnalyzing(true);
-    setIsAnalyzingBaseline(compareEnabled);
-    try {
-      const engine = new LLMAnalysisEngine();
-      // Current analysis
-      const currentPromise = engine.analyzeStudent(studentId, timeframe, {
-        includeAiMetadata: true,
-        aiProfile: iepSafeMode ? 'iep' : 'default'
-      });
-
-      // Baseline if enabled and timeframe provided
-      let baselinePromise: Promise<AnalyticsResultsAI | null> | null = null;
-      if (compareEnabled && timeframe) {
-        const baselineRange = toConcreteTimeRange(computeComparisonRange(timeframe, compareMode));
-        baselinePromise = engine
-          .analyzeStudent(studentId, baselineRange, {
-            includeAiMetadata: true,
-            aiProfile: iepSafeMode ? 'iep' : 'default'
-          })
-          .then((baseline) => {
-            const totalLen =
-              (baseline?.patterns?.length || 0) +
-              (baseline?.correlations?.length || 0) +
-              (Array.isArray(baseline?.insights) ? baseline.insights.length : 0);
-            return totalLen === 0 ? null : baseline;
-          })
-          .catch(() => null);
-      }
-
-      const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);
-      setResults(res);
-      setBaselineResults(base);
-      resultsCacheRef.current.set(cacheKey, { current: res, baseline: base });
-      setFromUiCache(false);
-    } catch (e) {
-      setError((e as Error)?.message || 'Analyse feilet.');
-    } finally {
-      setIsAnalyzing(false);
-      setIsAnalyzingBaseline(false);
-    }
-  }
-
-  async function refreshAnalyze() {
-    if (!studentId) {
-      setError('Velg en elev først.');
-      return;
-    }
-    setIsAnalyzing(true);
-    setIsAnalyzingBaseline(compareEnabled);
-    setError('');
-    try {
-      const engine = new LLMAnalysisEngine();
-      const currentPromise = engine.analyzeStudent(studentId, timeframe, {
-        includeAiMetadata: true, 
-        bypassCache: true,
-        aiProfile: iepSafeMode ? 'iep' : 'default'
-      });
-
-      let baselinePromise: Promise<AnalyticsResultsAI | null> | null = null;
-      if (compareEnabled && timeframe) {
-        const baselineRange = toConcreteTimeRange(computeComparisonRange(timeframe, compareMode));
-        baselinePromise = engine
-          .analyzeStudent(studentId, baselineRange, {
-            includeAiMetadata: true, 
-            bypassCache: true,
-            aiProfile: iepSafeMode ? 'iep' : 'default'
-          })
-          .then((baseline) => {
-            const totalLen =
-              (baseline?.patterns?.length || 0) +
-              (baseline?.correlations?.length || 0) +
-              (Array.isArray(baseline?.insights) ? baseline.insights.length : 0);
-            return totalLen === 0 ? null : baseline;
-          })
-          .catch(() => null);
-      }
-
-      const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);
-      setResults(res);
-      setBaselineResults(base);
-      resultsCacheRef.current.set(cacheKey, { current: res, baseline: base });
-      setFromUiCache(false);
-    } catch (e) {
-      setError((e as Error)?.message || 'Analyse feilet.');
-    } finally {
-      setIsAnalyzing(false);
-      setIsAnalyzingBaseline(false);
-    }
-  }
-
-  // Resolve evidence sources when results change
-  useEffect(() => {
-    async function resolveInterventionSources() {
-      if (!results?.suggestedInterventions?.length) return;
-      
-      const allSourceIds = new Set<string>();
-      for (const intervention of results.suggestedInterventions) {
-        if (intervention.sources?.length) {
-          for (const id of (intervention.sources || [])) {
-            if (typeof id === 'string' && id.trim()) {
-              allSourceIds.add(id.trim());
-            }
-          }
-        }
-      }
-      
-      if (allSourceIds.size === 0) return;
-      
-      try {
-        const resolved = await resolveSources(Array.from(allSourceIds));
-        const sourceMap = new Map(resolved.map(s => [s.id, s]));
-        setResolvedSources(sourceMap);
-      } catch (e) {
-        logger.error('[KreativiumAI] Failed to resolve sources', e as Error);
-      }
-    }
-    
-    resolveInterventionSources();
-  }, [results]);
+  const formTexts = React.useMemo(() => ({
+    studentLabel: String(tAnalytics('interface.form.studentLabel', { defaultValue: 'Elev' })),
+    studentPlaceholder: String(tAnalytics('interface.form.studentPlaceholder', { defaultValue: 'Velg elev' })),
+    presetLabel: String(tAnalytics('interface.form.presetLabel', { defaultValue: 'Tidsrom' })),
+    presetPlaceholder: String(tAnalytics('interface.form.presetPlaceholder', { defaultValue: 'Velg tidsrom' })),
+    presets: {
+      '7d': String(tAnalytics('interface.form.presets.7d', { defaultValue: 'Siste 7 dager' })),
+      '30d': String(tAnalytics('interface.form.presets.30d', { defaultValue: 'Siste 30 dager' })),
+      '90d': String(tAnalytics('interface.form.presets.90d', { defaultValue: 'Siste 90 dager' })),
+      all: String(tAnalytics('interface.form.presets.all', { defaultValue: 'Hele historikken' })),
+    } as Record<Preset, string>,
+    iepLabel: String(tAnalytics('interface.form.iepLabel', { defaultValue: 'IEP-trygg modus' })),
+    iepTooltipLine1: String(tAnalytics('interface.form.iepTooltip1', { defaultValue: 'IEP-trygg modus sikrer pedagogiske anbefalinger' })),
+    iepTooltipLine2: String(tAnalytics('interface.form.iepTooltip2', { defaultValue: 'uten medisinske/kliniske råd' })),
+    toggleOn: String(tAnalytics('interface.toggle.on', { defaultValue: 'På' })),
+    toggleOff: String(tAnalytics('interface.toggle.off', { defaultValue: 'Av' })),
+    testAi: String(tAnalytics('interface.actions.testAi', { defaultValue: 'Test AI' })),
+    analyze: String(tAnalytics('interface.actions.runAnalysis', { defaultValue: 'Kjør analyse' })),
+    refresh: String(tAnalytics('interface.actions.refreshAnalysis', { defaultValue: 'Oppdater (forbi cache)' })),
+    compareLoading: String(tAnalytics('interface.compare.loading', { defaultValue: 'Sammenligning...' })),
+  }), [tAnalytics]);
 
   async function handleCopyReport() {
+    clearError();
     try {
       if (!results) return;
       const text = await formatAiReportText(results, { includeMetadata: true });
@@ -412,6 +186,7 @@ export default function KreativiumAI(): JSX.Element {
   }
 
   async function handleDownloadPDF() {
+    clearError();
     try {
       if (!results) return;
       const text = await formatAiReportText(results, { includeMetadata: true });
@@ -432,6 +207,7 @@ export default function KreativiumAI(): JSX.Element {
   }
 
   async function handleShare() {
+    clearError();
     try {
       if (!results) return;
       const text = await formatAiReportText(results);
@@ -476,13 +252,18 @@ export default function KreativiumAI(): JSX.Element {
   const SourceChip = React.memo(({ sourceId }: { sourceId: string }) => {
     const source = resolvedSources.get(sourceId);
     if (!source) return null;
-    
+
     const truncatedTitle = truncateGrapheme(source.title, 20);
     const needsTitleEllipsis = source.title.length > 20;
     const excerpt = source.shortExcerpt 
       ? truncateGrapheme(source.shortExcerpt, 100) + (source.shortExcerpt.length > 100 ? '...' : '')
       : '';
-    
+    const openSourceLabel = String(tAnalytics('interface.interventions.openSourceAria', {
+      title: source.title,
+      defaultValue: 'Åpne kilde: {{title}}',
+    }));
+    const yearLabel = String(tAnalytics('interface.interventions.yearLabel', { defaultValue: 'År:' }));
+
     return (
       <Tooltip>
         <TooltipTrigger asChild>
@@ -491,7 +272,7 @@ export default function KreativiumAI(): JSX.Element {
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-background border cursor-pointer hover:bg-accent transition-colors"
-            aria-label={`Åpne kilde: ${source.title}`}
+            aria-label={openSourceLabel}
           >
             {truncatedTitle}{needsTitleEllipsis && '...'}
           </a>
@@ -499,7 +280,7 @@ export default function KreativiumAI(): JSX.Element {
         <TooltipContent className="max-w-xs">
           <p className="font-medium">{source.title}</p>
           {excerpt && <p className="text-xs mt-1">{excerpt}</p>}
-          {source.year && <p className="text-xs text-muted-foreground mt-1">År: {source.year}</p>}
+          {source.year && <p className="text-xs text-muted-foreground mt-1">{yearLabel} {source.year}</p>}
         </TooltipContent>
       </Tooltip>
     );
@@ -531,13 +312,13 @@ export default function KreativiumAI(): JSX.Element {
                 <Sparkles className="text-primary" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">Kreativium‑AI</h1>
-              <p className="text-sm text-muted-foreground">Lokal LLM for mønstre, korrelasjoner og tiltak</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Modell: <code>{displayModelName}</code> {fromUiCache && (<span className="ml-2 inline-flex items-center gap-1 text-[11px] rounded px-1.5 py-0.5 border border-muted-foreground/30">• {tAnalytics('interface.fromUiCache')}</span>)}</p>
+                <h1 className="text-2xl font-bold">{headerTexts.title}</h1>
+              <p className="text-sm text-muted-foreground">{headerTexts.subtitle}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{headerTexts.modelLabel} <code>{displayModelName}</code> {fromUiCache && (<span className="ml-2 inline-flex items-center gap-1 text-[11px] rounded px-1.5 py-0.5 border border-muted-foreground/30">• {tAnalytics('interface.fromUiCache')}</span>)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline">{(isLocal || ai.localOnly) ? 'Local model' : 'Remote'}</Badge>
+              <Badge variant="outline">{(isLocal || aiConfig.localOnly) ? headerTexts.localBadge : headerTexts.remoteBadge}</Badge>
               <Badge variant="outline">{displayModelName}</Badge>
             </div>
           </div>
@@ -550,7 +331,7 @@ export default function KreativiumAI(): JSX.Element {
                 className="block text-sm text-muted-foreground mb-1"
                 htmlFor={studentSelectTriggerId}
               >
-                Elev
+                {formTexts.studentLabel}
               </label>
               <Select value={studentId} onValueChange={setStudentId}>
                 <SelectTrigger
@@ -558,7 +339,7 @@ export default function KreativiumAI(): JSX.Element {
                   className="w-full"
                   aria-labelledby={studentSelectLabelId}
                 >
-                  <SelectValue placeholder="Velg elev" />
+                  <SelectValue placeholder={formTexts.studentPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {students.map(s => (
@@ -573,7 +354,7 @@ export default function KreativiumAI(): JSX.Element {
                 className="block text-sm text-muted-foreground mb-1"
                 htmlFor={presetSelectTriggerId}
               >
-                Tidsrom
+                {formTexts.presetLabel}
               </label>
               <Select value={preset} onValueChange={(v) => setPreset(v as Preset)}>
                 <SelectTrigger
@@ -581,13 +362,13 @@ export default function KreativiumAI(): JSX.Element {
                   className="w-full"
                   aria-labelledby={presetSelectLabelId}
                 >
-                  <SelectValue />
+                  <SelectValue placeholder={formTexts.presetPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7d">Siste 7 dager</SelectItem>
-                  <SelectItem value="30d">Siste 30 dager</SelectItem>
-                  <SelectItem value="90d">Siste 90 dager</SelectItem>
-                  <SelectItem value="all">Hele historikken</SelectItem>
+                  <SelectItem value="7d">{formTexts.presets['7d']}</SelectItem>
+                  <SelectItem value="30d">{formTexts.presets['30d']}</SelectItem>
+                  <SelectItem value="90d">{formTexts.presets['90d']}</SelectItem>
+                  <SelectItem value="all">{formTexts.presets.all}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -600,19 +381,17 @@ export default function KreativiumAI(): JSX.Element {
                   id={compareToggleId}
                   aria-label={tAnalytics('interface.comparePeriods')}
                   pressed={compareEnabled}
-                  onPressedChange={(v) => { setCompareEnabled(Boolean(v)); if (!v) setBaselineResults(null); }}
+                  onPressedChange={(v) => setCompareEnabled(Boolean(v))}
                   disabled={!studentId || !timeframe}
                   variant="outline"
                   size="sm"
                 >
-                  {compareEnabled ? 'På' : 'Av'}
+                  {compareEnabled ? formTexts.toggleOn : formTexts.toggleOff}
                 </Toggle>
                 <div className="ml-auto min-w-[12rem]">
                   <Select
                     value={compareMode}
-                    onValueChange={(value) => {
-                      if (isComparisonMode(value)) setCompareMode(value);
-                    }}
+                    onValueChange={onCompareModeChange}
                     disabled={!compareEnabled || !studentId || !timeframe}
                   >
                     <SelectTrigger className="w-full"><SelectValue placeholder={tAnalytics('interface.comparisonMode')} /></SelectTrigger>
@@ -626,7 +405,7 @@ export default function KreativiumAI(): JSX.Element {
               </div>
               <div className="flex items-center gap-2 mt-3">
                 <label className="text-sm text-muted-foreground" htmlFor={iepToggleId}>
-                  IEP-trygg modus
+                  {formTexts.iepLabel}
                 </label>
                 <TooltipProvider>
                   <Tooltip>
@@ -637,34 +416,34 @@ export default function KreativiumAI(): JSX.Element {
                         pressed={iepSafeMode}
                         onPressedChange={(v) => {
                           setIepSafeMode(Boolean(v));
-                          announceToScreenReader(v ? 'IEP-trygg modus aktivert' : 'IEP-trygg modus deaktivert');
+                          announceToScreenReader(v ? formTexts.toggleOn : formTexts.toggleOff);
                         }}
                         variant="outline"
                         size="sm"
                       >
-                        {iepSafeMode ? 'På' : 'Av'}
+                        {iepSafeMode ? formTexts.toggleOn : formTexts.toggleOff}
                       </Toggle>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>IEP-trygg modus sikrer pedagogiske anbefalinger</p>
-                      <p className="text-xs">uten medisinske/kliniske råd</p>
+                      <p>{formTexts.iepTooltipLine1}</p>
+                      <p className="text-xs">{formTexts.iepTooltipLine2}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               </div>
               <div className="flex items-end gap-2">
                 <Button variant="outline" onClick={testAI} disabled={isTesting} className="w-1/2">
-                  <RefreshCw className="h-4 w-4 mr-2" />Test AI
+                  <RefreshCw className="h-4 w-4 mr-2" />{formTexts.testAi}
                 </Button>
                 <Button onClick={analyze} disabled={isAnalyzing || !studentId} className="w-1/2">
-                  <Play className="h-4 w-4 mr-2" />Kjør analyse
+                  <Play className="h-4 w-4 mr-2" />{formTexts.analyze}
                 </Button>
                 <Button onClick={refreshAnalyze} variant="secondary" disabled={isAnalyzing || !studentId} className="w-full sm:w-auto">
-                  <RefreshCw className="h-4 w-4 mr-2" />Oppdater (forbi cache)
+                  <RefreshCw className="h-4 w-4 mr-2" />{formTexts.refresh}
                 </Button>
                 {compareEnabled && isAnalyzingBaseline && (
                   <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> Sammenligning...
+                    <Loader2 className="h-3 w-3 animate-spin" /> {formTexts.compareLoading}
                   </span>
                 )}
               </div>
@@ -676,43 +455,43 @@ export default function KreativiumAI(): JSX.Element {
         {studentId && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Database className="h-4 w-4" />Datakvalitet</CardTitle>
+              <CardTitle className="flex items-center gap-2"><Database className="h-4 w-4" />{dataQualityTexts.cardTitle}</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-foreground/90">
               {dataQuality ? (
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <div className="text-xs text-muted-foreground">Datapunkter</div>
+                    <div className="text-xs text-muted-foreground">{dataQualityTexts.dataPoints}</div>
                     <div className="font-medium">{dataQuality.total}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Sist registrert</div>
+                    <div className="text-xs text-muted-foreground">{dataQualityTexts.lastRecorded}</div>
                     <div className="font-medium">{dataQuality.last ? dataQuality.last.toLocaleString() : '—'}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Dager siden</div>
+                    <div className="text-xs text-muted-foreground">{dataQualityTexts.daysSince}</div>
                     <div className="font-medium">{dataQuality.daysSince ?? '—'}</div>
                   </div>
                   <div>
-                    <div className="text-xs text-muted-foreground">Fullstendighet</div>
+                    <div className="text-xs text-muted-foreground">{dataQualityTexts.completeness}</div>
                     <div className="font-medium">{dataQuality.completeness}%</div>
                   </div>
                   <div className="sm:col-span-4">
-                    <div className="text-xs text-muted-foreground mb-1">Balanse (tid på dagen)</div>
+                    <div className="text-xs text-muted-foreground mb-1">{dataQualityTexts.timeOfDayBalance}</div>
                     <div className="flex items-center gap-2">
                       {(['morning','afternoon','evening'] as const).map((k, i) => (
                         <div key={k} className="flex items-center gap-1">
-                          <span className="text-[11px] text-muted-foreground">{k === 'morning' ? 'morgen' : k === 'afternoon' ? 'etterm.' : 'kveld'}</span>
+                          <span className="text-[11px] text-muted-foreground">{k === 'morning' ? dataQualityTexts.morning : k === 'afternoon' ? dataQualityTexts.afternoon : dataQualityTexts.evening}</span>
                           <span className="text-[11px]">{dataQuality.buckets[k]}</span>
                           {i < 2 && <span className="text-muted-foreground/40">•</span>}
                         </div>
                       ))}
-                      <span className="ml-auto text-[11px] text-muted-foreground">score: {dataQuality.balance}%</span>
+                      <span className="ml-auto text-[11px] text-muted-foreground">{dataQualityTexts.score}: {dataQuality.balance}%</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 text-muted-foreground"><AlertTriangle className="h-4 w-4" />Ingen data funnet for valgt periode.</div>
+                <div className="flex items-center gap-2 text-muted-foreground"><AlertTriangle className="h-4 w-4" />{dataQualityTexts.noData}</div>
               )}
             </CardContent>
           </Card>
@@ -734,44 +513,15 @@ export default function KreativiumAI(): JSX.Element {
 
         {results && (
           <div className="space-y-6">
-            {/* Export & Share Toolbar */}
             <Card>
-              <CardContent className="p-4 flex flex-wrap items-center gap-2">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" aria-label={String(tAnalytics('interface.toolbarCopyAria'))} onClick={handleCopyReport}>
-                        <ClipboardIcon className="h-4 w-4 mr-2" />{String(tAnalytics('interface.toolbarCopy'))}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{String(tAnalytics('interface.toolbarCopyTooltip'))}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" aria-label={String(tAnalytics('interface.toolbarPdfAria'))} onClick={handleDownloadPDF}>
-                        <Download className="h-4 w-4 mr-2" />{String(tAnalytics('interface.toolbarPdf'))}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{String(tAnalytics('interface.toolbarPdfTooltip'))}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" aria-label={String(tAnalytics('interface.toolbarShareAria'))} onClick={handleShare}>
-                        <Share2 className="h-4 w-4 mr-2" />{String(tAnalytics('interface.toolbarShare'))}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{String(tAnalytics('interface.toolbarShareTooltip'))}</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                {toolbarLast.at && (
-                  <span className="text-[11px] text-muted-foreground ml-1">
-                    {String(tAnalytics('interface.lastExportShort'))}: {toolbarLast.type?.toUpperCase()} {new Date(toolbarLast.at).toLocaleTimeString()}
-                  </span>
-                )}
+              <CardContent className="p-0">
+                <AiReportToolbar
+                  onCopy={handleCopyReport}
+                  onDownload={handleDownloadPDF}
+                  onShare={handleShare}
+                  lastAction={toolbarLast}
+                  labels={toolbarLabels}
+                />
               </CardContent>
             </Card>
             {compareEnabled && timeframe && (
@@ -781,10 +531,9 @@ export default function KreativiumAI(): JSX.Element {
                 mode={compareMode}
                 currentLabel={`${formatDateForDisplay(timeframe.start)} – ${formatDateForDisplay(timeframe.end)}`}
                 baselineLabel={baselineResults
-                  ? formatComparisonPeriodLabel(
-                      toConcreteTimeRange(computeComparisonRange(timeframe, compareMode)),
-                      compareMode
-                    )
+                  ? (comparisonRange
+                    ? formatComparisonPeriodLabel(comparisonRange, compareMode)
+                    : tAnalytics('interface.noDataInComparisonPeriod'))
                   : tAnalytics('interface.noDataInComparisonPeriod')}
                 studentName={students.find(s => s.id === studentId)?.name || ''}
                 currentBalance={dataQuality?.balance}
@@ -796,57 +545,68 @@ export default function KreativiumAI(): JSX.Element {
             )}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Database className="h-4 w-4" />Nøkkelfunn</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Database className="h-4 w-4" />{keyFindingsTexts.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {keyFindings.length > 0 ? (
                   <ul className="list-disc pl-5 text-sm text-foreground/90">
-                    {keyFindings.map((finding, index) => <li key={index}>{finding}</li>)}
+                    {keyFindings.map((finding, index) => {
+                      const itemKey = finding ? `${finding}-${index}` : String(index);
+                      return <li key={itemKey}>{finding}</li>;
+                    })}
                   </ul>
-                ) : <p className="text-sm text-muted-foreground">Ingen nøkkelfunn rapportert.</p>}
+                ) : <p className="text-sm text-muted-foreground">{keyFindingsTexts.empty}</p>}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Clock className="h-4 w-4" />Mønstre</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Clock className="h-4 w-4" />{patternsTexts.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {results.patterns?.length ? results.patterns.map((patternResult, index) => {
                   const impactLabel = getOptionalStringField(patternResult, 'impact');
+                  const patternKey = getOptionalStringField(patternResult as Record<string, unknown>, 'id')
+                    ?? getOptionalStringField(patternResult as Record<string, unknown>, 'pattern')
+                    ?? String(index);
                   return (
-                    <div key={index} className="rounded-md border p-3">
+                    <div key={patternKey} className="rounded-md border p-3">
                       <div className="flex items-center justify-between">
-                        <div className="font-medium">{patternResult.pattern || 'Mønster'}</div>
+                        <div className="font-medium">{patternResult.pattern || patternsTexts.fallback}</div>
                         {impactLabel && <Badge variant="outline">{impactLabel}</Badge>}
                       </div>
                       {patternResult.description && <p className="text-sm text-muted-foreground mt-1">{patternResult.description}</p>}
                     </div>
                   );
-                }) : <p className="text-sm text-muted-foreground">Ingen mønstre identifisert.</p>}
+                }) : <p className="text-sm text-muted-foreground">{patternsTexts.empty}</p>}
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4" />Tiltak og anbefalinger</CardTitle>
+                <CardTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4" />{interventionsTexts.title}</CardTitle>
               </CardHeader>
               <TooltipProvider>
               <CardContent className="space-y-3">
                 {results.suggestedInterventions.length ? (
                   <ul className="space-y-3">
-                    {results.suggestedInterventions.map((intervention, index) => (
-                      <li key={index} className="rounded-md border p-3">
-                        <div className="font-medium">{intervention.title}</div>
-                        {intervention.description && <p className="text-sm text-muted-foreground mt-1">{intervention.description}</p>}
-                        {intervention.actions.length > 0 && (
-                          <ul className="list-disc pl-5 mt-2 text-sm">
-                            {intervention.actions.map((action, actionIndex) => <li key={actionIndex}>{action}</li>)}
-                          </ul>
-                        )}
-                        {intervention.sources.length > 0 && (
-                          <div className="mt-3">
-                            <span className="text-xs text-muted-foreground mr-2">Källor:</span>
+                    {results.suggestedInterventions.map((intervention, index) => {
+                      const interventionKey = intervention.id ?? `${intervention.title ?? 'intervention'}-${index}`;
+                      return (
+                        <li key={interventionKey} className="rounded-md border p-3">
+                          <div className="font-medium">{intervention.title}</div>
+                          {intervention.description && <p className="text-sm text-muted-foreground mt-1">{intervention.description}</p>}
+                          {intervention.actions.length > 0 && (
+                            <ul className="list-disc pl-5 mt-2 text-sm">
+                            {intervention.actions.map((action, actionIndex) => {
+                              const actionKey = action ? `${action}-${actionIndex}` : String(actionIndex);
+                              return <li key={actionKey}>{action}</li>;
+                            })}
+                            </ul>
+                          )}
+                          {intervention.sources.length > 0 && (
+                            <div className="mt-3">
+                            <span className="text-xs text-muted-foreground mr-2">{interventionsTexts.actionsLabel}</span>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {intervention.sources.map((sourceId) => (
                                 <SourceChip key={sourceId} sourceId={sourceId} />
@@ -854,46 +614,30 @@ export default function KreativiumAI(): JSX.Element {
                             </div>
                           </div>
                         )}
-                        {(intervention.expectedImpact || intervention.timeHorizon || intervention.tier) && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {intervention.expectedImpact && <Badge variant="outline">{intervention.expectedImpact}</Badge>}
-                            {intervention.timeHorizon && <Badge variant="outline">{intervention.timeHorizon}</Badge>}
-                            {intervention.tier && <Badge variant="outline">{intervention.tier}</Badge>}
-                          </div>
-                        )}
-                      </li>
-                    ))}
+                          {(intervention.expectedImpact || intervention.timeHorizon || intervention.tier) && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {intervention.expectedImpact && <Badge variant="outline">{intervention.expectedImpact}</Badge>}
+                              {intervention.timeHorizon && <Badge variant="outline">{intervention.timeHorizon}</Badge>}
+                              {intervention.tier && <Badge variant="outline">{intervention.tier}</Badge>}
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
-                ) : <p className="text-sm text-muted-foreground">Ingen anbefalinger rapportert.</p>}
+                ) : <p className="text-sm text-muted-foreground">{interventionsTexts.empty}</p>}
               </CardContent>
               </TooltipProvider>
             </Card>
 
             {results.ai && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Info className="h-4 w-4" />AI‑metadata • <span className="font-normal text-muted-foreground">{displayModelName}</span>
-                    {((results.ai.usage?.cacheReadTokens ?? 0) > 0 || (Array.isArray(results.ai.caveats) && results.ai.caveats.some(c => /cache/i.test(String(c))))) && (
-                      <Badge variant="outline">{tAnalytics('interface.fromCache')}</Badge>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground space-y-1">
-                  <div>Modell: {results.ai.model}</div>
-                  {results.ai.latencyMs != null && <div>Latens: {Math.round(results.ai.latencyMs)} ms</div>}
-                  {results.ai.usage && (
-                    <div>Tokens: prompt {results.ai.usage.promptTokens ?? 0} • completion {results.ai.usage.completionTokens ?? 0} • total {results.ai.usage.totalTokens ?? 0}</div>
-                  )}
-                  {results.ai.usage && ((results.ai.usage.cacheReadTokens ?? 0) > 0 || (results.ai.usage.cacheWriteTokens ?? 0) > 0) && (
-                    <div>Cache: read {results.ai.usage.cacheReadTokens ?? 0} • write {results.ai.usage.cacheWriteTokens ?? 0}</div>
-                  )}
-                  {(() => { try { const s = aiMetrics.summary(); const pct = Math.round((s.jsonValidity || 0) * 100); return <div>JSON‑gyldighet (global): {pct}%</div>; } catch { return null; } })()}
-                  {Array.isArray(results.ai.caveats) && results.ai.caveats.length > 0 && (
-                    <div>Forbehold: {results.ai.caveats.join('; ')}</div>
-                  )}
-                </CardContent>
-              </Card>
+              <AiMetadataCard
+                results={results}
+                displayModelName={displayModelName}
+                fromCacheLabel={fromCacheLabel}
+                globalJsonValidity={globalJsonValidity}
+                caveatsLabel={caveatsLabel}
+              />
             )}
           </div>
         )}

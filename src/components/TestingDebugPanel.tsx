@@ -23,7 +23,7 @@ import { dataStorage } from '@/lib/dataStorage';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { usePerformanceCache } from '@/hooks/usePerformanceCache';
 import { AnalyticsConfigTest } from '@/components/AnalyticsConfigTest';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 
 interface TestingDebugPanelProps {

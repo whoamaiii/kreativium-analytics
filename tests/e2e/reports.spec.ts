@@ -40,11 +40,6 @@ test.describe('Reports export page', () => {
   });
 });
 
-import { test, expect } from '@playwright/test';
-import { runAxeWithAppChromeHidden, writeAxeViolations } from '../utils/a11y';
-
-// Smoke test: verify export buttons are present and clickable (no actual file content check)
-
 test.describe('Reports exports', () => {
   test('Export buttons present and clickable', async ({ page }) => {
 await page.goto('/reports/export');

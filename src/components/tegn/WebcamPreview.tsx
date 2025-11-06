@@ -17,6 +17,9 @@ export const WebcamPreview = ({ active, mirrored = true, className, onError }: W
     async function start() {
       try {
         if (!active || !videoRef.current) return;
+        if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+          throw new Error('Camera is not supported in this browser.');
+        }
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
         if (cancelled) {
           stream.getTracks().forEach(t => t.stop());
@@ -36,16 +39,22 @@ export const WebcamPreview = ({ active, mirrored = true, className, onError }: W
         streamRef.current.getTracks().forEach(t => t.stop());
       }
       if (videoRef.current) {
+        try {
+          videoRef.current.pause();
+        } catch {
+          // no-op
+        }
         videoRef.current.srcObject = null;
       }
     };
   }, [active, onError]);
 
   return (
-    <div className={cn('relative overflow-hidden rounded-xl border border-border bg-black/60', className)}>
+    <div className={cn('relative overflow-hidden rounded-xl border border-border bg-muted', className)} data-state={active ? 'active' : 'inactive'}>
       <video
         ref={videoRef}
         className={cn('w-full h-64 object-cover', mirrored && 'scale-x-[-1]')}
+        autoPlay
         playsInline
         muted
         aria-label="Webcam preview"
@@ -53,5 +62,3 @@ export const WebcamPreview = ({ active, mirrored = true, className, onError }: W
     </div>
   );
 };
-
-

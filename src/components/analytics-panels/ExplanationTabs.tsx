@@ -106,34 +106,52 @@ export function ExplanationTabs({
   return (
     <div className={className}>
       <Tabs value={tab} onValueChange={handleTabChange}>
-        <div className="flex items-center justify-between gap-2">
-          <TabsList>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="kilder">Kilder</TabsTrigger>
-            <TabsTrigger value="henvisninger">Henvisninger</TabsTrigger>
-          </TabsList>
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-3">
+            <TabsList className="grid grid-cols-3 w-auto gap-1 p-1 bg-muted rounded-lg">
+              <TabsTrigger 
+                value="chat" 
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                💬 Chat
+              </TabsTrigger>
+              <TabsTrigger 
+                value="kilder" 
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                📚 Kilder
+              </TabsTrigger>
+              <TabsTrigger 
+                value="henvisninger" 
+                className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
+                🔗 Henvisninger
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          
           <div className="flex items-center gap-2">
             <button
               type="button"
-              className="rounded border px-2 py-1 text-[11px] text-muted-foreground hover:bg-accent/40"
+              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
               title="Skjul alt"
               onClick={() => {
                 try { window.dispatchEvent(new CustomEvent('explanationV2:collapseAll')); logger.info('[UI] explanationV2.collapseAll'); } catch {}
                 setShowAllKilder(false);
               }}
             >
-              Skjul alt
+              ➖ Skjul alt
             </button>
             <button
               type="button"
-              className="rounded border px-2 py-1 text-[11px] text-muted-foreground hover:bg-accent/40"
+              className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
               title="Vis alt"
               onClick={() => {
                 try { window.dispatchEvent(new CustomEvent('explanationV2:expandAll')); logger.info('[UI] explanationV2.expandAll'); } catch {}
                 setShowAllKilder(true);
               }}
             >
-              Vis alt
+              ➕ Vis alt
             </button>
           </div>
         </div>

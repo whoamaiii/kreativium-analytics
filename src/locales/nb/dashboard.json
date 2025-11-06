@@ -21,6 +21,16 @@
     "tip2": "Bruk miljødata for å identifisere utløsere",
     "tip3": "Se rapporter for trender og fremgang"
   },
+  "overview": {
+    "title": "Oversikt"
+  },
+  "students": {
+    "title": "Elever"
+  },
+  "actions": {
+    "newEntry": "Ny registrering",
+    "addStudent": "Legg til elev"
+  },
   "studentCard": {
     "grade": "Klasse {{grade}}",
     "noGrade": "Ingen klasse",

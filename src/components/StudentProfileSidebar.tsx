@@ -28,6 +28,7 @@ export function StudentProfileSidebar({
   const { state, isMobile, setOpenMobile } = useSidebar();
   const { tStudent, tCommon } = useTranslation();
 
+  // Consolidated navigation - reduced from 8 to 4 main sections
   const menuItems = [
     {
       section: 'dashboard',
@@ -39,48 +40,26 @@ export function StudentProfileSidebar({
       section: 'analytics',
       title: tCommon('navigation.analytics'),
       icon: 'analytics',
-      description: 'Datanalyse og innsikter'
+      description: 'Data, mønstre og innsikter'
     },
     {
       section: 'goals',
-      title: 'Mål',
-      icon: 'flag',
-      description: 'Målstyring og progresjon'
-    },
-    {
-      section: 'progress',
-      title: 'Fremgang',
+      title: 'Mål & Fremgang',
       icon: 'trending_up',
-      description: 'Utviklingsanalyse'
+      description: 'Målstyring og utviklingsanalyse'
     },
     {
       section: 'reports',
       title: tCommon('navigation.reports'),
       icon: 'description',
-      description: 'Rapporter og eksport'
+      description: 'Rapporter og verktøy'
     }
   ];
 
-  const toolItems = [
-    {
-      section: 'search',
-      title: tStudent('interface.advancedSearch'),
-      icon: 'search',
-      description: 'Avansert søk'
-    },
-    {
-      section: 'templates',
-      title: tStudent('interface.quickTemplates'),
-      icon: 'flash_on',
-      description: 'Hurtigmaler'
-    },
-    {
-      section: 'compare',
-      title: 'Sammenligning',
-      icon: 'compare_arrows',
-      description: 'Periodesammenligning'
-    }
-  ];
+  // Tools are now integrated into main sections:
+  // - Search/Templates -> Available in Reports section
+  // - Compare -> Available in Analytics section
+  const toolItems: typeof menuItems = [];
 
   const isActive = (section: string) => activeSection === section;
 
@@ -104,13 +83,13 @@ export function StudentProfileSidebar({
           </div>
         </div>
 
-        {/* Main Navigation */}
+        {/* Main Navigation with better visual hierarchy */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground text-xs font-medium uppercase tracking-wider px-3 py-2">
-            Hovedseksjoner
+            {state !== "collapsed" ? "Hovedseksjoner" : ""}
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.section}>
                   <SidebarMenuButton
@@ -122,16 +101,25 @@ export function StudentProfileSidebar({
                         try { setOpenMobile(false); } catch {}
                       }
                     }}
-                    className={`cursor-pointer mx-2 rounded-lg transition-all duration-200 ${
+                    className={`group cursor-pointer mx-2 rounded-lg transition-all duration-200 hover:scale-[1.02] ${
                       isActive(item.section) 
-                        ? 'bg-primary text-primary-foreground shadow-lg' 
+                        ? 'bg-primary text-primary-foreground shadow-lg ring-2 ring-primary/20' 
                         : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                     }`}
+                    title={state === "collapsed" ? String(item.title) : undefined}
                   >
-                    <span className="material-icons text-base">{item.icon}</span>
-                    {state !== "collapsed" && (
-                     <span className="text-sm ml-3">{String(item.title)}</span>
-                    )}
+                    <div className="flex items-center w-full">
+                      <span className="material-icons text-base flex-shrink-0">{item.icon}</span>
+                      {state !== "collapsed" && (
+                        <div className="ml-3 min-w-0 flex-1">
+                          <div className="text-sm font-medium">{String(item.title)}</div>
+                          <div className="text-xs opacity-70 truncate">{item.description}</div>
+                        </div>
+                      )}
+                      {isActive(item.section) && state !== "collapsed" && (
+                        <div className="w-2 h-2 rounded-full bg-current flex-shrink-0 ml-2" />
+                      )}
+                    </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -139,39 +127,7 @@ export function StudentProfileSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Tools Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground text-xs font-medium uppercase tracking-wider px-3 py-2">
-            Verktøy
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {toolItems.map((item) => (
-                <SidebarMenuItem key={item.section}>
-                  <SidebarMenuButton
-                    onClick={() => {
-                      try { logger.debug('[UI] Sidebar tools click', { section: item.section }); } catch {}
-                      onSectionChange(item.section);
-                      if (isMobile) {
-                        try { setOpenMobile(false); } catch {}
-                      }
-                    }}
-                    className={`cursor-pointer mx-2 rounded-lg transition-all duration-200 ${
-                      isActive(item.section) 
-                        ? 'bg-primary text-primary-foreground shadow-lg' 
-                        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                    }`}
-                  >
-                    <span className="material-icons text-base">{item.icon}</span>
-                    {state !== "collapsed" && (
-                      <span className="text-sm ml-3">{String(item.title)}</span>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Tools integrated into main sections - no separate tools section needed */}
 
       </SidebarContent>
     </Sidebar>

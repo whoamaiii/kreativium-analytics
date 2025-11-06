@@ -2,20 +2,45 @@
 
 /**
  * @file src/hooks/useAnalyticsWorker.ts
- * 
- * This hook encapsulates the logic for interacting with the analytics web worker.
- * It simplifies the process of creating, communicating with, and terminating the worker,
- * providing a clean, React-friendly interface for components to offload heavy computations.
- * Now enhanced with performance caching to avoid redundant calculations.
+ *
+ * Integration overview: Detection Engine → Analytics Worker → UI
+ *
+ * - Detection engine runs in a Web Worker (analytics.worker) and emits messages:
+ *   - type "partial" for mid-computation updates
+ *   - type "complete" for final analytics results
+ *   - type "alerts" for new alert events discovered by detection engine
+ *   - type "error" for recoverable errors
+ *   - type "progress" as a lightweight heartbeat
+ *
+ * - This hook manages the worker lifecycle, caches analytics, and bridges alert
+ *   events to the UI via a custom DOM event `alerts:updated` so any surface can
+ *   react to new alerts in real time without tight coupling.
+ *
+ * - Alert governance and deduplication are applied before persisting and notifying,
+ *   ensuring stable user experience across rapid incoming events.
+ *
+ * Performance & health:
+ * - Latency metrics are recorded for alert processing, sparkline generation and
+ *   UI updates (see src/lib/alerts/performance.ts).
+ * - A periodic health check publishes `alerts:health` with simple status when
+ *   no alert activity has been observed recently, enabling light-touch monitoring.
+ *
+ * Troubleshooting (summary):
+ * - If worker initialization fails: a circuit breaker opens briefly and a
+ *   fallback path computes analytics synchronously to keep UI responsive.
+ * - If alerts messages arrive without studentId, they are ignored and a warning
+ *   is logged.
+ * - If the worker becomes unresponsive, a watchdog triggers fallback processing
+ *   and resets the worker reference.
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { AnalyticsData, AnalyticsResults, AnalyticsWorkerMessage } from '@/types/analytics';
 import { usePerformanceCache } from './usePerformanceCache';
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import { getValidatedConfig, validateAnalyticsRuntimeConfig } from '@/lib/analyticsConfigValidation';
 import { buildInsightsCacheKey, buildInsightsTask } from '@/lib/analyticsManager';
 import { logger } from '@/lib/logger';
-import { toast } from 'sonner';
+import { toast } from '@/hooks/use-toast';
 import { diagnostics } from '@/lib/diagnostics';
 import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { POC_MODE, DISABLE_ANALYTICS_WORKER } from '@/lib/env';
@@ -23,140 +48,30 @@ import type { Student, Goal } from '@/types/student';
 import type { AnalyticsResultsAI } from '@/lib/analysis';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { dataStorage } from '@/lib/dataStorage';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 import { AnalyticsPrecomputationManager } from '@/lib/analyticsPrecomputation';
 import { deviceConstraints } from '@/lib/deviceConstraints';
-
-// -----------------------------------------------------------------------------
-// Module-level singleton to prevent duplicate workers across multiple consumers
-// -----------------------------------------------------------------------------
-interface WorkerSingleton {
-  worker: Worker | null;
-  refs: number;
-  ready: boolean;
-  circuitUntil: number; // epoch ms; when > now, do not attempt worker usage
-}
-
-const singleton: WorkerSingleton = {
-  worker: null,
-  refs: 0,
-  ready: false,
-  circuitUntil: 0,
-};
-
-function nowMs(): number { return Date.now(); }
-function isCircuitOpen(): boolean { return nowMs() < singleton.circuitUntil; }
-function openCircuit(ms: number): void { singleton.circuitUntil = nowMs() + Math.max(0, ms); }
+import { AlertPolicies } from '@/lib/alerts/policies';
+import { AlertTelemetryService } from '@/lib/alerts/telemetry';
+import { alertPerf } from '@/lib/alerts/performance';
+import { createRunAnalysis } from '@/lib/analytics/runAnalysisTask';
+import {
+  ALERTS_HEALTH_EVENT,
+  ensureWorkerInitialized,
+  getWorkerInstance,
+  isCircuitOpen,
+  isWorkerReady,
+  markWorkerReady,
+  queuePendingTask,
+  releaseWorker,
+  retainWorker,
+} from '@/lib/analytics/workerManager';
+import { createWorkerMessageHandlers } from '@/lib/analytics/workerMessageHandlers';
 
 // Shared once-per-key dedupe for user-facing notifications
 import { doOnce } from '@/lib/rateLimit';
 
-// Queue tasks until worker signals ready
-const pendingTasks: MessageEvent['data'][] = [];
-// Per-hook cleanup stack (listeners, timers)
-const cleanupFns: Array<() => void> = [];
+const telemetryService = new AlertTelemetryService();
 
-function flushQueuedTasks(): void {
-  if (!singleton.worker || !singleton.ready) return;
-  while (pendingTasks.length) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (singleton.worker as any).postMessage(pendingTasks.shift());
-    } catch (e) {
-      // If posting fails, stop flushing to avoid spin
-      break;
-    }
-  }
-}
-
-async function ensureWorkerInitialized(): Promise<Worker | null> {
-  if (POC_MODE || DISABLE_ANALYTICS_WORKER) return null;
-  if (singleton.worker) return singleton.worker;
-  if (isCircuitOpen()) return null;
-
-  try {
-    const mod = await import('@/workers/analytics.worker?worker');
-    const WorkerCtor = (mod as unknown as { default: { new(): Worker } }).default;
-    const worker = new WorkerCtor();
-
-    // Attach handlers once at creation time
-    worker.onmessage = (event: MessageEvent<AnalyticsWorkerMessage>) => {
-      // Any message implies liveness; mark ready when first progress received or on any first message
-      if (!singleton.ready) {
-        const msg = event.data as AnalyticsWorkerMessage | undefined;
-        if (!msg || msg.type === 'progress' || msg.type === 'partial' || msg.type === 'complete' || msg.type === 'error') {
-          singleton.ready = true;
-          flushQueuedTasks();
-        }
-      }
-    };
-
-    worker.onerror = (error: ErrorEvent) => {
-      logger.error('[useAnalyticsWorker] Worker runtime error, switching to fallback', error);
-      try {
-        worker.terminate();
-      } catch { /* noop */ }
-      singleton.worker = null;
-      singleton.ready = false;
-      // Open circuit for 60s to avoid thrash
-      openCircuit(60_000);
-      // One-time user-facing toast per cooldown window (localized elsewhere if needed)
-      doOnce('analytics_worker_failure', 60_000, () => {
-        // i18n keys under analytics:worker
-        try {
-          // Dynamically import to avoid pulling react-i18next into this hook directly
-          import('@/hooks/useTranslation').then(({ useTranslation }) => {
-            const { t } = useTranslation('analytics');
-            toast({
-              title: t('worker.fallbackTitle'),
-              description: t('worker.fallbackDescription'),
-            });
-          }).catch(() => {
-            // Fallback to English strings if i18n not ready here
-            toast({
-              title: 'Analytics running in fallback mode',
-              description: 'Background worker failed. Using safe fallback to keep the UI responsive.',
-            });
-          });
-        } catch {
-          toast({
-            title: 'Analytics running in fallback mode',
-            description: 'Background worker failed. Using safe fallback to keep the UI responsive.',
-          });
-        }
-      });
-    };
-
-    singleton.worker = worker;
-    singleton.ready = false; // will flip true on first onmessage
-    logger.info('[useAnalyticsWorker] Analytics worker initialized successfully');
-    return worker;
-  } catch (error) {
-    logger.error('[useAnalyticsWorker] Failed to initialize worker', error as Error);
-    singleton.worker = null;
-    // Shorter circuit on init failure
-    openCircuit(15_000);
-    return null;
-  }
-}
-
-function retainWorker(): void {
-  singleton.refs += 1;
-}
-
-function releaseWorker(): void {
-  singleton.refs = Math.max(0, singleton.refs - 1);
-  if (singleton.refs === 0 && singleton.worker) {
-    try {
-      logger.debug('[useAnalyticsWorker] Terminating analytics worker');
-      singleton.worker.terminate();
-    } catch { /* noop */ }
-    singleton.worker = null;
-    singleton.ready = false;
-  }
-}
-
-// Define CacheStats type if not imported from usePerformanceCache
 interface CacheStats {
   hits: number;
   misses: number;
@@ -227,11 +142,15 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const idleCallbackRef = useRef<number | null>(null);
-  const [isWorkerReady, setIsWorkerReady] = useState<boolean>(false);
+  const [workerReady, setWorkerReady] = useState<boolean>(false);
   const activeCacheKeyRef = useRef<string | null>(null);
   const cacheTagsRef = useRef<Map<string, string[]>>(new Map());
+  const alertPoliciesRef = useRef(new AlertPolicies());
   const precompManagerRef = useRef<AnalyticsPrecomputationManager | null>(null);
   const [precomputeStatus, setPrecomputeStatus] = useState<{ enabled: boolean; queueSize: number; isProcessing: boolean; processedCount: number } | null>(null);
+  const lastAlertsReceivedAtRef = useRef<number>(0);
+  const alertsHealthTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cleanupStackRef = useRef<Array<() => void>>([]);
 
   // Initialize performance cache with appropriate settings
   const cache = usePerformanceCache<AnalyticsResults>({
@@ -290,7 +209,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     const init = async () => {
       if (POC_MODE || DISABLE_ANALYTICS_WORKER) {
         workerRef.current = null;
-        setIsWorkerReady(false);
+        setWorkerReady(false);
         // Inform user once per minute if worker is disabled via flag
         if (DISABLE_ANALYTICS_WORKER) {
           doOnce('analytics_worker_disabled', 60_000, () => {
@@ -319,7 +238,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       }
       if (isCircuitOpen()) {
         workerRef.current = null;
-        setIsWorkerReady(false);
+        setWorkerReady(false);
         return;
       }
       retainWorker();
@@ -329,90 +248,46 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         return;
       }
       workerRef.current = worker;
-      setIsWorkerReady(!!(singleton.ready && worker));
+      setWorkerReady(isWorkerReady() && !!worker);
 
       // Attach per-hook message listener to consume results
       if (worker) {
-        const onMessage = (event: MessageEvent<AnalyticsWorkerMessage>) => {
-          const data = event.data as AnalyticsWorkerMessage | undefined;
-          if (!data) return;
-          // Any inbound message means the worker is alive
-          if (!singleton.ready) {
-            singleton.ready = true;
-            flushQueuedTasks();
-          }
-
-          // Reset watchdog on any message
-          if (watchdogRef.current) {
-            clearTimeout(watchdogRef.current);
-            watchdogRef.current = null;
-          }
-
-          // Handle message types
-          try {
-            switch (data.type) {
-              case 'partial':
-                // For now, do not merge partials into results to avoid flicker; could add later
-                break;
-              case 'complete':
-                {
-                  const cacheKeyFromMsg = (data.cacheKey || (data.payload as any)?.cacheKey) as string | undefined;
-                  const prewarmFlag = ((data.payload as any)?.prewarm === true);
-                  const shouldUpdateUi = !!cacheKeyFromMsg && cacheKeyFromMsg === activeCacheKeyRef.current && !prewarmFlag;
-                  // Always populate local cache when possible
-                  if (cacheKeyFromMsg && data.payload) {
-                    try {
-                      const storedTags = cacheTagsRef.current.get(cacheKeyFromMsg);
-                      const derivedTags = storedTags && storedTags.length
-                        ? storedTags
-                        : buildCacheTags({ data: data.payload as AnalyticsResults });
-                      const tags = Array.from(new Set([...(derivedTags ?? []), 'worker']));
-                      cache.set(cacheKeyFromMsg, data.payload as unknown as AnalyticsResultsAI, tags);
-                    } catch { /* noop */ }
-                    cacheTagsRef.current.delete(cacheKeyFromMsg);
-                  }
-                  if (shouldUpdateUi) {
-                    setResults(data.payload as unknown as AnalyticsResultsAI);
-                    setError(null);
-                    setIsAnalyzing(false);
-                  }
-                }
-                break;
-              case 'error':
-                if (data.cacheKey) {
-                  cacheTagsRef.current.delete(data.cacheKey);
-                }
-                setIsAnalyzing(false);
-                setError(typeof (data as any).error === 'string' ? (data as any).error : 'Analytics worker error');
-                // Provide minimal safe results to prevent UI crashes per rules
-                setResults((prev) => prev ?? ({
-                  patterns: [], correlations: [], environmentalCorrelations: [], predictiveInsights: [], anomalies: [], insights: ['Analytics temporarily unavailable.']
-                } as AnalyticsResultsAI));
-                break;
-              case 'progress':
-                // No-op: used for readiness/heartbeat
-                break;
-              default:
-                break;
-            }
-          } catch (e) {
-            logger.error('[useAnalyticsWorker] Failed handling worker message', e as Error);
-          }
-        };
-
-        const onMessageError = (evt: MessageEvent) => {
-          logger.error('[useAnalyticsWorker] messageerror from analytics worker', evt);
-        };
+        const { onMessage, onMessageError } = createWorkerMessageHandlers({
+          cache,
+          cacheTagsRef,
+          activeCacheKeyRef,
+          buildCacheTags: ({ data, goals, studentId, includeAiTag }) => buildCacheTags({
+            data: data as AnalyticsResults,
+            goals: goals as Goal[] | undefined,
+            studentId,
+            includeAiTag,
+          }),
+          setResults,
+          setError,
+          setIsAnalyzing,
+          alertPolicies: alertPoliciesRef.current,
+          telemetryService,
+          lastAlertsReceivedAtRef,
+          setWorkerReady,
+          markWorkerReady,
+          isWorkerReady,
+          watchdogRef,
+        });
 
         worker.addEventListener('message', onMessage as EventListener);
         worker.addEventListener('messageerror', onMessageError as EventListener);
 
-        // Cleanup these listeners if this hook unmounts while worker persists
-        cleanupFns.push(() => {
+        // Expose worker globally for lightweight event streaming from game UI
+        try { (window as unknown as { __analyticsWorker?: Worker }).__analyticsWorker = worker; } catch { /* noop */ }
+
+        cleanupStackRef.current.push(() => {
           try {
+            try { (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null; } catch { /* noop */ }
             worker.removeEventListener('message', onMessage as EventListener);
             worker.removeEventListener('messageerror', onMessageError as EventListener);
-          } catch { /* noop */ }
+          } catch {
+            /* noop */
+          }
         });
       }
     };
@@ -421,7 +296,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
 
     return () => {
       isMounted = false;
-      // Local cleanup only; singleton handles actual termination when refs reach 0
+      // Local cleanup only; worker manager handles actual termination when refs reach 0
       if (idleCallbackRef.current) {
         cancelIdleCallback(idleCallbackRef.current);
         idleCallbackRef.current = null;
@@ -431,13 +306,49 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         watchdogRef.current = null;
       }
       // Run any per-hook cleanup fns (like removing event listeners)
-      while (cleanupFns.length) {
-        try { (cleanupFns.pop() as () => void)(); } catch { /* noop */ }
+      while (cleanupStackRef.current.length) {
+        try { (cleanupStackRef.current.pop() as () => void)(); } catch { /* noop */ }
+      }
+      if (alertsHealthTimerRef.current) {
+        clearInterval(alertsHealthTimerRef.current);
+        alertsHealthTimerRef.current = null;
       }
       releaseWorker();
     };
   // Stable on mount; do not re-init on cache identity churn
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Periodic alerts integration health publication (lightweight)
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      if (alertsHealthTimerRef.current) {
+        clearInterval(alertsHealthTimerRef.current);
+        alertsHealthTimerRef.current = null;
+      }
+      alertsHealthTimerRef.current = setInterval(() => {
+        const now = Date.now();
+        const last = lastAlertsReceivedAtRef.current;
+        const msSince = last ? now - last : Number.POSITIVE_INFINITY;
+        const healthy = Number.isFinite(msSince) ? msSince < 120_000 : false; // consider stale if > 2 minutes
+        try {
+          window.dispatchEvent(new CustomEvent(ALERTS_HEALTH_EVENT, {
+            detail: {
+              healthy,
+              msSinceLastAlert: Number.isFinite(msSince) ? msSince : null,
+              snapshot: (() => { try { return alertPerf.snapshot(); } catch { return null; } })(),
+            }
+          }));
+        } catch { /* noop */ }
+      }, 30_000);
+    } catch { /* noop */ }
+    return () => {
+      if (alertsHealthTimerRef.current) {
+        clearInterval(alertsHealthTimerRef.current);
+        alertsHealthTimerRef.current = null;
+      }
+    };
   }, []);
 
   /**
@@ -458,265 +369,36 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     return buildInsightsCacheKey(inputs as any, { config: cfg });
   }, []);
 
-  /**
-   * Sends data to the worker to start a new analysis, checking cache first.
-   * Supports AI analysis via analyticsManager when requested.
-   */
-  const runAnalysis = useCallback(async (data: AnalyticsData, options?: { useAI?: boolean; student?: Student; prewarm?: boolean }) => {
-    const prewarm = (options as any)?.prewarm === true;
-    const aiRequested = options?.useAI === true;
-    const resolvedStudentId = (() => {
-      if (options?.student?.id) return options.student.id;
-      return (data.entries?.[0]?.studentId) || (data.emotions?.[0]?.studentId as any) || (data.sensoryInputs?.[0]?.studentId as any) || undefined;
-    })();
-
-    // Fetch goals when student context is provided (before cache key for correctness)
-    const goals = (() => {
-      if (!resolvedStudentId) return undefined;
+  const runAnalysis = useMemo(() => createRunAnalysis({
+    cache,
+    cacheTagsRef,
+    activeCacheKeyRef,
+    workerRef,
+    watchdogRef,
+    setResults,
+    setError,
+    setIsAnalyzing,
+    createCacheKey,
+    buildCacheTags,
+    getGoalsForStudent: (studentId: string) => {
       try {
-        return dataStorage.getGoalsForStudent(resolvedStudentId) ?? [];
+        return dataStorage.getGoalsForStudent(studentId) ?? [];
       } catch {
-        return undefined;
+        return [];
       }
-    })();
-    const cacheKey = `${createCacheKey({ ...data, goals }, goals)}|ai=${aiRequested ? '1' : '0'}`;
-    if (!prewarm) {
-      activeCacheKeyRef.current = cacheKey;
-    }
-    
-    // Check cache first
-    const cachedResult = cache.get(cacheKey);
-    if (cachedResult) {
-      // Reduce logging verbosity - only log on first hit per key
-      if (!cache.get(`_logged_${cacheKey}`)) {
-        try {
-          logger.debug('[useAnalyticsWorker] cache hit', { cacheKey });
-          cache.set(`_logged_${cacheKey}`, true, ['logging'], 60000); // Log once per minute max
-        } catch (err) {
-          /* noop */
-        }
-      }
-      setResults(cachedResult as AnalyticsResultsAI);
-      setError(null);
-      return;
-    }
-
-    const cacheTags = buildCacheTags({ data, goals, studentId: resolvedStudentId, includeAiTag: aiRequested });
-
-    // AI path: bypass worker and use analyticsManager with runtime toggle
-    if (aiRequested) {
-      setIsAnalyzing(true);
-      setError(null);
-      try {
-        let studentObj: Student | undefined = options?.student;
-        if (!studentObj) {
-          const first = data.entries?.[0];
-          if (first?.studentId) {
-            studentObj = { id: first.studentId, name: 'Student', createdAt: new Date() } as Student;
-          }
-        }
-        if (!studentObj) throw new Error('Missing student context for AI analysis');
-
-        const res = await analyticsManager.getStudentAnalytics(studentObj, { useAI: true });
-        if (!prewarm) setResults(res as AnalyticsResultsAI);
-        cache.set(cacheKey, res as AnalyticsResultsAI, cacheTags);
-      } catch (err) {
-        logger.error('[useAnalyticsWorker] AI analysis path failed', err);
-        setError('AI analysis failed. Falling back to standard analytics.');
-        try {
-          const res = await analyticsWorkerFallback.processAnalytics({ ...(data as any), goals } as any, { useAI: false, student: options?.student });
-          if (!prewarm) setResults(res as AnalyticsResultsAI);
-          cache.set(cacheKey, res as AnalyticsResultsAI, cacheTags);
-        } catch (fallbackError) {
-          logger.error('[useAnalyticsWorker] Fallback after AI failure also failed', fallbackError);
-          if (!prewarm) setResults({
-            patterns: [],
-            correlations: [],
-            environmentalCorrelations: [],
-            predictiveInsights: [],
-            anomalies: [],
-            insights: ['Analytics temporarily unavailable.']
-          } as AnalyticsResultsAI);
-        }
-      } finally {
-        if (!prewarm) setIsAnalyzing(false);
-      }
-      return;
-    }
-
-    // If no worker available, use fallback
-    if (!workerRef.current || DISABLE_ANALYTICS_WORKER) {
-      // Only log fallback mode once per session
-      if (!cache.get('_logged_fallback_mode')) {
-        logger.debug('[useAnalyticsWorker] No worker available, using fallback');
-        cache.set('_logged_fallback_mode', true, ['logging'], 3600000); // Log once per hour
-      }
-      if (!prewarm) setIsAnalyzing(true);
-      setError(null);
-      
-      try {
-        const results = await analyticsWorkerFallback.processAnalytics({ ...(data as any), goals } as any, { useAI: options?.useAI, student: options?.student });
-        // Prewarm path does not update UI
-        if (!prewarm) setResults(results as AnalyticsResultsAI);
-        // Cache the results
-        cache.set(cacheKey, results as AnalyticsResultsAI, cacheTags);
-        cacheTagsRef.current.delete(cacheKey);
-      } catch (error) {
-        logger.error('[useAnalyticsWorker] Fallback failed', error);
-        setError('Analytics processing failed. Please try again.');
-        // Set minimal results to prevent UI crash
-        if (!prewarm) setResults({
-          patterns: [],
-          correlations: [],
-          environmentalCorrelations: [],
-          predictiveInsights: [],
-          anomalies: [],
-          insights: ['Analytics temporarily unavailable.']
-        } as AnalyticsResultsAI);
-      } finally {
-        if (!prewarm) setIsAnalyzing(false);
-      }
-      return;
-    }
-
-    // If not in cache, proceed with worker analysis
-    if (!prewarm) setIsAnalyzing(true);
-    setError(null);
-    if (!prewarm) setResults(null);
-
-    // Start watchdog timeout to prevent indefinite spinner
-    if (watchdogRef.current) {
-      clearTimeout(watchdogRef.current);
-      watchdogRef.current = null;
-    }
-    // Determine timeout from config if available; fallback to 15s minimum 3s
-    const cfg = getValidatedConfig();
-    // Clamp watchdog timeout to a sane upper bound to avoid indefinite spinners.
-    // Use config ttl as a hint but never exceed 20s; keep a 5s lower bound.
-    const hint = cfg?.cache?.ttl ?? 15000;
-    const timeoutMs = Math.min(20000, Math.max(5000, hint));
-    watchdogRef.current = setTimeout(async () => {
-      try {
-        logger.error('[useAnalyticsWorker] watchdog timeout: worker did not respond, attempting fallback');
-      } catch {
-        /* noop */
-      }
-      diagnostics.logWorkerTimeout('analytics', timeoutMs);
-      
-      // Terminate unresponsive worker
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-      
-      // Attempt fallback processing
-      try {
-        const fallbackResults = await analyticsWorkerFallback.processAnalytics({ ...data, goals } as AnalyticsData, { useAI: options?.useAI, student: options?.student });
-        if (!prewarm) setResults(fallbackResults as AnalyticsResultsAI);
-        cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, cacheTags);
-        cacheTagsRef.current.delete(cacheKey);
-        setError('Worker timeout - results computed using fallback mode.');
-      } catch (fallbackError) {
-        logger.error('[useAnalyticsWorker] Fallback failed after watchdog timeout', fallbackError);
-        setError('Analytics processing failed. Please try again.');
-        // Set minimal results to prevent UI crash
-        if (!prewarm) setResults({
-          patterns: [],
-          correlations: [],
-          environmentalCorrelations: [],
-          predictiveInsights: [],
-          anomalies: [],
-          insights: ['Analytics temporarily unavailable.']
-        } as AnalyticsResultsAI);
-      } finally {
-        if (!prewarm) setIsAnalyzing(false);
-      }
-    }, timeoutMs);
-    
-    // Get current configuration (validated)
-    const config = getValidatedConfig();
-
-    // Rate limit worker posting logs
-    const logKey = `_logged_worker_post_${new Date().getMinutes()}`;
-    if (!cache.get(logKey)) {
-      try {
-        logger.debug('[useAnalyticsWorker] posting to worker (runAnalysis)', { hasConfig: !!config, cacheKey });
-        cache.set(logKey, true, ['logging'], 60000); // Log at most once per minute
-      } catch {
-        /* noop */
-      }
-    }
-    
-    // Send data to worker with cache key and configuration
-    try {
-      // Build typed Insights task with centralized key, ttl, and tags
-      const inputs = {
-        entries: data.entries,
-        emotions: data.emotions,
-        sensoryInputs: data.sensoryInputs,
-        ...(goals ? { goals } : {}),
-      } as const;
-      const task = buildInsightsTask(inputs, {
-        config,
-        // Propagate tags derived from inputs so worker-side caches can invalidate by tag
-        tags: cacheTags,
-        prewarm,
-      });
-
-      // Rate limit WORKER_MESSAGE logs
-      const workerLogKey = `_logged_worker_message_${cacheKey}_${new Date().getMinutes()}`;
-      if (!cache.get(workerLogKey)) {
-        logger.debug('[WORKER_MESSAGE] Sending Insights/Compute task to analytics worker', {
-          cacheKey: task.cacheKey,
-          ttlSeconds: task.ttlSeconds,
-          tagCount: task.tags?.length ?? 0,
-          emotionsCount: data.emotions?.length || 0,
-          sensoryInputsCount: data.sensoryInputs?.length || 0,
-          entriesCount: data.entries?.length || 0
-        });
-        cache.set(workerLogKey, true, ['logging'], 60000); // Log once per minute per cache key
-      }
-
-      // If worker not available or circuit is open, queue or fallback
-      if (!workerRef.current || isCircuitOpen()) {
-        // If no worker at all, route to fallback immediately (do not queue unbounded)
-        if (!singleton.worker) {
-          throw new Error('Worker unavailable or circuit open');
-        }
-      }
-
-      cacheTagsRef.current.set(cacheKey, cacheTags);
-
-      // If worker exists but is not ready yet, queue the task
-      if (workerRef.current && !singleton.ready) {
-        pendingTasks.push(task as unknown as MessageEvent['data']);
-      } else if (workerRef.current) {
-        workerRef.current.postMessage(task);
-      } else {
-        throw new Error('Worker reference missing');
-      }
-    } catch (postErr) {
-      logger.error('[WORKER_MESSAGE] Failed to post message to worker, falling back to sync', { error: postErr });
-      if (watchdogRef.current) {
-        clearTimeout(watchdogRef.current);
-        watchdogRef.current = null;
-      }
-      
-      // Fallback to synchronous processing
-      try {
-        const fallbackResults = await analyticsWorkerFallback.processAnalytics({ ...data, goals } as AnalyticsData, { useAI: options?.useAI, student: options?.student });
-        if (!prewarm) setResults(fallbackResults as AnalyticsResultsAI);
-        cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, cacheTags);
-        cacheTagsRef.current.delete(cacheKey);
-        setError(null);
-      } catch (fallbackError) {
-        logger.error('[useAnalyticsWorker] Fallback processing failed after worker post error', fallbackError);
-        setError('Analytics processing failed.');
-      } finally {
-        if (!prewarm) setIsAnalyzing(false);
-      }
-    }
-  }, [cache, createCacheKey, buildCacheTags]);
+    },
+    analyticsManager,
+    analyticsWorkerFallback,
+    getValidatedConfig,
+    buildInsightsTask,
+    queuePendingTask,
+    getWorkerInstance,
+    isWorkerReady,
+    isCircuitOpen,
+    workerDisabled: DISABLE_ANALYTICS_WORKER,
+    logger,
+    diagnostics,
+  }), [cache, buildCacheTags, createCacheKey]);
 
   /**
    * Pre-compute analytics for common queries during idle time.
@@ -811,7 +493,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       if (typeof window !== 'undefined') {
         window.addEventListener('analytics:cache:clear', onClearAll as EventListener);
         window.addEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
-        cleanupFns.push(() => {
+        cleanupStackRef.current.push(() => {
           try {
             window.removeEventListener('analytics:cache:clear', onClearAll as EventListener);
             window.removeEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
@@ -861,7 +543,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       try { precompManagerRef.current?.stop(); } catch { /* noop */ }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [liveCfg?.precomputation?.enabled, isWorkerReady]);
+  }, [liveCfg?.precomputation?.enabled, workerReady]);
 
   /**
    * Get current cache statistics

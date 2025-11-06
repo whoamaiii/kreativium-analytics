@@ -10,7 +10,7 @@ import { useStudentData } from "@/hooks/useStudentData";
 import { Insights } from "@/types/student";
 import { downloadBlob } from "@/lib/utils";
 import { ArrowLeft, Download, Save, FileText, Calendar, Loader } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSettings } from "@/components/LanguageSettings";
 import { GlobalMenu } from "@/components/GlobalMenu";

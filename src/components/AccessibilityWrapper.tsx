@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface AccessibilityWrapperProps {
@@ -13,6 +13,25 @@ export const AccessibilityWrapper: React.FC<AccessibilityWrapperProps> = ({
   announceChanges = true
 }) => {
   const { tCommon } = useTranslation();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    function applyFromStorage() {
+      try {
+        const hc = localStorage.getItem('emotion.highContrast') === '1';
+        const rm = localStorage.getItem('emotion.motionReduced') === '1';
+        root.classList.toggle('hc', hc);
+        root.setAttribute('data-reduce-motion', rm ? '1' : '0');
+      } catch {}
+    }
+    applyFromStorage();
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key) { applyFromStorage(); return; }
+      if (e.key.startsWith('emotion.')) applyFromStorage();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   const handleSkip = useCallback((e: React.MouseEvent<HTMLAnchorElement>): void => {
     e.preventDefault();

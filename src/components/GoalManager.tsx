@@ -19,10 +19,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Goal, Student, GoalDataPoint, Milestone } from "@/types/student";
 import { dataStorage } from "@/lib/dataStorage";
-import { Calendar, Plus, Crosshair, TrendingUp, CheckCircle, Edit, Trash2, Calendar as CalendarIcon } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Crosshair, TrendingUp, CheckCircle, Edit, Trash2, Calendar as CalendarIcon } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { logger } from "@/lib/logger";
+import { useTranslation } from "@/hooks/useTranslation";
+import { toError } from "@/lib/errors";
+import { generateId } from "@/lib/uuid";
 
 interface GoalManagerProps {
   student: Student;
@@ -41,9 +44,9 @@ interface GoalManagerProps {
  * @param {Function} [props.onGoalUpdate] - Callback when goals are updated
  */
 export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
+  const { tCommon } = useTranslation();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
   const [newGoal, setNewGoal] = useState({
     title: "",
     description: "",
@@ -71,42 +74,22 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     loadGoals();
   }, [loadGoals]);
 
-  /**
-   * Generate a unique ID using crypto.randomUUID or fallback.
-   * This is more secure and collision-resistant than Math.random().
-   * 
-   * @returns {string} A unique identifier
-   */
-  const generateId = (): string => {
-    // Use crypto.randomUUID if available (modern browsers)
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    
-    // Fallback to timestamp + random for older browsers
-    // This is still much better than Math.random().toString(36)
-    const timestamp = Date.now().toString(36);
-    const randomPart = Math.random().toString(36).substring(2, 11);
-    const randomPart2 = Math.random().toString(36).substring(2, 11);
-    return `${timestamp}-${randomPart}-${randomPart2}`;
-  };
-
   const createGoal = () => {
     // Validate required fields
     if (!newGoal.title.trim() || !newGoal.description.trim() || !newGoal.measurableObjective.trim()) {
-      toast.error("Please fill in all required fields");
+      toast.error(String(tCommon('goals.validation.required', { defaultValue: 'Please fill in all required fields' })));
       return;
     }
 
     // Validate target date
     if (!newGoal.targetDate) {
-      toast.error("Please select a target date");
+      toast.error(String(tCommon('goals.validation.targetDateRequired', { defaultValue: 'Please select a target date' })));
       return;
     }
 
     const targetDate = new Date(newGoal.targetDate);
     if (isNaN(targetDate.getTime())) {
-      toast.error("Invalid target date");
+      toast.error(String(tCommon('goals.validation.targetDateInvalid', { defaultValue: 'Invalid target date' })));
       return;
     }
 
@@ -114,37 +97,39 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (targetDate < today) {
-      toast.error("Target date must be in the future");
+      toast.error(String(tCommon('goals.validation.targetDateFuture', { defaultValue: 'Target date must be in the future' })));
       return;
     }
 
     // Validate baseline and target values
     if (newGoal.targetValue <= newGoal.baselineValue) {
-      toast.error("Target value must be greater than baseline value");
+      toast.error(String(tCommon('goals.validation.targetGreaterThanBaseline', { defaultValue: 'Target value must be greater than baseline value' })));
       return;
     }
 
     const goal: Goal = {
-      id: generateId(),
+      id: generateId('goal'),
       studentId: student.id,
       title: newGoal.title,
       description: newGoal.description,
       category: newGoal.category,
       targetDate,
       createdDate: new Date(),
+      updatedAt: new Date(),
       status: "active",
       measurableObjective: newGoal.measurableObjective,
       currentProgress: 0,
+      progress: 0,
       milestones: [],
       interventions: [],
       baselineValue: newGoal.baselineValue,
       targetValue: newGoal.targetValue,
       dataPoints: [{
-        id: generateId(),
+        id: generateId('goal_datapoint'),
         timestamp: new Date(),
         value: newGoal.baselineValue,
-        notes: "Baseline measurement",
-        collectedBy: "Teacher"
+        notes: String(tCommon('goals.baselineMeasurement', { defaultValue: 'Baseline measurement' })),
+        collectedBy: String(tCommon('roles.teacher', { defaultValue: 'Teacher' }))
       }]
     };
 
@@ -152,7 +137,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     loadGoals();
     resetForm();
     setShowCreateDialog(false);
-    toast.success("Goal created successfully!");
+    toast.success(String(tCommon('goals.created', { defaultValue: 'Goal created successfully!' })));
     onGoalUpdate?.();
   };
 
@@ -160,7 +145,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     const goalToUpdate = goals.find(g => g.id === goalId);
     if (!goalToUpdate) return;
 
-    const updatedGoal = { ...goalToUpdate, ...updates };
+    const updatedGoal = { ...goalToUpdate, ...updates, updatedAt: new Date() };
     dataStorage.saveGoal(updatedGoal);
     loadGoals();
     onGoalUpdate?.();
@@ -171,14 +156,14 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     if (!goal) return;
 
     const newDataPoint: GoalDataPoint = {
-      id: generateId(),
+      id: generateId('goal_datapoint'),
       timestamp: new Date(),
       value,
       notes,
       collectedBy: "Teacher"
     };
 
-    const updatedDataPoints = [...goal.dataPoints, newDataPoint];
+    const updatedDataPoints = [...(goal.dataPoints ?? []), newDataPoint];
     const progress = goal.targetValue ? ((value - (goal.baselineValue || 0)) / (goal.targetValue - (goal.baselineValue || 0))) * 100 : 0;
     
     updateGoal(goalId, {
@@ -186,7 +171,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
       currentProgress: Math.max(0, Math.min(100, progress))
     });
 
-    toast.success("Progress updated!");
+    toast.success(String(tCommon('goals.progressUpdated', { defaultValue: 'Progress updated!' })));
   };
 
   const addMilestone = (goalId: string, title: string, description: string, targetDate: Date) => {
@@ -194,7 +179,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     if (!goal) return;
 
     const newMilestone: Milestone = {
-      id: generateId(),
+      id: generateId('milestone'),
       title,
       description,
       targetDate,
@@ -202,24 +187,24 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     };
 
     updateGoal(goalId, {
-      milestones: [...goal.milestones, newMilestone]
+      milestones: [...(goal.milestones ?? []), newMilestone]
     });
 
-    toast.success("Milestone added!");
+    toast.success(String(tCommon('goals.milestone.added', { defaultValue: 'Milestone added!' })));
   };
 
   const completeMilestone = (goalId: string, milestoneId: string) => {
     const goal = goals.find(g => g.id === goalId);
     if (!goal) return;
 
-    const updatedMilestones = goal.milestones.map(m =>
+    const updatedMilestones = (goal.milestones ?? []).map(m =>
       m.id === milestoneId 
         ? { ...m, isCompleted: true, completedDate: new Date() }
         : m
     );
 
     updateGoal(goalId, { milestones: updatedMilestones });
-    toast.success("Milestone completed! 🎉");
+    toast.success(String(tCommon('goals.milestone.completed', { defaultValue: 'Milestone completed! 🎉' })));
   };
 
   /**
@@ -235,18 +220,18 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     }
 
     try {
-      const confirmed = window.confirm(`Are you sure you want to delete the goal "${goal.title}"?`);
+      const confirmed = window.confirm(String(tCommon('goals.confirmDelete', { defaultValue: 'Are you sure you want to delete the goal "{{title}}"?', title: goal.title })));
       if (confirmed) {
         // More efficient deletion: mark as deleted instead of rewriting all goals
         const updatedGoal = { ...goal, status: 'discontinued' as Goal['status'], deletedAt: new Date() };
         dataStorage.saveGoal(updatedGoal);
         loadGoals();
-        toast.success("Goal deleted");
+        toast.success(String(tCommon('goals.deleted', { defaultValue: 'Goal deleted' })));
         onGoalUpdate?.();
       }
     } catch (error) {
-      logger.error('Failed to delete goal', error);
-      toast.error('Failed to delete goal. Please try again.');
+      logger.error('Failed to delete goal', toError(error));
+      toast.error(String(tCommon('goals.deleteFailed', { defaultValue: 'Failed to delete goal. Please try again.' })));
     }
   };
 
@@ -260,7 +245,6 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
       targetValue: 100,
       baselineValue: 0
     });
-    setEditingGoal(null);
   };
 
   const getStatusColor = (status: Goal['status']) => {
@@ -289,69 +273,69 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">IEP Goals</h2>
-          <p className="text-muted-foreground">Track and monitor {student.name}'s progress toward educational objectives</p>
+          <h2 className="text-2xl font-bold text-foreground">{String(tCommon('goals.header.title', { defaultValue: 'IEP Goals' }))}</h2>
+          <p className="text-muted-foreground">{String(tCommon('goals.header.subtitle', { defaultValue: "Track and monitor {{name}}'s progress toward educational objectives", name: student.name }))}</p>
         </div>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:opacity-90 font-dyslexia">
               <Plus className="h-4 w-4 mr-2" />
-              New Goal
+              {String(tCommon('goals.actions.new', { defaultValue: 'New Goal' }))}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Create New IEP Goal</DialogTitle>
+              <DialogTitle>{String(tCommon('goals.create.title', { defaultValue: 'Create New IEP Goal' }))}</DialogTitle>
               <DialogDescription>
-                Enter goal details, targets, and measurable objectives.
+                {String(tCommon('goals.create.description', { defaultValue: 'Enter goal details, targets, and measurable objectives.' }))}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title">Goal Title *</Label>
+                <Label htmlFor="title">{String(tCommon('goals.form.title', { defaultValue: 'Goal Title *' }))}</Label>
                 <Input
                   id="title"
                   value={newGoal.title}
                   onChange={(e) => setNewGoal(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g., Improve emotional regulation during transitions"
+                  placeholder={String(tCommon('goals.form.title.placeholder', { defaultValue: 'e.g., Improve emotional regulation during transitions' }))}
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">{String(tCommon('goals.form.category', { defaultValue: 'Category' }))}</Label>
                 <Select value={newGoal.category} onValueChange={(value: Goal['category']) => setNewGoal(prev => ({ ...prev, category: value }))}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="behavioral">Behavioral</SelectItem>
-                    <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="social">Social</SelectItem>
-                    <SelectItem value="sensory">Sensory</SelectItem>
-                    <SelectItem value="communication">Communication</SelectItem>
+                    <SelectItem value="behavioral">{String(tCommon('goals.category.behavioral', { defaultValue: 'Behavioral' }))}</SelectItem>
+                    <SelectItem value="academic">{String(tCommon('goals.category.academic', { defaultValue: 'Academic' }))}</SelectItem>
+                    <SelectItem value="social">{String(tCommon('goals.category.social', { defaultValue: 'Social' }))}</SelectItem>
+                    <SelectItem value="sensory">{String(tCommon('goals.category.sensory', { defaultValue: 'Sensory' }))}</SelectItem>
+                    <SelectItem value="communication">{String(tCommon('goals.category.communication', { defaultValue: 'Communication' }))}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="description">Description *</Label>
+                <Label htmlFor="description">{String(tCommon('goals.form.description', { defaultValue: 'Description *' }))}</Label>
                 <Textarea
                   id="description"
                   value={newGoal.description}
                   onChange={(e) => setNewGoal(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Detailed description of what the student will achieve..."
+                  placeholder={String(tCommon('goals.form.description.placeholder', { defaultValue: 'Detailed description of what the student will achieve...' }))}
                 />
               </div>
               <div>
-                <Label htmlFor="measurable">Measurable Objective *</Label>
+                <Label htmlFor="measurable">{String(tCommon('goals.form.measurable', { defaultValue: 'Measurable Objective *' }))}</Label>
                 <Textarea
                   id="measurable"
                   value={newGoal.measurableObjective}
                   onChange={(e) => setNewGoal(prev => ({ ...prev, measurableObjective: e.target.value }))}
-                  placeholder="How will progress be measured? Include specific criteria..."
+                  placeholder={String(tCommon('goals.form.measurable.placeholder', { defaultValue: 'How will progress be measured? Include specific criteria...' }))}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="baseline">Baseline Value</Label>
+                  <Label htmlFor="baseline">{String(tCommon('goals.form.baseline', { defaultValue: 'Baseline Value' }))}</Label>
                   <Input
                     id="baseline"
                     type="number"
@@ -360,7 +344,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="target">Target Value</Label>
+                  <Label htmlFor="target">{String(tCommon('goals.form.target', { defaultValue: 'Target Value' }))}</Label>
                   <Input
                     id="target"
                     type="number"
@@ -370,7 +354,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
                 </div>
               </div>
               <div>
-                <Label htmlFor="targetDate">Target Date</Label>
+                <Label htmlFor="targetDate">{String(tCommon('goals.form.targetDate', { defaultValue: 'Target Date' }))}</Label>
                 <Input
                   id="targetDate"
                   type="date"
@@ -380,9 +364,9 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
               </div>
               <div className="flex gap-2 justify-end">
                 <Button variant="outline" onClick={() => { resetForm(); setShowCreateDialog(false); }}>
-                  Cancel
+                  {String(tCommon('buttons.cancel', { defaultValue: 'Cancel' }))}
                 </Button>
-                <Button onClick={createGoal}>Create Goal</Button>
+                <Button onClick={createGoal}>{String(tCommon('goals.actions.create', { defaultValue: 'Create Goal' }))}</Button>
               </div>
             </div>
           </DialogContent>
@@ -394,13 +378,13 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Crosshair className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No IEP Goals Yet</h3>
+            <h3 className="text-xl font-semibold text-foreground mb-2">{String(tCommon('goals.empty.title', { defaultValue: 'No IEP Goals Yet' }))}</h3>
             <p className="text-muted-foreground text-center mb-6 max-w-md">
-              Start by creating your first IEP goal to track {student.name}'s educational progress.
+              {String(tCommon('goals.empty.subtitle', { defaultValue: "Start by creating your first IEP goal to track {{name}}'s educational progress.", name: student.name }))}
             </p>
             <Button onClick={() => setShowCreateDialog(true)} className="bg-gradient-primary hover:opacity-90 font-dyslexia">
               <Plus className="h-4 w-4 mr-2" />
-              Create First Goal
+              {String(tCommon('goals.actions.createFirst', { defaultValue: 'Create First Goal' }))}
             </Button>
           </CardContent>
         </Card>
@@ -426,10 +410,10 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" aria-label="Edit goal" title="Edit goal">
+                    <Button variant="ghost" size="icon" aria-label={String(tCommon('aria.editGoal', { defaultValue: 'Edit goal' }))} title={String(tCommon('aria.editGoal', { defaultValue: 'Edit goal' }))}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" aria-label="Delete goal" title="Delete goal" onClick={() => deleteGoal(goal.id)}>
+                    <Button variant="ghost" size="icon" aria-label={String(tCommon('aria.deleteGoal', { defaultValue: 'Delete goal' }))} title={String(tCommon('aria.deleteGoal', { defaultValue: 'Delete goal' }))} onClick={() => deleteGoal(goal.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -439,7 +423,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
                 {/* Progress */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Progress</span>
+                    <span className="text-sm font-medium">{String(tCommon('goals.progress.label', { defaultValue: 'Progress' }))}</span>
                     <span className="text-sm text-muted-foreground">{Math.round(goal.currentProgress)}%</span>
                   </div>
                   <Progress value={goal.currentProgress} className="h-3" />
@@ -447,7 +431,7 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
 
                 {/* Measurable Objective */}
                 <div className="mb-4">
-                  <h4 className="font-medium mb-2">Measurable Objective</h4>
+                  <h4 className="font-medium mb-2">{String(tCommon('goals.measurable.title', { defaultValue: 'Measurable Objective' }))}</h4>
                   <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
                     {goal.measurableObjective}
                   </p>
@@ -457,45 +441,45 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="flex items-center gap-2 text-sm">
                     <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    <span>Created: {format(goal.createdDate, 'MMM dd, yyyy')}</span>
+                    <span>{String(tCommon('goals.timeline.created', { defaultValue: 'Created:' }))} {format(goal.createdDate, 'MMM dd, yyyy')}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Crosshair className="h-4 w-4 text-muted-foreground" />
-                    <span>Target: {format(goal.targetDate, 'MMM dd, yyyy')}</span>
+                    <span>{String(tCommon('goals.timeline.target', { defaultValue: 'Target:' }))} {format(goal.targetDate, 'MMM dd, yyyy')}</span>
                   </div>
                 </div>
 
                 {/* Milestones */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">Milestones</h4>
+                    <h4 className="font-medium">{String(tCommon('goals.milestones.title', { defaultValue: 'Milestones' }))}</h4>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => {
-                        const title = prompt("Milestone title:");
-                        const description = prompt("Milestone description:");
-                        const dateStr = prompt("Target date (YYYY-MM-DD):");
+                        const title = prompt(String(tCommon('goals.milestones.prompt.title', { defaultValue: 'Milestone title:' })));
+                        const description = prompt(String(tCommon('goals.milestones.prompt.description', { defaultValue: 'Milestone description:' })));
+                        const dateStr = prompt(String(tCommon('goals.milestones.prompt.date', { defaultValue: 'Target date (YYYY-MM-DD):' })));
                         if (title && description && dateStr) {
                           addMilestone(goal.id, title, description, new Date(dateStr));
                         }
                       }}
                     >
                       <Plus className="h-3 w-3 mr-1" />
-                      Add
+                      {String(tCommon('buttons.add', { defaultValue: 'Add' }))}
                     </Button>
                   </div>
-                  {goal.milestones.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No milestones yet</p>
+                  {(goal.milestones?.length ?? 0) === 0 ? (
+                    <p className="text-sm text-muted-foreground">{String(tCommon('goals.milestones.empty', { defaultValue: 'No milestones yet' }))}</p>
                   ) : (
                     <div className="space-y-2">
-                      {goal.milestones.map((milestone) => (
+                      {(goal.milestones ?? []).map((milestone) => (
                         <div key={milestone.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded">
                           <Button
                             variant="ghost"
                             size="icon"
-                            aria-label={milestone.isCompleted ? 'Milestone completed' : 'Mark milestone complete'}
-                            title={milestone.isCompleted ? 'Milestone completed' : 'Mark milestone complete'}
+                            aria-label={milestone.isCompleted ? String(tCommon('goals.milestones.completed', { defaultValue: 'Milestone completed' })) : String(tCommon('goals.milestones.markComplete', { defaultValue: 'Mark milestone complete' }))}
+                            title={milestone.isCompleted ? String(tCommon('goals.milestones.completed', { defaultValue: 'Milestone completed' })) : String(tCommon('goals.milestones.markComplete', { defaultValue: 'Mark milestone complete' }))}
                             onClick={() => !milestone.isCompleted && completeMilestone(goal.id, milestone.id)}
                             disabled={milestone.isCompleted}
                           >
@@ -522,15 +506,15 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      const value = prompt("Enter current progress value:");
-                      const notes = prompt("Progress notes (optional):");
+                      const value = prompt(String(tCommon('goals.progress.prompt.value', { defaultValue: 'Enter current progress value:' })));
+                      const notes = prompt(String(tCommon('goals.progress.prompt.notes', { defaultValue: 'Progress notes (optional):' })));
                       if (value) {
                         addDataPoint(goal.id, Number(value), notes || undefined);
                       }
                     }}
                   >
                     <TrendingUp className="h-4 w-4 mr-1" />
-                    Update Progress
+                    {String(tCommon('goals.progress.update', { defaultValue: 'Update Progress' }))}
                   </Button>
                 </div>
               </CardContent>
