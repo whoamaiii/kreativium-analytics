@@ -96,15 +96,16 @@ function readEnvOverrides(): Partial<SchemaAnalyticsConfig> | null {
 
   // Clean undefined leaves to respect deep-merge semantics later
   function prune<T extends object>(obj: T): T {
-    const out: any = Array.isArray(obj) ? [...(obj as any)] : { ...(obj as any) };
-    for (const k of Object.keys(out)) {
-      const v = out[k];
+    const out = Array.isArray(obj) ? ([...obj] as unknown as T) : ({ ...obj } as T);
+    const outRecord = out as Record<string, unknown>;
+    for (const k of Object.keys(outRecord)) {
+      const v = outRecord[k];
       if (v && typeof v === 'object' && !Array.isArray(v)) {
-        out[k] = prune(v);
+        outRecord[k] = prune(v as Record<string, unknown>);
       }
-      if (out[k] === undefined) delete out[k];
+      if (outRecord[k] === undefined) delete outRecord[k];
     }
-    return out as T;
+    return out;
   }
 
   return prune(overrides);
@@ -116,18 +117,22 @@ let cacheStamp = 0;
 
 function deepMerge<T extends object>(base: T, overrides?: Partial<T> | null): T {
   if (!overrides) return base;
-  const output: any = Array.isArray(base) ? [...(base as any)] : { ...(base as any) };
+  const output = Array.isArray(base) ? ([...base] as unknown as T) : ({ ...base } as T);
+  const outputRecord = output as Record<string, unknown>;
+  const baseRecord = base as Record<string, unknown>;
+  const overridesRecord = overrides as Record<string, unknown>;
+
   for (const key of Object.keys(overrides) as Array<keyof T>) {
-    const ov: any = (overrides as any)[key];
+    const ov = overridesRecord[key as string];
     if (ov === undefined) continue;
-    const bv: any = (base as any)[key];
+    const bv = baseRecord[key as string];
     if (bv && typeof bv === 'object' && !Array.isArray(bv) && ov && typeof ov === 'object' && !Array.isArray(ov)) {
-      output[key] = deepMerge(bv, ov);
+      outputRecord[key as string] = deepMerge(bv as Record<string, unknown>, ov as Partial<Record<string, unknown>>);
     } else {
-      output[key] = ov;
+      outputRecord[key as string] = ov;
     }
   }
-  return output as T;
+  return output;
 }
 
 function applyEnvironmentProfile(base: SchemaAnalyticsConfig): SchemaAnalyticsConfig {
