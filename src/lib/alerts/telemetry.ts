@@ -61,7 +61,7 @@ import type {
 } from '@/lib/alerts/types';
 import { safeGet, safeSet } from '@/lib/storage';
 import { hashStudentId } from '@/lib/alerts/utils/hash';
-import * as logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
 
@@ -174,9 +174,9 @@ export class AlertTelemetryService {
     const entries = this.readEntries();
     entries.push(this.toEntry(alert, extras));
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_created', { alertId: alert.id, experiment: extras?.experimentKey }); } catch {}
+    try { logger.info('alert_created', { alertId: alert.id, experiment: extras?.experimentKey }); } catch {}
     try {
-      (logger as any)?.debug?.('alert_telemetry_captured', {
+      logger.debug('alert_telemetry_captured', {
         alertId: alert.id,
         experiment: extras?.experimentKey,
         variant: extras?.experimentVariant,
@@ -191,7 +191,7 @@ export class AlertTelemetryService {
     const e = entries.find((x) => x.alertId === alertId);
     if (e) e.acknowledgedAt = new Date().toISOString();
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_acknowledged', { alertId }); } catch {}
+    try { logger.info('alert_acknowledged', { alertId }); } catch {}
   }
 
   /**
@@ -211,7 +211,7 @@ export class AlertTelemetryService {
       if (data?.actionId) e.resolutionActionId = data.actionId;
     }
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_resolved', { alertId }); } catch {}
+    try { logger.info('alert_resolved', { alertId }); } catch {}
   }
 
   /** Capture teacher feedback for an alert: relevance flag, rating, and comment. */
@@ -220,7 +220,7 @@ export class AlertTelemetryService {
     const e = entries.find((x) => x.alertId === alertId);
     if (e) e.feedback = feedback;
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_feedback', { alertId, feedback }); } catch {}
+    try { logger.info('alert_feedback', { alertId, feedback }); } catch {}
   }
 
   /** Snooze an alert until a future time with an optional reason. */
@@ -233,7 +233,7 @@ export class AlertTelemetryService {
       if (data?.reason) e.snoozeReason = data.reason;
     }
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_snoozed', { alertId, until: data?.until, reason: data?.reason }); } catch {}
+    try { logger.info('alert_snoozed', { alertId, until: data?.until, reason: data?.reason }); } catch {}
   }
 
   /** Return all telemetry entries. Prefer getEntriesBetween for larger datasets. */

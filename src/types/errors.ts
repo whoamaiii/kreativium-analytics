@@ -2,6 +2,8 @@
  * Standardized error types for the Sensory Compass application
  */
 
+import { storageUtils } from '@/lib/storageUtils';
+
 export enum ErrorType {
   // Data errors
   DATA_VALIDATION = 'DATA_VALIDATION',
@@ -230,8 +232,6 @@ export const storageQuotaRecoveryStrategy: ErrorRecoveryStrategy = {
     return error.type === ErrorType.STORAGE_QUOTA_EXCEEDED;
   },
   async recover(): Promise<void> {
-    // Import dynamically to avoid circular dependencies
-    const { storageUtils } = await import('@/lib/storageUtils');
     storageUtils.clearOldTrackingData(7); // Clear data older than 7 days
   },
 };

@@ -25,6 +25,7 @@ import {
   retryWithExponentialBackoff,
   sanitizeRequestForLog,
   safeJSONParse,
+  extractFirstJsonObject,
 } from './utils';
 import { aiMetrics } from '@/lib/ai/metrics';
 
@@ -407,7 +408,6 @@ export class OpenRouterClient {
           // 1) Fallback JSON extraction strategies on content text
           if (!parsed.ok) {
             try {
-              const { extractFirstJsonObject } = await import('./utils');
               const attempt = extractFirstJsonObject<unknown>(text);
               if (attempt.ok) {
                 parsed = { ok: true, value: attempt.value } as any;

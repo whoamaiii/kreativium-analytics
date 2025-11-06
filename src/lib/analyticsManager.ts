@@ -12,7 +12,7 @@ import type { AnalysisEngine } from "@/lib/analysis";
 import { AnalyticsRunner } from "@/lib/analytics/runner";
 import type { AnalyticsResultsCompat } from "@/lib/analytics/types";
 import { loadAiConfig } from "@/lib/aiConfig";
-import { getProfileMap, initializeStudentProfile, saveProfiles } from "@/lib/analyticsProfiles";
+import { getProfileMap, initializeStudentProfile, saveProfiles, clearAllProfiles, getProfileCacheStats, clearStudentProfile } from "@/lib/analyticsProfiles";
 import { analyticsCoordinator } from "@/lib/analyticsCoordinator";
 import type { StudentAnalyticsProfile } from "@/lib/analyticsProfiles";
 // New orchestrator-style helpers and types
@@ -594,7 +594,6 @@ class AnalyticsManagerService {
 
       // Profiles
       try {
-        const { clearAllProfiles, getProfileCacheStats } = await import('@/lib/analyticsProfiles');
         const before = getProfileCacheStats().count;
         const cleared = clearAllProfiles();
         summary.profilesBefore = before;
@@ -641,7 +640,6 @@ class AnalyticsManagerService {
 
       // Profiles
       try {
-        const { clearStudentProfile } = await import('@/lib/analyticsProfiles');
         clearStudentProfile(studentId);
       } catch (e) {
         logger.warn('[analyticsManager] clearStudentProfile failed', e as Error);
