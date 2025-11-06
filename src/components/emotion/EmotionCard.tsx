@@ -25,7 +25,6 @@ export function EmotionCard({ emotion, selected, onClick }: EmotionCardProps) {
       }`}
     >
       {emotion.iconPath && (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={emotion.iconPath} alt="" className="h-8 w-8" />
       )}
       <span className="text-sm font-medium">{label}</span>

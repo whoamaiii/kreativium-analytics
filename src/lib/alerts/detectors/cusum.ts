@@ -115,6 +115,16 @@ export function detectCUSUMShift(series: TrendPoint[], options: CUSUMDetectorOpt
   const score = clamp((thresholdRatio - 1) / 2, 0, 1);
   const confidence = clamp(0.65 + Math.log1p(Math.max(0, thresholdRatio - 1)) * 0.2, 0.65, 0.98);
 
+  logger.debug('CUSUM detection evaluated', {
+    label: options.label ?? 'CUSUM',
+    kFactor,
+    hMultiplier: adjHMultiplier,
+    sigma,
+    thresholdRatio,
+    side,
+    detected: true,
+  });
+
   return {
     score,
     confidence,
@@ -147,14 +157,4 @@ export function detectCUSUMShift(series: TrendPoint[], options: CUSUMDetectorOpt
       side,
     },
   };
-
-  logger.debug('CUSUM detection evaluated', {
-    label: options.label ?? 'CUSUM',
-    kFactor,
-    hMultiplier: adjHMultiplier,
-    sigma,
-    thresholdRatio,
-    side,
-    detected: true,
-  });
 }
