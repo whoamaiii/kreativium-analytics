@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { SensoryEntry } from "@/types/student";
 import { Eye, Ear, Hand, RotateCcw, Activity } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
+import { HelpTooltip } from "@/components/help/TooltipLibrary";
+import { BodyMap, type BodyLocation } from "@/components/tracking/BodyMap";
 
 interface SensoryTrackerProps {
   onSensoryAdd: (sensory: Omit<SensoryEntry, 'id' | 'timestamp'>) => void;
@@ -53,6 +55,7 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
   const [notes, setNotes] = useState('');
   const [environment, setEnvironment] = useState('');
   const [location, setLocation] = useState('');
+  const [selectedBodyLocations, setSelectedBodyLocations] = useState<BodyLocation[]>([]);
   const [copingStrategies, setCopingStrategies] = useState<string[]>([]);
   const [newCopingStrategy, setNewCopingStrategy] = useState('');
 
@@ -67,15 +70,28 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
     setCopingStrategies(copingStrategies.filter(s => s !== strategy));
   };
 
+  const handleBodyLocationSelect = (bodyLocation: BodyLocation) => {
+    setSelectedBodyLocations(prev =>
+      prev.includes(bodyLocation)
+        ? prev.filter(loc => loc !== bodyLocation)
+        : [...prev, bodyLocation]
+    );
+  };
+
   const handleSubmit = () => {
     if (!selectedType || !selectedResponse) return;
+
+    // Combine body map selections with manual location entry
+    const combinedLocation = selectedBodyLocations.length > 0
+      ? selectedBodyLocations.join(', ')
+      : location || undefined;
 
     onSensoryAdd({
       studentId,
       sensoryType: selectedType as SensoryEntry['sensoryType'],
       response: selectedResponse as SensoryEntry['response'],
       intensity: intensity as SensoryEntry['intensity'],
-      location: location || undefined,
+      location: combinedLocation,
       notes: notes.trim() || undefined,
       environment: environment.trim() || undefined,
       copingStrategies: copingStrategies.length > 0 ? copingStrategies : undefined,
@@ -86,6 +102,7 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
     setSelectedResponse('');
     setIntensity(3);
     setLocation('');
+    setSelectedBodyLocations([]);
     setNotes('');
     setEnvironment('');
     setCopingStrategies([]);
@@ -99,7 +116,10 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
       <CardContent className="space-y-6">
         {/* Sensory Type Selection */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">{String(tTracking('sensory.selectType'))}</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-medium text-foreground">{String(tTracking('sensory.selectType'))}</h3>
+            <HelpTooltip term="visual" />
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {sensoryTypes.map((type) => {
               const Icon = type.icon;
@@ -117,8 +137,9 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
                   aria-pressed={selectedType === type.type}
                 >
                   <Icon className="h-5 w-5 transform transition-transform duration-200 hover:scale-110" />
-                  <div className="text-left">
+                  <div className="text-left flex items-center gap-2">
                     <div className="font-medium">{String(tTracking(`sensory.types.${type.type}`))}</div>
+                    <HelpTooltip term={type.type} />
                   </div>
                 </Button>
               );
@@ -129,7 +150,10 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
         {/* Response Type */}
         {selectedType && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">{String(tTracking('sensory.response'))}</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-medium text-foreground">{String(tTracking('sensory.response'))}</h3>
+              <HelpTooltip term="seeking" />
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {responses.map((response) => (
                 <Button
@@ -154,9 +178,12 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
         {/* Intensity Scale */}
 {selectedResponse && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">
-              {String(tTracking('sensory.intensity'))}: {intensity}/5
-            </h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-medium text-foreground">
+                {String(tTracking('sensory.intensity'))}: {intensity}/5
+              </h3>
+              <HelpTooltip term="intensity" />
+            </div>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((level) => (
                 <Button
@@ -187,32 +214,51 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
           </div>
         )}
 
-        {/* Body Location */}
+        {/* Body Location - Interactive Body Map */}
         {selectedType && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">Body Location (Optional)</h3>
-            <div className="flex flex-wrap gap-2">
-              {bodyLocations.map((loc) => (
-                <Badge
-                  key={loc}
-                  variant={location === loc ? "default" : "outline"}
-                  className="cursor-pointer font-dyslexia hover-lift transition-all duration-200"
-                  onClick={() => setLocation(location === loc ? '' : loc)}
-                  role="button"
-                  tabIndex={0}
-                  aria-pressed={location === loc}
-                  aria-label={`Select body location: ${loc}`}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setLocation(location === loc ? '' : loc);
-                    }
-                  }}
-                >
-                  {loc}
-                </Badge>
-              ))}
+            <div className="flex items-center gap-2 mb-4">
+              <h3 className="text-sm font-medium text-foreground">Body Location (Optional)</h3>
+              <HelpTooltip term="tactile" />
             </div>
+
+            {/* Interactive Body Map */}
+            <div className="mb-4">
+              <BodyMap
+                selectedLocations={selectedBodyLocations}
+                onLocationSelect={handleBodyLocationSelect}
+                multiSelect={true}
+              />
+            </div>
+
+            {/* Text-based fallback for manual entry */}
+            <details className="text-sm text-muted-foreground">
+              <summary className="cursor-pointer hover:text-foreground mb-2">
+                Or select from list
+              </summary>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {bodyLocations.map((loc) => (
+                  <Badge
+                    key={loc}
+                    variant={location === loc ? "default" : "outline"}
+                    className="cursor-pointer font-dyslexia hover-lift transition-all duration-200"
+                    onClick={() => setLocation(location === loc ? '' : loc)}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={location === loc}
+                    aria-label={`Select body location: ${loc}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setLocation(location === loc ? '' : loc);
+                      }
+                    }}
+                  >
+                    {loc}
+                  </Badge>
+                ))}
+              </div>
+            </details>
           </div>
         )}
 

@@ -7,6 +7,7 @@ import { EmotionEntry } from "@/types/student";
 import { Heart, Frown, Angry, Smile, Zap, Sun } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 import { logger } from '@/lib/logger';
+import { HelpTooltip } from "@/components/help/TooltipLibrary";
 
 interface EmotionTrackerProps {
   onEmotionAdd: (emotion: Omit<EmotionEntry, 'id' | 'timestamp'>) => void;
@@ -157,9 +158,12 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
         {/* Intensity Scale */}
         {selectedEmotion && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">
-              {String(tTracking('emotions.intensity'))}: {intensity}/5
-            </h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-medium text-foreground">
+                {String(tTracking('emotions.intensity'))}: {intensity}/5
+              </h3>
+              <HelpTooltip term="intensity" />
+            </div>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((level) => (
                 <Button
@@ -184,7 +188,10 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
         {/* Duration */}
         {selectedEmotion && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">Duration (minutes)</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-medium text-foreground">Duration (minutes)</h3>
+              <HelpTooltip term="duration" />
+            </div>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -229,7 +236,10 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
         {/* Escalation Pattern */}
         {selectedEmotion && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">How did it develop?</h3>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="text-sm font-medium text-foreground">How did it develop?</h3>
+              <HelpTooltip term="escalation" />
+            </div>
             <div className="flex gap-2">
               <Button
                 variant={escalationPattern === 'sudden' ? "default" : "outline"}
@@ -261,7 +271,10 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
 
         {/* Triggers */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">Utløsere (Valgfritt)</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <h3 className="text-sm font-medium text-foreground">Utløsere (Valgfritt)</h3>
+            <HelpTooltip term="triggers" />
+          </div>
           <div className="flex gap-2 mb-2">
             <input
               type="text"

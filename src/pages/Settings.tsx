@@ -3,13 +3,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useNavigate } from 'react-router-dom';
-import { FileText } from 'lucide-react';
+import { FileText, BookOpen } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/breadcrumbs';
 import { Switch } from '@/components/ui/switch';
+import { OnboardingTrigger, useOnboarding } from '@/components/onboarding/OnboardingTutorial';
+import { ExampleEntriesDialog } from '@/components/help/ExampleEntriesDialog';
 
 const Settings = (): JSX.Element => {
   const { tSettings, tCommon } = useTranslation();
   const navigate = useNavigate();
+  const { restart } = useOnboarding();
+  const [showExamples, setShowExamples] = React.useState(false);
   const [motionReduced, setMotionReduced] = React.useState<boolean>(() => {
     try { return localStorage.getItem('emotion.motionReduced') === '1'; } catch { return false; }
   });
@@ -172,6 +176,30 @@ const Settings = (): JSX.Element => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Help & Support Section */}
+            <Card className="bg-gradient-card border-0 shadow-soft">
+              <CardContent className="p-6 space-y-4">
+                <h2 className="text-xl font-semibold">Help & Support</h2>
+                <p className="text-sm text-muted-foreground">
+                  Access tutorials and examples to get the most out of Kreativium Analytics
+                </p>
+
+                <div className="space-y-3">
+                  <OnboardingTrigger onClick={restart} />
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowExamples(true)}
+                    className="w-full justify-start gap-2"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    View Example Entries
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="bg-gradient-card border-0 shadow-soft">
               <CardContent className="p-6 space-y-3">
             <h2 className="text-xl font-semibold">{tSettings('data.title')}</h2>
@@ -187,6 +215,9 @@ const Settings = (): JSX.Element => {
           </section>
         </div>
       </div>
+
+      {/* Example Entries Dialog */}
+      <ExampleEntriesDialog open={showExamples} onOpenChange={setShowExamples} />
     </div>
   );
 };
