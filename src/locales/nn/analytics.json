@@ -70,6 +70,115 @@
     "toolbarShareTooltip": "Del AI‑rapporten via systemdeling",
     "toolbarShareAria": "Del AI‑rapport",
     "shareAnnounce": "Rapport delt eller kopiert"
+  },
+  "patternRecognition": {
+    "title": "Mønstergjenkjenning",
+    "empty": {
+      "title": "Ingen mønster oppdaga enno",
+      "description": "Hald fram med å spore kjensler og sensoriske inntrykk. AI-en vil byrje å oppdage mønster etter du har minst 10-15 oppføringar."
+    },
+    "stats": {
+      "patterns": "{{count}} mønster oppdaga",
+      "patterns_plural": "{{count}} mønster oppdaga",
+      "correlations": "{{count}} korrelasjon identifisert",
+      "correlations_plural": "{{count}} korrelasjonar identifisert"
+    },
+    "views": {
+      "cards": "Kort",
+      "heatmap": "Varmekart",
+      "list": "Liste"
+    },
+    "showing": "Viser topp {{shown}} av {{total}} mønster.",
+    "switchToList": "Byt til <strong>Listevisning</strong> for å sjå alle mønster."
+  },
+  "interventions": {
+    "title": "Tiltak-tilrådingar",
+    "empty": {
+      "title": "Ingen tiltak tilgjengeleg",
+      "description": "AI-drivne tiltak-forslag blir vist her når mønster blir oppdaga. Hald fram med å spore for å byggje eit rikt datasett."
+    },
+    "stats": {
+      "suggestions": "{{count}} evidensbasert forslag",
+      "suggestions_plural": "{{count}} evidensbaserte forslag"
+    },
+    "impact": {
+      "label": "Venta effekt",
+      "high": "Høg effekt",
+      "medium": "Middels effekt",
+      "low": "Låg effekt"
+    },
+    "timeHorizon": {
+      "label": "Tidshorisont",
+      "short": "Umiddelbar (1-2 dagar)",
+      "medium": "Kortsiktig (1-2 veker)",
+      "long": "Langsiktig (1+ månad)",
+      "varies": "Varierer"
+    },
+    "sections": {
+      "actionSteps": "Handlingssteg:",
+      "successMetrics": "Suksessmål:",
+      "evidenceBase": "Evidensgrunnlag:"
+    },
+    "progress": {
+      "label": "Framdrift",
+      "completed": "{{count}} av {{total}} fullført"
+    },
+    "evidence": {
+      "sources": "Basert på {{count}} forskingsstudie",
+      "sources_plural": "Basert på {{count}} forskingsstudiar",
+      "udlCheckpoints": "UDL-kontrollpunkt:",
+      "confidence": "Konfidens:"
+    },
+    "actions": {
+      "start": "Start tiltak",
+      "saveToIEP": "Lagre til IOP"
+    },
+    "toasts": {
+      "started": "Tiltak starta",
+      "startedDescription": "Sporar framdrift for: {{title}}",
+      "startError": "Kunne ikkje starte tiltak",
+      "copiedToClipboard": "Kopiert til utklippstavle",
+      "copiedDescription": "Lim inn i IOP-dokumentasjon",
+      "copyError": "Kunne ikkje kopiere til utklippstavle"
+    }
+  },
+  "predictiveAlerts": {
+    "title": "Prediktive varsel",
+    "empty": {
+      "title": "Alt klart",
+      "description": "Ingen prediktive varsel eller avvik oppdaga. Mønster er stabile og innanfor venta område."
+    },
+    "stats": {
+      "insights": "{{count}} innsikt",
+      "insights_plural": "{{count}} innsikter",
+      "anomalies": "{{count}} avvik oppdaga",
+      "anomalies_plural": "{{count}} avvik oppdaga"
+    },
+    "insights": {
+      "title": "Prediktive innsikter",
+      "types": {
+        "risk": "Risiko",
+        "opportunity": "Moglegheit",
+        "trend": "Trend"
+      },
+      "trends": {
+        "increasing": "Aukande",
+        "decreasing": "Synkande",
+        "stable": "Stabil"
+      },
+      "accuracy": "Nøyaktigheit:"
+    },
+    "anomalies": {
+      "title": "Avvik-varsel",
+      "severity": {
+        "high": "Høg alvorsgrad",
+        "medium": "Middels alvorsgrad",
+        "low": "Låg alvorsgrad"
+      },
+      "deviationScore": "Avviksscore",
+      "recommendedAction": "Tilrådd handling:",
+      "more": "+{{count}} meir"
+    }
   }
 }
 

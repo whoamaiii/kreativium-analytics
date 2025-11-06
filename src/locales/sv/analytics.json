@@ -70,6 +70,115 @@
     "toolbarShareTooltip": "Dela AI‑rapporten via systemdelning",
     "toolbarShareAria": "Dela AI‑rapport",
     "shareAnnounce": "Rapport delad eller kopierad"
+  },
+  "patternRecognition": {
+    "title": "Mönsterigenkänning",
+    "empty": {
+      "title": "Inga mönster upptäckta ännu",
+      "description": "Fortsätt spåra känslor och sensoriska intryck. AI:n kommer att börja upptäcka mönster efter att du har minst 10-15 poster."
+    },
+    "stats": {
+      "patterns": "{{count}} mönster upptäckt",
+      "patterns_plural": "{{count}} mönster upptäckta",
+      "correlations": "{{count}} korrelation identifierad",
+      "correlations_plural": "{{count}} korrelationer identifierade"
+    },
+    "views": {
+      "cards": "Kort",
+      "heatmap": "Värmekarta",
+      "list": "Lista"
+    },
+    "showing": "Visar topp {{shown}} av {{total}} mönster.",
+    "switchToList": "Byt till <strong>Listvy</strong> för att se alla mönster."
+  },
+  "interventions": {
+    "title": "Åtgärdsrekommendationer",
+    "empty": {
+      "title": "Inga åtgärder tillgängliga",
+      "description": "AI-drivna åtgärdsförslag visas här när mönster upptäcks. Fortsätt spåra för att bygga ett rikt dataset."
+    },
+    "stats": {
+      "suggestions": "{{count}} evidensbaserat förslag",
+      "suggestions_plural": "{{count}} evidensbaserade förslag"
+    },
+    "impact": {
+      "label": "Förväntad påverkan",
+      "high": "Hög påverkan",
+      "medium": "Medel påverkan",
+      "low": "Låg påverkan"
+    },
+    "timeHorizon": {
+      "label": "Tidshorisont",
+      "short": "Omedelbar (1-2 dagar)",
+      "medium": "Kortsiktig (1-2 veckor)",
+      "long": "Långsiktig (1+ månad)",
+      "varies": "Varierar"
+    },
+    "sections": {
+      "actionSteps": "Åtgärdssteg:",
+      "successMetrics": "Framgångsmått:",
+      "evidenceBase": "Evidensgrund:"
+    },
+    "progress": {
+      "label": "Framsteg",
+      "completed": "{{count}} av {{total}} slutförda"
+    },
+    "evidence": {
+      "sources": "Baserat på {{count}} forskningsstudie",
+      "sources_plural": "Baserat på {{count}} forskningsstudier",
+      "udlCheckpoints": "UDL-kontrollpunkter:",
+      "confidence": "Konfidens:"
+    },
+    "actions": {
+      "start": "Starta åtgärd",
+      "saveToIEP": "Spara till IEP"
+    },
+    "toasts": {
+      "started": "Åtgärd startad",
+      "startedDescription": "Spårar framsteg för: {{title}}",
+      "startError": "Kunde inte starta åtgärd",
+      "copiedToClipboard": "Kopierat till urklipp",
+      "copiedDescription": "Klistra in i IEP-dokumentation",
+      "copyError": "Kunde inte kopiera till urklipp"
+    }
+  },
+  "predictiveAlerts": {
+    "title": "Prediktiva varningar",
+    "empty": {
+      "title": "Allt klart",
+      "description": "Inga prediktiva varningar eller avvikelser upptäckta. Mönster är stabila och inom förväntade intervall."
+    },
+    "stats": {
+      "insights": "{{count}} insikt",
+      "insights_plural": "{{count}} insikter",
+      "anomalies": "{{count}} avvikelse upptäckt",
+      "anomalies_plural": "{{count}} avvikelser upptäckta"
+    },
+    "insights": {
+      "title": "Prediktiva insikter",
+      "types": {
+        "risk": "Risk",
+        "opportunity": "Möjlighet",
+        "trend": "Trend"
+      },
+      "trends": {
+        "increasing": "Ökande",
+        "decreasing": "Minskande",
+        "stable": "Stabil"
+      },
+      "accuracy": "Noggrannhet:"
+    },
+    "anomalies": {
+      "title": "Avvikelsevarningar",
+      "severity": {
+        "high": "Hög allvarlighetsgrad",
+        "medium": "Medel allvarlighetsgrad",
+        "low": "Låg allvarlighetsgrad"
+      },
+      "deviationScore": "Avvikelsescore",
+      "recommendedAction": "Rekommenderad åtgärd:",
+      "more": "+{{count}} fler"
+    }
   }
 }
 

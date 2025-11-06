@@ -913,5 +913,114 @@
       "zAxis": "Z",
       "intensity": "Intensity"
     }
+  },
+  "patternRecognition": {
+    "title": "Pattern Recognition",
+    "empty": {
+      "title": "No Patterns Detected Yet",
+      "description": "Keep tracking emotions and sensory inputs. The AI will start detecting patterns after you have at least 10-15 entries."
+    },
+    "stats": {
+      "patterns": "{{count}} pattern detected",
+      "patterns_plural": "{{count}} patterns detected",
+      "correlations": "{{count}} correlation identified",
+      "correlations_plural": "{{count}} correlations identified"
+    },
+    "views": {
+      "cards": "Cards",
+      "heatmap": "Heat Map",
+      "list": "List"
+    },
+    "showing": "Showing top {{shown}} of {{total}} patterns.",
+    "switchToList": "Switch to <strong>List view</strong> to see all patterns."
+  },
+  "interventions": {
+    "title": "Intervention Recommendations",
+    "empty": {
+      "title": "No Interventions Available",
+      "description": "AI-powered intervention suggestions will appear here once patterns are detected. Keep tracking to build a rich dataset."
+    },
+    "stats": {
+      "suggestions": "{{count}} evidence-based suggestion",
+      "suggestions_plural": "{{count}} evidence-based suggestions"
+    },
+    "impact": {
+      "label": "Expected Impact",
+      "high": "High Impact",
+      "medium": "Medium Impact",
+      "low": "Low Impact"
+    },
+    "timeHorizon": {
+      "label": "Time Horizon",
+      "short": "Immediate (1-2 days)",
+      "medium": "Short-term (1-2 weeks)",
+      "long": "Long-term (1+ month)",
+      "varies": "Varies"
+    },
+    "sections": {
+      "actionSteps": "Action Steps:",
+      "successMetrics": "Success Metrics:",
+      "evidenceBase": "Evidence Base:"
+    },
+    "progress": {
+      "label": "Progress",
+      "completed": "{{count}} of {{total}} completed"
+    },
+    "evidence": {
+      "sources": "Based on {{count}} research study",
+      "sources_plural": "Based on {{count}} research studies",
+      "udlCheckpoints": "UDL Checkpoints:",
+      "confidence": "Confidence:"
+    },
+    "actions": {
+      "start": "Start Intervention",
+      "saveToIEP": "Save to IEP"
+    },
+    "toasts": {
+      "started": "Intervention Started",
+      "startedDescription": "Tracking progress for: {{title}}",
+      "startError": "Could not start intervention",
+      "copiedToClipboard": "Copied to Clipboard",
+      "copiedDescription": "Paste into IEP documentation",
+      "copyError": "Could not copy to clipboard"
+    }
+  },
+  "predictiveAlerts": {
+    "title": "Predictive Alerts",
+    "empty": {
+      "title": "All Clear",
+      "description": "No predictive alerts or anomalies detected. Patterns are stable and within expected ranges."
+    },
+    "stats": {
+      "insights": "{{count}} insight",
+      "insights_plural": "{{count}} insights",
+      "anomalies": "{{count}} anomaly detected",
+      "anomalies_plural": "{{count}} anomalies detected"
+    },
+    "insights": {
+      "title": "Predictive Insights",
+      "types": {
+        "risk": "Risk",
+        "opportunity": "Opportunity",
+        "trend": "Trend"
+      },
+      "trends": {
+        "increasing": "Increasing",
+        "decreasing": "Decreasing",
+        "stable": "Stable"
+      },
+      "accuracy": "Accuracy:"
+    },
+    "anomalies": {
+      "title": "Anomaly Alerts",
+      "severity": {
+        "high": "High Severity",
+        "medium": "Medium Severity",
+        "low": "Low Severity"
+      },
+      "deviationScore": "Deviation Score",
+      "recommendedAction": "Recommended Action:",
+      "more": "+{{count}} more"
+    }
   }
 }

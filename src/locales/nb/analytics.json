@@ -927,5 +927,114 @@
       "zAxis": "Z",
       "intensity": "Intensitet"
     }
+  },
+  "patternRecognition": {
+    "title": "Mønstergjenkjenning",
+    "empty": {
+      "title": "Ingen mønstre oppdaget ennå",
+      "description": "Fortsett å spore følelser og sensoriske inntrykk. AI-en vil begynne å oppdage mønstre etter du har minst 10-15 oppføringer."
+    },
+    "stats": {
+      "patterns": "{{count}} mønster oppdaget",
+      "patterns_plural": "{{count}} mønstre oppdaget",
+      "correlations": "{{count}} korrelasjon identifisert",
+      "correlations_plural": "{{count}} korrelasjoner identifisert"
+    },
+    "views": {
+      "cards": "Kort",
+      "heatmap": "Varmekart",
+      "list": "Liste"
+    },
+    "showing": "Viser topp {{shown}} av {{total}} mønstre.",
+    "switchToList": "Bytt til <strong>Listevisning</strong> for å se alle mønstre."
+  },
+  "interventions": {
+    "title": "Tiltak-anbefalinger",
+    "empty": {
+      "title": "Ingen tiltak tilgjengelig",
+      "description": "AI-drevne tiltak-forslag vises her når mønstre blir oppdaget. Fortsett å spore for å bygge et rikt datasett."
+    },
+    "stats": {
+      "suggestions": "{{count}} evidensbasert forslag",
+      "suggestions_plural": "{{count}} evidensbaserte forslag"
+    },
+    "impact": {
+      "label": "Forventet effekt",
+      "high": "Høy effekt",
+      "medium": "Middels effekt",
+      "low": "Lav effekt"
+    },
+    "timeHorizon": {
+      "label": "Tidshorisont",
+      "short": "Umiddelbar (1-2 dager)",
+      "medium": "Kortsiktig (1-2 uker)",
+      "long": "Langsiktig (1+ måned)",
+      "varies": "Varierer"
+    },
+    "sections": {
+      "actionSteps": "Handlingssteg:",
+      "successMetrics": "Suksessmål:",
+      "evidenceBase": "Evidensgrunnlag:"
+    },
+    "progress": {
+      "label": "Framdrift",
+      "completed": "{{count}} av {{total}} fullført"
+    },
+    "evidence": {
+      "sources": "Basert på {{count}} forskningsstudie",
+      "sources_plural": "Basert på {{count}} forskningsstudier",
+      "udlCheckpoints": "UDL-kontrollpunkter:",
+      "confidence": "Konfidens:"
+    },
+    "actions": {
+      "start": "Start tiltak",
+      "saveToIEP": "Lagre til IOP"
+    },
+    "toasts": {
+      "started": "Tiltak startet",
+      "startedDescription": "Sporer framdrift for: {{title}}",
+      "startError": "Kunne ikke starte tiltak",
+      "copiedToClipboard": "Kopiert til utklippstavle",
+      "copiedDescription": "Lim inn i IOP-dokumentasjon",
+      "copyError": "Kunne ikke kopiere til utklippstavle"
+    }
+  },
+  "predictiveAlerts": {
+    "title": "Prediktive varsler",
+    "empty": {
+      "title": "Alt klart",
+      "description": "Ingen prediktive varsler eller anomalier oppdaget. Mønstre er stabile og innenfor forventede områder."
+    },
+    "stats": {
+      "insights": "{{count}} innsikt",
+      "insights_plural": "{{count}} innsikter",
+      "anomalies": "{{count}} anomali oppdaget",
+      "anomalies_plural": "{{count}} anomalier oppdaget"
+    },
+    "insights": {
+      "title": "Prediktive innsikter",
+      "types": {
+        "risk": "Risiko",
+        "opportunity": "Mulighet",
+        "trend": "Trend"
+      },
+      "trends": {
+        "increasing": "Økende",
+        "decreasing": "Synkende",
+        "stable": "Stabil"
+      },
+      "accuracy": "Nøyaktighet:"
+    },
+    "anomalies": {
+      "title": "Anomali-varsler",
+      "severity": {
+        "high": "Høy alvorlighet",
+        "medium": "Middels alvorlighet",
+        "low": "Lav alvorlighet"
+      },
+      "deviationScore": "Avviksscore",
+      "recommendedAction": "Anbefalt handling:",
+      "more": "+{{count}} mer"
+    }
   }
 }
