@@ -1,6 +1,6 @@
 /**
  * @file src/workers/analytics.worker.ts
- * 
+ *
  * This is a web worker dedicated to performing heavy analytics computations
  * in a background thread, ensuring the main UI thread remains responsive.
  * It listens for messages containing student data, runs a series of analyses,
@@ -19,6 +19,23 @@ import { generateAnalyticsSummary } from '@/lib/analyticsSummary';
 import { AlertDetectionEngine } from '@/lib/alerts/engine';
 import { BaselineService } from '@/lib/alerts/baseline';
 import type { AlertEvent } from '@/lib/alerts/types';
+
+// Type extensions for Web Worker environment
+declare const postMessage: (message: AnalyticsWorkerMessage) => void;
+
+// Worker message payload types
+interface WorkerIncomingMessage {
+  type?: string;
+  payload?: {
+    inputs?: Partial<AnalyticsData>;
+    config?: AnalyticsConfiguration | null;
+    prewarm?: boolean;
+  };
+  cacheKey?: string;
+  ttlSeconds?: number;
+  studentId?: string;
+  [key: string]: unknown;
+}
 
 // Type is now imported from @/types/analytics
 
@@ -245,8 +262,8 @@ const enqueueMessage = (msg: AnalyticsWorkerMessage) => {
     setTimeout(() => {
       try {
         while (outgoingQueue.length) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (postMessage as any)(outgoingQueue.shift());
+          const message = outgoingQueue.shift();
+          if (message) postMessage(message);
         }
       } finally {
         flushScheduled = false;
@@ -267,12 +284,12 @@ export type { AnalyticsData, AnalyticsResults } from '@/types/analytics';
  * This function is triggered when the main thread calls `worker.postMessage()`.
  * It orchestrates the analysis process and posts the results back.
  */
-export async function handleMessage(e: MessageEvent<any>) {
+export async function handleMessage(e: MessageEvent<WorkerIncomingMessage | AnalyticsData>) {
   // Support two message shapes:
   // A) Cache control commands (CACHE/*)
   // B) Typed task envelope built via buildInsightsTask
   // C) Legacy AnalyticsData directly
-  const msg = e.data as any;
+  const msg = e.data;
 
   // Lightweight event ingestion channel from game UI
   if (msg && msg.type === 'game:event' && msg.payload) {
@@ -322,13 +339,13 @@ export async function handleMessage(e: MessageEvent<any>) {
     const { inputs, config, prewarm } = msg.payload;
     isPrewarm = !!prewarm;
     filteredData = {
-      entries: inputs.entries,
-      emotions: inputs.emotions,
-      sensoryInputs: inputs.sensoryInputs,
-      goals: (inputs as any).goals ?? [],
+      entries: inputs?.entries ?? [],
+      emotions: inputs?.emotions ?? [],
+      sensoryInputs: inputs?.sensoryInputs ?? [],
+      goals: inputs?.goals ?? [],
       cacheKey: msg.cacheKey,
-      config: (config as any) ?? null
-    } as unknown as AnalyticsData;
+      config: config ?? null
+    };
     // Optionally honor ttlSeconds from task by updating per-message TTL
     if (typeof msg.ttlSeconds === 'number' && msg.ttlSeconds > 0) {
       workerCacheTTL = Math.max(1000, Math.floor(msg.ttlSeconds * 1000));
@@ -347,7 +364,7 @@ export async function handleMessage(e: MessageEvent<any>) {
         entries: filteredData?.entries?.length ?? 0,
         emotions: filteredData?.emotions?.length ?? 0,
         sensory: filteredData?.sensoryInputs?.length ?? 0,
-        goals: (filteredData as any)?.goals?.length ?? 0,
+        goals: filteredData?.goals?.length ?? 0,
       });
       workerCache.set(logKey, true, ['logging']);
     }
@@ -460,7 +477,7 @@ try {
         filteredData.emotions,
         filteredData.sensoryInputs,
         filteredData.entries,
-        (filteredData as any).goals ?? []
+        filteredData.goals ?? []
       );
 
       // Send partial update for predictive insights
@@ -501,12 +518,12 @@ try {
       entries: filteredData.entries,
       emotions: filteredData.emotions,
       sensoryInputs: filteredData.sensoryInputs,
-      goals: (filteredData as any).goals ?? [],
-    }, { config: currentConfig as any });
+      goals: filteredData.goals ?? [],
+    }, { config: currentConfig ?? undefined });
 
     const results: AnalyticsResults = {
       ...unified,
-      suggestedInterventions: (unified as any).suggestedInterventions ?? [],
+      suggestedInterventions: unified.suggestedInterventions ?? [],
       cacheKey: filteredData.cacheKey,
       updatedCharts: ['insightList']
     };
@@ -568,19 +585,16 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
   try {
     self.addEventListener('error', (e: ErrorEvent) => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: e.message, cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker runtime error encountered.'], updatedCharts: ['insightList']
+        postMessage({ type: 'error', error: e.message, cacheKey: undefined, payload: {
+          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker runtime error encountered.'], updatedCharts: ['insightList'], suggestedInterventions: []
         }});
       } catch (err) { try { logger.warn('[analytics.worker] Failed to post error message', err as Error); } catch {} }
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    self.addEventListener('unhandledrejection', (e: any) => {
+    self.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
       const msg = typeof e?.reason === 'string' ? e.reason : (e?.reason?.message ?? 'Unhandled rejection in worker');
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: String(msg), cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker unhandled rejection.'], updatedCharts: ['insightList']
+        postMessage({ type: 'error', error: String(msg), cacheKey: undefined, payload: {
+          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker unhandled rejection.'], updatedCharts: ['insightList'], suggestedInterventions: []
         }});
       } catch (err) { try { logger.warn('[analytics.worker] Failed to post rejection message', err as Error); } catch {} }
     });
@@ -588,14 +602,12 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
 
   // Signal readiness so main thread can flush any queued tasks
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (postMessage as any)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
+    postMessage({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
   } catch (e) {
     // If ready signal fails, try to send error message as fallback
     logger.error('[analytics.worker] CRITICAL: Failed to post ready signal', e as Error);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (postMessage as any)({
+      postMessage({
         type: 'error',
         error: 'Worker failed to initialize properly',
         cacheKey: undefined,
@@ -605,7 +617,8 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
           predictiveInsights: [],
           anomalies: [],
           insights: ['Worker initialization failed.'],
-          updatedCharts: ['insightList']
+          updatedCharts: ['insightList'],
+          suggestedInterventions: []
         }
       });
     } catch (fallbackError) {
