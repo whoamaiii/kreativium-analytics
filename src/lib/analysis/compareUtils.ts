@@ -99,7 +99,7 @@ function toDeltaNumber(current: number | null, baseline: number | null): DeltaNu
 }
 
 function normalizePattern(input: unknown): NormalizedPattern | undefined {
-  const obj = input as any;
+  const obj = input as Record<string, unknown>;
   if (!obj) return undefined;
   const name: string | undefined =
     typeof obj.name === "string" ? obj.name : typeof obj.pattern === "string" ? obj.pattern : undefined;
@@ -116,7 +116,7 @@ function keyForName(name: string): string {
 }
 
 function normalizeCorrelation(input: unknown): NormalizedCorrelation | undefined {
-  const obj = input as any;
+  const obj = input as Record<string, unknown>;
   if (!obj) return undefined;
   let v1: string | undefined;
   let v2: string | undefined;
@@ -132,13 +132,15 @@ function normalizeCorrelation(input: unknown): NormalizedCorrelation | undefined
   const key = `${vars[0]}|${vars[1]}`.toLowerCase();
   const coefficient: number | undefined = typeof obj.coefficient === "number" ? obj.coefficient : typeof obj.correlation === "number" ? obj.correlation : undefined;
   const direction: "positive" | "negative" | undefined =
-    typeof obj.direction === "string" ? (obj.direction as any) : coefficient != null ? (coefficient >= 0 ? "positive" : "negative") : undefined;
+    typeof obj.direction === "string" && (obj.direction === "positive" || obj.direction === "negative")
+      ? obj.direction
+      : coefficient != null ? (coefficient >= 0 ? "positive" : "negative") : undefined;
   const pValue: number | undefined = typeof obj.pValue === "number" ? obj.pValue : undefined;
   return { key, variables: vars, coefficient, direction, pValue };
 }
 
 function normalizeIntervention(input: unknown): NormalizedIntervention | undefined {
-  const obj = input as any;
+  const obj = input as Record<string, unknown>;
   if (!obj) return undefined;
   const title: string | undefined = typeof obj.title === "string" ? obj.title : undefined;
   if (!title) return undefined;
@@ -158,13 +160,13 @@ export function diffSummary(
   const counts = {
     patterns: toDeltaNumber(current?.patterns?.length ?? 0, baseline?.patterns?.length ?? 0),
     correlations: toDeltaNumber(current?.correlations?.length ?? 0, baseline?.correlations?.length ?? 0),
-    insights: toDeltaNumber((current as any)?.insights?.length ?? 0, (baseline as any)?.insights?.length ?? 0),
-    anomalies: toDeltaNumber((current as any)?.anomalies?.length ?? 0, (baseline as any)?.anomalies?.length ?? 0),
-    predictive: toDeltaNumber((current as any)?.predictiveInsights?.length ?? 0, (baseline as any)?.predictiveInsights?.length ?? 0),
+    insights: toDeltaNumber(current?.insights?.length ?? 0, baseline?.insights?.length ?? 0),
+    anomalies: toDeltaNumber(current?.anomalies?.length ?? 0, baseline?.anomalies?.length ?? 0),
+    predictive: toDeltaNumber(current?.predictiveInsights?.length ?? 0, baseline?.predictiveInsights?.length ?? 0),
   };
 
-  const createdAtCurr = (current as any)?.ai?.createdAt ? Date.parse((current as any).ai.createdAt) : null;
-  const createdAtBase = (baseline as any)?.ai?.createdAt ? Date.parse((baseline as any).ai.createdAt) : null;
+  const createdAtCurr = current?.ai?.createdAt ? Date.parse(current.ai.createdAt) : null;
+  const createdAtBase = baseline?.ai?.createdAt ? Date.parse(baseline.ai.createdAt) : null;
   const recencyMs = toDeltaNumber(createdAtCurr, createdAtBase);
 
   const balance = toDeltaNumber(currentBalance ?? null, baselineBalance ?? null);
