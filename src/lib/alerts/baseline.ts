@@ -98,6 +98,11 @@ function betaPosteriorVariance(prior: BetaPrior): number {
   return (a * b) / denom3;
 }
 
+// Helper to extract sensory behavior identifier from SensoryEntry
+function getSensoryBehavior(entry: SensoryEntry): string {
+  return entry.sensoryType ?? entry.type ?? entry.response ?? 'unknown';
+}
+
 function key(studentId: string): string {
   return `alerts:baseline:${studentId}`;
 }
@@ -162,8 +167,8 @@ export class BaselineService {
       );
       const grouped = new Map<string, number[]>();
       windowed.forEach((e) => {
-        const name = (e as any).emotion ?? (e as any).name ?? 'unknown';
-        const val = Number((e as any).intensity ?? (e as any).value ?? 0);
+        const name = e.emotion ?? 'unknown';
+        const val = Number(e.intensity ?? 0);
         const arr = grouped.get(name) ?? [];
         arr.push(val);
         grouped.set(name, arr);
@@ -172,7 +177,7 @@ export class BaselineService {
         const validVals = vals.filter((v) => Number.isFinite(v));
         const { cleaned, outlierIndices } = assessDataQuality(validVals);
         const tsAll = windowed
-          .filter((e) => ((e as any).emotion ?? (e as any).name ?? 'unknown') === name)
+          .filter((e) => (e.emotion ?? 'unknown') === name)
           .map((e) => new Date(e.timestamp as unknown as string | number | Date).getTime())
           .filter((t) => Number.isFinite(t));
 
@@ -223,8 +228,8 @@ export class BaselineService {
       const windowedTracking = tracking.filter((t) => new Date(t.timestamp as unknown as string | number | Date).getTime() >= cutoff);
       const windowedSensory = sensory.filter((s) => new Date(s.timestamp as unknown as string | number | Date).getTime() >= cutoff);
 
-      const addBehavior = (set: Set<string>, s: any) => {
-        const b = s?.behavior ?? s?.response ?? s?.type ?? s?.sensoryType ?? 'unknown';
+      const addBehavior = (set: Set<string>, s: SensoryEntry) => {
+        const b = getSensoryBehavior(s);
         if (typeof b === 'string' && b.length) set.add(b);
       };
 
@@ -232,7 +237,7 @@ export class BaselineService {
       if (windowedTracking.length > 0) {
         windowedTracking.forEach((t) => (t.sensoryInputs ?? []).forEach((si) => addBehavior(behaviors, si)));
       } else {
-        windowedSensory.forEach((s) => addBehavior(behaviors, s as any));
+        windowedSensory.forEach((s) => addBehavior(behaviors, s));
       }
 
       behaviors.forEach((behavior) => {
@@ -243,7 +248,7 @@ export class BaselineService {
           trials = windowedTracking.length;
           windowedTracking.forEach((t) => {
             const occurred = (t.sensoryInputs ?? []).some((si) => {
-              const b = (si as any)?.behavior ?? (si as any)?.response ?? (si as any)?.type ?? (si as any)?.sensoryType;
+              const b = getSensoryBehavior(si);
               return b === behavior;
             });
             if (occurred) successes += 1;
@@ -253,7 +258,7 @@ export class BaselineService {
           const byDay = new Map<string, { hasBehavior: boolean }>();
           windowedSensory.forEach((s) => {
             const day = toDayString(s.timestamp as unknown as string | number | Date);
-            const b = (s as any)?.behavior ?? (s as any)?.response ?? (s as any)?.type ?? (s as any)?.sensoryType;
+            const b = getSensoryBehavior(s);
             const entry = byDay.get(day) ?? { hasBehavior: false };
             if (b === behavior) entry.hasBehavior = true;
             byDay.set(day, entry);
@@ -298,7 +303,7 @@ export class BaselineService {
           studentCount: t.environmentalData?.classroom?.studentCount,
         };
         const maxEmotion = (t.emotions ?? [])
-          .map((e) => Number((e as any).intensity))
+          .map((e) => Number(e.intensity ?? 0))
           .filter((n) => Number.isFinite(n))
           .reduce((max, val) => Math.max(max, val), 0);
         Object.entries(mapping).forEach(([k, v]) => {
@@ -375,8 +380,8 @@ export class BaselineService {
         const cutoff = daysAgo(windowDays);
         const relevant = emotions.filter((e) => new Date(e.timestamp as unknown as string | number | Date).getTime() >= cutoff);
         const vals = relevant
-          .filter((e) => ((e as any).emotion ?? (e as any).name ?? 'unknown') === stat.emotion)
-          .map((e) => Number((e as any).intensity ?? 0))
+          .filter((e) => (e.emotion ?? 'unknown') === stat.emotion)
+          .map((e) => Number(e.intensity ?? 0))
           .filter((n) => Number.isFinite(n));
         const zs = zScoresMedian(vals);
         const outliers = zs.filter((z) => Math.abs(z) > 3.5).length;
