@@ -47,6 +47,7 @@ import { FiltersDrawer } from '@/components/analytics/FiltersDrawer';
 import { QuickQuestions } from '@/components/analytics/QuickQuestions';
 import type { FilterCriteria } from '@/lib/filterUtils';
 import { AnalyticsActions } from '@/components/analytics/AnalyticsActions';
+import { useAnalyticsNavigation } from '@/hooks/useAnalyticsNavigation';
 
 // Typed tab keys to avoid stringly-typed errors
 
@@ -449,6 +450,9 @@ export const AnalyticsDashboard = memo(({
   // URL-synced hook for persistence across reloads and deep links
   const [activeTab, setActiveTab] = useSyncedTabParam({ debounceMs: 150, paramKey: 'tab', defaultTab: 'overview' });
 
+  // Cross-panel navigation with context
+  const navigation = useAnalyticsNavigation({ onTabChange: setActiveTab });
+
   // Live region for announcing tab changes
   const [liveMessage, setLiveMessage] = useState<string>("");
   useEffect(() => {
@@ -695,8 +699,8 @@ export const AnalyticsDashboard = memo(({
 
         <TabsContent value="patterns" className="space-y-6">
           <ErrorBoundary showToast={false}>
-            <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
-              <LazyPatternsPanel filteredData={filteredData} useAI={useAI} student={student} />
+            <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}>
+              <LazyPatternsPanel filteredData={filteredData} useAI={useAI} student={student} navigation={navigation} />
             </Suspense>
           </ErrorBoundary>
         </TabsContent>
@@ -711,8 +715,8 @@ export const AnalyticsDashboard = memo(({
 
         <TabsContent value="alerts" className="space-y-6">
           <ErrorBoundary showToast={false}>
-            <Suspense fallback={<div className="h-[200px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}> 
-              <LazyAlertsPanel filteredData={filteredData} studentId={student?.id ?? ''} />
+            <Suspense fallback={<div className="h-[200px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('states.analyzing'))} />}>
+              <LazyAlertsPanel filteredData={filteredData} studentId={student?.id ?? ''} navigation={navigation} />
             </Suspense>
           </ErrorBoundary>
         </TabsContent>

@@ -24,10 +24,12 @@ import { useAlertFilterState, useAlertDerivedData } from '@/components/analytics
 import { useAlertBulkActions } from '@/components/analytics-panels/hooks/useAlertBulkActions';
 import { PredictiveAlertsPanel } from '@/components/analytics/PredictiveAlertsPanel';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
+import type { AnalyticsNavigation } from '@/hooks/useAnalyticsNavigation';
 
 export interface AlertsPanelProps {
   filteredData: { entries: TrackingEntry[]; emotions: EmotionEntry[]; sensoryInputs: SensoryEntry[] };
   studentId?: string;
+  navigation?: AnalyticsNavigation;
 }
 
 function getSeverityIcon(severity: AlertSeverity) {
@@ -44,7 +46,7 @@ function getSeverityIcon(severity: AlertSeverity) {
   }
 }
 
-export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredData: _filteredData, studentId }) => {
+export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredData: _filteredData, studentId, navigation }) => {
   const { tAnalytics, tCommon } = useTranslation();
   const { pinnedIds, isPinned, togglePin, unpinAlert, clearPinnedAlerts } = usePinnedAlerts();
 
@@ -363,18 +365,26 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredDat
           onInsightClick={(insight) => {
             // Navigate to patterns tab with insight context
             logger.info('[AlertsPanel] Predictive insight clicked', { insight });
-            toast({
-              title: 'Predictive Insight',
-              description: insight.description,
-            });
+            if (navigation) {
+              navigation.navigateFromInsight(insight);
+            } else {
+              toast({
+                title: 'Predictive Insight',
+                description: insight.description,
+              });
+            }
           }}
           onAnomalyClick={(anomaly) => {
-            // Show detailed anomaly analysis
+            // Navigate to patterns tab to show related patterns
             logger.info('[AlertsPanel] Anomaly clicked', { anomaly });
-            toast({
-              title: 'Anomaly Detected',
-              description: anomaly.description,
-            });
+            if (navigation) {
+              navigation.navigateFromAnomaly(anomaly);
+            } else {
+              toast({
+                title: 'Anomaly Detected',
+                description: anomaly.description,
+              });
+            }
           }}
         />
       )}

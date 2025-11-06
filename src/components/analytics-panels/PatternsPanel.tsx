@@ -26,6 +26,8 @@ import { useSyncedPatternParams } from '@/hooks/useSyncedPatternParams';
 import { PatternRecognitionDashboard } from '@/components/analytics/PatternRecognitionDashboard';
 import { InterventionPanel } from '@/components/analytics/InterventionPanel';
 import { motion } from 'framer-motion';
+import type { AnalyticsNavigation } from '@/hooks/useAnalyticsNavigation';
+import { readNavigationContext } from '@/hooks/useAnalyticsNavigation';
 
 export interface PatternsPanelProps {
   filteredData: {
@@ -35,6 +37,7 @@ export interface PatternsPanelProps {
   };
   useAI?: boolean;
   student?: Student;
+  navigation?: AnalyticsNavigation;
 }
 
 const getPatternIcon = (type: string): React.ReactElement => {
@@ -56,7 +59,7 @@ const getConfidenceColor = (confidence: number): string => {
   return 'text-orange-600';
 };
 
-export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI = false, student }: PatternsPanelProps): React.ReactElement {
+export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI = false, student, navigation }: PatternsPanelProps): React.ReactElement {
   const { results, isAnalyzing, error, runAnalysis } = useAnalyticsWorker({ precomputeOnIdle: false });
   const { tAnalytics } = useTranslation();
   const [explanations, setExplanations] = React.useState<Record<string, { status: 'idle' | 'loading' | 'ok' | 'error'; text?: string; error?: string }>>({});
@@ -98,6 +101,9 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
       // ensure worker side effects are cleaned by the hook on unmount
     };
   }, [filteredData, runAnalysis, useAI, student]);
+
+  // Track navigation context from URL on mount
+  const [navigationContextApplied, setNavigationContextApplied] = React.useState(false);
 
   const patterns: PatternResult[] = results?.patterns || [];
   const correlations: CorrelationResult[] = (results as any)?.correlations || [];
@@ -294,6 +300,47 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
       }, 300);
     }
   };
+
+  // Apply navigation context from cross-panel navigation (anomaly → pattern, insight → pattern)
+  useEffect(() => {
+    if (navigationContextApplied || patterns.length === 0) return;
+
+    const navContext = readNavigationContext();
+    if (!navContext) return;
+
+    logger.info('[PatternsPanel] Applying navigation context', navContext);
+
+    // Auto-select pattern if anomaly or insight context
+    if (navContext.anomalyMetric || navContext.insightType) {
+      // Find pattern related to the metric/context
+      const relatedPattern = patterns.find(p => {
+        const patternText = (p as any).pattern?.toLowerCase() || '';
+        if (navContext.anomalyMetric && patternText.includes(navContext.anomalyMetric.toLowerCase())) {
+          return true;
+        }
+        if (navContext.highlightMetric && patternText.includes(navContext.highlightMetric.toLowerCase())) {
+          return true;
+        }
+        return false;
+      });
+
+      if (relatedPattern) {
+        // Delay to allow rendering
+        setTimeout(() => {
+          handleExplainClick(relatedPattern);
+        }, 500);
+      } else {
+        // No specific pattern found, just scroll to top
+        setTimeout(() => {
+          try {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
+        }, 300);
+      }
+    }
+
+    setNavigationContextApplied(true);
+  }, [patterns, navigationContextApplied]);
 
   const handleCopy = async (text: string) => {
     try {
