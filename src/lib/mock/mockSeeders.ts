@@ -7,6 +7,13 @@ import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
 import { generateUUID } from '@/lib/uuid';
 import { generateUniversalMockDataForStudent as generateMockData } from '@/lib/universalDataGenerator';
+import type { Student } from '@/types/student';
+
+// Extended dataStorage interface for methods that may not be in base interface
+interface DataStorageWithOptionalMethods {
+  saveStudent?: (student: Student) => void;
+  setStudents?: (students: Student[]) => void;
+}
 
 export interface SeedDemoOptions {
   // Seed for existing students in storage
@@ -33,16 +40,17 @@ export async function seedDemoData(options: SeedDemoOptions = {}): Promise<{ tot
       for (let i = 0; i < createNewStudents; i++) {
         const id = `demo-${generateUUID()}`;
         // Minimal student object; adapt to your domain model if needed
-        const student = { id, name: `Demo Student ${i + 1}` } as any;
+        const student: Student = { id, name: `Demo Student ${i + 1}` };
+        const storageWithOptional = dataStorage as unknown as DataStorageWithOptionalMethods;
         try {
           // Persist via storage API if available
-          if ((dataStorage as any).saveStudent) {
-            (dataStorage as any).saveStudent(student);
+          if (storageWithOptional.saveStudent) {
+            storageWithOptional.saveStudent(student);
           } else {
             // Fallback: push into existing list if your storage supports it
             const students = dataStorage.getStudents();
-            if (!students.find(s => s.id === id) && (dataStorage as any).setStudents) {
-              (dataStorage as any).setStudents([...students, student]);
+            if (!students.find(s => s.id === id) && storageWithOptional.setStudents) {
+              storageWithOptional.setStudents([...students, student]);
             }
           }
         } catch (e) {
