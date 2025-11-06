@@ -113,7 +113,7 @@ export function buildEmotionTrendsOption(
       type: 'line',
       name: labelAvg,
       data: avg,
-      meta: { key: 'avgEmotionIntensity' } as any,
+      meta: { key: 'avgEmotionIntensity' },
       encode: { y: 'avgEmotionIntensity' },
       smooth: true,
       showSymbol: false,
@@ -140,7 +140,7 @@ export function buildEmotionTrendsOption(
             type: 'line',
             name: labelMA(config.movingAverageWindow),
             data: avgMA,
-            meta: { key: 'avgEmotionIntensityMA' } as any,
+            meta: { key: 'avgEmotionIntensityMA' },
             encode: { y: 'avgEmotionIntensityMA' },
             smooth: true,
             showSymbol: false,
@@ -155,7 +155,7 @@ export function buildEmotionTrendsOption(
       type: 'line',
       name: labelPos,
       data: pos,
-      meta: { key: 'positiveEmotions' } as any,
+      meta: { key: 'positiveEmotions' },
       encode: { y: 'positiveEmotions' },
       smooth: true,
       showSymbol: false,
@@ -168,7 +168,7 @@ export function buildEmotionTrendsOption(
       type: 'line',
       name: labelNeg,
       data: neg,
-      meta: { key: 'negativeEmotions' } as any,
+      meta: { key: 'negativeEmotions' },
       encode: { y: 'negativeEmotions' },
       smooth: true,
       showSymbol: false,
@@ -181,7 +181,7 @@ export function buildEmotionTrendsOption(
       type: 'line',
       name: labelSensory,
       data: sensory,
-      meta: { key: 'totalSensoryInputs' } as any,
+      meta: { key: 'totalSensoryInputs' },
       encode: { y: 'totalSensoryInputs' },
       smooth: true,
       showSymbol: false,
@@ -273,7 +273,7 @@ export function buildAreaOption(
         type: 'line',
         name: String(tAnalytics('charts.avgEmotionIntensity')),
         data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
-        meta: { key: 'avgEmotionIntensity' } as any,
+        meta: { key: 'avgEmotionIntensity' },
         encode: { y: 'avgEmotionIntensity' },
         smooth: true,
         showSymbol: false,
@@ -285,7 +285,7 @@ export function buildAreaOption(
         type: 'line',
         name: String(tAnalytics('charts.positiveEmotions')),
         data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
-        meta: { key: 'positiveEmotions' } as any,
+        meta: { key: 'positiveEmotions' },
         encode: { y: 'positiveEmotions' },
         smooth: true,
         showSymbol: false,
@@ -336,7 +336,7 @@ export function buildComposedOption(
         type: 'bar',
         name: String(tAnalytics('charts.positiveEmotions')),
         data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
-        meta: { key: 'positiveEmotions' } as any,
+        meta: { key: 'positiveEmotions' },
         encode: { y: 'positiveEmotions' },
         yAxisIndex: 0,
         emphasis: { focus: 'none' },
@@ -345,7 +345,7 @@ export function buildComposedOption(
         type: 'bar',
         name: String(tAnalytics('charts.negativeEmotions')),
         data: rows.map(r => toFiniteNumber(r.negativeEmotions)),
-        meta: { key: 'negativeEmotions' } as any,
+        meta: { key: 'negativeEmotions' },
         encode: { y: 'negativeEmotions' },
         yAxisIndex: 0,
         emphasis: { focus: 'none' },
@@ -354,7 +354,7 @@ export function buildComposedOption(
         type: 'line',
         name: String(tAnalytics('charts.avgEmotionIntensity')),
         data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
-        meta: { key: 'avgEmotionIntensity' } as any,
+        meta: { key: 'avgEmotionIntensity' },
         encode: { y: 'avgEmotionIntensity' },
         yAxisIndex: 1,
         smooth: true,
@@ -478,13 +478,10 @@ export function buildPredictionTimelineOption(
   const dates = rows.map(r => r.date);
   const values = rows.map(r => (Number.isFinite(r.riskScore) ? r.riskScore : 0));
 
-  // Allow risk score scale 0..1 or 0..100 depending on config; default 0..1
-  const yMax = (chartsCfg as any)?.riskYAxisMax && Number.isFinite((chartsCfg as any).riskYAxisMax)
-    ? (chartsCfg as any).riskYAxisMax
-    : 1;
-  const yInterval = (chartsCfg as any)?.riskYAxisInterval && Number.isFinite((chartsCfg as any).riskYAxisInterval)
-    ? (chartsCfg as any).riskYAxisInterval
-    : yMax <= 1 ? 0.1 : Math.ceil(yMax / 10);
+  // Allow risk score scale 0..1 or 0..100 depending on data range; default 0..1
+  // Note: Risk-specific axis config not in charts config, use defaults
+  const yMax = 1;  // Risk scores are 0-1 normalized
+  const yInterval = 0.1;
 
   const labelRisk = String(tAnalytics('charts.riskScore'));
 
