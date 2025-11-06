@@ -20,6 +20,7 @@ export interface NavigationContext {
 
   // Correlation context
   correlationFactors?: string[];
+  correlationStrength?: number;
 
   // Common context
   highlightMetric?: string;
@@ -85,6 +86,9 @@ export function useAnalyticsNavigation(options: AnalyticsNavigationOptions): Ana
       url.searchParams.delete('highlightMetric');
       url.searchParams.delete('timeStart');
       url.searchParams.delete('timeEnd');
+      url.searchParams.delete('factor1');
+      url.searchParams.delete('factor2');
+      url.searchParams.delete('correlationStrength');
 
       // Write new context
       if (context.patternId) url.searchParams.set('patternId', context.patternId);
@@ -95,6 +99,13 @@ export function useAnalyticsNavigation(options: AnalyticsNavigationOptions): Ana
       if (context.highlightMetric) url.searchParams.set('highlightMetric', context.highlightMetric);
       if (context.timeFilter?.start) url.searchParams.set('timeStart', context.timeFilter.start);
       if (context.timeFilter?.end) url.searchParams.set('timeEnd', context.timeFilter.end);
+      if (context.correlationFactors && context.correlationFactors.length >= 2) {
+        url.searchParams.set('factor1', context.correlationFactors[0]);
+        url.searchParams.set('factor2', context.correlationFactors[1]);
+      }
+      if (context.correlationStrength !== undefined) {
+        url.searchParams.set('correlationStrength', context.correlationStrength.toString());
+      }
 
       window.history.replaceState(window.history.state, '', url.toString());
 
@@ -172,6 +183,7 @@ export function useAnalyticsNavigation(options: AnalyticsNavigationOptions): Ana
   const navigateFromCorrelation = useCallback((correlation: CorrelationResult) => {
     const context: NavigationContext = {
       correlationFactors: [correlation.factor1, correlation.factor2],
+      correlationStrength: correlation.correlation,
       highlightMetric: correlation.factor1,
       autoScroll: true,
     };
@@ -226,6 +238,9 @@ export function readNavigationContext(): NavigationContext | null {
     const highlightMetric = params.get('highlightMetric');
     const timeStart = params.get('timeStart');
     const timeEnd = params.get('timeEnd');
+    const factor1 = params.get('factor1');
+    const factor2 = params.get('factor2');
+    const correlationStrength = params.get('correlationStrength');
 
     if (patternId) context.patternId = patternId;
     if (patternType) context.patternType = patternType;
@@ -238,6 +253,12 @@ export function readNavigationContext(): NavigationContext | null {
         start: timeStart || undefined,
         end: timeEnd || undefined,
       };
+    }
+    if (factor1 && factor2) {
+      context.correlationFactors = [factor1, factor2];
+    }
+    if (correlationStrength) {
+      context.correlationStrength = parseFloat(correlationStrength);
     }
 
     return Object.keys(context).length > 0 ? context : null;

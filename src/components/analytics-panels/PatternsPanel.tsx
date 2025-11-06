@@ -25,6 +25,7 @@ import { analyticsConfig } from '@/lib/analyticsConfig';
 import { useSyncedPatternParams } from '@/hooks/useSyncedPatternParams';
 import { PatternRecognitionDashboard } from '@/components/analytics/PatternRecognitionDashboard';
 import { InterventionPanel } from '@/components/analytics/InterventionPanel';
+import { CorrelationInsightCard } from '@/components/analytics/CorrelationInsightCard';
 import { motion } from 'framer-motion';
 import type { AnalyticsNavigation } from '@/hooks/useAnalyticsNavigation';
 import { readNavigationContext } from '@/hooks/useAnalyticsNavigation';
@@ -104,6 +105,13 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
 
   // Track navigation context from URL on mount
   const [navigationContextApplied, setNavigationContextApplied] = React.useState(false);
+
+  // Track correlation exploration mode
+  const [correlationContext, setCorrelationContext] = React.useState<{
+    factor1: string;
+    factor2: string;
+    strength: number;
+  } | null>(null);
 
   const patterns: PatternResult[] = results?.patterns || [];
   const correlations: CorrelationResult[] = (results as any)?.correlations || [];
@@ -301,7 +309,7 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
     }
   };
 
-  // Apply navigation context from cross-panel navigation (anomaly → pattern, insight → pattern)
+  // Apply navigation context from cross-panel navigation (anomaly → pattern, insight → pattern, correlation → patterns)
   useEffect(() => {
     if (navigationContextApplied || patterns.length === 0) return;
 
@@ -309,6 +317,25 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
     if (!navContext) return;
 
     logger.info('[PatternsPanel] Applying navigation context', navContext);
+
+    // Handle correlation context
+    if (navContext.correlationFactors && navContext.correlationFactors.length >= 2) {
+      setCorrelationContext({
+        factor1: navContext.correlationFactors[0],
+        factor2: navContext.correlationFactors[1],
+        strength: navContext.correlationStrength || 0,
+      });
+
+      // Scroll to top to show correlation card
+      setTimeout(() => {
+        try {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch {}
+      }, 300);
+
+      setNavigationContextApplied(true);
+      return;
+    }
 
     // Auto-select pattern if anomaly or insight context
     if (navContext.anomalyMetric || navContext.insightType) {
@@ -647,6 +674,19 @@ EVIDENCE:
     try { return !!analyticsConfig.getConfig().features?.explanationV2 && !isSmallViewport; } catch { return !isSmallViewport; }
   }, [isSmallViewport]);
 
+  // Filter patterns based on correlation context
+  const displayPatterns = React.useMemo(() => {
+    if (!correlationContext) return patterns;
+
+    // Filter to only patterns involving BOTH factors
+    return patterns.filter(p => {
+      const patternText = (p as any).pattern?.toLowerCase() || '';
+      const includesFactor1 = patternText.includes(correlationContext.factor1.toLowerCase());
+      const includesFactor2 = patternText.includes(correlationContext.factor2.toLowerCase());
+      return includesFactor1 && includesFactor2;
+    });
+  }, [patterns, correlationContext]);
+
   const leftContent = (
     <div className="space-y-6">
       {/* Loading/Error States */}
@@ -671,21 +711,62 @@ EVIDENCE:
         </Card>
       )}
 
+      {/* Correlation Insight Card - Shows when in correlation exploration mode */}
+      {!isAnalyzing && !error && correlationContext && (
+        <CorrelationInsightCard
+          factor1={correlationContext.factor1}
+          factor2={correlationContext.factor2}
+          strength={correlationContext.strength}
+          observationCount={filteredData.entries.length}
+          timespan={(() => {
+            try {
+              const entries = filteredData.entries;
+              if (entries.length === 0) return undefined;
+              const earliest = new Date(entries[0].timestamp);
+              const latest = new Date(entries[entries.length - 1].timestamp);
+              const days = Math.ceil((latest.getTime() - earliest.getTime()) / (1000 * 60 * 60 * 24));
+              if (days < 7) return `${days} days`;
+              if (days < 30) return `${Math.ceil(days / 7)} weeks`;
+              return `${Math.ceil(days / 30)} months`;
+            } catch {
+              return undefined;
+            }
+          })()}
+          onExit={() => {
+            setCorrelationContext(null);
+            setNavigationContextApplied(false);
+            // Clear URL params
+            try {
+              const url = new URL(window.location.href);
+              url.searchParams.delete('factor1');
+              url.searchParams.delete('factor2');
+              url.searchParams.delete('correlationStrength');
+              window.history.replaceState(window.history.state, '', url.toString());
+            } catch {}
+          }}
+        />
+      )}
+
       {/* Pattern Recognition Dashboard */}
       {!isAnalyzing && !error && (
         <>
           <PatternRecognitionDashboard
-            patterns={patterns}
+            patterns={displayPatterns}
             correlations={correlations}
             onPatternSelect={handleExplainClick}
             onCorrelationSelect={(correlation) => {
-              // Find related pattern and select it
-              const relatedPattern = patterns.find(p =>
-                p.pattern.includes(correlation.factor1) ||
-                p.pattern.includes(correlation.factor2)
-              );
-              if (relatedPattern) {
-                handleExplainClick(relatedPattern);
+              // Navigate to correlation exploration mode
+              if (navigation) {
+                navigation.navigateFromCorrelation(correlation);
+              } else {
+                // Fallback: Find related pattern and select it
+                const relatedPattern = patterns.find(p =>
+                  p.pattern.includes(correlation.factor1) ||
+                  p.pattern.includes(correlation.factor2)
+                );
+                if (relatedPattern) {
+                  handleExplainClick(relatedPattern);
+                }
               }
             }}
           />
