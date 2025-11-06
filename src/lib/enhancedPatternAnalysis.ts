@@ -115,8 +115,7 @@ class EnhancedPatternAnalysisEngine {
     goals: Goal[] = []
   ): Promise<PredictiveInsight[]> {
     // Capture config snapshot once per operation
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const { enhancedAnalysis, timeWindows, alertSensitivity, analytics, insights: insightsCfg, taxonomy, patternAnalysis } = cfg;
 
     const collectedInsights: PredictiveInsight[] = [];
@@ -281,8 +280,7 @@ class EnhancedPatternAnalysisEngine {
   // Enhanced Trend Analysis with Statistical Significance
   analyzeTrendsWithStatistics(data: { value: number; timestamp: Date }[]): TrendAnalysis | null {
     // Capture config snapshot once per operation
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const { enhancedAnalysis, analytics, timeWindows } = cfg;
 
     if (data.length < enhancedAnalysis.minSampleSize) return null;
@@ -385,9 +383,8 @@ class EnhancedPatternAnalysisEngine {
     confidence: number
   ): { level: 'low' | 'medium' | 'high'; explanation: string; factors: string[] } {
     // Capture config snapshot once per operation
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
-    const { enhancedAnalysis, timeWindows, insights, patternAnalysis } = cfg || {} as any;
+    const cfg = analyticsConfig.getConfig();
+    const { enhancedAnalysis, timeWindows, insights, patternAnalysis } = cfg;
 
     const factors: string[] = [];
     let explanation = '';
@@ -488,8 +485,7 @@ class EnhancedPatternAnalysisEngine {
     trackingEntries: TrackingEntry[]
   ): AnomalyDetection[] {
     // Capture config snapshot once per operation
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const { enhancedAnalysis, alertSensitivity } = cfg;
 
     const anomalies: AnomalyDetection[] = [];
@@ -550,8 +546,7 @@ class EnhancedPatternAnalysisEngine {
   // Comprehensive Correlation Matrix
   generateCorrelationMatrix(trackingEntries: TrackingEntry[]): CorrelationMatrix {
     // Capture config snapshot once per operation
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const { enhancedAnalysis, patternAnalysis, taxonomy } = cfg;
 
     const factors = [
@@ -597,7 +592,7 @@ class EnhancedPatternAnalysisEngine {
         const x: number[] = [];
         const y: number[] = [];
         for (let k = 0; k < dataPoints.length; k++) {
-          const dv = dataPoints[k] as any;
+          const dv = dataPoints[k] as Record<string, number>;
           const v1 = dv[factor1];
           const v2 = dv[factor2];
           if (typeof v1 === 'number' && Number.isFinite(v1) && typeof v2 === 'number' && Number.isFinite(v2)) {
@@ -696,8 +691,7 @@ class EnhancedPatternAnalysisEngine {
     trackingEntries: TrackingEntry[]
   ): PredictiveInsight[] {
     // Capture config snapshot once per operation (private helper still snapshots to avoid nested reads)
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const { timeWindows, enhancedAnalysis, alertSensitivity } = cfg;
 
     const risks: PredictiveInsight[] = [];
@@ -709,7 +703,7 @@ class EnhancedPatternAnalysisEngine {
 
     // Apply sensitivity multiplier for risk assessment
     // Incidents threshold: prefer configured value if present; fallback to 3
-    const incidentsThreshold = Math.max(1, Math.floor((enhancedAnalysis as any)?.riskAssessmentThreshold ?? 3));
+    const incidentsThreshold = Math.max(1, Math.floor(enhancedAnalysis?.incidentsThreshold ?? 3));
 
     // High stress accumulation risk (use configured intensity and emotions)
     const stressIntensityT = cfg?.enhancedAnalysis?.riskAssessment?.stressIntensityThreshold;
@@ -858,8 +852,7 @@ class EnhancedPatternAnalysisEngine {
 
   private getTrendSeverity(trend: TrendAnalysis): 'low' | 'medium' | 'high' {
     // Use configured significance bands; default to 0.7/0.5 if missing
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const bands = cfg?.enhancedAnalysis?.correlationSignificance;
     const highT = typeof bands?.high === 'number' ? bands.high : 0.7;
     const medT = typeof bands?.moderate === 'number' ? bands.moderate : 0.5;
@@ -900,8 +893,7 @@ class EnhancedPatternAnalysisEngine {
     const recommendations: string[] = [];
 
     // Check each sensory modality
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const bands = cfg?.enhancedAnalysis?.correlationSignificance;
     const highBand = typeof bands?.high === 'number' ? bands.high : 0.7;
 
@@ -926,8 +918,7 @@ class EnhancedPatternAnalysisEngine {
   // Baseline analysis using ML clustering
   async analyzeBaseline(trackingEntries: TrackingEntry[]): Promise<BaselineCluster[]> {
     // Capture config snapshot once per operation (kept for parity/future use)
-    const cfgAny: any = analyticsConfig as any;
-    const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
+    const cfg = analyticsConfig.getConfig();
     const { enhancedAnalysis, patternAnalysis, timeWindows, alertSensitivity, analytics, insights, taxonomy } = cfg;
 
     if (!this.mlModelsInitialized || trackingEntries.length < 10) {
