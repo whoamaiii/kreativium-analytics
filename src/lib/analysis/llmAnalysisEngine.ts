@@ -116,8 +116,8 @@ export class LLMAnalysisEngine implements AnalysisEngine {
 
       try {
         const heurPreview = await this.heuristic.analyzeStudent(studentId, timeframe, { bypassCache: false });
-        patterns = (heurPreview as any)?.patterns || [];
-        correlations = (heurPreview as any)?.correlations || [];
+        patterns = heurPreview.patterns || [];
+        correlations = heurPreview.correlations || [];
       } catch (error) {
         try {
           logger.warn('[LLMAnalysisEngine] heuristic preview for evidence failed', { error: error instanceof Error ? error.message : String(error) });
@@ -258,7 +258,7 @@ export class LLMAnalysisEngine implements AnalysisEngine {
 
       if (useMapReduce && start && end) {
         lineage = buildDataLineage({ entries, emotions, sensoryInputs, goals }, timeframe);
-        const overallRange = { start, end, timezone: timeframe?.timezone } as any;
+        const overallRange: TimeRange = { start, end, timezone: timeframe?.timezone };
         const mergedReport = await analyzeLargePeriod(entries, emotions, sensoryInputs, goals, overallRange, mapReduceOptions);
         if (mergedReport) {
           validated = { ok: true, report: mergedReport, repaired: false, caveats: ['Map‑reduce pipeline benyttet for langt tidsrom'] };
@@ -286,8 +286,8 @@ export class LLMAnalysisEngine implements AnalysisEngine {
             topP: aiCfg.topP,
             timeoutMs: aiCfg.timeoutMs,
             baseUrl: aiCfg.baseUrl,
-            apiKey: (aiCfg as any).apiKey,
-            localOnly: (aiCfg as any).localOnly,
+            apiKey: aiCfg.apiKey,
+            localOnly: aiCfg.localOnly,
             ensureJson: true,
           }
         );
