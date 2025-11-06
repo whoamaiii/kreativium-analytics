@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 import { FileText, BarChart3, Brain, CalendarClock, Download } from 'lucide-react';
 

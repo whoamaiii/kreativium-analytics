@@ -62,8 +62,8 @@ export function useAsyncState<TValue = unknown>(
     data: initialDataRef.current,
     error: null,
   }));
-  const isMountedRef = useRef(true);
   const autoResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     initialDataRef.current = initialData;
@@ -71,7 +71,10 @@ export function useAsyncState<TValue = unknown>(
 
   useEffect(() => {
     return () => {
-      isMountedRef.current = false;
+      // Cleanup: abort any pending operations and clear timeouts
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
       if (autoResetRef.current) {
         clearTimeout(autoResetRef.current);
       }
@@ -86,7 +89,6 @@ export function useAsyncState<TValue = unknown>(
   }, []);
 
   const reset = useCallback(() => {
-    if (!isMountedRef.current) return;
     clearAutoReset();
     setInternalState({
       status: 'idle',
@@ -99,14 +101,12 @@ export function useAsyncState<TValue = unknown>(
     if (!autoResetMs || autoResetMs <= 0) return;
     clearAutoReset();
     autoResetRef.current = setTimeout(() => {
-      if (!isMountedRef.current) return;
       reset();
     }, autoResetMs);
   }, [autoResetMs, clearAutoReset, reset]);
 
   const setData = useCallback(
     (value: TValue | null) => {
-      if (!isMountedRef.current) return;
       clearAutoReset();
       setInternalState({
         status: value === null ? 'idle' : 'success',
@@ -119,7 +119,6 @@ export function useAsyncState<TValue = unknown>(
 
   const setError = useCallback(
     (error: Error | null) => {
-      if (!isMountedRef.current) return;
       clearAutoReset();
       setInternalState(prev => ({
         status: error ? 'error' : 'idle',
@@ -135,9 +134,9 @@ export function useAsyncState<TValue = unknown>(
 
   const execute = useCallback(
     async <TReturn = TValue>(asyncFunction: () => Promise<TReturn>): Promise<TReturn> => {
-      if (!isMountedRef.current) {
-        throw new Error('Component unmounted');
-      }
+      // Create new AbortController for this execution
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
 
       clearAutoReset();
       setInternalState(prev => ({
@@ -150,10 +149,16 @@ export function useAsyncState<TValue = unknown>(
       let lastError: Error | null = null;
 
       while (attempt <= retryCount) {
+        // Check if operation was aborted
+        if (abortController.signal.aborted) {
+          throw new Error('Operation aborted');
+        }
+
         try {
           const result = await asyncFunction();
 
-          if (!isMountedRef.current) {
+          // Check again after async operation
+          if (abortController.signal.aborted) {
             return result;
           }
 
@@ -185,7 +190,8 @@ export function useAsyncState<TValue = unknown>(
             continue;
           }
 
-          if (!isMountedRef.current) {
+          // Check if aborted before setting error state
+          if (abortController.signal.aborted) {
             throw error;
           }
 

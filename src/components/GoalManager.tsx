@@ -143,12 +143,21 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
 
   const updateGoal = (goalId: string, updates: Partial<Goal>) => {
     const goalToUpdate = goals.find(g => g.id === goalId);
-    if (!goalToUpdate) return;
+    if (!goalToUpdate) {
+      logger.warn('Attempted to update non-existent goal', { goalId });
+      return;
+    }
 
-    const updatedGoal = { ...goalToUpdate, ...updates, updatedAt: new Date() };
-    dataStorage.saveGoal(updatedGoal);
-    loadGoals();
-    onGoalUpdate?.();
+    try {
+      const updatedGoal = { ...goalToUpdate, ...updates, updatedAt: new Date() };
+      dataStorage.saveGoal(updatedGoal);
+      loadGoals();
+      onGoalUpdate?.();
+      toast.success(String(tCommon('goals.updated', { defaultValue: 'Goal updated successfully!' })));
+    } catch (error) {
+      logger.error('Failed to update goal', { error, goalId });
+      toast.error('Failed to update goal. Please try again.');
+    }
   };
 
   const addDataPoint = (goalId: string, value: number, notes?: string) => {

@@ -7,7 +7,7 @@ import { downloadBlob } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { Download, FileText, Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useNavigate } from 'react-router-dom';
 import { useReportsWorker } from '@/hooks/useReportsWorker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

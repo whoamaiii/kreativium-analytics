@@ -3,8 +3,8 @@ import { z } from 'zod';
 // Validation schemas
 export const studentSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be less than 100 characters'),
-  grade: z.string().min(1, 'Grade is required'),
-  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+  grade: z.string().max(50, 'Grade must be less than 50 characters').optional(),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional().or(z.literal('')),
   notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional()
 });
 

@@ -742,7 +742,10 @@ class AnalyticsManagerService {
         });
         __lastFacadeLogMinute = nowMinute;
       }
-      } catch (e) { try { logger.warn('[analyticsManager] Engine selection debug logging failed', e as Error); } catch {} }
+      } catch (e) {
+        // Log engine selection debug failure, but don't let it crash the app
+        logger.warn('[analyticsManager] Engine selection debug logging failed', e as Error);
+      }
 
     if (shouldUseAi) return new LLMAnalysisEngine();
     return new HeuristicAnalysisEngine();

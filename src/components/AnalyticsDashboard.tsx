@@ -494,7 +494,17 @@ export const AnalyticsDashboard = memo(({
                 <RefreshCw className="h-4 w-4 mr-2" />
                 {String(tAnalytics('actions.retryAnalysis'))}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => { try { window?.location?.reload(); } catch {} }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  try {
+                    window?.location?.reload();
+                  } catch (error) {
+                    logger.error('Failed to reload page', { error });
+                  }
+                }}
+              >
                 {String(tAnalytics('actions.tryAgain'))}
               </Button>
             </div>
@@ -531,7 +541,9 @@ export const AnalyticsDashboard = memo(({
                   url.searchParams.set('tab', tab);
                   url.searchParams.set('preset', preset);
                   window.history.replaceState(window.history.state, '', url.toString());
-                } catch {}
+                } catch (error) {
+                  logger.warn('Failed to update URL with tab/preset params', { error, tab, preset });
+                }
               }}
               onFiltersApply={(criteria) => {
                 setFilters(criteria);
