@@ -147,14 +147,4 @@ export function detectCUSUMShift(series: TrendPoint[], options: CUSUMDetectorOpt
       side,
     },
   };
-
-  logger.debug('CUSUM detection evaluated', {
-    label: options.label ?? 'CUSUM',
-    kFactor,
-    hMultiplier: adjHMultiplier,
-    sigma,
-    thresholdRatio,
-    side,
-    detected: true,
-  });
 }
