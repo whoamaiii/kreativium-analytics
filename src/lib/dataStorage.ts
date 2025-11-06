@@ -511,8 +511,12 @@ export class DataStorageManager implements IDataStorage {
 
     // Analytics may depend on goals; broadcast cache invalidation for affected student
     try {
-      if ((goal as any)?.studentId) analyticsCoordinator.broadcastCacheClear((goal as any).studentId as string);
-    } catch { /* noop */ }
+      if (goal.studentId && typeof goal.studentId === 'string') {
+        analyticsCoordinator.broadcastCacheClear(goal.studentId);
+      }
+    } catch (error) {
+      logger.warn('[dataStorage] Failed to broadcast cache clear for goal', { goalId: goal.id, error });
+    }
   }
 
   /**
@@ -552,8 +556,12 @@ export class DataStorageManager implements IDataStorage {
 
     // Interventions impact analytics; invalidate caches for the student
     try {
-      if ((intervention as any)?.studentId) analyticsCoordinator.broadcastCacheClear((intervention as any).studentId as string);
-    } catch { /* noop */ }
+      if (intervention.studentId && typeof intervention.studentId === 'string') {
+        analyticsCoordinator.broadcastCacheClear(intervention.studentId);
+      }
+    } catch (error) {
+      logger.warn('[dataStorage] Failed to broadcast cache clear for intervention', { interventionId: intervention.id, error });
+    }
   }
 
   /**
@@ -593,8 +601,12 @@ export class DataStorageManager implements IDataStorage {
 
     // Alerts may be surfaced in analytics; invalidate per student
     try {
-      if ((alert as any)?.studentId) analyticsCoordinator.broadcastCacheClear((alert as any).studentId as string);
-    } catch { /* noop */ }
+      if (alert.studentId && typeof alert.studentId === 'string') {
+        analyticsCoordinator.broadcastCacheClear(alert.studentId);
+      }
+    } catch (error) {
+      logger.warn('[dataStorage] Failed to broadcast cache clear for alert', { alertId: alert.id, error });
+    }
   }
 
   /**
@@ -632,8 +644,12 @@ export class DataStorageManager implements IDataStorage {
 
     // Correlations directly tie into analytics views; invalidate for the student
     try {
-      if ((correlation as any)?.studentId) analyticsCoordinator.broadcastCacheClear((correlation as any).studentId as string);
-    } catch { /* noop */ }
+      if (correlation.studentId && typeof correlation.studentId === 'string') {
+        analyticsCoordinator.broadcastCacheClear(correlation.studentId);
+      }
+    } catch (error) {
+      logger.warn('[dataStorage] Failed to broadcast cache clear for correlation', { correlationId: correlation.id, error });
+    }
   }
 
   /**

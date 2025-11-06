@@ -132,7 +132,10 @@ const workerCache = {
   },
 
   createKey(prefix: string, params: Record<string, unknown>): string {
-    const sorted = Object.keys(params).sort().map(k => `${k}:${JSON.stringify((params as any)[k])}`).join(':');
+    const sorted = Object.keys(params).sort().map(k => {
+      const value = params[k];
+      return `${k}:${JSON.stringify(value)}`;
+    }).join(':');
     return `${prefix}:${sorted}`;
   },
   
@@ -145,12 +148,27 @@ const baselineService = new BaselineService();
 const alertDetectionEngine = new AlertDetectionEngine({ baselineService });
 
 function extractStudentId(data: AnalyticsData): string | null {
+  // Try to extract from entries
   const entryId = data.entries?.[0]?.studentId;
-  if (entryId) return entryId;
+  if (typeof entryId === 'string' && entryId.trim().length > 0) {
+    return entryId;
+  }
+
+  // Try to extract from emotions
   const emotionId = data.emotions?.[0]?.studentId;
-  if (emotionId) return emotionId;
-  const sensoryId = data.sensoryInputs?.[0]?.studentId;
-  if (sensoryId) return sensoryId;
+  if (typeof emotionId === 'string' && emotionId.trim().length > 0) {
+    return emotionId;
+  }
+
+  // Try to extract from sensory inputs
+  const sensoryInput = data.sensoryInputs?.[0];
+  if (sensoryInput && typeof sensoryInput === 'object') {
+    const sensoryId = (sensoryInput as Record<string, unknown>).studentId;
+    if (typeof sensoryId === 'string' && sensoryId.trim().length > 0) {
+      return sensoryId;
+    }
+  }
+
   return null;
 }
 
