@@ -215,7 +215,7 @@ describe('AlertPolicies', () => {
     const alert = baseAlert({ id: 'th-1', studentId });
     const key = policies.calculateDedupeKey(alert);
     // initial attempts 0
-    let delay0 = policies.getThrottleDelay(studentId, key);
+    const delay0 = policies.getThrottleDelay(studentId, key);
     // record a few attempts
     for (let i = 0; i < 8; i += 1) policies.recordThrottleAttempt(studentId, key);
     const delay1 = policies.getThrottleDelay(studentId, key);

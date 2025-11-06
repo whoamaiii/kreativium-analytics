@@ -36,7 +36,8 @@ export type EmotionKey = 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'di
  * Adjustments are intentionally subtle to avoid oscillations.
  */
 export function refineDifficultyForEmotion(state: DifficultyState, emotion: EmotionKey): DifficultyState {
-  let { threshold, holdMs, streak } = state;
+  const { streak } = state;
+  let { threshold, holdMs } = state;
   switch (emotion) {
     case 'happy':
       threshold = Math.max(0.5, threshold - 0.01);
