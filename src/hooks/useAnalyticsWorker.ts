@@ -285,8 +285,8 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
             try { (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null; } catch { /* noop */ }
             worker.removeEventListener('message', onMessage as EventListener);
             worker.removeEventListener('messageerror', onMessageError as EventListener);
-          } catch {
-            /* noop */
+          } catch (error) {
+            logger.warn('[useAnalyticsWorker] Failed to remove event listeners during cleanup', error);
           }
         });
       }
@@ -307,7 +307,11 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       }
       // Run any per-hook cleanup fns (like removing event listeners)
       while (cleanupStackRef.current.length) {
-        try { (cleanupStackRef.current.pop() as () => void)(); } catch { /* noop */ }
+        try {
+          (cleanupStackRef.current.pop() as () => void)();
+        } catch (error) {
+          logger.warn('[useAnalyticsWorker] Cleanup function failed during unmount', error);
+        }
       }
       if (alertsHealthTimerRef.current) {
         clearInterval(alertsHealthTimerRef.current);

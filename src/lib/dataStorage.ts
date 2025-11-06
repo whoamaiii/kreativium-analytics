@@ -81,8 +81,13 @@ export class DataStorageManager implements IDataStorage {
 
   // Get current data version
   private getDataVersion(): number {
-    const versionData = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
-    return versionData ? JSON.parse(versionData).version : 0;
+    try {
+      const versionData = localStorage.getItem(STORAGE_KEYS.DATA_VERSION);
+      return versionData ? JSON.parse(versionData).version : 0;
+    } catch (error) {
+      logger.error('[dataStorage] Failed to parse data version, resetting to 0', error);
+      return 0;
+    }
   }
 
   /**
@@ -183,29 +188,34 @@ export class DataStorageManager implements IDataStorage {
   private loadStorageIndex(): StorageIndex {
     const indexData = localStorage.getItem(STORAGE_KEYS.STORAGE_INDEX);
     if (indexData) {
-      const parsed = JSON.parse(indexData);
-      
-      // Convert date strings back to Date objects for accurate timestamp comparison
-      // Optimized: Use a single loop to process all index categories
-      const indexCategories = ['students', 'trackingEntries', 'goals', 'interventions', 'alerts'] as const;
-      
-      for (const category of indexCategories) {
-        if (parsed[category]) {
-          // Process all entries in this category at once
-          const entries = Object.entries(parsed[category]);
-          parsed[category] = entries.reduce((acc, [key, value]) => {
-            acc[key] = new Date(value as string);
-            return acc;
-          }, {} as Record<string, Date>);
+      try {
+        const parsed = JSON.parse(indexData);
+
+        // Convert date strings back to Date objects for accurate timestamp comparison
+        // Optimized: Use a single loop to process all index categories
+        const indexCategories = ['students', 'trackingEntries', 'goals', 'interventions', 'alerts'] as const;
+
+        for (const category of indexCategories) {
+          if (parsed[category]) {
+            // Process all entries in this category at once
+            const entries = Object.entries(parsed[category]);
+            parsed[category] = entries.reduce((acc, [key, value]) => {
+              acc[key] = new Date(value as string);
+              return acc;
+            }, {} as Record<string, Date>);
+          }
         }
+
+        // Convert the lastUpdated timestamp
+        parsed.lastUpdated = new Date(parsed.lastUpdated);
+        return parsed;
+      } catch (error) {
+        logger.error('[dataStorage] Failed to parse storage index, creating new index', error);
+        // Fall through to create new index
       }
-      
-      // Convert the lastUpdated timestamp
-      parsed.lastUpdated = new Date(parsed.lastUpdated);
-      return parsed;
     }
 
-    // Create new index if none exists
+    // Create new index if none exists or if parsing failed
     return {
       students: {},
       trackingEntries: {},

@@ -53,7 +53,8 @@ export const flushQueuedTasks = (): void => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (workerState.worker as any).postMessage(pendingTasks.shift());
-    } catch {
+    } catch (error) {
+      logger.warn('[analyticsWorkerManager] Failed to flush queued task, stopping flush', error);
       break;
     }
   }

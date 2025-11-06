@@ -9,6 +9,8 @@ export class WorkerDetector {
   private lastSentTs = 0;
   private scratchCanvas: HTMLCanvasElement | null = null;
   private imageCapture: any | null = null;
+  private inFlightFrames = 0;
+  private readonly MAX_IN_FLIGHT_FRAMES = 2;
 
   constructor(private options: DetectorOptions = {}) {
     this.targetFps = Math.max(8, Math.min(30, options.targetFps ?? 20));
@@ -55,11 +57,17 @@ export class WorkerDetector {
     const video = this.video;
     if (!video || !this.worker) return;
     if (!this.snapshot.ready) return;
+
+    // Throttle if too many frames are pending to prevent memory accumulation
+    if (this.inFlightFrames >= this.MAX_IN_FLIGHT_FRAMES) return;
+
     const minDt = 1000 / this.targetFps;
     if (now - this.lastSentTs < minDt) return;
     if ((video.readyState ?? 0) < 2 || video.videoWidth === 0 || video.videoHeight === 0) return;
 
     this.lastSentTs = now;
+    this.inFlightFrames++;
+
     // Path A: Use ImageCapture if available
     if (this.imageCapture) {
       (this.imageCapture.grabFrame?.() as Promise<ImageBitmap>)
@@ -69,6 +77,9 @@ export class WorkerDetector {
         .catch(() => {
           // fall back to canvas path on failure
           this.imageCapture = null;
+        })
+        .finally(() => {
+          this.inFlightFrames--;
         });
       return;
     }
@@ -81,15 +92,22 @@ export class WorkerDetector {
       if (this.scratchCanvas.width !== w) this.scratchCanvas.width = w;
       if (this.scratchCanvas.height !== h) this.scratchCanvas.height = h;
       const ctx = this.scratchCanvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        this.inFlightFrames--;
+        return;
+      }
       ctx.drawImage(video, 0, 0, w, h);
       (window as unknown as any).createImageBitmap(this.scratchCanvas)
         .then((ib: ImageBitmap) => {
           try { this.worker!.postMessage({ type: 'frame', frame: ib }, [ib as unknown as Transferable]); } catch {}
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => {
+          this.inFlightFrames--;
+        });
     } catch {
-      // silently ignore frame errors
+      // silently ignore frame errors but decrement counter
+      this.inFlightFrames--;
     }
   }
 

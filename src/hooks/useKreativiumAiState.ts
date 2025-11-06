@@ -176,6 +176,14 @@ export const useKreativiumAiState = (): KreativiumAiState => {
     }
   }, [aiConfig]);
 
+  // Mount guard to prevent state updates after component unmounts
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     try {
       const loaded = dataStorage.getStudents();
@@ -306,15 +314,22 @@ export const useKreativiumAiState = (): KreativiumAiState => {
       }
 
       const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);
+
+      // Only update state if component is still mounted
+      if (!isMountedRef.current) return;
+
       setResults(res);
       setBaselineResults(base);
       resultsCacheRef.current.set(cacheKey, { current: res, baseline: base });
       setFromUiCache(false);
     } catch (e) {
+      if (!isMountedRef.current) return;
       setError((e as Error)?.message || 'Analyse feilet.');
     } finally {
-      setIsAnalyzing(false);
-      setIsAnalyzingBaseline(false);
+      if (isMountedRef.current) {
+        setIsAnalyzing(false);
+        setIsAnalyzingBaseline(false);
+      }
     }
   }, [
     studentId,
@@ -360,15 +375,22 @@ export const useKreativiumAiState = (): KreativiumAiState => {
       }
 
       const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);
+
+      // Only update state if component is still mounted
+      if (!isMountedRef.current) return;
+
       setResults(res);
       setBaselineResults(base);
       resultsCacheRef.current.set(cacheKey, { current: res, baseline: base });
       setFromUiCache(false);
     } catch (e) {
+      if (!isMountedRef.current) return;
       setError((e as Error)?.message || 'Analyse feilet.');
     } finally {
-      setIsAnalyzing(false);
-      setIsAnalyzingBaseline(false);
+      if (isMountedRef.current) {
+        setIsAnalyzing(false);
+        setIsAnalyzingBaseline(false);
+      }
     }
   }, [
     studentId,
