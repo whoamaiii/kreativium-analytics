@@ -101,11 +101,49 @@ export type AnyStepConfig =
 
 /** Persisted state for a fitted step. */
 /** Persisted state for a fitted step (parameters learned during `fit`). */
-export interface FittedStepState {
+export interface CleaningStepState {
   name: string;
-  kind: StepKind;
-  params: Record<string, unknown>;
+  kind: 'cleaning';
+  params: {
+    dropCols: string[];
+    trimStrings: boolean;
+  };
 }
+
+export interface ScalingStepState {
+  name: string;
+  kind: 'scaling';
+  params: {
+    means: Record<string, number>;
+    stds: Record<string, number>;
+    method: 'standard';
+  };
+}
+
+export interface EncodingStepState {
+  name: string;
+  kind: 'encoding';
+  params: {
+    categories: Record<string, string[]>;
+    includeBooleans: boolean;
+    oneHotMaxCategories: number;
+  };
+}
+
+export interface FeatureEngineeringStepState {
+  name: string;
+  kind: 'feature_engineering';
+  params: {
+    degree: 1 | 2;
+    columns: string[];
+  };
+}
+
+export type FittedStepState =
+  | CleaningStepState
+  | ScalingStepState
+  | EncodingStepState
+  | FeatureEngineeringStepState;
 
 /** Serialized representation of a fitted pipeline. */
 /** Serialized representation of a fitted pipeline + metadata. */

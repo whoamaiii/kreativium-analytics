@@ -37,10 +37,14 @@
 import { stableHash } from '@/lib/hash';
 import {
   AnyStepConfig,
+  CleaningStepState,
   DataProfile,
   Dataset,
+  EncodingStepState,
+  FeatureEngineeringStepState,
   FittedStepState,
   PipelineMetadata,
+  ScalingStepState,
   SerializedPipeline,
   StepKind,
 } from '@/types/preprocessing';
@@ -65,7 +69,7 @@ function inferDataProfile(data: Dataset): DataProfile {
     }, new Set())
   );
 
-  const inferredTypes: DataProfile['inferredTypes'] = {} as any;
+  const inferredTypes: Record<string, 'number' | 'string' | 'boolean' | 'date' | 'unknown'> = {};
   const missingRatioByColumn: Record<string, number> = {};
   const uniqueCountByColumn: Record<string, number> = {};
 
@@ -77,7 +81,7 @@ function inferDataProfile(data: Dataset): DataProfile {
 
   for (const row of data) {
     for (const col of columns) {
-      const val = (row as any)[col];
+      const val = row[col];
       uniques.get(col)!.add(val);
     }
   }
@@ -108,7 +112,7 @@ function inferDataProfile(data: Dataset): DataProfile {
 }
 
 /** Simple cleaning: drop all-null columns, trim strings. */
-function applyCleaning(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'cleaning' }>): { data: Dataset; state: FittedStepState } {
+function applyCleaning(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'cleaning' }>): { data: Dataset; state: CleaningStepState } {
   const columns = new Set<string>();
   dataset.forEach((r) => Object.keys(r).forEach((k) => columns.add(k)));
 
@@ -117,7 +121,7 @@ function applyCleaning(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'cl
     for (const c of columns) {
       let allNull = true;
       for (const row of dataset) {
-        const v = (row as any)[c];
+        const v = row[c];
         if (v !== null && v !== undefined) {
           allNull = false;
           break;
@@ -150,7 +154,10 @@ function fitScaling(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'scali
 
   for (const col of profile.numericColumns) {
     const vals: number[] = dataset
-      .map((r) => (typeof (r as any)[col] === 'number' ? ((r as any)[col] as number) : NaN))
+      .map((r) => {
+        const val = r[col];
+        return typeof val === 'number' ? val : NaN;
+      })
       .filter((v) => Number.isFinite(v));
     const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     const variance = vals.length ? vals.reduce((a, b) => a + (b - mean) * (b - mean), 0) / vals.length : 0;
@@ -163,13 +170,13 @@ function fitScaling(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'scali
     data.map((row) => {
       const out: Record<string, unknown> = { ...row };
       for (const col of Object.keys(means)) {
-        const v = (row as any)[col];
+        const v = row[col];
         out[col] = typeof v === 'number' ? (v - means[col]) / stds[col] : v;
       }
       return out;
     });
 
-  const state: FittedStepState = { name: cfg.name, kind: 'scaling', params: { means, stds, method: cfg.method ?? 'standard' } };
+  const state: ScalingStepState = { name: cfg.name, kind: 'scaling', params: { means, stds, method: cfg.method ?? 'standard' } };
   return { transform, state };
 }
 
@@ -188,7 +195,7 @@ function fitEncoding(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'enco
   for (const c of cats) {
     const set = new Set<string>();
     for (const row of dataset) {
-      const v = (row as any)[c];
+      const v = row[c];
       const key = typeof v === 'string' ? v : typeof v === 'boolean' ? String(v) : String(v ?? '');
       set.add(key);
     }
@@ -211,7 +218,7 @@ function fitEncoding(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'enco
       return out;
     });
 
-  const state: FittedStepState = { name: cfg.name, kind: 'encoding', params: { categories, includeBooleans, oneHotMaxCategories: max } };
+  const state: EncodingStepState = { name: cfg.name, kind: 'encoding', params: { categories, includeBooleans, oneHotMaxCategories: max } };
   return { transform, state };
 }
 
@@ -224,13 +231,13 @@ function fitFeatureEngineering(dataset: Dataset, cfg: Extract<AnyStepConfig, { k
     data.map((row) => {
       const out: Record<string, unknown> = { ...row };
       for (const col of cols) {
-        const v = (row as any)[col];
+        const v = row[col];
         if (typeof v === 'number') out[`${col}__squared`] = v * v;
       }
       return out;
     });
 
-  const state: FittedStepState = { name: cfg.name, kind: 'feature_engineering', params: { degree, columns: cols } };
+  const state: FeatureEngineeringStepState = { name: cfg.name, kind: 'feature_engineering', params: { degree, columns: cols } };
   return { transform, state };
 }
 
@@ -331,8 +338,8 @@ export class PreprocessingPipeline {
 
     for (const state of this.fittedStates) {
       if (state.kind === 'cleaning') {
-        const drop = (state.params as any).dropCols as string[];
-        const trimStrings = !!(state.params as any).trimStrings;
+        const drop = state.params.dropCols;
+        const trimStrings = state.params.trimStrings;
         current = current.map((row) => {
           const out: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(row)) {
@@ -342,17 +349,17 @@ export class PreprocessingPipeline {
           return out;
         });
       } else if (state.kind === 'scaling') {
-        const { means, stds } = state.params as any;
+        const { means, stds } = state.params;
         current = current.map((row) => {
           const out: Record<string, unknown> = { ...row };
           for (const col of Object.keys(means)) {
-            const v = (row as any)[col];
+            const v = row[col];
             out[col] = typeof v === 'number' ? (v - means[col]) / stds[col] : v;
           }
           return out;
         });
       } else if (state.kind === 'encoding') {
-        const { categories } = state.params as any as { categories: Record<string, string[]> };
+        const { categories } = state.params;
         current = current.map((row) => {
           const out: Record<string, unknown> = {};
           for (const [k, v] of Object.entries(row)) {
@@ -368,11 +375,11 @@ export class PreprocessingPipeline {
           return out;
         });
       } else if (state.kind === 'feature_engineering') {
-        const { columns } = state.params as any as { columns: string[] };
+        const { columns } = state.params;
         current = current.map((row) => {
           const out: Record<string, unknown> = { ...row };
           for (const col of columns) {
-            const v = (row as any)[col];
+            const v = row[col];
             if (typeof v === 'number') out[`${col}__squared`] = v * v;
           }
           return out;
@@ -396,8 +403,8 @@ export class PreprocessingPipeline {
         createdAt: new Date().toISOString(),
         pipelineVersion: this.version,
         configHash: stableHash(this.config.map((c) => ({ ...c, when: undefined }))),
-        dataSchema: { columns: [], inferredTypes: {} as any },
-      } as PipelineMetadata;
+        dataSchema: { columns: [], inferredTypes: {} },
+      };
     }
     return {
       version: this.version,
@@ -410,14 +417,14 @@ export class PreprocessingPipeline {
   /**
    * Recreates a `PreprocessingPipeline` instance from a serialized state.
    * This allows for perfect reconstruction of a fitted pipeline for later use.
-   * 
+   *
    * @param payload The `SerializedPipeline` object.
    * @returns A new `PreprocessingPipeline` instance with its state restored.
    */
   static fromJSON(payload: SerializedPipeline): PreprocessingPipeline {
     const pipe = new PreprocessingPipeline(payload.config);
-    (pipe as any).fittedStates = deepCloneJSON(payload.fitted);
-    (pipe as any).metadata = deepCloneJSON(payload.metadata);
+    pipe.fittedStates = deepCloneJSON(payload.fitted);
+    pipe.metadata = deepCloneJSON(payload.metadata);
     return pipe;
   }
 }
