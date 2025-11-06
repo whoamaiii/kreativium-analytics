@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, memo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Student } from "@/types/student";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
  * Dashboard component - Main landing page with modern glassmorphism design
  * @returns React component displaying students list and tracking statistics
  */
-const Dashboard = () => {
+const Dashboard = memo(() => {
   const navigate = useNavigate();
   const { tDashboard, tCommon, tSettings } = useTranslation();
   const { students, isLoading, todayEntries, totalEntries, weeklyTrend } = useDashboardData();
@@ -258,6 +258,8 @@ const Dashboard = () => {
         </div>
       </div>
   );
-};
+});
+
+Dashboard.displayName = 'Dashboard';
 
 export { Dashboard };

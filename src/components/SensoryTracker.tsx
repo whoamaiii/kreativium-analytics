@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,7 +40,7 @@ const copingStrategySuggestions = [
   'Compression', 'Joint compressions', 'Chewing gum', 'Water break'
 ];
 
-export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps) => {
+export const SensoryTracker = memo(({ onSensoryAdd, studentId }: SensoryTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedResponse, setSelectedResponse] = useState<string>('');
@@ -290,7 +290,7 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
           />
         </div>
 
-        <Button 
+        <Button
           onClick={handleSubmit}
           disabled={!selectedType || !selectedResponse}
           className="w-full font-dyslexia bg-gradient-primary hover:opacity-90 transition-all duration-200"
@@ -300,4 +300,6 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
       </CardContent>
     </Card>
   );
-};
+});
+
+SensoryTracker.displayName = 'SensoryTracker';

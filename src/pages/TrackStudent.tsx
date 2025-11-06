@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { EmotionTracker } from "@/components/EmotionTracker";
@@ -13,7 +13,7 @@ import { logger } from "@/lib/logger";
 import { saveTrackingEntry as saveTrackingEntryUnified } from "@/lib/tracking/saveTrackingEntry";
 import { dataStorage } from "@/lib/dataStorage";
 
-const TrackStudent = () => {
+const TrackStudent = memo(() => {
   const { studentId } = useParams();
   const navigate = useNavigate();
   const [student, setStudent] = useState<Student | null>(null);
@@ -259,6 +259,8 @@ const TrackStudent = () => {
       </div>
     </div>
   );
-};
+});
+
+TrackStudent.displayName = 'TrackStudent';
 
 export default TrackStudent;

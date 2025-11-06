@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,16 +34,16 @@ const subEmotions: Record<string, string[]> = {
 
 /**
  * EmotionTracker Component
- * 
+ *
  * Provides an accessible interface for tracking and recording student emotions
  * with intensity levels, triggers, and contextual information.
- * 
+ *
  * @component
  * @param {EmotionTrackerProps} props - Component props
  * @param {Function} props.onEmotionAdd - Callback when emotion is added
  * @param {string} props.studentId - ID of the student being tracked
  */
-export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps) => {
+export const EmotionTracker = memo(({ onEmotionAdd, studentId }: EmotionTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const [selectedEmotion, setSelectedEmotion] = useState<string>('');
   const [selectedSubEmotion, setSelectedSubEmotion] = useState<string>('');
@@ -302,7 +302,7 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
           />
         </div>
 
-        <Button 
+        <Button
           onClick={handleSubmit}
           disabled={!selectedEmotion}
           className="w-full font-dyslexia bg-gradient-primary hover:opacity-90 transition-all duration-200"
@@ -312,4 +312,6 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
       </CardContent>
     </Card>
   );
-};
+});
+
+EmotionTracker.displayName = 'EmotionTracker';

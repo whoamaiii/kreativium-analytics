@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useId } from 'react';
+import { useCallback, useEffect, useMemo, useState, useId, memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -18,7 +18,7 @@ const EXPORT_PREFS_KEY = 'sensory-tracker_export_prefs_v1';
 
 type DatePreset = '7d' | '30d' | '90d' | 'qtd' | 'all' | 'custom';
 
-const Reports = () => {
+const Reports = memo(() => {
   const { tSettings, tCommon } = useTranslation();
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
@@ -349,6 +349,8 @@ const Reports = () => {
       </div>
     </div>
   );
-};
+});
+
+Reports.displayName = 'Reports';
 
 export default Reports;
