@@ -1,5 +1,40 @@
 import { logger } from '@/lib/logger';
 
+// Type extensions for experimental browser APIs
+interface MemoryInfo {
+  usedJSHeapSize: number;
+  jsHeapSizeLimit: number;
+  totalJSHeapSize: number;
+}
+
+interface PerformanceWithMemory extends Performance {
+  memory?: MemoryInfo;
+}
+
+interface NetworkInformation {
+  effectiveType?: 'slow-2g' | '2g' | '3g' | '4g';
+  saveData?: boolean;
+  downlink?: number;
+  rtt?: number;
+}
+
+interface NavigatorWithConnection extends Navigator {
+  connection?: NetworkInformation;
+}
+
+interface BatteryManager {
+  charging: boolean;
+  level: number;
+  chargingTime: number;
+  dischargingTime: number;
+  addEventListener(type: string, listener: EventListener): void;
+  removeEventListener(type: string, listener: EventListener): void;
+}
+
+interface NavigatorWithBattery extends Navigator {
+  getBattery?: () => Promise<BatteryManager>;
+}
+
 /**
  * Checks if the device has sufficient resources for precomputation tasks
  * @param cfg - Optional configuration (reserved for future use)
@@ -14,8 +49,9 @@ import { logger } from '@/lib/logger';
 export async function canPrecompute(cfg?: unknown): Promise<boolean> {
   try {
     // Check 1: Memory constraints
-    if ('memory' in performance && (performance as any).memory) {
-      const mem = (performance as any).memory;
+    const perfWithMem = performance as PerformanceWithMemory;
+    if ('memory' in performance && perfWithMem.memory) {
+      const mem = perfWithMem.memory;
       const heapUsageRatio = mem.usedJSHeapSize / mem.jsHeapSizeLimit;
 
       if (heapUsageRatio > 0.9) {
@@ -25,8 +61,9 @@ export async function canPrecompute(cfg?: unknown): Promise<boolean> {
     }
 
     // Check 2: Network constraints (avoid precomputation on slow connections)
-    if ('connection' in navigator) {
-      const conn = (navigator as any).connection;
+    const navWithConn = navigator as NavigatorWithConnection;
+    if ('connection' in navigator && navWithConn.connection) {
+      const conn = navWithConn.connection;
 
       // Respect data saver mode
       if (conn.saveData === true) {
@@ -36,7 +73,7 @@ export async function canPrecompute(cfg?: unknown): Promise<boolean> {
 
       // Avoid precomputation on slow connections
       const slowConnections = ['slow-2g', '2g'];
-      if (slowConnections.includes(conn.effectiveType)) {
+      if (conn.effectiveType && slowConnections.includes(conn.effectiveType)) {
         logger.debug('[deviceConstraints] Slow connection detected', { effectiveType: conn.effectiveType });
         return false;
       }
@@ -52,9 +89,10 @@ export async function canPrecompute(cfg?: unknown): Promise<boolean> {
     }
 
     // Check 4: Battery constraints (avoid heavy computation on low battery)
-    if ('getBattery' in navigator) {
+    const navWithBattery = navigator as NavigatorWithBattery;
+    if ('getBattery' in navigator && navWithBattery.getBattery) {
       try {
-        const battery = await (navigator as any).getBattery();
+        const battery = await navWithBattery.getBattery();
 
         // If not charging and battery is low, skip precomputation
         if (!battery.charging && battery.level < 0.2) {
