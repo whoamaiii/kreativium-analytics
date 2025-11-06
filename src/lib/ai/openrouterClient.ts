@@ -535,7 +535,7 @@ export const openRouterClient = {
   },
   chatJSON: <TOut = unknown>(
     ...args: Parameters<OpenRouterClient['chatJSON']>
-  ): ReturnType<OpenRouterClient['chatJSON']<TOut>> => {
+  ): Promise<TOut> => {
     // Respect per-call overrides passed as the second arg
     const overrides = (args?.[1] ?? undefined) as Partial<OpenRouterClientConfig> | undefined;
     const client = new OpenRouterClient(overrides);
