@@ -26,7 +26,48 @@ import {
   sanitizeRequestForLog,
   safeJSONParse,
 } from './utils';
+
+// Type for safeJSONParse result
+type SafeJSONParseResult<T> = { ok: true; value: T } | { ok: false; error: Error };
 import { aiMetrics } from '@/lib/ai/metrics';
+
+// Extend ImportMeta for Vite environment variables
+declare global {
+  interface ImportMetaEnv {
+    VITE_AI_MODEL_NAME?: string;
+    VITE_OPENROUTER_API_KEY?: string;
+    [key: string]: unknown;
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
+// Extended message types for function/tool calling
+interface ToolCall {
+  type?: string;
+  id?: string;
+  function?: {
+    name?: string;
+    arguments?: string | Record<string, unknown>;
+  };
+}
+
+interface ExtendedChatMessage extends ChatMessage {
+  refusal?: string | null;
+  content?: string | null;
+  tool_calls?: ToolCall[];
+}
+
+interface ExtendedOpenRouterChoice {
+  index: number;
+  message: ExtendedChatMessage;
+  finish_reason: string | null;
+}
+
+interface ExtendedOpenRouterChatResponse extends Omit<OpenRouterChatResponse, 'choices'> {
+  choices: ExtendedOpenRouterChoice[];
+}
 
 const DEFAULT_BASE_URL = 'https://openrouter.ai/api/v1';
 
@@ -45,7 +86,7 @@ export class OpenRouterClient {
     });
 
     // Resolve model/key from env with safe browser fallbacks
-    const envAny: Record<string, unknown> = (import.meta as any)?.env ?? {};
+    const env = import.meta.env;
     const getLS = (k: string) => {
       try { return typeof localStorage !== 'undefined' ? (localStorage.getItem(k) || '') : ''; } catch (e) { try { logger.warn('[OpenRouterClient] localStorage access failed', e as Error); } catch {} return ''; }
     };
@@ -62,19 +103,19 @@ export class OpenRouterClient {
     // Precedence: explicit overrides > validated ai.modelName > env/localStorage > default
     let liveModel = overrides?.modelName ?? ai.modelName;
     if (!liveModel || liveModel.trim().length === 0) {
-      liveModel = pickFirstNonEmpty(envAny.VITE_AI_MODEL_NAME, getLS('VITE_AI_MODEL_NAME')) || ai.modelName;
+      liveModel = pickFirstNonEmpty(env.VITE_AI_MODEL_NAME, getLS('VITE_AI_MODEL_NAME')) || ai.modelName;
     }
 
     const liveKey = pickFirstNonEmpty(
       overrides?.apiKey,
       ai.apiKey,
-      envAny.VITE_OPENROUTER_API_KEY,
+      env.VITE_OPENROUTER_API_KEY,
       getLS('OPENROUTER_API_KEY'),
       getLS('VITE_OPENROUTER_API_KEY'),
     );
 
     this.config = {
-      baseUrl: overrides?.baseUrl || (ai as any).baseUrl || DEFAULT_BASE_URL,
+      baseUrl: overrides?.baseUrl || ai.baseUrl || DEFAULT_BASE_URL,
       modelName: liveModel,
       temperature: ai.temperature,
       maxTokens: ai.maxTokens,
@@ -84,7 +125,7 @@ export class OpenRouterClient {
       maxRetries: overrides?.maxRetries ?? 3,
       baseDelayMs: overrides?.baseDelayMs ?? 500,
       maxDelayMs: overrides?.maxDelayMs ?? 4000,
-      localOnly: overrides?.localOnly ?? (ai as any)?.localOnly ?? false,
+      localOnly: overrides?.localOnly ?? ai.localOnly ?? false,
     } as Required<OpenRouterClientConfig>;
 
     try { logger.debug('[OpenRouterClient] init config', { hasKey: !!this.config.apiKey, model: this.config.modelName }); } catch (e) { try { logger.warn('[OpenRouterClient] Constructor debug logging failed', e as Error); } catch {} }
@@ -223,7 +264,7 @@ export class OpenRouterClient {
       } catch (error) {
         clearTimeout(timeoutId);
         // Network or Abort errors should be typed and possibly retried
-        if ((error as any)?.name === 'AbortError') {
+        if (error instanceof Error && error.name === 'AbortError') {
           const err = new SensoryCompassError(
             ErrorType.TIMEOUT_ERROR,
             'AI request timed out',
@@ -252,7 +293,8 @@ export class OpenRouterClient {
   }
 
   private pickFirstMessageContent(data: OpenRouterChatResponse): string {
-    const message = data.choices?.[0]?.message;
+    const extendedData = data as ExtendedOpenRouterChatResponse;
+    const message = extendedData.choices?.[0]?.message;
     if (!message) {
       throw new SensoryCompassError(
         ErrorType.AI_INVALID_RESPONSE,
@@ -261,7 +303,7 @@ export class OpenRouterClient {
       );
     }
 
-    const refusal = typeof (message as any).refusal === 'string' ? ((message as any).refusal as string).trim() : '';
+    const refusal = typeof message.refusal === 'string' ? message.refusal.trim() : '';
     if (refusal.length > 0) {
       throw new SensoryCompassError(
         ErrorType.AI_REFUSAL,
@@ -271,10 +313,10 @@ export class OpenRouterClient {
     }
 
     // Some providers place JSON only in tool_calls.function.arguments with empty/null content
-    if (typeof (message as any).content === 'string') {
-      return (message as any).content as string;
+    if (typeof message.content === 'string') {
+      return message.content;
     }
-    const toolArgs = (message as any)?.tool_calls?.[0]?.function?.arguments;
+    const toolArgs = message.tool_calls?.[0]?.function?.arguments;
     if (toolArgs) {
       // Defer actual parsing of tool args to JSON handlers; return empty string to signal fallback path
       return '';
@@ -385,22 +427,23 @@ export class OpenRouterClient {
         value = text as TOut;
       } else {
         // Enforce JSON parse/refine
-        let parsed = safeJSONParse<unknown>(text);
+        let parsed: SafeJSONParseResult<unknown> = safeJSONParse<unknown>(text);
         let hasToolArgs = false;
         if (!parsed.ok) {
           // 0) Tool/function-call style responses
           try {
-            const toolArgs = (response as any)?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+            const extendedResponse = response as ExtendedOpenRouterChatResponse;
+            const toolArgs = extendedResponse.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
             if (typeof toolArgs === 'string') {
               const trimmedToolArgs = toolArgs.trim();
               if (trimmedToolArgs.length > 0) {
                 hasToolArgs = true;
                 const pa = safeJSONParse<unknown>(toolArgs);
-                if (pa.ok) parsed = pa as any;
+                if (pa.ok) parsed = pa;
               }
             } else if (toolArgs && typeof toolArgs === 'object') {
               hasToolArgs = true;
-              parsed = { ok: true, value: toolArgs } as any;
+              parsed = { ok: true, value: toolArgs };
             }
           } catch {}
 
@@ -410,7 +453,7 @@ export class OpenRouterClient {
               const { extractFirstJsonObject } = await import('./utils');
               const attempt = extractFirstJsonObject<unknown>(text);
               if (attempt.ok) {
-                parsed = { ok: true, value: attempt.value } as any;
+                parsed = { ok: true, value: attempt.value };
               }
             } catch {}
           }
@@ -484,18 +527,20 @@ export class OpenRouterClient {
 
 // Export a lightweight facade that reads fresh env each call
 export const openRouterClient = {
-  chat: (...args: any[]) => {
+  chat: (...args: Parameters<OpenRouterClient['chat']>) => {
     // Respect per-call overrides passed as the second arg
     const overrides = (args?.[1] ?? undefined) as Partial<OpenRouterClientConfig> | undefined;
     const client = new OpenRouterClient(overrides);
-    return client.chat(...(args as Parameters<OpenRouterClient['chat']>));
+    return client.chat(...args);
   },
-  chatJSON: (...args: any[]) => {
+  chatJSON: <TOut = unknown>(
+    ...args: Parameters<OpenRouterClient['chatJSON']>
+  ): ReturnType<OpenRouterClient['chatJSON']<TOut>> => {
     // Respect per-call overrides passed as the second arg
     const overrides = (args?.[1] ?? undefined) as Partial<OpenRouterClientConfig> | undefined;
     const client = new OpenRouterClient(overrides);
     // Preserve generic behavior by delegating at runtime; callers retain typing via export cast below
-    return (client.chatJSON as any)(...args);
+    return client.chatJSON<TOut>(...args);
   },
 } as {
   chat: OpenRouterClient['chat'];
