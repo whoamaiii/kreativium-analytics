@@ -98,7 +98,14 @@ const StudentProfile = () => {
   } = useStudentData(studentId);
   // Persist selected studentId for global modules (games) to scope progress writes
   useEffect(() => {
-    try { if (studentId) localStorage.setItem('current.studentId', studentId); } catch {}
+    try {
+      if (studentId) {
+        localStorage.setItem('current.studentId', studentId);
+      }
+    } catch (error) {
+      // localStorage can fail in private mode or when quota is exceeded
+      logger.warn('Failed to persist current studentId to localStorage', { error, studentId });
+    }
   }, [studentId]);
 
   // DIAGNOSTIC: After data hook

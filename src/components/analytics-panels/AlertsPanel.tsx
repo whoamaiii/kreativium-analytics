@@ -296,11 +296,28 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredDat
   const pinnedAlerts = useMemo(() => alerts.filter(a => pinnedIds.has(a.id)), [alerts, pinnedIds]);
 
   const handleAcknowledgeSelected = useCallback(() => {
+    let successCount = 0;
+    let failCount = 0;
+
     for (const id of Array.from(selectedIds)) {
-      try { acknowledge(id); } catch {}
+      try {
+        acknowledge(id);
+        successCount++;
+      } catch (error) {
+        failCount++;
+        logger.error('Failed to acknowledge alert', { error, alertId: id });
+      }
     }
+
     setSelectedIds(new Set());
-    toast.success('Acknowledged selected alerts');
+
+    if (failCount === 0) {
+      toast.success('Acknowledged selected alerts');
+    } else if (successCount > 0) {
+      toast.warning(`Acknowledged ${successCount} alerts, but ${failCount} failed`);
+    } else {
+      toast.error('Failed to acknowledge alerts');
+    }
   }, [selectedIds, acknowledge]);
 
   const handleResolve = useCallback(() => {

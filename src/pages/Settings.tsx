@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useNavigate } from 'react-router-dom';
 import { FileText } from 'lucide-react';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Switch } from '@/components/ui/switch';
 
 const Settings = (): JSX.Element => {

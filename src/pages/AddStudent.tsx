@@ -12,7 +12,7 @@ import { LanguageSettings } from "@/components/LanguageSettings";
 import { analyticsManager } from "@/lib/analyticsManager";
 import { dataStorage } from "@/lib/dataStorage";
 import { logger } from "@/lib/logger";
-import { sanitizeInput } from "@/lib/formValidation";
+import { validateStudent, sanitizeInput } from "@/lib/formValidation";
 
 const AddStudent = () => {
   const [name, setName] = useState('');
@@ -20,18 +20,34 @@ const AddStudent = () => {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const navigate = useNavigate();
   const { tStudent, tCommon } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!name.trim()) {
-      toast.error(String(tStudent('addStudent.form.name.required')));
+
+    // Validate with Zod schema
+    const validationResult = validateStudent({
+      name: name.trim(),
+      grade: grade.trim(),
+      dateOfBirth: dateOfBirth.trim(),
+      notes: notes.trim()
+    });
+
+    if (!validationResult.success) {
+      // Convert validation errors to field-level error map
+      const errorMap: Record<string, string> = {};
+      validationResult.errors.forEach(err => {
+        errorMap[err.field] = err.message;
+      });
+      setErrors(errorMap);
+      toast.error('Please fix the validation errors');
       return;
     }
 
+    setErrors({}); // Clear any previous errors
     setIsLoading(true);
 
     try {
@@ -50,10 +66,10 @@ const AddStudent = () => {
 
       // Save student using proper dataStorage method
       dataStorage.saveStudent(newStudent);
-      
+
       // Initialize analytics infrastructure only (no mock data generation)
       analyticsManager.initializeStudentAnalytics(newStudent.id);
-      
+
       toast.success(String(tStudent('addStudent.success')));
       navigate('/');
     } catch (error) {
@@ -110,11 +126,24 @@ const AddStudent = () => {
                 <Input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    // Clear error on change
+                    if (errors.name) {
+                      setErrors(prev => ({ ...prev, name: '' }));
+                    }
+                  }}
                   placeholder={String(tStudent('addStudent.form.name.placeholder'))}
-                  className="font-dyslexia bg-input border-border focus:ring-ring"
+                  className={`font-dyslexia bg-input border-border focus:ring-ring ${errors.name ? 'border-red-500' : ''}`}
                   required
+                  aria-invalid={!!errors.name}
+                  aria-describedby={errors.name ? 'name-error' : undefined}
                 />
+                {errors.name && (
+                  <p id="name-error" className="text-sm text-red-500 mt-1">
+                    {errors.name}
+                  </p>
+                )}
               </div>
 
               {/* Grade - Optional */}
@@ -125,10 +154,22 @@ const AddStudent = () => {
                 <Input
                   type="text"
                   value={grade}
-                  onChange={(e) => setGrade(e.target.value)}
+                  onChange={(e) => {
+                    setGrade(e.target.value);
+                    if (errors.grade) {
+                      setErrors(prev => ({ ...prev, grade: '' }));
+                    }
+                  }}
                   placeholder={String(tStudent('addStudent.form.grade.placeholder'))}
-                  className="font-dyslexia bg-input border-border focus:ring-ring"
+                  className={`font-dyslexia bg-input border-border focus:ring-ring ${errors.grade ? 'border-red-500' : ''}`}
+                  aria-invalid={!!errors.grade}
+                  aria-describedby={errors.grade ? 'grade-error' : undefined}
                 />
+                {errors.grade && (
+                  <p id="grade-error" className="text-sm text-red-500 mt-1">
+                    {errors.grade}
+                  </p>
+                )}
               </div>
 
               {/* Date of Birth - Optional */}
@@ -139,9 +180,21 @@ const AddStudent = () => {
                 <Input
                   type="date"
                   value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  className="font-dyslexia bg-input border-border focus:ring-ring"
+                  onChange={(e) => {
+                    setDateOfBirth(e.target.value);
+                    if (errors.dateOfBirth) {
+                      setErrors(prev => ({ ...prev, dateOfBirth: '' }));
+                    }
+                  }}
+                  className={`font-dyslexia bg-input border-border focus:ring-ring ${errors.dateOfBirth ? 'border-red-500' : ''}`}
+                  aria-invalid={!!errors.dateOfBirth}
+                  aria-describedby={errors.dateOfBirth ? 'dateOfBirth-error' : undefined}
                 />
+                {errors.dateOfBirth && (
+                  <p id="dateOfBirth-error" className="text-sm text-red-500 mt-1">
+                    {errors.dateOfBirth}
+                  </p>
+                )}
               </div>
 
               {/* Notes - Optional */}
@@ -151,11 +204,23 @@ const AddStudent = () => {
                 </label>
                 <Textarea
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                    if (errors.notes) {
+                      setErrors(prev => ({ ...prev, notes: '' }));
+                    }
+                  }}
                   placeholder={String(tStudent('addStudent.form.notes.placeholder'))}
-                  className="font-dyslexia bg-input border-border focus:ring-ring"
+                  className={`font-dyslexia bg-input border-border focus:ring-ring ${errors.notes ? 'border-red-500' : ''}`}
                   rows={4}
+                  aria-invalid={!!errors.notes}
+                  aria-describedby={errors.notes ? 'notes-error' : undefined}
                 />
+                {errors.notes && (
+                  <p id="notes-error" className="text-sm text-red-500 mt-1">
+                    {errors.notes}
+                  </p>
+                )}
               </div>
 
               {/* Submit Buttons */}
