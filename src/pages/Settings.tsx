@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useNavigate } from 'react-router-dom';
 import { FileText, BookOpen } from 'lucide-react';
-import { Breadcrumbs } from '@/components/ui/breadcrumbs';
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Switch } from '@/components/ui/switch';
 import { OnboardingTrigger, useOnboarding } from '@/components/onboarding/OnboardingTutorial';
 import { ExampleEntriesDialog } from '@/components/help/ExampleEntriesDialog';
