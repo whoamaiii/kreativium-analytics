@@ -35,7 +35,7 @@ export function computeAllowedContexts(args: {
     if (loc) placeSet.add(loc.toLowerCase());
   }
   for (const em of args.emotions) {
-    const triggers = (em as any)?.triggers as string[] | undefined;
+    const triggers = em.triggers;
     if (Array.isArray(triggers)) {
       for (const t of triggers) {
         const v = (t || '').trim();
@@ -71,7 +71,7 @@ export function buildEvidenceForPattern(args: {
       timestamp: e.timestamp.toISOString(),
       description: `${e.emotion} intensitet ${e.intensity}`,
       metrics: { intensity: e.intensity },
-      tags: Array.isArray((e as any)?.triggers) ? ((e as any).triggers as string[]) : undefined,
+      tags: Array.isArray(e.triggers) ? e.triggers : undefined,
     });
   }
 
