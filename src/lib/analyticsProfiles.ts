@@ -20,6 +20,16 @@ export interface StudentAnalyticsProfile {
   analyticsHealthScore: number;
 }
 
+// Raw profile as stored in localStorage (dates are strings)
+interface StoredProfile {
+  studentId: string;
+  isInitialized: boolean;
+  lastAnalyzedAt: string | null;
+  analyticsConfig: StudentAnalyticsProfile['analyticsConfig'];
+  minimumDataRequirements: StudentAnalyticsProfile['minimumDataRequirements'];
+  analyticsHealthScore: number;
+}
+
 let profiles: Map<string, StudentAnalyticsProfile> | null = null;
 
 function loadProfilesFromStorage(): Map<string, StudentAnalyticsProfile> {
@@ -27,13 +37,17 @@ function loadProfilesFromStorage(): Map<string, StudentAnalyticsProfile> {
   try {
     const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.analyticsProfiles) : null;
     if (!raw) return map;
-    const obj = JSON.parse(raw) as Record<string, any>;
-    for (const [studentId, profile] of Object.entries(obj)) {
-      if (profile && typeof (profile as any).studentId === 'string') {
-        map.set(studentId, {
-          ...(profile as any),
-          lastAnalyzedAt: profile.lastAnalyzedAt ? new Date(profile.lastAnalyzedAt) : null,
-        });
+    const obj = JSON.parse(raw) as Record<string, unknown>;
+    for (const [studentId, profileData] of Object.entries(obj)) {
+      // Type guard to ensure profile has required structure
+      if (profileData && typeof profileData === 'object' && 'studentId' in profileData) {
+        const profile = profileData as StoredProfile;
+        if (typeof profile.studentId === 'string') {
+          map.set(studentId, {
+            ...profile,
+            lastAnalyzedAt: profile.lastAnalyzedAt ? new Date(profile.lastAnalyzedAt) : null,
+          });
+        }
       }
     }
   } catch (error) {
