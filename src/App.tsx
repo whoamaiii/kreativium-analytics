@@ -41,6 +41,7 @@ const EnvironmentalCorrelationsTest = (!IS_PROD || POC_MODE)
   ? lazy(() => import("./pages/EnvironmentalCorrelationsTest"))
   : null as unknown as React.LazyExoticComponent<() => JSX.Element>;
 import { ErrorWrapper } from "./components/ErrorWrapper";
+import { OnboardingTutorial } from "@/components/onboarding/OnboardingTutorial";
 
 // Additional lazies for custom routes
 const ReportBuilderPage = lazy(() => import('./pages/ReportBuilderPage').then(m => ({ default: m.default })));
@@ -68,6 +69,8 @@ const App = () => (
             <Toaster />
             <BrowserRouter>
               <TegnXPProvider>
+                {/* Onboarding tutorial - shows automatically for new users */}
+                <OnboardingTutorial autoShow={true} />
                 <Suspense fallback={<LoadingFallback />}>
                   <Routes>
                 <Route path="/" element={<Dashboard />} />
