@@ -20,6 +20,39 @@ import { buildInsightsCacheKey as _buildInsightsCacheKey, buildInsightsTask as _
 export { createInsightsTask as buildTask, createInsightsCacheKey as buildCacheKey } from '@/lib/analyticsTasks';
 import type { InsightsOptions, AnalyticsResult } from "@/types/insights";
 
+// #region Type Extensions
+
+// Extend ImportMeta for Vite environment variables
+declare global {
+  interface ImportMetaEnv {
+    VITE_AI_ANALYSIS_ENABLED?: string;
+    VITE_AI_MODEL_NAME?: string;
+    VITE_OPENROUTER_API_KEY?: string;
+    VITE_DISABLE_MANAGER_TTL_CACHE?: string;
+    [key: string]: unknown;
+  }
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+}
+
+// Extended analytics results with optional runtime properties
+interface ExtendedAnalyticsResults extends AnalyticsResults {
+  confidence?: number;
+  hasMinimumData?: boolean;
+}
+
+// Runtime cache config may include feature flags not in the base type
+interface RuntimeCacheConfig {
+  ttl?: number;
+  maxSize?: number;
+  invalidateOnConfigChange?: boolean;
+  disableManagerTTLCache?: boolean;
+  disableManagerTTL?: boolean;
+}
+
+// #endregion
+
 // #region Type Definitions
 
 /**
@@ -328,7 +361,7 @@ class AnalyticsManagerService {
         const preferHeuristic = options?.useAI === false;
 
         // Determine whether the cached result was produced by an AI provider (non-heuristic)
-        const provider = (cached.results as any)?.ai?.provider;
+        const provider = cached.results.ai?.provider;
         const isCachedAI = typeof provider === 'string' && provider.toLowerCase() !== 'heuristic';
 
         if (cacheAge < ttl) {
@@ -689,17 +722,17 @@ class AnalyticsManagerService {
     const cfgFlag = liveCfg?.features?.aiAnalysisEnabled;
 
     // Read live Vite env to avoid stale module-level defaults
-    const env: Record<string, unknown> = (import.meta as any)?.env ?? {};
+    const env = import.meta.env;
     const toBool = (v: unknown) => {
       const s = (v ?? '').toString().toLowerCase();
       return s === '1' || s === 'true' || s === 'yes';
     };
     const liveEnabled = toBool(env.VITE_AI_ANALYSIS_ENABLED);
-    const liveModel = typeof env.VITE_AI_MODEL_NAME === 'string' && (env.VITE_AI_MODEL_NAME as string).trim().length > 0
-      ? (env.VITE_AI_MODEL_NAME as string)
+    const liveModel = typeof env.VITE_AI_MODEL_NAME === 'string' && env.VITE_AI_MODEL_NAME.trim().length > 0
+      ? env.VITE_AI_MODEL_NAME
       : aiEnv.modelName;
-    const liveKey = typeof env.VITE_OPENROUTER_API_KEY === 'string' && (env.VITE_OPENROUTER_API_KEY as string).trim().length > 0
-      ? (env.VITE_OPENROUTER_API_KEY as string)
+    const liveKey = typeof env.VITE_OPENROUTER_API_KEY === 'string' && env.VITE_OPENROUTER_API_KEY.trim().length > 0
+      ? env.VITE_OPENROUTER_API_KEY
       : (aiEnv.apiKey || '');
 
     const resolved = typeof useAI === 'boolean' ? useAI : (typeof cfgFlag === 'boolean' ? cfgFlag : liveEnabled);
@@ -757,11 +790,12 @@ class AnalyticsManagerService {
   private isManagerTtlCacheDisabled(): boolean {
     try {
       const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
-      const cfgFlag = (cfg?.cache as any)?.disableManagerTTLCache === true || (cfg?.cache as any)?.disableManagerTTL === true;
+      const cacheConfig = cfg?.cache as RuntimeCacheConfig | undefined;
+      const cfgFlag = cacheConfig?.disableManagerTTLCache === true || cacheConfig?.disableManagerTTL === true;
       if (cfgFlag) return true;
     } catch { /* ignore */ }
     try {
-      const env: Record<string, unknown> = (import.meta as any)?.env ?? {};
+      const env = import.meta.env;
       const raw = (env.VITE_DISABLE_MANAGER_TTL_CACHE ?? '').toString().toLowerCase();
       return raw === '1' || raw === 'true' || raw === 'yes';
     } catch { /* ignore */ }
@@ -816,8 +850,8 @@ export async function getInsights(
     const ttlSeconds = typeof options?.ttlSeconds === 'number' ? options.ttlSeconds : Math.max(1, Math.floor(ttlMs / 1000));
     const tags = Array.from(new Set(["insights", "v2", ...(options?.tags ?? [])]));
 
-    const fullCfg = options?.config ? { config: (options.config as any) } : { config: cfg as any };
-    const detailed = await computeInsights(inputs, fullCfg as any);
+    const fullCfg = options?.config ? { config: options.config } : { config: cfg };
+    const detailed = await computeInsights(inputs, fullCfg) as ExtendedAnalyticsResults;
 
     // Summarize for stable payloads (avoid large arrays in summary field)
     const summary = {
@@ -827,8 +861,8 @@ export async function getInsights(
       predictiveInsightsCount: detailed.predictiveInsights?.length ?? 0,
       anomaliesCount: detailed.anomalies?.length ?? 0,
       insightsCount: detailed.insights?.length ?? 0,
-      confidence: (detailed as any).confidence,
-      hasMinimumData: (detailed as any).hasMinimumData,
+      confidence: detailed.confidence,
+      hasMinimumData: detailed.hasMinimumData,
     } as Record<string, unknown>;
 
     return {
