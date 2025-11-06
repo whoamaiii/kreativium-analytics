@@ -22,6 +22,8 @@ import InterventionTemplateManager from '@/lib/interventions/templateManager';
 import CreateGoalFromAlertDialog from '@/components/goals/CreateGoalFromAlertDialog';
 import { useAlertFilterState, useAlertDerivedData } from '@/components/analytics-panels/hooks/useAlertFilters';
 import { useAlertBulkActions } from '@/components/analytics-panels/hooks/useAlertBulkActions';
+import { PredictiveAlertsPanel } from '@/components/analytics/PredictiveAlertsPanel';
+import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 
 export interface AlertsPanelProps {
   filteredData: { entries: TrackingEntry[]; emotions: EmotionEntry[]; sensoryInputs: SensoryEntry[] };
@@ -98,6 +100,11 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredDat
     counts,
     grouped,
   } = derived;
+
+  // Extract predictive insights and anomalies from analytics
+  const { results } = useAnalyticsWorker({ precomputeOnIdle: false });
+  const predictiveInsights = (results as any)?.predictiveInsights || [];
+  const anomalies = (results as any)?.anomalies || [];
 
   const bulkActions = useAlertBulkActions({
     alerts,
@@ -347,8 +354,34 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredDat
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-      <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Predictive Insights Layer */}
+      {(predictiveInsights.length > 0 || anomalies.length > 0) && (
+        <PredictiveAlertsPanel
+          predictiveInsights={predictiveInsights}
+          anomalies={anomalies}
+          onInsightClick={(insight) => {
+            // Navigate to patterns tab with insight context
+            logger.info('[AlertsPanel] Predictive insight clicked', { insight });
+            toast({
+              title: 'Predictive Insight',
+              description: insight.description,
+            });
+          }}
+          onAnomalyClick={(anomaly) => {
+            // Show detailed anomaly analysis
+            logger.info('[AlertsPanel] Anomaly clicked', { anomaly });
+            toast({
+              title: 'Anomaly Detected',
+              description: anomaly.description,
+            });
+          }}
+        />
+      )}
+
+      {/* Existing Alert Management UI */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+        <div className="space-y-4">
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -881,6 +914,7 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredDat
           if (!open) setGoalDialogAlert(null);
         }}
       />
+      </div>
     </div>
   );
 });

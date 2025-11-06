@@ -1,11 +1,11 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Brain, Eye, BarChart3, Clock, Info, TrendingUp } from 'lucide-react';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { TrackingEntry, EmotionEntry, SensoryEntry, Student } from '@/types/student';
-import { PatternResult } from '@/lib/patternAnalysis';
+import { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 import { generateInsightsStructured } from '@/lib/insights';
 import { stableKeyFromPattern } from '@/lib/key';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -19,10 +19,13 @@ import { logger } from '@/lib/logger';
 import { toast } from '@/hooks/use-toast';
 import { ExplanationDock } from './ExplanationDock';
 import { ExplanationSheet } from './ExplanationSheet';
-import type { SourceItem } from '@/types/analytics';
+import type { SourceItem, InterventionResult } from '@/types/analytics';
 import { ResizableSplitLayout } from '@/components/layouts/ResizableSplitLayout';
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import { useSyncedPatternParams } from '@/hooks/useSyncedPatternParams';
+import { PatternRecognitionDashboard } from '@/components/analytics/PatternRecognitionDashboard';
+import { InterventionPanel } from '@/components/analytics/InterventionPanel';
+import { motion } from 'framer-motion';
 
 export interface PatternsPanelProps {
   filteredData: {
@@ -61,6 +64,7 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
   const [selectedTitle, setSelectedTitle] = React.useState<string>('');
   const [isSheetOpen, setIsSheetOpen] = React.useState<boolean>(false);
   const dockRef = React.useRef<HTMLDivElement>(null);
+  const interventionRef = useRef<HTMLDivElement>(null);
   const { patternId, explain, setPatternId, setExplain, clearPatternParams } = useSyncedPatternParams();
 
   // Track viewport to decide dock vs sheet
@@ -96,6 +100,8 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
   }, [filteredData, runAnalysis, useAI, student]);
 
   const patterns: PatternResult[] = results?.patterns || [];
+  const correlations: CorrelationResult[] = (results as any)?.correlations || [];
+  const interventions: InterventionResult[] = (results as any)?.suggestedInterventions || [];
   const structured = generateInsightsStructured(
     {
       patterns: results?.patterns || [],
@@ -278,6 +284,15 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
     } else {
       try { dockRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch {}
     }
+
+    // Scroll to interventions if available
+    if (interventions.length > 0) {
+      setTimeout(() => {
+        try {
+          interventionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch {}
+      }, 300);
+    }
   };
 
   const handleCopy = async (text: string) => {
@@ -292,6 +307,73 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
   const handleAddToReport = (text: string) => {
     // Placeholder for integration with report builder
     try { toast.info('Lagt til i rapportutkast'); } catch {}
+  };
+
+  // Intervention handlers
+  const handleStartIntervention = (intervention: InterventionResult) => {
+    try {
+      const activeInterventions = JSON.parse(
+        localStorage.getItem('active_interventions') || '[]'
+      );
+
+      activeInterventions.push({
+        id: hashOfString(intervention.title),
+        intervention,
+        startedAt: new Date().toISOString(),
+        studentId: student?.id,
+        completedSteps: [],
+      });
+
+      localStorage.setItem('active_interventions', JSON.stringify(activeInterventions));
+
+      toast({
+        title: 'Intervention Started',
+        description: `Tracking progress for: ${intervention.title}`,
+      });
+    } catch (e) {
+      logger.error('[PatternsPanel] Failed to start intervention', e);
+      toast({
+        title: 'Error',
+        description: 'Could not start intervention',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSaveToIEP = (intervention: InterventionResult) => {
+    try {
+      const iepText = `
+INTERVENTION: ${intervention.title}
+
+DESCRIPTION:
+${intervention.description}
+
+ACTIONS:
+${intervention.actions.map((a, i) => `${i + 1}. ${a}`).join('\n')}
+
+SUCCESS METRICS:
+${intervention.metrics.map(m => `• ${m}`).join('\n')}
+
+EVIDENCE:
+• Tier: ${intervention.tier || 'N/A'}
+• Research sources: ${intervention.sources?.length || 0}
+• UDL Checkpoints: ${intervention.udlCheckpoints?.join(', ') || 'N/A'}
+      `.trim();
+
+      navigator.clipboard.writeText(iepText);
+
+      toast({
+        title: 'Copied to Clipboard',
+        description: 'Paste into IEP documentation',
+      });
+    } catch (e) {
+      logger.error('[PatternsPanel] Failed to copy to clipboard', e);
+      toast({
+        title: 'Error',
+        description: 'Could not copy to clipboard',
+        variant: 'destructive',
+      });
+    }
   };
 
   const current = selectedKey ? explanations[selectedKey] : undefined;
@@ -519,94 +601,66 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
   }, [isSmallViewport]);
 
   const leftContent = (
-        <div className="space-y-4">
-      <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{String(tAnalytics('insights.patterns'))}</CardTitle>
-          <Button variant="outline" onClick={() => runAnalysis(filteredData, { useAI, student })} disabled={isAnalyzing}>
-            {isAnalyzing ? String(tAnalytics('states.analyzing')) : String(tAnalytics('actions.refreshAnalysis'))}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {isAnalyzing && (
-            <div className="text-center py-8 text-muted-foreground">
+    <div className="space-y-6">
+      {/* Loading/Error States */}
+      {isAnalyzing && (
+        <Card>
+          <CardContent className="p-8">
+            <div className="text-center text-muted-foreground">
               <Clock className="h-12 w-12 mx-auto mb-4 motion-safe:animate-spin opacity-50" />
               <p>{String(tAnalytics('states.analyzing'))}</p>
             </div>
-          )}
-          {!isAnalyzing && error && (
-            <div className="text-center py-8 text-destructive">
+          </CardContent>
+        </Card>
+      )}
+
+      {!isAnalyzing && error && (
+        <Card>
+          <CardContent className="p-8">
+            <div className="text-center text-destructive">
               <p>{error}</p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Pattern Recognition Dashboard */}
+      {!isAnalyzing && !error && (
+        <>
+          <PatternRecognitionDashboard
+            patterns={patterns}
+            correlations={correlations}
+            onPatternSelect={handleExplainClick}
+            onCorrelationSelect={(correlation) => {
+              // Find related pattern and select it
+              const relatedPattern = patterns.find(p =>
+                p.pattern.includes(correlation.factor1) ||
+                p.pattern.includes(correlation.factor2)
+              );
+              if (relatedPattern) {
+                handleExplainClick(relatedPattern);
+              }
+            }}
+          />
+
+          {/* Intervention Panel - Shows when pattern selected and interventions available */}
+          {selectedKey && interventions.length > 0 && (
+            <motion.div
+              ref={interventionRef}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <InterventionPanel
+                interventions={interventions}
+                onStartIntervention={handleStartIntervention}
+                onSaveToIEP={handleSaveToIEP}
+              />
+            </motion.div>
           )}
-          {!isAnalyzing && !error && patterns.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>{String(tAnalytics('empty.noPatterns'))}</p>
-              <p className="text-sm">{String(tAnalytics('insights.noPatterns'))}</p>
-            </div>
-          )}
-          {!isAnalyzing && !error && patterns.length > 0 && (
-            <div className="space-y-4">
-            {patterns.map((pattern: PatternResult) => (
-                <Card key={stableKeyFromPattern(pattern)} className="border-l-4 border-l-primary">
-                  <CardContent className="pt-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3">
-                        {getPatternIcon(pattern.type)}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-foreground">
-                              {String((pattern as PatternResult & { pattern?: string; name?: string }).pattern ?? (pattern as PatternResult & { pattern?: string; name?: string }).name ?? 'Pattern')
-                                .replace('-', ' ')
-                                .replace(/\b\w/g, (l: string) => l.toUpperCase())}
-                            </h4>
-                            <button
-                              aria-label={String(tAnalytics('insights.explainPattern'))}
-                              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] leading-none text-muted-foreground hover:bg-accent/40"
-                              onClick={() => handleExplainClick(pattern)}
-                              disabled={!aiKeyPresent}
-                              title={!aiKeyPresent ? String(tAnalytics('ai.toggle.unavailable', { defaultValue: 'AI er ikke tilgjengelig (mangler API-nøkkel).' })) : undefined}
-                            >
-                              <Info className="h-3 w-3" />
-                              {String(tAnalytics('insights.explainPattern'))}
-                            </button>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {String((pattern as PatternResult & { description?: string }).description ?? '')}
-                          </p>
-                          {pattern.recommendations && (
-                            <div className="mt-3">
-                              <h5 className="text-sm font-medium mb-2">{String(tAnalytics('insights.recommendations'))}</h5>
-                              <ul className="text-sm text-muted-foreground space-y-1">
-{pattern.recommendations.map((rec) => (
-                                  <li key={hashOfString(rec)} className="flex items-start gap-2">
-                                    <span className="text-primary">•</span>
-                                    <span>{rec}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="outline" className={getConfidenceColor(pattern.confidence)}>
-                          {String(tAnalytics('insights.confidencePercent', { percentage: Math.round(pattern.confidence * 100) }))}
-                        </Badge>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {String(tAnalytics('confidence.calculation.dataPoints'))}: {pattern.dataPoints}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-        </div>
+        </>
+      )}
+    </div>
   );
 
   const rightContent = (
