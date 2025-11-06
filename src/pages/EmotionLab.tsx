@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import * as faceapi from '@vladmandic/face-api';
+import { loadFaceApi, loadModels } from '@/lib/faceapi';
 // Optional: workerized detector toggle
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -34,12 +34,14 @@ export default function EmotionLab() {
     let raf = 0;
     let lastTs = performance.now();
 
-    async function loadModels() {
+    async function loadModelsLocal() {
       try {
         setModelStatus('loading');
         // Load local models only to respect CSP connect-src 'self'
-        await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
-        await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
+        await loadModels(modelBaseUrl, {
+          tinyFaceDetector: true,
+          faceExpressionNet: true,
+        });
         setModelsOrigin('local');
         setModelStatus('ready');
       } catch (ee) {
@@ -49,7 +51,7 @@ export default function EmotionLab() {
     }
 
     if (consented && modelStatus === 'idle') {
-      void loadModels();
+      void loadModelsLocal();
     }
 
     async function analyze() {
@@ -73,6 +75,9 @@ export default function EmotionLab() {
       }
 
       try {
+        // Get face-api instance
+        const faceapi = await loadFaceApi();
+
         const result = await faceapi
           .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: 0.5 }))
           .withFaceExpressions();

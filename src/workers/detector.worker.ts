@@ -1,6 +1,6 @@
-import * as faceapi from '@vladmandic/face-api';
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-cpu';
+import { loadFaceApi, loadModels } from '@/lib/faceapi';
 import type { DetectorWorkerMessage, DetectorWorkerResult, DetectorWorkerReady, DetectionBox } from '@/detector/types';
 
 let initialized = false;
@@ -12,8 +12,13 @@ async function ensureModels(): Promise<void> {
   // Use CPU backend in worker for maximum compatibility
   try { await tf.setBackend('cpu'); } catch {}
   try { await tf.ready(); } catch {}
-  await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
-  await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
+
+  // Lazy load face-api and models
+  await loadModels(modelBaseUrl, {
+    tinyFaceDetector: true,
+    faceExpressionNet: true,
+  });
+
   initialized = true;
 }
 
@@ -31,6 +36,10 @@ self.addEventListener('message', async (evt: MessageEvent<DetectorWorkerMessage>
     }
     if (msg.type === 'frame') {
       if (!initialized) await ensureModels();
+
+      // Get face-api instance
+      const faceapi = await loadFaceApi();
+
       const bitmap = msg.frame;
       const t0 = performance.now();
       // Draw ImageBitmap to OffscreenCanvas to ensure compatibility with face-api input types

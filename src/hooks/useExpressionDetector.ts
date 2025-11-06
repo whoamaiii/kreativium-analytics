@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import * as faceapi from '@vladmandic/face-api';
+import { loadFaceApi, loadModels } from '@/lib/faceapi';
 
 export interface DetectionBox {
   x: number;
@@ -53,8 +53,11 @@ export function useExpressionDetector(
   const ensureModels = useCallback(async () => {
     if (initializedRef.current) return true;
     try {
-      await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
-      await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
+      // Lazy load face-api and models
+      await loadModels(modelBaseUrl, {
+        tinyFaceDetector: true,
+        faceExpressionNet: true,
+      });
       initializedRef.current = true;
       setSnapshot(s => ({ ...s, ready: true }));
       return true;
@@ -73,6 +76,9 @@ export function useExpressionDetector(
     // HAVE_CURRENT_DATA (2) is sufficient and avoids running on a 0x0 stream
     const hasFrameData = (video.readyState ?? 0) >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
     if (!hasFrameData) return;
+
+    // Get face-api instance
+    const faceapi = await loadFaceApi();
 
     const results = await faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold }))

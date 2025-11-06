@@ -1,4 +1,4 @@
-import * as faceapi from '@vladmandic/face-api';
+import { loadFaceApi, loadModels } from '@/lib/faceapi';
 import type { DetectorOptions, DetectorSnapshot, DetectionBox } from '@/detector/types';
 
 export class FaceApiDetector {
@@ -16,8 +16,11 @@ export class FaceApiDetector {
 
   async ensureModels(): Promise<void> {
     if (this.initialized) return;
-    await faceapi.nets.tinyFaceDetector.loadFromUri(this.modelBaseUrl);
-    await faceapi.nets.faceExpressionNet.loadFromUri(this.modelBaseUrl);
+    // Lazy load face-api and models
+    await loadModels(this.modelBaseUrl, {
+      tinyFaceDetector: true,
+      faceExpressionNet: true,
+    });
     this.initialized = true;
     this.snapshot.ready = true;
   }
@@ -31,6 +34,10 @@ export class FaceApiDetector {
     if (!video) return;
     if (!this.initialized) await this.ensureModels();
     if ((video.readyState ?? 0) < 2 || video.videoWidth === 0 || video.videoHeight === 0) return;
+
+    // Get face-api instance
+    const faceapi = await loadFaceApi();
+
     const t0 = performance.now();
     const results = await faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: this.scoreThreshold }))
