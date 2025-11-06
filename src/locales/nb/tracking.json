@@ -21,7 +21,21 @@
     "sessionSaved": "Økt lagret vellykket!",
     "saveError": "Kunne ikke lagre økt. Prøv igjen.",
     "summaryTitle": "Gjennomgang av sesjon",
-    "minutesSuffix": "min"
+    "minutesSuffix": "min",
+    "quickEntry": {
+      "title": "Hurtigregistrering",
+      "question": "Hvordan har {{firstName}} det akkurat nå?",
+      "aiSuggestion": "AI-forslag",
+      "confident": "{{percent}}% sikker",
+      "saveAndDone": "Lagre & Ferdig",
+      "addMoreDetails": "Legg til flere detaljer",
+      "timeSaved": "Hurtigregistrering sparer ~9 minutter vs. fullstendig skjema",
+      "selectEmotionFirst": "Vennligst velg en følelse først",
+      "saved": "✓ Lagret!",
+      "trackedFor": "{{emotion}} registrert for {{name}}",
+      "saveFailed": "Lagring mislyktes",
+      "saveFailedDescription": "Kunne ikke lagre registrering. Prøv igjen."
+    }
   },
   "emotions": {
     "title": "Følelser",

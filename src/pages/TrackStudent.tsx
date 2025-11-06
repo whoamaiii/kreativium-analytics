@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { EmotionTracker } from "@/components/EmotionTracker";
 import { SensoryTracker } from "@/components/SensoryTracker";
 import { EnvironmentalTracker } from "@/components/EnvironmentalTracker";
+import { MobileQuickEntry } from "@/components/tracking/MobileQuickEntry";
 import { Student, EmotionEntry, SensoryEntry, TrackingEntry, EnvironmentalEntry } from "@/types/student";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { ArrowLeft, Save, User, Smartphone, Monitor } from "lucide-react";
 import { toast } from '@/hooks/use-toast';
 import { useTranslation } from "@/hooks/useTranslation";
 import { LanguageSettings } from "@/components/LanguageSettings";
@@ -23,6 +24,25 @@ const TrackStudent = () => {
   const [generalNotes, setGeneralNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { tTracking, tCommon } = useTranslation();
+
+  // Mobile-first: Detect screen size and default view
+  const [isMobileView, setIsMobileView] = useState(true);
+  const [userPreferredView, setUserPreferredView] = useState<'auto' | 'mobile' | 'full'>('auto');
+
+  // Responsive detection hook
+  useEffect(() => {
+    if (userPreferredView === 'auto') {
+      const checkMobile = () => {
+        setIsMobileView(window.innerWidth < 768);
+      };
+
+      checkMobile(); // Initial check
+      window.addEventListener('resize', checkMobile);
+      return () => window.removeEventListener('resize', checkMobile);
+    } else {
+      setIsMobileView(userPreferredView === 'mobile');
+    }
+  }, [userPreferredView]);
 
   useEffect(() => {
     if (!studentId) return;
@@ -67,7 +87,7 @@ const TrackStudent = () => {
 
   const handleSaveSession = async () => {
     if (!student) return;
-    
+
     if (emotions.length === 0 && sensoryInputs.length === 0) {
       toast({
         title: String(tTracking('session.validationError')),
@@ -80,7 +100,7 @@ const TrackStudent = () => {
     setIsLoading(true);
     try {
       const timestamp = new Date();
-      
+
       // Create the tracking entry
       const trackingEntry: TrackingEntry = {
         id: crypto.randomUUID(),
@@ -132,6 +152,45 @@ const TrackStudent = () => {
     }
   };
 
+  // Handler for mobile quick entry save
+  const handleQuickEntrySave = async (
+    quickEmotions: Omit<EmotionEntry, 'id' | 'timestamp'>[],
+    quickSensory: Omit<SensoryEntry, 'id' | 'timestamp'>[]
+  ) => {
+    if (!student) return;
+
+    const timestamp = new Date();
+
+    const trackingEntry: TrackingEntry = {
+      id: crypto.randomUUID(),
+      studentId: student.id,
+      timestamp,
+      emotions: quickEmotions.map(e => ({
+        ...e,
+        id: crypto.randomUUID(),
+        timestamp
+      })),
+      sensoryInputs: quickSensory.map(s => ({
+        ...s,
+        id: crypto.randomUUID(),
+        timestamp
+      }))
+    };
+
+    const result = await saveTrackingEntryUnified(trackingEntry, { minDataPoints: 1 });
+    if (!result.success) {
+      throw new Error(result.errors?.join(', ') || 'Save failed');
+    }
+
+    // Navigate back to student profile
+    navigate(`/student/${student.id}`);
+  };
+
+  // Handler to expand from quick entry to full form
+  const handleExpandToFullForm = () => {
+    setUserPreferredView('full');
+  };
+
   if (!student) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -140,6 +199,17 @@ const TrackStudent = () => {
           <p className="text-muted-foreground">{String(tCommon('status.loading'))}</p>
         </div>
       </div>
+    );
+  }
+
+  // Conditional rendering: Mobile Quick Entry vs. Full Form
+  if (isMobileView) {
+    return (
+      <MobileQuickEntry
+        student={student}
+        onSave={handleQuickEntrySave}
+        onExpandDetails={handleExpandToFullForm}
+      />
     );
   }
 
@@ -157,9 +227,31 @@ const TrackStudent = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               {String(tCommon('buttons.back'))}
             </Button>
-            <LanguageSettings />
+            <div className="flex items-center gap-2">
+              {/* View toggle button - desktop only */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setUserPreferredView(userPreferredView === 'mobile' ? 'full' : 'mobile')}
+                className="font-dyslexia hidden md:flex"
+                title="Toggle between quick entry and full form"
+              >
+                {userPreferredView === 'mobile' || isMobileView ? (
+                  <>
+                    <Monitor className="h-4 w-4 mr-2" />
+                    Full Form
+                  </>
+                ) : (
+                  <>
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Quick Entry
+                  </>
+                )}
+              </Button>
+              <LanguageSettings />
+            </div>
           </div>
-          
+
           <div className="flex items-center gap-3 mb-2">
             <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-lg">
               {student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
@@ -170,7 +262,7 @@ const TrackStudent = () => {
               </h1>
             </div>
           </div>
-          
+
           <p className="text-muted-foreground">
             {String(tTracking('session.description'))}
           </p>

@@ -21,7 +21,21 @@
     "sessionSaved": "Session saved successfully!",
     "saveError": "Failed to save session. Please try again.",
     "summaryTitle": "Session Data Review",
-    "minutesSuffix": "min"
+    "minutesSuffix": "min",
+    "quickEntry": {
+      "title": "Quick Entry",
+      "question": "How is {{firstName}} feeling right now?",
+      "aiSuggestion": "AI Suggestion",
+      "confident": "{{percent}}% confident",
+      "saveAndDone": "Save & Done",
+      "addMoreDetails": "Add More Details",
+      "timeSaved": "Quick entry saves ~9 minutes vs. full form",
+      "selectEmotionFirst": "Please select an emotion first",
+      "saved": "✓ Saved!",
+      "trackedFor": "{{emotion}} tracked for {{name}}",
+      "saveFailed": "Save failed",
+      "saveFailedDescription": "Could not save entry. Please try again."
+    }
   },
   "emotions": {
     "title": "Emotions",
