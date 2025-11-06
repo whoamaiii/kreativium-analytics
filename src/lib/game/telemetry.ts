@@ -19,6 +19,13 @@ export interface ConfidenceReportedEvent extends GameEventBase { kind: 'confiden
 
 export type GameEvent = RoundStartEvent | RoundSuccessEvent | RoundFailEvent | HintUsedEvent | ProbSampleEvent | ModeStartEvent | ModeEndEvent | ConfidenceReportedEvent;
 
+// Extend Window interface to include analytics worker if available
+declare global {
+  interface Window {
+    __analyticsWorker?: Worker;
+  }
+}
+
 const STORAGE_KEY = 'emotion.telemetry.v1';
 
 export function recordGameEvent(event: GameEvent): void {
@@ -34,9 +41,9 @@ export function recordGameEvent(event: GameEvent): void {
   try {
     // Reduce noise: do not stream high-frequency probability samples
     if (event.kind !== 'prob_sample') {
-      const worker = (window as any)?.__analyticsWorker as Worker | undefined;
+      const worker = window.__analyticsWorker;
       if (worker) {
-        (worker as any).postMessage({ type: 'game:event', payload: event });
+        worker.postMessage({ type: 'game:event', payload: event });
       }
     }
   } catch {}
@@ -64,8 +71,8 @@ export function computeEmotionTrends():
     if (ev.kind === 'round_success') {
       const key = ev.target;
       if (!out[key]) out[key] = { reactionTimes: [], stabilityMs: [] };
-      out[key].reactionTimes.push((ev as any).timeMs as number);
-      const stab = (ev as any).stabilityMs as number | undefined;
+      out[key].reactionTimes.push(ev.timeMs);
+      const stab = ev.stabilityMs;
       if (typeof stab === 'number' && Number.isFinite(stab)) out[key].stabilityMs.push(stab);
     }
   }
@@ -82,7 +89,7 @@ export function computeSessionSummary(startTs?: number, endTs?: number): {
 } {
   const events = readGameTelemetry();
   const start = typeof startTs === 'number' ? startTs : (() => {
-    const lastStart = [...events].reverse().find(e => (e as any).kind === 'mode_start') as any;
+    const lastStart = [...events].reverse().find((e): e is ModeStartEvent => e.kind === 'mode_start');
     return lastStart?.ts ?? null;
   })();
   const end = typeof endTs === 'number' ? endTs : Date.now();
@@ -100,7 +107,7 @@ export function computeSessionSummary(startTs?: number, endTs?: number): {
       const t = ev.target;
       successByEmotion.set(t, (successByEmotion.get(t) ?? 0) + 1);
       attemptsByEmotion.set(t, (attemptsByEmotion.get(t) ?? 0) + 1);
-      if (typeof (ev as any).timeMs === 'number') timeToSuccess.push((ev as any).timeMs as number);
+      if (typeof ev.timeMs === 'number') timeToSuccess.push(ev.timeMs);
       roundsSet.add(ev.roundIndex);
     } else if (ev.kind === 'round_fail') {
       const t = ev.target;
@@ -109,7 +116,7 @@ export function computeSessionSummary(startTs?: number, endTs?: number): {
     } else if (ev.kind === 'hint_used') {
       roundsWithHint.add(ev.roundIndex);
     } else if (ev.kind === 'confidence_reported') {
-      const ce = (ev as any).calibrationError as number | undefined;
+      const ce = ev.calibrationError;
       if (typeof ce === 'number' && Number.isFinite(ce)) calibErrors.push(ce);
     }
   }
@@ -136,10 +143,10 @@ export function computeSessionSummary(startTs?: number, endTs?: number): {
 export function streamSessionSummary(startTs?: number, context?: { studentId?: string; mode?: string }): void {
   try {
     const summary = computeSessionSummary(startTs);
-    const worker = (window as any)?.__analyticsWorker as Worker | undefined;
+    const worker = window.__analyticsWorker;
     const payload = { summary, context: context ?? {} };
     if (worker) {
-      (worker as any).postMessage({ type: 'game:session_summary', payload });
+      worker.postMessage({ type: 'game:session_summary', payload });
     }
   } catch {
     // ignore streaming errors
