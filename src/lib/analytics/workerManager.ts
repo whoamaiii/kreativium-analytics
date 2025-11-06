@@ -101,8 +101,8 @@ export const ensureWorkerInitialized = async (): Promise<Worker | null> => {
       logger.error('[analyticsWorkerManager] Worker runtime error, switching to fallback', error);
       try {
         worker.terminate();
-      } catch {
-        /* noop */
+      } catch (terminateError) {
+        logger.warn('[analyticsWorkerManager] Failed to terminate worker after error', terminateError);
       }
       workerState.worker = null;
       workerState.ready = false;

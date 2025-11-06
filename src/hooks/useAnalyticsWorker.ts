@@ -415,15 +415,22 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     const schedule = async () => {
       try {
         const allowed = await deviceConstraints.canPrecompute(pc);
-        if (!allowed) return;
-      } catch { /* noop */ }
+        if (!allowed) {
+          logger.debug('[useAnalyticsWorker] Precomputation skipped due to device constraints');
+          return;
+        }
+      } catch (error) {
+        logger.warn('[useAnalyticsWorker] Failed to check device constraints, allowing precomputation', error);
+      }
 
       const dataSets = dataProvider();
       const student = options?.student;
       dataSets.forEach((data, index) => {
         setTimeout(() => {
           // Route through runAnalysis to ensure caching and goal inclusion; mark as prewarm
-          runAnalysis(data, { student, prewarm: true }).catch(() => { /* noop */ });
+          runAnalysis(data, { student, prewarm: true }).catch((error) => {
+            logger.debug('[useAnalyticsWorker] Precomputation task failed, continuing', { index, error });
+          });
         }, index * (pc.taskStaggerDelay ?? 100));
       });
     };

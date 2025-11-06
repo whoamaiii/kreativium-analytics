@@ -57,12 +57,16 @@ const ensureStudent = (data: AnalyticsData, explicit?: Student): Student | undef
     } as Student;
   }
   const sensory = data.sensoryInputs?.[0];
-  if ((sensory as any)?.studentId) {
-    return {
-      id: (sensory as any).studentId,
-      name: 'Student',
-      createdAt: new Date(),
-    } as Student;
+  if (sensory && typeof sensory === 'object' && sensory !== null) {
+    const sensoryObj = sensory as Record<string, unknown>;
+    const studentId = sensoryObj.studentId;
+    if (typeof studentId === 'string' && studentId.trim().length > 0) {
+      return {
+        id: studentId,
+        name: 'Student',
+        createdAt: new Date(),
+      } as Student;
+    }
   }
   return undefined;
 };
@@ -108,10 +112,34 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
     const prewarm = options?.prewarm === true;
     const aiRequested = options?.useAI === true;
     const resolvedStudentId = (() => {
-      if (options?.student?.id) return options.student.id;
-      return (data.entries?.[0]?.studentId)
-        || (data.emotions?.[0]?.studentId as string | undefined)
-        || ((data.sensoryInputs?.[0] as Record<string, unknown> | undefined)?.studentId as string | undefined);
+      // Priority 1: Explicit student ID from options
+      if (options?.student?.id && typeof options.student.id === 'string') {
+        return options.student.id;
+      }
+
+      // Priority 2: Extract from data.entries
+      const entryStudentId = data.entries?.[0]?.studentId;
+      if (typeof entryStudentId === 'string' && entryStudentId.trim().length > 0) {
+        return entryStudentId;
+      }
+
+      // Priority 3: Extract from data.emotions
+      const emotionStudentId = data.emotions?.[0]?.studentId;
+      if (typeof emotionStudentId === 'string' && emotionStudentId.trim().length > 0) {
+        return emotionStudentId;
+      }
+
+      // Priority 4: Extract from data.sensoryInputs
+      const sensoryInput = data.sensoryInputs?.[0];
+      if (sensoryInput && typeof sensoryInput === 'object' && sensoryInput !== null) {
+        const sensoryStudentId = (sensoryInput as Record<string, unknown>).studentId;
+        if (typeof sensoryStudentId === 'string' && sensoryStudentId.trim().length > 0) {
+          return sensoryStudentId;
+        }
+      }
+
+      // No valid student ID found
+      return undefined;
     })();
 
     const goals = resolvedStudentId ? getGoalsForStudent(resolvedStudentId) ?? [] : undefined;

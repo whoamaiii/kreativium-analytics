@@ -572,7 +572,28 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (postMessage as any)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
-  } catch (e) { try { logger.warn('[analytics.worker] Failed to post ready signal', e as Error); } catch {} }
+  } catch (e) {
+    // If ready signal fails, try to send error message as fallback
+    logger.error('[analytics.worker] CRITICAL: Failed to post ready signal', e as Error);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (postMessage as any)({
+        type: 'error',
+        error: 'Worker failed to initialize properly',
+        cacheKey: undefined,
+        payload: {
+          patterns: [],
+          correlations: [],
+          predictiveInsights: [],
+          anomalies: [],
+          insights: ['Worker initialization failed.'],
+          updatedCharts: ['insightList']
+        }
+      });
+    } catch (fallbackError) {
+      logger.error('[analytics.worker] CRITICAL: Cannot communicate with main thread', fallbackError as Error);
+    }
+  }
 
   self.onmessage = handleMessage;
 }

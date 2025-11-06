@@ -120,8 +120,24 @@ const handleCompleteMessage = (
   data: AnalyticsWorkerMessage,
   ctx: WorkerMessageHandlerContext
 ) => {
-  const cacheKeyFromMsg = (data.cacheKey || (data.payload as any)?.cacheKey) as string | undefined;
-  const prewarmFlag = ((data.payload as any)?.prewarm === true);
+  // Validate payload exists and is an object
+  if (!data.payload || typeof data.payload !== 'object') {
+    logger.warn('[workerMessageHandlers] Invalid complete message: missing or invalid payload', {
+      hasPayload: !!data.payload,
+      payloadType: typeof data.payload
+    });
+    return;
+  }
+
+  // Extract cache key with validation
+  const payloadObj = data.payload as Record<string, unknown>;
+  const cacheKeyFromMsg = (data.cacheKey || payloadObj?.cacheKey) as string | undefined;
+  if (cacheKeyFromMsg && typeof cacheKeyFromMsg !== 'string') {
+    logger.warn('[workerMessageHandlers] Invalid cache key type', { cacheKeyType: typeof cacheKeyFromMsg });
+    return;
+  }
+
+  const prewarmFlag = (payloadObj?.prewarm === true);
   const shouldUpdateUi = !!cacheKeyFromMsg && cacheKeyFromMsg === ctx.activeCacheKeyRef.current && !prewarmFlag;
 
   if (cacheKeyFromMsg && data.payload) {
@@ -132,8 +148,11 @@ const handleCompleteMessage = (
         : ctx.buildCacheTags({ data: data.payload as AnalyticsResults });
       const tags = Array.from(new Set([...(derivedTags ?? []), 'worker']));
       ctx.cache.set(cacheKeyFromMsg, data.payload as unknown as AnalyticsResultsAI, tags);
-    } catch {
-      /* noop */
+    } catch (error) {
+      logger.warn('[workerMessageHandlers] Failed to cache analytics results', {
+        cacheKey: cacheKeyFromMsg,
+        error
+      });
     }
     ctx.cacheTagsRef.current.delete(cacheKeyFromMsg);
   }
@@ -153,7 +172,15 @@ const handleErrorMessage = (
     ctx.cacheTagsRef.current.delete(data.cacheKey);
   }
   ctx.setIsAnalyzing(false);
-  ctx.setError(typeof (data as any).error === 'string' ? ((data as any).error as string) : 'Analytics worker error');
+
+  // Extract error message with proper validation
+  let errorMessage = 'Analytics worker error';
+  const dataObj = data as Record<string, unknown>;
+  if ('error' in dataObj && typeof dataObj.error === 'string' && dataObj.error.trim().length > 0) {
+    errorMessage = dataObj.error;
+  }
+
+  ctx.setError(errorMessage);
   ctx.setResults((prev) => prev ?? ({
     patterns: [],
     correlations: [],
