@@ -60,7 +60,7 @@ export function validateAndMergeAnalyticsConfig(
       const bv = bRecord[key as string];
       if (bv === undefined) continue;
       const av = aRecord[key as string];
-      if (av && typeof av === 'object' && !Array.isArray(av) && typeof bv === 'object' && !Array.isArray(bv)) {
+      if (av && typeof av === 'object' && !Array.isArray(av) && bv && typeof bv === 'object' && !Array.isArray(bv)) {
         outRecord[key as string] = deepMerge(av as Record<string, unknown>, bv as Partial<Record<string, unknown>>);
       } else {
         outRecord[key as string] = bv;

@@ -260,6 +260,7 @@ function deepMerge<T extends object>(base: T, overrides: Partial<T> | undefined 
       baseVal &&
       typeof baseVal === 'object' &&
       !Array.isArray(baseVal) &&
+      overrideVal &&
       typeof overrideVal === 'object' &&
       !Array.isArray(overrideVal)
     ) {
