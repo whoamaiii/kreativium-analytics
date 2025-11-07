@@ -1,18 +1,34 @@
 /* eslint-disable no-restricted-syntax */
 // Vite builds this as a module worker (see vite.config.ts worker.format = 'es')
 import { exportSystem as ExportSystem } from '@/lib/exportSystem';
+import type { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
+
+/**
+ * Export options for CSV/JSON generation
+ */
+export interface ExportOptions {
+  format: 'csv' | 'json';
+  includeFields: string[];
+  dateRange?: { start: Date; end: Date } | null;
+  anonymize?: boolean;
+}
+
+/**
+ * All data structure for export operations
+ */
+export interface AllDataForExport {
+  trackingEntries: TrackingEntry[];
+  emotions: EmotionEntry[];
+  sensoryInputs: SensoryEntry[];
+  goals: Goal[];
+}
 
 export type ReportsWorkerRequest = {
   id: string;
   kind: 'csv' | 'json';
   payload: {
-    students: unknown[];
-    allData: {
-      trackingEntries: unknown[];
-      emotions: unknown[];
-      sensoryInputs: unknown[];
-      goals: unknown[];
-    };
+    students: Student[];
+    allData: AllDataForExport;
     options: {
       format: 'csv' | 'json';
       includeFields: string[];
@@ -39,21 +55,18 @@ self.addEventListener('message', (evt: MessageEvent<ReportsWorkerRequest>) => {
     // Progress hint: filtering window
     respond({ id: msg.id, type: 'progress', progress: 0.2, message: 'preparing' });
 
+    const exportOptions: ExportOptions = {
+      ...options,
+      dateRange: options.dateRange
+        ? { start: new Date(options.dateRange.start), end: new Date(options.dateRange.end) }
+        : null,
+    };
+
     let content = '';
     if (msg.kind === 'csv') {
-      content = ExportSystem.generateCSVExport(students as any[], allData as any, {
-        ...(options as any),
-        dateRange: options.dateRange
-          ? { start: new Date(options.dateRange.start), end: new Date(options.dateRange.end) }
-          : undefined,
-      });
+      content = ExportSystem.generateCSVExport(students, allData, exportOptions);
     } else if (msg.kind === 'json') {
-      content = ExportSystem.generateJSONExport(students as any[], allData as any, {
-        ...(options as any),
-        dateRange: options.dateRange
-          ? { start: new Date(options.dateRange.start), end: new Date(options.dateRange.end) }
-          : undefined,
-      });
+      content = ExportSystem.generateJSONExport(students, allData, exportOptions);
     }
 
     respond({ id: msg.id, type: 'progress', progress: 0.95, message: 'finalizing' });

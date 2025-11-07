@@ -302,7 +302,10 @@ export const useKreativiumAiState = (): KreativiumAiState => {
               (Array.isArray(baseline?.insights) ? baseline.insights.length : 0);
             return totalLen === 0 ? null : baseline;
           })
-          .catch(() => null);
+          .catch((error) => {
+            logger.warn('[useKreativiumAiState] Baseline analysis failed', error as Error);
+            return null;
+          });
       }
 
       const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);
@@ -356,7 +359,10 @@ export const useKreativiumAiState = (): KreativiumAiState => {
               (Array.isArray(baseline?.insights) ? baseline.insights.length : 0);
             return totalLen === 0 ? null : baseline;
           })
-          .catch(() => null);
+          .catch((error) => {
+            logger.warn('[useKreativiumAiState] Baseline analysis failed', error as Error);
+            return null;
+          });
       }
 
       const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);

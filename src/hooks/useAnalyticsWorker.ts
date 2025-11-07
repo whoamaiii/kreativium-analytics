@@ -278,15 +278,19 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         worker.addEventListener('messageerror', onMessageError as EventListener);
 
         // Expose worker globally for lightweight event streaming from game UI
-        try { (window as unknown as { __analyticsWorker?: Worker }).__analyticsWorker = worker; } catch { /* noop */ }
+        try { (window as unknown as { __analyticsWorker?: Worker }).__analyticsWorker = worker; } catch (error) {
+          logger.debug('[useAnalyticsWorker] Failed to expose worker globally', error as Error);
+        }
 
         cleanupStackRef.current.push(() => {
           try {
-            try { (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null; } catch { /* noop */ }
+            try { (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null; } catch (error) {
+              logger.debug('[useAnalyticsWorker] Failed to clear global worker reference', error as Error);
+            }
             worker.removeEventListener('message', onMessage as EventListener);
             worker.removeEventListener('messageerror', onMessageError as EventListener);
-          } catch {
-            /* noop */
+          } catch (error) {
+            logger.debug('[useAnalyticsWorker] Worker cleanup failed', error as Error);
           }
         });
       }
@@ -307,7 +311,9 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       }
       // Run any per-hook cleanup fns (like removing event listeners)
       while (cleanupStackRef.current.length) {
-        try { (cleanupStackRef.current.pop() as () => void)(); } catch { /* noop */ }
+        try { (cleanupStackRef.current.pop() as () => void)(); } catch (error) {
+          logger.debug('[useAnalyticsWorker] Cleanup function failed', error as Error);
+        }
       }
       if (alertsHealthTimerRef.current) {
         clearInterval(alertsHealthTimerRef.current);
@@ -419,7 +425,9 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       dataSets.forEach((data, index) => {
         setTimeout(() => {
           // Route through runAnalysis to ensure caching and goal inclusion; mark as prewarm
-          runAnalysis(data, { student, prewarm: true }).catch(() => { /* noop */ });
+          runAnalysis(data, { student, prewarm: true }).catch((error) => {
+            logger.debug('[useAnalyticsWorker] Prewarm analysis failed', error as Error);
+          });
         }, index * (pc.taskStaggerDelay ?? 100));
       });
     };
@@ -526,7 +534,9 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     if (!precompManagerRef.current) {
       precompManagerRef.current = new AnalyticsPrecomputationManager((data) => {
         // Use runAnalysis with prewarm flag; student inference occurs within
-        runAnalysis(data, { prewarm: true }).catch(() => { /* noop */ });
+        runAnalysis(data, { prewarm: true }).catch((error) => {
+          logger.debug('[useAnalyticsWorker] Precomputation manager analysis failed', error as Error);
+        });
       });
     }
 
