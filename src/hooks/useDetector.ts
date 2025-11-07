@@ -3,6 +3,7 @@ import { WorkerDetector } from '@/detector/worker.detector';
 import { FaceApiDetector } from '@/detector/faceapi.detector';
 import { MediaPipeDetector } from '@/detector/mediapipe.detector';
 import type { DetectorOptions, DetectorSnapshot } from '@/detector/types';
+import { logger } from '@/lib/logger';
 
 export function useDetector(videoRef: React.RefObject<HTMLVideoElement>, options: DetectorOptions = {}): DetectorSnapshot {
   const [useWorker, setUseWorker] = useState<boolean>(true);
@@ -81,7 +82,9 @@ export function useDetector(videoRef: React.RefObject<HTMLVideoElement>, options
     let raf = 0;
     let lastSet = 0;
     const loop = () => {
-      det.tick().catch(() => {});
+      det.tick().catch((error) => {
+        logger.debug('[useDetector] FaceApi tick error', error as Error);
+      });
       const now = performance.now();
       if (now - lastSet >= updateIntervalMsRef.current) {
         setSnapshot(det.getSnapshot());
@@ -104,7 +107,9 @@ export function useDetector(videoRef: React.RefObject<HTMLVideoElement>, options
     let raf = 0;
     let lastSet = 0;
     const loop = () => {
-      det.tick().catch(() => {});
+      det.tick().catch((error) => {
+        logger.debug('[useDetector] MediaPipe tick error', error as Error);
+      });
       const now = performance.now();
       if (now - lastSet >= updateIntervalMsRef.current) {
         setSnapshot(det.getSnapshot());

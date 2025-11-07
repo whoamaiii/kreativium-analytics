@@ -8,19 +8,130 @@
  */
 import { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 import { PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalysis';
-import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
+import { TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
 import { AnalyticsData, AnalyticsResults, AnalyticsConfiguration, WorkerCacheEntry, AnalyticsWorkerMessage } from '@/types/analytics';
 import { createCachedPatternAnalysis } from '@/lib/cachedPatternAnalysis';
 import { logger } from '@/lib/logger';
 import { generateInsightsFromWorkerInputs } from '@/lib/insights';
-import { computeInsights } from '@/lib/insights/unified';
+import { computeInsights, type ComputeInsightsInputs } from '@/lib/insights/unified';
 import { ANALYTICS_CONFIG, analyticsConfig } from '@/lib/analyticsConfig';
 import { generateAnalyticsSummary } from '@/lib/analyticsSummary';
 import { AlertDetectionEngine } from '@/lib/alerts/engine';
 import { BaselineService } from '@/lib/alerts/baseline';
 import type { AlertEvent } from '@/lib/alerts/types';
+import type { InsightsWorkerTask, InsightsConfigSubset } from '@/lib/insights/task';
 
 // Type is now imported from @/types/analytics
+
+// ============================================================================
+// Worker Message Type Definitions
+// ============================================================================
+
+/**
+ * Cache control commands sent from main thread to worker
+ */
+interface CacheClearAllCommand {
+  type: 'CACHE/CLEAR_ALL';
+}
+
+interface CacheClearStudentCommand {
+  type: 'CACHE/CLEAR_STUDENT';
+  studentId: string;
+}
+
+interface CacheClearPatternsCommand {
+  type: 'CACHE/CLEAR_PATTERNS';
+}
+
+type CacheCommand = CacheClearAllCommand | CacheClearStudentCommand | CacheClearPatternsCommand;
+
+/**
+ * Game events for observability
+ */
+interface GameEventMessage {
+  type: 'game:event';
+  payload: {
+    kind: string;
+    ts: number;
+  };
+}
+
+interface GameSessionSummaryMessage {
+  type: 'game:session_summary';
+  payload: unknown;
+}
+
+/**
+ * Extended AnalyticsData with goals properly typed
+ */
+interface ExtendedAnalyticsData extends AnalyticsData {
+  goals: Goal[];
+}
+
+/**
+ * Incoming worker messages - union of all possible message types
+ */
+type IncomingWorkerMessage =
+  | CacheCommand
+  | GameEventMessage
+  | GameSessionSummaryMessage
+  | InsightsWorkerTask
+  | AnalyticsData;
+
+/**
+ * Cache clear response payload types
+ */
+interface CacheClearDonePayload {
+  scope: 'all' | 'student' | 'patterns';
+  studentId?: string;
+  patternsCleared: number;
+  cacheCleared?: number;
+  stats: { size: number };
+}
+
+interface CacheClearDoneMessage {
+  type: 'CACHE/CLEAR_DONE';
+  payload: CacheClearDonePayload;
+}
+
+/**
+ * Type guard to check if message is an InsightsWorkerTask
+ */
+function isInsightsTask(msg: unknown): msg is InsightsWorkerTask {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'type' in msg &&
+    msg.type === 'Insights/Compute' &&
+    'payload' in msg
+  );
+}
+
+/**
+ * Type guard to check if message is a cache command
+ */
+function isCacheCommand(msg: unknown): msg is CacheCommand {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'type' in msg &&
+    typeof (msg as { type: unknown }).type === 'string' &&
+    (msg as { type: string }).type.startsWith('CACHE/')
+  );
+}
+
+/**
+ * Type guard to check if message is a game event
+ */
+function isGameEvent(msg: unknown): msg is GameEventMessage | GameSessionSummaryMessage {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'type' in msg &&
+    typeof (msg as { type: unknown }).type === 'string' &&
+    ((msg as { type: string }).type === 'game:event' || (msg as { type: string }).type === 'game:session_summary')
+  );
+}
 
 // Worker cache TTL source: cache.ttl from central analytics config (ms). Safe fallback applied.
 let workerCacheTTL = (ANALYTICS_CONFIG.cache.ttl ?? 300_000); // default from config, safe fallback 300s
@@ -132,7 +243,7 @@ const workerCache = {
   },
 
   createKey(prefix: string, params: Record<string, unknown>): string {
-    const sorted = Object.keys(params).sort().map(k => `${k}:${JSON.stringify((params as any)[k])}`).join(':');
+    const sorted = Object.keys(params).sort().map(k => `${k}:${JSON.stringify(params[k])}`).join(':');
     return `${prefix}:${sorted}`;
   },
   
@@ -217,18 +328,31 @@ const getConfigHash = (cfg: AnalyticsConfiguration | null): string => {
   return Math.abs(hash).toString(36);
 };
 
+// ============================================================================
+// Typed postMessage wrapper for Web Worker context
+// ============================================================================
+
+/**
+ * Type-safe wrapper for postMessage in Web Worker context
+ */
+function postWorkerMessage(message: AnalyticsWorkerMessage | CacheClearDoneMessage): void {
+  postMessage(message);
+}
+
 // Outgoing message queue to avoid flooding the main thread with messages
-const outgoingQueue: AnalyticsWorkerMessage[] = [];
+const outgoingQueue: (AnalyticsWorkerMessage | CacheClearDoneMessage)[] = [];
 let flushScheduled = false;
-const enqueueMessage = (msg: AnalyticsWorkerMessage) => {
+const enqueueMessage = (msg: AnalyticsWorkerMessage | CacheClearDoneMessage) => {
   outgoingQueue.push(msg);
   if (!flushScheduled) {
     flushScheduled = true;
     setTimeout(() => {
       try {
         while (outgoingQueue.length) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (postMessage as any)(outgoingQueue.shift());
+          const message = outgoingQueue.shift();
+          if (message) {
+            postWorkerMessage(message);
+          }
         }
       } finally {
         flushScheduled = false;
@@ -249,18 +373,18 @@ export type { AnalyticsData, AnalyticsResults } from '@/types/analytics';
  * This function is triggered when the main thread calls `worker.postMessage()`.
  * It orchestrates the analysis process and posts the results back.
  */
-export async function handleMessage(e: MessageEvent<any>) {
+export async function handleMessage(e: MessageEvent<IncomingWorkerMessage>) {
   // Support two message shapes:
   // A) Cache control commands (CACHE/*)
   // B) Typed task envelope built via buildInsightsTask
   // C) Legacy AnalyticsData directly
-  const msg = e.data as any;
+  const msg = e.data;
 
   // Lightweight event ingestion channel from game UI
   if (msg && msg.type === 'game:event' && msg.payload) {
     try {
       // For now, aggregate into an in-memory counter and expose via alerts channel for observability
-      const ev = msg.payload as { kind: string; ts: number };
+      const ev = msg.payload;
       const key = `game:event:count:${ev.kind}`;
       const prev = (workerCache.get(key) as number | undefined) ?? 0;
       workerCache.set(key, prev + 1, ['game-events'], 300000);
@@ -273,50 +397,64 @@ export async function handleMessage(e: MessageEvent<any>) {
       const key = 'game:session:last';
       workerCache.set(key, msg.payload, ['game-session'], 600000);
       // Optionally surface via alerts channel for UI hooks wanting summaries quickly
-      enqueueMessage({ type: 'alerts', payload: { alerts: [], prewarm: true } } as unknown as AnalyticsWorkerMessage);
+      enqueueMessage({ type: 'alerts', payload: { alerts: [], prewarm: true } });
     } catch {}
     return;
   }
 
   // Intercept cache control messages first
-  if (msg && typeof msg.type === 'string' && msg.type.startsWith('CACHE/')) {
+  if (isCacheCommand(msg)) {
     try {
       if (msg.type === 'CACHE/CLEAR_ALL') {
         const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
         const cacheCleared = workerCache.clearAll();
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
-      } else if (msg.type === 'CACHE/CLEAR_STUDENT' && typeof msg.studentId === 'string') {
+        enqueueMessage({
+          type: 'CACHE/CLEAR_DONE',
+          payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() }
+        });
+      } else if (msg.type === 'CACHE/CLEAR_STUDENT') {
         const patternsCleared = (() => { try { return cachedAnalysis.invalidateStudentCache(msg.studentId); } catch { return 0; } })();
         const cacheCleared = workerCache.clearByStudentId(msg.studentId);
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'student', studentId: msg.studentId, patternsCleared, cacheCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
+        enqueueMessage({
+          type: 'CACHE/CLEAR_DONE',
+          payload: { scope: 'student', studentId: msg.studentId, patternsCleared, cacheCleared, stats: workerCache.getStats() }
+        });
       } else if (msg.type === 'CACHE/CLEAR_PATTERNS') {
         const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
+        enqueueMessage({
+          type: 'CACHE/CLEAR_DONE',
+          payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() }
+        });
       }
     } catch (err) {
       try { logger.error('[analytics.worker] Cache clear command failed', err as Error); } catch {}
     }
     return;
   }
-  let filteredData: AnalyticsData;
+  let filteredData: ExtendedAnalyticsData;
   let isPrewarm = false;
-  if (msg && msg.type === 'Insights/Compute' && msg.payload) {
+  if (isInsightsTask(msg)) {
     const { inputs, config, prewarm } = msg.payload;
     isPrewarm = !!prewarm;
     filteredData = {
       entries: inputs.entries,
       emotions: inputs.emotions,
       sensoryInputs: inputs.sensoryInputs,
-      goals: (inputs as any).goals ?? [],
+      goals: inputs.goals ?? [],
       cacheKey: msg.cacheKey,
-      config: (config as any) ?? null
-    } as unknown as AnalyticsData;
+      config: config ?? null
+    };
     // Optionally honor ttlSeconds from task by updating per-message TTL
     if (typeof msg.ttlSeconds === 'number' && msg.ttlSeconds > 0) {
       workerCacheTTL = Math.max(1000, Math.floor(msg.ttlSeconds * 1000));
     }
   } else {
-    filteredData = msg as AnalyticsData;
+    // Legacy AnalyticsData message
+    const legacyData = msg as AnalyticsData;
+    filteredData = {
+      ...legacyData,
+      goals: legacyData.goals ?? []
+    };
   }
 
   // Diagnostic log: message received - use cache to limit verbosity
@@ -329,7 +467,7 @@ export async function handleMessage(e: MessageEvent<any>) {
         entries: filteredData?.entries?.length ?? 0,
         emotions: filteredData?.emotions?.length ?? 0,
         sensory: filteredData?.sensoryInputs?.length ?? 0,
-        goals: (filteredData as any)?.goals?.length ?? 0,
+        goals: filteredData.goals.length,
       });
       workerCache.set(logKey, true, ['logging']);
     }
@@ -442,7 +580,7 @@ try {
         filteredData.emotions,
         filteredData.sensoryInputs,
         filteredData.entries,
-        (filteredData as any).goals ?? []
+        filteredData.goals
       );
 
       // Send partial update for predictive insights
@@ -483,12 +621,12 @@ try {
       entries: filteredData.entries,
       emotions: filteredData.emotions,
       sensoryInputs: filteredData.sensoryInputs,
-      goals: (filteredData as any).goals ?? [],
-    }, { config: currentConfig as any });
+      goals: filteredData.goals,
+    }, { config: currentConfig ?? undefined });
 
     const results: AnalyticsResults = {
       ...unified,
-      suggestedInterventions: (unified as any).suggestedInterventions ?? [],
+      suggestedInterventions: unified.suggestedInterventions,
       cacheKey: filteredData.cacheKey,
       updatedCharts: ['insightList']
     };
@@ -550,29 +688,72 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
   try {
     self.addEventListener('error', (e: ErrorEvent) => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: e.message, cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker runtime error encountered.'], updatedCharts: ['insightList']
-        }});
-      } catch (err) { try { logger.warn('[analytics.worker] Failed to post error message', err as Error); } catch {} }
+        postWorkerMessage({
+          type: 'error',
+          error: e.message,
+          cacheKey: undefined,
+          payload: {
+            patterns: [],
+            correlations: [],
+            predictiveInsights: [],
+            anomalies: [],
+            insights: ['Worker runtime error encountered.'],
+            suggestedInterventions: [],
+            updatedCharts: ['insightList']
+          }
+        });
+      } catch (err) {
+        try {
+          logger.warn('[analytics.worker] Failed to post error message', err as Error);
+        } catch (logErr) {
+          console.error('[analytics.worker] Critical: Failed to log error', logErr);
+        }
+      }
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    self.addEventListener('unhandledrejection', (e: any) => {
+
+    self.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
       const msg = typeof e?.reason === 'string' ? e.reason : (e?.reason?.message ?? 'Unhandled rejection in worker');
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: String(msg), cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker unhandled rejection.'], updatedCharts: ['insightList']
-        }});
-      } catch (err) { try { logger.warn('[analytics.worker] Failed to post rejection message', err as Error); } catch {} }
+        postWorkerMessage({
+          type: 'error',
+          error: String(msg),
+          cacheKey: undefined,
+          payload: {
+            patterns: [],
+            correlations: [],
+            predictiveInsights: [],
+            anomalies: [],
+            insights: ['Worker unhandled rejection.'],
+            suggestedInterventions: [],
+            updatedCharts: ['insightList']
+          }
+        });
+      } catch (err) {
+        try {
+          logger.warn('[analytics.worker] Failed to post rejection message', err as Error);
+        } catch (logErr) {
+          console.error('[analytics.worker] Critical: Failed to log rejection', logErr);
+        }
+      }
     });
-  } catch (e) { try { logger.warn('[analytics.worker] Failed to setup error handlers', e as Error); } catch {} }
+  } catch (e) {
+    try {
+      logger.warn('[analytics.worker] Failed to setup error handlers', e as Error);
+    } catch (logErr) {
+      console.error('[analytics.worker] Critical: Failed to log error handler setup failure', logErr);
+    }
+  }
 
   // Signal readiness so main thread can flush any queued tasks
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (postMessage as any)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
-  } catch (e) { try { logger.warn('[analytics.worker] Failed to post ready signal', e as Error); } catch {} }
+    postWorkerMessage({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
+  } catch (e) {
+    try {
+      logger.warn('[analytics.worker] Failed to post ready signal', e as Error);
+    } catch (logErr) {
+      console.error('[analytics.worker] Critical: Failed to log ready signal failure', logErr);
+    }
+  }
 
   self.onmessage = handleMessage;
 }

@@ -139,7 +139,7 @@ export const QuickQuestions: React.FC<QuickQuestionsProps> = ({ onNavigate, onFi
     },
   ], []);
 
-  const closePopover = useCallback(() => setOpen(false), []);
+  const closePopover = useCallback(() => setOpen(false), [setOpen]);
 
   const handleSelect = useCallback((item: QuickQuestionItem) => {
     setTab('explore');

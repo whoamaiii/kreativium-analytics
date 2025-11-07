@@ -30,33 +30,62 @@ import type { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 import type { InsightOutput, InsightConfig, ConfidenceConfig } from '@/types/insights';
 
 /**
+ * Config cache with TTL to reduce repeated I/O during analytics runs
+ */
+interface ConfigCache {
+  config: typeof ANALYTICS_CONFIG;
+  timestamp: number;
+}
+
+let configCache: ConfigCache | null = null;
+const CONFIG_CACHE_TTL_MS = 5000; // 5 seconds
+
+function getCachedConfig(): typeof ANALYTICS_CONFIG {
+  const now = Date.now();
+
+  // Return cached config if still valid
+  if (configCache && (now - configCache.timestamp) < CONFIG_CACHE_TTL_MS) {
+    return configCache.config;
+  }
+
+  // Fetch fresh config
+  try {
+    const config = analyticsConfig.getConfig() || ANALYTICS_CONFIG;
+    configCache = { config, timestamp: now };
+    return config;
+  } catch {
+    // If fetch fails but we have stale cache, use it
+    if (configCache) {
+      return configCache.config;
+    }
+    return ANALYTICS_CONFIG;
+  }
+}
+
+/**
+ * Invalidate config cache (useful for testing or when config changes)
+ */
+export function invalidateConfigCache(): void {
+  configCache = null;
+}
+
+/**
  * Resolve effective confidence config, preferring live config and allowing an override.
  * Kept local here to avoid cross-file private helper imports.
  */
 function getEffectiveConfidenceConfig(cfgParam?: ConfidenceConfig): ConfidenceConfig {
   if (cfgParam) return cfgParam;
-  try {
-    return analyticsConfig.getConfig()?.confidence || ANALYTICS_CONFIG.confidence;
-  } catch {
-    return ANALYTICS_CONFIG.confidence;
-  }
+  return getCachedConfig().confidence;
 }
 
 // Local helpers to mirror analytics configuration access
 function getEffectiveInsightsConfig(cfgParam?: InsightConfig): InsightConfig {
   if (cfgParam) return cfgParam;
-  try {
-    return analyticsConfig.getConfig()?.insights || ANALYTICS_CONFIG.insights;
-  } catch {
-    return ANALYTICS_CONFIG.insights;
-  }
+  return getCachedConfig().insights;
 }
+
 function getEffectiveFullConfig() {
-  try {
-    return analyticsConfig.getConfig() || (ANALYTICS_CONFIG as unknown);
-  } catch {
-    return ANALYTICS_CONFIG as unknown;
-  }
+  return getCachedConfig() as unknown;
 }
 
 /**
@@ -92,18 +121,18 @@ export function calculateConfidence(
   cfgParam?: ConfidenceConfig
 ): number {
   const cfg = getEffectiveConfidenceConfig(cfgParam);
-  const TH = cfg.THRESHOLDS as any;
-  const W = cfg.WEIGHTS as any;
+  const TH = cfg.THRESHOLDS as Record<string, number>;
+  const W = cfg.WEIGHTS as Record<string, number>;
 
   // Support both *_COUNT and *_ENTRIES keys defensively
-  const emotionThreshold: number = TH.EMOTION_COUNT ?? TH.EMOTION_ENTRIES ?? 1;
-  const sensoryThreshold: number = TH.SENSORY_COUNT ?? TH.SENSORY_ENTRIES ?? 1;
-  const trackingThreshold: number = TH.TRACKING_COUNT ?? TH.TRACKING_ENTRIES ?? 1;
+  const emotionThreshold: number = TH['EMOTION_COUNT'] ?? TH['EMOTION_ENTRIES'] ?? 1;
+  const sensoryThreshold: number = TH['SENSORY_COUNT'] ?? TH['SENSORY_ENTRIES'] ?? 1;
+  const trackingThreshold: number = TH['TRACKING_COUNT'] ?? TH['TRACKING_ENTRIES'] ?? 1;
 
-  const wEmotion: number = W.EMOTIONS ?? W.EMOTION ?? 0;
-  const wSensory: number = W.SENSORY ?? 0;
-  const wTracking: number = W.TRACKING ?? 0;
-  const recencyBoostVal: number = W.RECENCY_BOOST ?? 0;
+  const wEmotion: number = W['EMOTIONS'] ?? W['EMOTION'] ?? 0;
+  const wSensory: number = W['SENSORY'] ?? 0;
+  const wTracking: number = W['TRACKING'] ?? 0;
+  const recencyBoostVal: number = W['RECENCY_BOOST'] ?? 0;
 
   const e = Math.min(emotions.length / Math.max(1, emotionThreshold), 1) * wEmotion;
   const s = Math.min(sensoryInputs.length / Math.max(1, sensoryThreshold), 1) * wSensory;
@@ -209,7 +238,7 @@ export function generateInsightsStructured(
     }));
 
   results.correlations
-    .filter(c => (c as any).significance === 'high')
+    .filter(c => c.significance === 'high')
     .slice(0, cfg.MAX_CORRELATIONS_TO_SHOW)
     .forEach(correlation => messages.push({ key: 'analytics.insights.messages.strongCorrelation', params: { description: correlation.description } }));
 
@@ -315,18 +344,18 @@ export function generateInsights(...args: any[]): InsightOutput {
 
   significantPatterns.forEach(p => {
     const pct = Math.round(p.confidence * 100);
-    insights.push(`Pattern detected (${(p as any).type}): ${(p as any).pattern} (${pct}% confidence). ${p.description}`);
+    insights.push(`Pattern detected (${p.type}): ${p.pattern} (${pct}% confidence). ${p.description}`);
   });
 
   // Summarize strongest correlations
   const strongCorrelations = correlations
     .slice()
-    .sort((a: any, b: any) => Math.abs((b.correlation as number) - (a.correlation as number)))
+    .sort((a, b) => Math.abs(b.correlation - a.correlation))
     .slice(0, cfg.MAX_CORRELATIONS_TO_SHOW);
 
-  strongCorrelations.forEach((c: any) => {
+  strongCorrelations.forEach(c => {
     insights.push(
-      `Correlation: ${c.factor1} <-> ${c.factor2} (r=${typeof c.correlation === 'number' ? c.correlation.toFixed(2) : '0.00'}, ${c.significance}). ${c.description}`
+      `Correlation: ${c.factor1} <-> ${c.factor2} (r=${c.correlation.toFixed(2)}, ${c.significance}). ${c.description}`
     );
   });
 

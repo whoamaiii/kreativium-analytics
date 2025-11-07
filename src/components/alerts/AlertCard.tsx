@@ -70,12 +70,17 @@ class SparklineBoundary extends React.Component<{ children: React.ReactNode }, {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-14 w-full items-center justify-center rounded bg-slate-100 text-xs text-slate-500" role="status" aria-live="polite">
+        <div
+          className="flex h-14 w-full items-center justify-center rounded bg-slate-100 text-xs text-slate-500"
+          role="alert"
+          aria-label="Trend visualization error: data unavailable"
+        >
+          <span className="sr-only">Alert: </span>
           Trend unavailable
         </div>
       );
     }
-    return this.props.children as any;
+    return <>{this.props.children}</>;
   }
 }
 

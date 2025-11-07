@@ -105,9 +105,13 @@ if (typeof window !== 'undefined') {
     // Register Service Worker for offline caching of models/static assets
     try {
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+        navigator.serviceWorker.register('/sw.js').catch((error) => {
+          logger.warn('[main] Failed to register service worker', error as Error);
+        });
       }
-    } catch {}
+    } catch (error) {
+      logger.warn('[main] Service worker registration failed', error as Error);
+    }
   }
 }
 

@@ -178,7 +178,10 @@ export class OpenRouterClient {
         clearTimeout(timeoutId);
 
         if (!res.ok) {
-          const text = await res.text().catch(() => '');
+          const text = await res.text().catch((error) => {
+            logger.warn('[openrouterClient] Failed to read error response text', error as Error);
+            return '';
+          });
 
           // Extract retry-after header if present
           const retryAfterHeader = res.headers.get('retry-after');

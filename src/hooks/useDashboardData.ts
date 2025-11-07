@@ -50,16 +50,24 @@ export const useDashboardData = (): DashboardData => {
     const handleAnalyticsCacheClear = () => load();
     const handleMockDataLoaded = () => load();
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('analytics:cache:clear', handleAnalyticsCacheClear as EventListener);
-    window.addEventListener('mockDataLoaded', handleMockDataLoaded as EventListener);
-    logger.debug('[EVENT_LISTENER] useDashboardData mounted listeners');
+    try {
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('analytics:cache:clear', handleAnalyticsCacheClear as EventListener);
+      window.addEventListener('mockDataLoaded', handleMockDataLoaded as EventListener);
+      logger.debug('[EVENT_LISTENER] useDashboardData mounted listeners');
+    } catch (error) {
+      logger.warn('[useDashboardData] Failed to add event listeners', error as Error);
+    }
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('analytics:cache:clear', handleAnalyticsCacheClear as EventListener);
-      window.removeEventListener('mockDataLoaded', handleMockDataLoaded as EventListener);
-      logger.debug('[EVENT_LISTENER] useDashboardData removed listeners');
+      try {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('analytics:cache:clear', handleAnalyticsCacheClear as EventListener);
+        window.removeEventListener('mockDataLoaded', handleMockDataLoaded as EventListener);
+        logger.debug('[EVENT_LISTENER] useDashboardData removed listeners');
+      } catch (error) {
+        logger.debug('[useDashboardData] Failed to remove event listeners', error as Error);
+      }
     };
   }, []);
 

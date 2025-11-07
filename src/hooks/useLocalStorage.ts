@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
 
+// Helper to safely check if localStorage is available
+function isLocalStorageAvailable(): boolean {
+  try {
+    if (typeof window === 'undefined') return false;
+    const test = '__storage_test__';
+    window.localStorage.setItem(test, test);
+    window.localStorage.removeItem(test);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function useLocalStorage<T>(
   key: string,
   initialValue: T | (() => T)
@@ -9,34 +22,47 @@ export function useLocalStorage<T>(
   const [storedValue, setStoredValue] = useState<T>(() => {
     try {
       // Get from local storage by key
-      const item = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(key) : null;
+      if (!isLocalStorageAvailable()) {
+        return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
+      }
+      const item = window.localStorage.getItem(key);
       // Parse stored json or if none return initialValue (support lazy init)
       if (item) return JSON.parse(item);
       return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
     } catch (error) {
       // If error also return initialValue
-      logger.error(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
+      logger.warn(`[useLocalStorage] Error reading localStorage key "${key}"`, error as Error);
+      return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
     }
   });
 
   // Listen for changes to this key in other tabs
   useEffect(() => {
+    if (!isLocalStorageAvailable()) return;
+
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key) {
         try {
-          setStoredValue(e.newValue ? JSON.parse(e.newValue) : initialValue);
+          setStoredValue(e.newValue ? JSON.parse(e.newValue) : (typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue));
         } catch (error) {
-          logger.error(`Error parsing localStorage key "${key}" on change:`, error);
-          setStoredValue(initialValue);
+          logger.warn(`[useLocalStorage] Error parsing localStorage key "${key}" on change`, error as Error);
+          setStoredValue(typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue);
         }
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
+    try {
+      window.addEventListener('storage', handleStorageChange);
+    } catch (error) {
+      logger.warn('[useLocalStorage] Failed to add storage event listener', error as Error);
+    }
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
+      try {
+        window.removeEventListener('storage', handleStorageChange);
+      } catch (error) {
+        logger.debug('[useLocalStorage] Failed to remove storage event listener', error as Error);
+      }
     };
   }, [key, initialValue]);
 
@@ -48,23 +74,24 @@ export function useLocalStorage<T>(
       // Save state
       setStoredValue(valueToStore);
       // Save to local storage
-      if (typeof window !== 'undefined' && window.localStorage) {
+      if (isLocalStorageAvailable()) {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
       // A more advanced implementation would handle the error case
-      logger.error(`Error setting localStorage key "${key}":`, error);
+      logger.warn(`[useLocalStorage] Error setting localStorage key "${key}"`, error as Error);
     }
   };
 
   const removeValue = () => {
     try {
-      setStoredValue(initialValue);
-      if (typeof window !== 'undefined' && window.localStorage) {
+      const fallbackValue = typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
+      setStoredValue(fallbackValue);
+      if (isLocalStorageAvailable()) {
         window.localStorage.removeItem(key);
       }
     } catch (error) {
-      logger.error(`Error removing localStorage key "${key}":`, error);
+      logger.warn(`[useLocalStorage] Error removing localStorage key "${key}"`, error as Error);
     }
   };
 
