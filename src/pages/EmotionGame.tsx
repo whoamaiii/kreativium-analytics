@@ -21,7 +21,6 @@ import { WorldBanner } from '@/components/game/WorldBanner';
 import { ScanSweep } from '@/components/game/ScanSweep';
 import { AlmostThereHint } from '@/components/game/AlmostThereHint';
 import { playSuccessChime } from '@/lib/sound';
-// import CornerCelebrate from '@/components/game/CornerCelebrate';
 import { useDetector } from '@/hooks/useDetector';
 import { useHoldTimer } from '@/hooks/useHoldTimer';
 import { createMetricsAccumulator } from '@/lib/game/metrics';
@@ -31,7 +30,6 @@ import { TutorialOverlay } from '@/components/game/TutorialOverlay';
 import { CalibrationOverlay } from '@/components/game/CalibrationOverlay';
 import { loadCalibration } from '@/hooks/useCalibration';
 import { useCelebrations } from '@/hooks/useCelebrations';
-// no need for useSearchParams here to avoid re-running effect on each render
 import { recordGameEvent, streamSessionSummary } from '@/lib/game/telemetry';
 import { adaptDifficulty, refineDifficultyForEmotion } from '@/lib/game/difficultyAdapter';
 import { resolveParams } from '@/lib/adaptive/rules';

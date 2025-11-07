@@ -4,6 +4,19 @@ import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/sa
 import { logger } from './logger';
 import { generateId } from './uuid';
 import { validateEmotionEntry, validateSensoryEntry, validateTrackingEntry, validateStudent } from './dataValidation';
+import {
+  TEMPERATURE,
+  HUMIDITY,
+  ATMOSPHERIC_PRESSURE,
+  NOISE_LEVEL,
+  LIGHTING,
+  WEATHER,
+  EMOTIONS,
+  EMOTION_INTENSITY,
+  DATA_GENERATION,
+  PROBABILITY,
+  TIME,
+} from '@/config/constants';
 
 // Helper function to get a random date within the last N days
 const getRandomDate = (daysAgo: number, variance: number = 0): Date => {
@@ -11,7 +24,7 @@ const getRandomDate = (daysAgo: number, variance: number = 0): Date => {
   baseDate.setDate(baseDate.getDate() - daysAgo);
   
   if (variance > 0) {
-    const varianceMs = variance * 24 * 60 * 60 * 1000; // Convert days to milliseconds
+    const varianceMs = variance * TIME.DAY_MS; // Convert days to milliseconds
     const randomOffset = (Math.random() - 0.5) * 2 * varianceMs;
     baseDate.setTime(baseDate.getTime() + randomOffset);
   }
@@ -35,13 +48,15 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
   const emo = entry.emotions[0];
 
   // Prefer anxious/frustrated with higher intensity so it surfaces in patterns
-  if (Math.random() < 0.8) emo.emotion = 'anxious';
-  if (!emo.intensity || emo.intensity < 4) emo.intensity = 4;
+  if (Math.random() < PROBABILITY.HIGH) emo.emotion = 'anxious';
+  if (!emo.intensity || emo.intensity < EMOTION_INTENSITY.HIGH_THRESHOLD) {
+    emo.intensity = EMOTION_INTENSITY.HIGH_THRESHOLD;
+  }
   emo.triggers = Array.isArray(emo.triggers) ? emo.triggers : [];
 
   // Choose a social scenario
   const r = Math.random();
-  if (r < 0.30) {
+  if (r < PROBABILITY.SOCIAL_SCENARIOS.GROUP_WORK) {
     // Gruppearbeid i klasserommet
     entry.environmentalData = entry.environmentalData || { 
       id: undefined, 
@@ -62,7 +77,7 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
     emo.triggers.push('sosial interaksjon', 'gruppearbeid');
     emo.notes = emo.notes || 'Uro under gruppeoppgave';
     entry.generalNotes = 'Sosial situasjon: gruppeoppgave i klasserommet (samarbeid/gruppe).';
-  } else if (r < 0.55) {
+  } else if (r < PROBABILITY.SOCIAL_SCENARIOS.RECESS) {
     // Friminutt ute
     entry.environmentalData = entry.environmentalData || { 
       id: undefined, 
@@ -83,7 +98,7 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
     emo.triggers.push('sosial interaksjon', 'friminutt');
     emo.notes = emo.notes || 'Konflikt i friminutt';
     entry.generalNotes = 'Friminutt med mange elever; mulig konflikt/press i sosial situasjon.';
-  } else if (r < 0.75) {
+  } else if (r < PROBABILITY.SOCIAL_SCENARIOS.CAFETERIA) {
     // Lunsj i kantinen
     entry.environmentalData = entry.environmentalData || { 
       id: undefined, 
@@ -97,7 +112,7 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
       entry.environmentalData.socialContext = 'Lunsj/kantine';
       entry.environmentalData.roomConditions = {
         ...(entry.environmentalData.roomConditions || {}),
-        noiseLevel: Math.max(3, (entry.environmentalData.roomConditions?.noiseLevel || 3)),
+        noiseLevel: Math.max(NOISE_LEVEL.CAFETERIA_HIGH, (entry.environmentalData.roomConditions?.noiseLevel || NOISE_LEVEL.CAFETERIA_HIGH)),
         lighting: entry.environmentalData.roomConditions?.lighting || 'bright',
       };
     }
@@ -150,7 +165,7 @@ function applyEmmaSocialContext(entry: TrackingEntry): void {
 }
 
 /** Ensure Emma has at least a baseline number of explicit social examples. */
-function ensureEmmaSocialBaseline(entries: TrackingEntry[], student: Student, min = 6): void {
+function ensureEmmaSocialBaseline(entries: TrackingEntry[], student: Student, min = DATA_GENERATION.EMMA_SOCIAL_BASELINE_MIN): void {
   const socialRe = /(sosial|sosiale|venn|venner|kompis|klasse|klasserom|gruppe|grupp|friminutt|pause|lunsj|frokost|middag|kantine|overgang|presentasjon)/i;
   const count = entries.filter((e) => {
     const txt = `${e.generalNotes || e.notes || ''} ${(e.environmentalData?.classroom?.activity || '')} ${(e.environmentalData?.location || '')} ${(e.environmentalData?.socialContext || '')}`;
@@ -162,7 +177,7 @@ function ensureEmmaSocialBaseline(entries: TrackingEntry[], student: Student, mi
 
   const scenarios: Array<'gruppe' | 'friminutt' | 'kantine' | 'presentasjon' | 'overgang'> = ['gruppe', 'friminutt', 'kantine', 'presentasjon', 'overgang'];
   for (let i = 0; i < needed; i++) {
-    const ts = new Date(Date.now() - (i + 1) * 3 * 36e5); // every ~3 hours back
+    const ts = new Date(Date.now() - (i + 1) * DATA_GENERATION.SOCIAL_BASELINE_INTERVAL_HOURS * TIME.HOUR_MS); // every ~3 hours back
     const e: TrackingEntry = {
       id: generateId(`tracking_${student.id}`),
       studentId: student.id,
@@ -173,7 +188,7 @@ function ensureEmmaSocialBaseline(entries: TrackingEntry[], student: Student, mi
       generalNotes: '',
     } as TrackingEntry;
     // Always high enough intensity and social trigger
-    e.emotions[0].intensity = Math.max(4, e.emotions[0].intensity || 4);
+    e.emotions[0].intensity = Math.max(EMOTION_INTENSITY.HIGH_THRESHOLD, e.emotions[0].intensity || EMOTION_INTENSITY.HIGH_THRESHOLD);
     e.emotions[0].triggers = Array.from(new Set([...(e.emotions[0].triggers || []), 'sosial interaksjon']));
 
     // Cycle through scenarios to diversify examples
@@ -190,7 +205,7 @@ function ensureEmmaSocialBaseline(entries: TrackingEntry[], student: Student, mi
         e.emotions[0].triggers?.push('friminutt');
         break;
       case 'kantine':
-        e.environmentalData = { ...(e.environmentalData || {}), location: 'cafeteria', socialContext: 'Lunsj/kantine', roomConditions: { noiseLevel: 4, lighting: 'bright', temperature: 0 } };
+        e.environmentalData = { ...(e.environmentalData || {}), location: 'cafeteria', socialContext: 'Lunsj/kantine', roomConditions: { noiseLevel: NOISE_LEVEL.CAFETERIA_HIGH, lighting: 'bright', temperature: 0 } };
         e.generalNotes = 'Lunsj i kantinen; høy lyd og tett sosialt miljø.';
         e.emotions[0].triggers?.push('kantine', 'lunsj');
         break;
@@ -212,22 +227,14 @@ function ensureEmmaSocialBaseline(entries: TrackingEntry[], student: Student, mi
 
 // Generate realistic emotion entry
 export const generateEmotionEntry = (studentId: string, timestamp: Date, emotionBias?: string): EmotionEntry => {
-  const emotions = ['happy', 'sad', 'anxious', 'calm', 'excited', 'frustrated', 'content'];
-  const biasedEmotion = emotionBias || emotions[Math.floor(Math.random() * emotions.length)];
+  const emotions = [...EMOTIONS.TYPES];
+  const biasedEmotion = emotionBias || emotions[Math.floor(Math.random() * EMOTIONS.COUNT)];
   
   // Generate intensity based on emotion type
-  const intensityMap: Record<string, [number, number]> = {
-    'happy': [3, 5],
-    'sad': [2, 4],
-    'anxious': [3, 5],
-    'calm': [2, 4],
-    'excited': [4, 5],
-    'frustrated': [3, 5],
-    'content': [2, 4],
-    'overwhelmed': [4, 5]
-  };
-  
-  const [minIntensity, maxIntensity] = intensityMap[biasedEmotion] || [2, 4];
+  const intensityRange = EMOTION_INTENSITY.RANGES[biasedEmotion as keyof typeof EMOTION_INTENSITY.RANGES];
+  const [minIntensity, maxIntensity] = intensityRange
+    ? [intensityRange.min, intensityRange.max]
+    : [EMOTION_INTENSITY.RANGES.sad.min, EMOTION_INTENSITY.RANGES.sad.max];
   const intensity = Math.floor(Math.random() * (maxIntensity - minIntensity + 1)) + minIntensity;
   
   const entry: EmotionEntry = {
@@ -236,8 +243,8 @@ export const generateEmotionEntry = (studentId: string, timestamp: Date, emotion
     timestamp,
     emotion: biasedEmotion,
     intensity,
-    triggers: Math.random() > 0.7 ? ['environmental change', 'social interaction'] : [],
-    notes: Math.random() > 0.8 ? `Student seemed ${biasedEmotion} during this period` : ''
+    triggers: Math.random() > PROBABILITY.MEDIUM_HIGH ? ['environmental change', 'social interaction'] : [],
+    notes: Math.random() > PROBABILITY.HIGH ? `Student seemed ${biasedEmotion} during this period` : ''
   };
   
   // Validate the generated entry
@@ -292,15 +299,15 @@ const generateEnvironmentalEntry = (timestamp: Date, correlationFactors?: { nois
     location: ['classroom', 'library', 'cafeteria', 'playground', 'hallway'][Math.floor(Math.random() * 5)],
     socialContext: ['individual work', 'group activity', 'instruction', 'transition'][Math.floor(Math.random() * 4)],
     roomConditions: {
-      noiseLevel: factors.noise !== undefined ? (factors.noise ? 4 : 2) : Math.floor(Math.random() * 5) + 1,
-      lighting: factors.bright !== undefined ? (factors.bright ? 'bright' : 'dim') : ['bright', 'moderate', 'dim'][Math.floor(Math.random() * 3)],
-      temperature: Math.floor(Math.random() * 10) + 18, // 18-28°C
-      humidity: Math.floor(Math.random() * 20) + 40 // 40-60%
+      noiseLevel: factors.noise !== undefined ? (factors.noise ? NOISE_LEVEL.NOISY : NOISE_LEVEL.QUIET) : Math.floor(Math.random() * NOISE_LEVEL.RANGE_SCALE_5) + NOISE_LEVEL.MIN_SCALE_5,
+      lighting: factors.bright !== undefined ? (factors.bright ? 'bright' : 'dim') : LIGHTING.CONDITIONS[Math.floor(Math.random() * LIGHTING.COUNT)],
+      temperature: Math.floor(Math.random() * TEMPERATURE.INDOOR_RANGE) + TEMPERATURE.INDOOR_MIN,
+      humidity: Math.floor(Math.random() * HUMIDITY.RANGE) + HUMIDITY.MIN
     },
     weather: {
-      condition: ['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'][Math.floor(Math.random() * 5)] as 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy',
-      temperature: Math.floor(Math.random() * 15) + 10, // 10-25°C
-      pressure: Math.floor(Math.random() * 50) + 1000 // 1000-1050 hPa
+      condition: WEATHER.CONDITIONS[Math.floor(Math.random() * WEATHER.COUNT_FULL)] as 'sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy',
+      temperature: Math.floor(Math.random() * TEMPERATURE.OUTDOOR_RANGE) + TEMPERATURE.OUTDOOR_MIN,
+      pressure: Math.floor(Math.random() * ATMOSPHERIC_PRESSURE.RANGE) + ATMOSPHERIC_PRESSURE.MIN
     },
     classroom: {
       activity: ['instruction', 'transition', 'free-time', 'testing', 'group-work'][Math.floor(Math.random() * 5)] as 'instruction' | 'transition' | 'free-time' | 'testing' | 'group-work',

@@ -3,6 +3,7 @@ import { EmotionEntry, SensoryEntry, TrackingEntry, EnvironmentalEntry } from '@
 import { differenceInMinutes, subMinutes } from 'date-fns';
 import { logger } from '@/lib/logger';
 import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { TEMPERATURE, HUMIDITY, NOISE_LEVEL, WEATHER, PROBABILITY } from '@/config/constants';
 
 interface RealtimeDataOptions {
   enabled: boolean;
@@ -116,16 +117,16 @@ const generateEnvironmentalEntry = (): EnvironmentalEntry => {
     id: `env-${Date.now()}-${Math.random()}`,
     timestamp: new Date(),
     location: 'classroom',
-    socialContext: Math.random() > 0.5 ? 'group' : 'individual',
+    socialContext: Math.random() > PROBABILITY.MEDIUM ? 'group' : 'individual',
     roomConditions: {
-      temperature: 20 + Math.floor(Math.random() * 5),
-      humidity: 40 + Math.floor(Math.random() * 20),
-      lighting: Math.random() > 0.5 ? 'bright' : 'dim',
-      noiseLevel: Math.floor(Math.random() * 10)
+      temperature: TEMPERATURE.REALTIME_INDOOR_BASE + Math.floor(Math.random() * TEMPERATURE.REALTIME_INDOOR_VARIANCE),
+      humidity: HUMIDITY.MIN + Math.floor(Math.random() * HUMIDITY.RANGE),
+      lighting: Math.random() > PROBABILITY.MEDIUM ? 'bright' : 'dim',
+      noiseLevel: Math.floor(Math.random() * NOISE_LEVEL.RANGE_SCALE_10)
     },
     weather: {
-      condition: ['sunny', 'cloudy', 'rainy'][Math.floor(Math.random() * 3)] as 'sunny' | 'cloudy' | 'rainy',
-      temperature: 15 + Math.floor(Math.random() * 15)
+      condition: WEATHER.CONDITIONS_SIMPLE[Math.floor(Math.random() * WEATHER.COUNT_SIMPLE)] as 'sunny' | 'cloudy' | 'rainy',
+      temperature: TEMPERATURE.REALTIME_OUTDOOR_BASE + Math.floor(Math.random() * TEMPERATURE.REALTIME_OUTDOOR_VARIANCE)
     },
     classroom: {
       activity: ['instruction', 'transition', 'free-time'][Math.floor(Math.random() * 3)] as 'instruction' | 'transition' | 'free-time',
