@@ -290,6 +290,55 @@ export const EMOTIONS = {
 } as const;
 
 // =============================================================================
+// CLASSROOM & STUDENT CONSTANTS
+// =============================================================================
+
+export const CLASSROOM = {
+  /** Minimum student count */
+  MIN_STUDENTS: 10,
+  /** Maximum student count */
+  MAX_STUDENTS: 30,
+  /** Student count range */
+  STUDENT_RANGE: 20,
+
+  /** Realtime minimum student count */
+  REALTIME_MIN_STUDENTS: 15,
+  /** Realtime maximum student count */
+  REALTIME_MAX_STUDENTS: 25,
+  /** Realtime student count range */
+  REALTIME_STUDENT_RANGE: 10,
+
+  /** Available activities */
+  ACTIVITIES: ['instruction', 'transition', 'free-time', 'testing', 'group-work'] as const,
+  /** Number of activity types */
+  ACTIVITIES_COUNT: 5,
+
+  /** Simple activities (for realtime) */
+  ACTIVITIES_SIMPLE: ['instruction', 'transition', 'free-time'] as const,
+  /** Number of simple activity types */
+  ACTIVITIES_SIMPLE_COUNT: 3,
+
+  /** Available times of day */
+  TIMES_OF_DAY: ['morning', 'afternoon', 'evening'] as const,
+  /** Number of time periods */
+  TIMES_OF_DAY_COUNT: 3,
+} as const;
+
+export const LOCATION = {
+  /** Available locations */
+  TYPES: ['classroom', 'library', 'cafeteria', 'playground', 'hallway'] as const,
+  /** Number of location types */
+  COUNT: 5,
+} as const;
+
+export const SOCIAL_CONTEXT = {
+  /** Available social contexts */
+  TYPES: ['individual work', 'group activity', 'instruction', 'transition'] as const,
+  /** Number of social context types */
+  COUNT: 4,
+} as const;
+
+// =============================================================================
 // EXPORT FOR TYPE-SAFE ACCESS
 // =============================================================================
 
@@ -310,3 +359,18 @@ export type WeatherCondition = (typeof WEATHER.CONDITIONS)[number];
 
 /** Type for lighting conditions */
 export type LightingCondition = (typeof LIGHTING.CONDITIONS)[number];
+
+/** Type for classroom activities */
+export type ClassroomActivity = (typeof CLASSROOM.ACTIVITIES)[number];
+
+/** Type for simple classroom activities */
+export type ClassroomActivitySimple = (typeof CLASSROOM.ACTIVITIES_SIMPLE)[number];
+
+/** Type for time of day */
+export type TimeOfDay = (typeof CLASSROOM.TIMES_OF_DAY)[number];
+
+/** Type for location */
+export type LocationType = (typeof LOCATION.TYPES)[number];
+
+/** Type for social context */
+export type SocialContextType = (typeof SOCIAL_CONTEXT.TYPES)[number];

@@ -46,25 +46,17 @@ import {
 import { safeGet, safeSet } from '@/lib/storage';
 import { logger } from '@/lib/logger';
 import { DEDUPE_WINDOW_MS, MAX_THROTTLE_DELAY_MS, THROTTLE_BACKOFF_BASE } from '@/lib/alerts/constants';
+import { safeJsonParse, safeJsonStringify } from '@/lib/utils/errorHandling';
 
 function readStorage<T>(key: string): T | null {
-  try {
-    const raw = safeGet(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch (e) {
-    try { logger.debug('[AlertPolicies] Failed to read storage key', { key, error: e as Error }); } catch {}
-    return null;
-  }
+  const raw = safeGet(key);
+  if (!raw) return null;
+  return safeJsonParse<T>(raw, null as T, 'AlertPolicies.readStorage');
 }
 
 function writeStorage<T>(key: string, value: T): void {
-  try {
-    const raw = JSON.stringify(value);
-    safeSet(key, raw);
-  } catch (e) {
-    try { logger.debug('[AlertPolicies] Failed to write storage key', { key, error: e as Error }); } catch {}
-    // no-op
-  }
+  const raw = safeJsonStringify(value, '{}', 'AlertPolicies.writeStorage');
+  safeSet(key, raw);
 }
 
 const DEFAULT_BASE_BY_SEVERITY: Record<AlertSeverity, number> = {

@@ -35,6 +35,7 @@ import { adaptDifficulty, refineDifficultyForEmotion } from '@/lib/game/difficul
 import { resolveParams } from '@/lib/adaptive/rules';
 import type { HintsState } from '@/lib/game/hints';
 import { loadHints, useHint as consumeHint } from '@/lib/game/hints';
+import { safeLocalStorageGet, safeNumberParse } from '@/lib/utils/errorHandling';
 import { ConfidencePrompt } from '@/components/game/ConfidencePrompt';
 import { RoundSummaryCard } from '@/components/game/RoundSummaryCard';
 import { CalibrationErrorSparkline } from '@/components/game/CalibrationErrorSparkline';
@@ -66,10 +67,12 @@ export default function EmotionGame() {
   const { tCommon } = useTranslation();
   const { results: _analyticsResults } = useAnalyticsWorker({ precomputeOnIdle: false });
   const [worldIndex, setWorldIndex] = useState<number>(() => {
-    try { return Math.max(0, Math.min(DEFAULT_WORLDS.length - 1, Number(localStorage.getItem('emotion.worldIndex') || '0'))); } catch {
-      /* noop */
-      return 0;
-    }
+    const stored = safeNumberParse(
+      safeLocalStorageGet('emotion.worldIndex', '0', 'EmotionGame.worldIndex'),
+      0,
+      'EmotionGame.worldIndex'
+    );
+    return Math.max(0, Math.min(DEFAULT_WORLDS.length - 1, stored));
   });
   const baseWorld = DEFAULT_WORLDS[worldIndex] ?? DEFAULT_WORLDS[0];
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -82,27 +85,20 @@ export default function EmotionGame() {
   const [fpsBuckets, setFpsBuckets] = useState<Record<string, number>>({});
   const fpsBucketsRef = useRef<Record<string, number>>({});
   const [showTutorial, setShowTutorial] = useState<boolean>(() => {
-    try { return localStorage.getItem('emotion.tutorialSeen') !== '1'; } catch {
-      /* noop */
-      return true;
-    }
+    return safeLocalStorageGet('emotion.tutorialSeen', '', 'EmotionGame.tutorialSeen') !== '1';
   });
   const [showCalibration, setShowCalibration] = useState<boolean>(() => !loadCalibration());
   const [showLevelComplete, setShowLevelComplete] = useState<boolean>(false);
   const [showStickerBook, setShowStickerBook] = useState<boolean>(false);
   const [themeId, setThemeId] = useState<'regnbueland' | 'rom'>(() => {
-    try { return (localStorage.getItem('emotion.themeId') as 'regnbueland' | 'rom') || 'regnbueland'; } catch {
-      /* noop */
-      return 'regnbueland';
-    }
+    const stored = safeLocalStorageGet('emotion.themeId', 'regnbueland', 'EmotionGame.themeId');
+    return (stored as 'regnbueland' | 'rom') || 'regnbueland';
   });
   const theme = getTheme(themeId);
   const [showWorldBanner, setShowWorldBanner] = useState<boolean>(false);
   const [mode, setMode] = useState<GameMode>(() => {
-    try { return (localStorage.getItem('emotion.gameMode') as GameMode) || 'classic'; } catch {
-      /* noop */
-      return 'classic';
-    }
+    const stored = safeLocalStorageGet('emotion.gameMode', 'classic', 'EmotionGame.gameMode');
+    return (stored as GameMode) || 'classic';
   });
   const modeStartRef = useRef<number | null>(null);
   const [practice, setPractice] = useState<PracticeMode>(loadStoredPractice);

@@ -16,6 +16,9 @@ import {
   DATA_GENERATION,
   PROBABILITY,
   TIME,
+  CLASSROOM,
+  LOCATION,
+  SOCIAL_CONTEXT,
 } from '@/config/constants';
 
 // Helper function to get a random date within the last N days
@@ -296,8 +299,8 @@ const generateEnvironmentalEntry = (timestamp: Date, correlationFactors?: { nois
   return {
     id: generateId('env'),
     timestamp,
-    location: ['classroom', 'library', 'cafeteria', 'playground', 'hallway'][Math.floor(Math.random() * 5)],
-    socialContext: ['individual work', 'group activity', 'instruction', 'transition'][Math.floor(Math.random() * 4)],
+    location: LOCATION.TYPES[Math.floor(Math.random() * LOCATION.COUNT)],
+    socialContext: SOCIAL_CONTEXT.TYPES[Math.floor(Math.random() * SOCIAL_CONTEXT.COUNT)],
     roomConditions: {
       noiseLevel: factors.noise !== undefined ? (factors.noise ? NOISE_LEVEL.NOISY : NOISE_LEVEL.QUIET) : Math.floor(Math.random() * NOISE_LEVEL.RANGE_SCALE_5) + NOISE_LEVEL.MIN_SCALE_5,
       lighting: factors.bright !== undefined ? (factors.bright ? 'bright' : 'dim') : LIGHTING.CONDITIONS[Math.floor(Math.random() * LIGHTING.COUNT)],
@@ -310,9 +313,9 @@ const generateEnvironmentalEntry = (timestamp: Date, correlationFactors?: { nois
       pressure: Math.floor(Math.random() * ATMOSPHERIC_PRESSURE.RANGE) + ATMOSPHERIC_PRESSURE.MIN
     },
     classroom: {
-      activity: ['instruction', 'transition', 'free-time', 'testing', 'group-work'][Math.floor(Math.random() * 5)] as 'instruction' | 'transition' | 'free-time' | 'testing' | 'group-work',
-      studentCount: Math.floor(Math.random() * 20) + 10, // 10-30 students
-      timeOfDay: ['morning', 'afternoon', 'evening'][Math.floor(Math.random() * 3)] as 'morning' | 'afternoon' | 'evening'
+      activity: CLASSROOM.ACTIVITIES[Math.floor(Math.random() * CLASSROOM.ACTIVITIES_COUNT)],
+      studentCount: Math.floor(Math.random() * CLASSROOM.STUDENT_RANGE) + CLASSROOM.MIN_STUDENTS,
+      timeOfDay: CLASSROOM.TIMES_OF_DAY[Math.floor(Math.random() * CLASSROOM.TIMES_OF_DAY_COUNT)]
     },
     notes: Math.random() > 0.9 ? 'Notable environmental conditions' : ''
   };

@@ -3,7 +3,7 @@ import { EmotionEntry, SensoryEntry, TrackingEntry, EnvironmentalEntry } from '@
 import { differenceInMinutes, subMinutes } from 'date-fns';
 import { logger } from '@/lib/logger';
 import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
-import { TEMPERATURE, HUMIDITY, NOISE_LEVEL, WEATHER, PROBABILITY } from '@/config/constants';
+import { TEMPERATURE, HUMIDITY, NOISE_LEVEL, WEATHER, PROBABILITY, CLASSROOM } from '@/config/constants';
 
 interface RealtimeDataOptions {
   enabled: boolean;
@@ -129,8 +129,8 @@ const generateEnvironmentalEntry = (): EnvironmentalEntry => {
       temperature: TEMPERATURE.REALTIME_OUTDOOR_BASE + Math.floor(Math.random() * TEMPERATURE.REALTIME_OUTDOOR_VARIANCE)
     },
     classroom: {
-      activity: ['instruction', 'transition', 'free-time'][Math.floor(Math.random() * 3)] as 'instruction' | 'transition' | 'free-time',
-      studentCount: 15 + Math.floor(Math.random() * 10),
+      activity: CLASSROOM.ACTIVITIES_SIMPLE[Math.floor(Math.random() * CLASSROOM.ACTIVITIES_SIMPLE_COUNT)],
+      studentCount: CLASSROOM.REALTIME_MIN_STUDENTS + Math.floor(Math.random() * CLASSROOM.REALTIME_STUDENT_RANGE),
       timeOfDay: 'morning'
     }
   };
