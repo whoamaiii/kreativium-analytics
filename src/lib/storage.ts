@@ -1,21 +1,15 @@
 import { storageUtils } from '@/lib/storageUtils';
+import { safeLocalStorageGet, safeLocalStorageSet } from '@/lib/utils/errorHandling';
 
 export function safeGet(key: string): string | null {
-  try {
-    return typeof window !== 'undefined' ? localStorage.getItem(key) : null;
-  } catch {
-    return null;
-  }
+  if (typeof window === 'undefined') return null;
+  return safeLocalStorageGet(key, null as any, 'storage.safeGet') as string | null;
 }
 
 export function safeSet(key: string, value: string): void {
-  try {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(key, value);
-    } else {
-      storageUtils.safeSetItem(key, value);
-    }
-  } catch {
-    // no-op
+  if (typeof window !== 'undefined') {
+    safeLocalStorageSet(key, value, 'storage.safeSet');
+  } else {
+    storageUtils.safeSetItem(key, value);
   }
 }

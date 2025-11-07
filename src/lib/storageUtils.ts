@@ -3,6 +3,7 @@
  */
 import { logger } from '@/lib/logger';
 import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
+import { safeJsonParse, safeJsonStringify, safeLocalStorageGet, safeLocalStorageSet, tryCatchSync } from '@/lib/utils/errorHandling';
 
 export const storageUtils = {
   /**
@@ -25,35 +26,39 @@ export const storageUtils = {
    * Clear old tracking data to free up space
    */
   clearOldTrackingData(daysToKeep: number = 30): void {
-    try {
+    const result = tryCatchSync(() => {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
       // Clear old tracking entries
       const entriesKey = 'sensoryTracker_entries';
-      const entriesData = localStorage.getItem(entriesKey);
+      const entriesData = safeLocalStorageGet(entriesKey, '', 'storageUtils.clearOldTracking');
       if (entriesData) {
-        const entries = JSON.parse(entriesData);
-        const filteredEntries = entries.filter((entry: { timestamp: string | Date }) => {
+        const entries = safeJsonParse<Array<{ timestamp: string | Date }>>(entriesData, [], 'storageUtils.parseEntries');
+        const filteredEntries = entries.filter((entry) => {
           const entryDate = new Date(entry.timestamp);
           return entryDate > cutoffDate;
         });
-        localStorage.setItem(entriesKey, JSON.stringify(filteredEntries));
+        const json = safeJsonStringify(filteredEntries, '[]', 'storageUtils.stringifyEntries');
+        safeLocalStorageSet(entriesKey, json, 'storageUtils.saveFilteredEntries');
       }
 
       // Clear old alerts
       const alertsKey = 'sensoryTracker_alerts';
-      const alertsData = localStorage.getItem(alertsKey);
+      const alertsData = safeLocalStorageGet(alertsKey, '', 'storageUtils.clearOldAlerts');
       if (alertsData) {
-        const alerts = JSON.parse(alertsData);
-        const filteredAlerts = alerts.filter((alert: { timestamp: string | Date }) => {
+        const alerts = safeJsonParse<Array<{ timestamp: string | Date }>>(alertsData, [], 'storageUtils.parseAlerts');
+        const filteredAlerts = alerts.filter((alert) => {
           const alertDate = new Date(alert.timestamp);
           return alertDate > cutoffDate;
         });
-        localStorage.setItem(alertsKey, JSON.stringify(filteredAlerts));
+        const json = safeJsonStringify(filteredAlerts, '[]', 'storageUtils.stringifyAlerts');
+        safeLocalStorageSet(alertsKey, json, 'storageUtils.saveFilteredAlerts');
       }
-    } catch (error) {
-      logger.error('Error clearing old data:', error);
+    }, 'storageUtils.clearOldTrackingData');
+
+    if (!result.success) {
+      logger.error('Error clearing old data:', result.error);
     }
   },
 
@@ -62,7 +67,7 @@ export const storageUtils = {
    */
   compressData(data: unknown): string {
     // Remove unnecessary whitespace from JSON
-    return JSON.stringify(data);
+    return safeJsonStringify(data, '{}', 'storageUtils.compressData');
   },
 
   /**
@@ -80,7 +85,7 @@ export const storageUtils = {
       )) {
         // Try to clear old data and retry
         this.clearOldTrackingData();
-        
+
         try {
           localStorage.setItem(key, value);
         } catch (retryError) {

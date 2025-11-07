@@ -11,6 +11,7 @@ import {
   triggerAlertToAlertEvent,
   backupLegacyAlerts,
 } from '@/lib/alerts/adapters';
+import { safeJsonParse, safeJsonStringify, tryCatchSync } from '@/lib/utils/errorHandling';
 
 function alertsKey(studentId: string): string {
   return `alerts:list:${studentId}`;
@@ -28,34 +29,29 @@ type MigrationStatus = {
   hadLegacy?: boolean;
 };
 
-function parseJSON<T>(raw: string | null): T | null {
-  try {
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
 function readNew(studentId: string): AlertEvent[] {
   const raw = safeGet(alertsKey(studentId));
-  const parsed = parseJSON<AlertEvent[]>(raw);
+  const parsed = safeJsonParse<AlertEvent[]>(raw, null, 'alerts.bridge.readNew');
   return Array.isArray(parsed) ? parsed : [];
 }
 
 function writeNew(studentId: string, events: AlertEvent[]): void {
-  try {
-    safeSet(alertsKey(studentId), JSON.stringify(events));
-  } catch (err) {
-    try { logger.warn('[AlertSystemBridge] Failed to persist new alerts', err as Error); } catch {}
+  const result = tryCatchSync(() => {
+    const json = safeJsonStringify(events, '[]', 'alerts.bridge.writeNew');
+    safeSet(alertsKey(studentId), json);
+  }, 'alerts.bridge.writeNew');
+
+  if (!result.success) {
+    logger.warn('[AlertSystemBridge] Failed to persist new alerts', result.error);
   }
 }
 
 function dispatchAlertsUpdated(studentId?: string): void {
-  try {
+  tryCatchSync(() => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('alerts:updated', { detail: { studentId } }));
     }
-  } catch {}
+  }, 'alerts.bridge.dispatchAlertsUpdated');
 }
 
 export class AlertSystemBridge {
@@ -68,30 +64,32 @@ export class AlertSystemBridge {
   }
 
   public convertLegacyToNew(studentId?: string): AlertEvent[] {
-    try {
+    const result = tryCatchSync(() => {
       const legacy = studentId ? alertSystem.getStudentAlerts(studentId) : alertSystem.getAllAlerts();
       const mapped = legacy.map(alertHistoryToAlertEvent);
       if (studentId) return mapped.filter((e) => e.studentId === studentId);
       return mapped;
-    } catch (err) {
-      try { logger.error('[AlertSystemBridge] convertLegacyToNew failed', err as Error); } catch {}
+    }, 'alerts.bridge.convertLegacyToNew');
+
+    if (!result.success) {
+      logger.error('[AlertSystemBridge] convertLegacyToNew failed', result.error);
       return [];
     }
+
+    return result.value;
   }
 
   public migrateStorageFormat(studentId?: string): { ok: boolean; added: number; hadLegacy: boolean; error?: string } {
     const statusRaw = safeGet(MIGRATION_STATUS_KEY);
-    const status = parseJSON<MigrationStatus>(statusRaw) ?? { version: BRIDGE_VERSION };
+    const status = safeJsonParse<MigrationStatus>(statusRaw, { version: BRIDGE_VERSION }, 'alerts.bridge.migrationStatus');
     const hadLegacy = this.detectLegacyPresent();
     if (!hadLegacy) {
       // Nothing to migrate
       return { ok: true, added: 0, hadLegacy: false };
     }
 
-    try {
-      // Backup legacy payload for rollback/debug
-      backupLegacyAlerts();
-    } catch { /* noop */ }
+    // Backup legacy payload for rollback/debug
+    tryCatchSync(() => backupLegacyAlerts(), 'alerts.bridge.backupLegacy');
 
     try {
       let totalAdded = 0;

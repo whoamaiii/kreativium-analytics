@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { logger } from '@/lib/logger';
+import { safeJsonParse, safeJsonStringify, safeLocalStorageGet, safeLocalStorageSet, safeLocalStorageRemove } from '@/lib/utils/errorHandling';
 
 export function useLocalStorage<T>(
   key: string,
@@ -7,29 +8,28 @@ export function useLocalStorage<T>(
 ): [T, (value: T | ((val: T) => T)) => void, () => void] {
   // State to store our value
   const [storedValue, setStoredValue] = useState<T>(() => {
-    try {
-      // Get from local storage by key
-      const item = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(key) : null;
-      // Parse stored json or if none return initialValue (support lazy init)
-      if (item) return JSON.parse(item);
-      return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
-    } catch (error) {
-      // If error also return initialValue
-      logger.error(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
+    // Get from local storage by key
+    const item = typeof window !== 'undefined' && window.localStorage
+      ? safeLocalStorageGet(key, '', `useLocalStorage.init.${key}`)
+      : null;
+
+    // Parse stored json or if none return initialValue (support lazy init)
+    if (item) {
+      const parsed = safeJsonParse<T>(item, null as any, `useLocalStorage.parse.${key}`);
+      if (parsed !== null) return parsed;
     }
+
+    return typeof initialValue === 'function' ? (initialValue as () => T)() : initialValue;
   });
 
   // Listen for changes to this key in other tabs
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === key) {
-        try {
-          setStoredValue(e.newValue ? JSON.parse(e.newValue) : initialValue);
-        } catch (error) {
-          logger.error(`Error parsing localStorage key "${key}" on change:`, error);
-          setStoredValue(initialValue);
-        }
+        const parsed = e.newValue
+          ? safeJsonParse<T>(e.newValue, initialValue, `useLocalStorage.change.${key}`)
+          : initialValue;
+        setStoredValue(parsed);
       }
     };
 
@@ -42,29 +42,21 @@ export function useLocalStorage<T>(
 
   // Return a wrapped version of useState's setter function that persists the new value to localStorage
   const setValue = (value: T | ((val: T) => T)) => {
-    try {
-      // Allow value to be a function so we have the same API as useState
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      // Save state
-      setStoredValue(valueToStore);
-      // Save to local storage
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore));
-      }
-    } catch (error) {
-      // A more advanced implementation would handle the error case
-      logger.error(`Error setting localStorage key "${key}":`, error);
+    // Allow value to be a function so we have the same API as useState
+    const valueToStore = value instanceof Function ? value(storedValue) : value;
+    // Save state
+    setStoredValue(valueToStore);
+    // Save to local storage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const json = safeJsonStringify(valueToStore, '{}', `useLocalStorage.set.${key}`);
+      safeLocalStorageSet(key, json, `useLocalStorage.set.${key}`);
     }
   };
 
   const removeValue = () => {
-    try {
-      setStoredValue(initialValue);
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem(key);
-      }
-    } catch (error) {
-      logger.error(`Error removing localStorage key "${key}":`, error);
+    setStoredValue(initialValue);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      safeLocalStorageRemove(key, `useLocalStorage.remove.${key}`);
     }
   };
 

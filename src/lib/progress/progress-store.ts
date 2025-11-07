@@ -1,3 +1,5 @@
+import { safeLocalStorageGet, safeJsonParse, safeJsonStringify, safeLocalStorageSet } from '@/lib/utils/errorHandling';
+
 export type StickerId = 'hold-master' | 'name-hero' | 'streak-star';
 
 export interface DailyProgress {
@@ -25,35 +27,36 @@ function storageKeyForStudent(studentId: string): string {
 }
 
 function getCurrentStudentId(): string {
-  try { return localStorage.getItem('current.studentId') || 'anonymous'; } catch { return 'anonymous'; }
+  return safeLocalStorageGet('current.studentId', 'anonymous', 'progress-store.getCurrentStudentId');
 }
 
 function migrateGlobalToStudentOnce(studentId: string): void {
-  try {
-    const marker = `progress.migratedFor:${studentId}`;
-    if (localStorage.getItem(marker) === '1') return;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const legacy = JSON.parse(raw) as Record<string, DailyProgress>;
-    const existingRaw = localStorage.getItem(storageKeyForStudent(studentId));
-    const merged = existingRaw ? { ...JSON.parse(existingRaw), ...legacy } : legacy;
-    localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(merged));
-    localStorage.setItem(marker, '1');
-  } catch {}
+  const marker = `progress.migratedFor:${studentId}`;
+  if (safeLocalStorageGet(marker, '', 'progress-store.migration') === '1') return;
+
+  const raw = safeLocalStorageGet(STORAGE_KEY, '', 'progress-store.migrationLegacy');
+  if (!raw) return;
+
+  const legacy = safeJsonParse<Record<string, DailyProgress>>(raw, {}, 'progress-store.parseLegacy');
+  const existingRaw = safeLocalStorageGet(storageKeyForStudent(studentId), '', 'progress-store.existing');
+  const merged = existingRaw
+    ? { ...safeJsonParse<Record<string, DailyProgress>>(existingRaw, {}, 'progress-store.parseExisting'), ...legacy }
+    : legacy;
+
+  const mergedJson = safeJsonStringify(merged, '{}', 'progress-store.stringifyMerged');
+  safeLocalStorageSet(storageKeyForStudent(studentId), mergedJson, 'progress-store.saveMerged');
+  safeLocalStorageSet(marker, '1', 'progress-store.setMarker');
 }
 
 export function loadStudentProgress(studentId: string = getCurrentStudentId()): Record<string, DailyProgress> {
-  try {
-    migrateGlobalToStudentOnce(studentId);
-    const raw = localStorage.getItem(storageKeyForStudent(studentId));
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+  migrateGlobalToStudentOnce(studentId);
+  const raw = safeLocalStorageGet(storageKeyForStudent(studentId), '', 'progress-store.load');
+  return raw ? safeJsonParse<Record<string, DailyProgress>>(raw, {}, 'progress-store.parseLoad') : {};
 }
 
 export function saveStudentProgress(studentId: string, map: Record<string, DailyProgress>): void {
-  try { localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(map)); } catch {}
+  const json = safeJsonStringify(map, '{}', 'progress-store.save');
+  safeLocalStorageSet(storageKeyForStudent(studentId), json, 'progress-store.save');
 }
 
 // Backwards‑compatible aliases now scoped to current student
@@ -62,7 +65,7 @@ export function loadProgress(): Record<string, DailyProgress> {
 }
 
 export function saveProgress(map: Record<string, DailyProgress>): void {
-  try { saveStudentProgress(getCurrentStudentId(), map); } catch {}
+  saveStudentProgress(getCurrentStudentId(), map);
 }
 
 function ensureToday(map: Record<string, DailyProgress>): DailyProgress {
