@@ -167,10 +167,13 @@ export type AnalyticsResultsPartial = Partial<AnalyticsResults> & { cacheKey?: s
 /**
  * Worker message envelope for incremental communication
  */
-export type WorkerMessageType = 'progress' | 'partial' | 'complete' | 'error' | 'alerts';
+export type WorkerMessageType = 'progress' | 'partial' | 'complete' | 'error' | 'alerts' | 'CACHE/CLEAR_DONE';
 
 type WorkerProgress = { stage: string; percent: number };
 
+/**
+ * Outgoing messages (worker → main thread)
+ */
 export type AnalyticsWorkerMessage =
   | {
     type: 'progress';
@@ -205,7 +208,17 @@ export type AnalyticsWorkerMessage =
     cacheKey?: string;
     payload: { alerts: AlertEvent[]; studentId?: string; prewarm?: boolean };
   }
-  // Lightweight meta channel for diagnostics; worker may ignore
+  | {
+    type: 'CACHE/CLEAR_DONE';
+    payload: {
+      scope: 'all' | 'student' | 'patterns';
+      studentId?: string;
+      patternsCleared: number;
+      cacheCleared?: number;
+      stats: { size: number };
+    };
+  }
+  // Lightweight meta channel for diagnostics
   | {
     type: 'game:event';
     payload: unknown;
@@ -214,6 +227,61 @@ export type AnalyticsWorkerMessage =
     type: 'game:session_summary';
     payload: unknown;
   };
+
+/**
+ * Cache control commands (main thread → worker)
+ */
+export type CacheControlMessage =
+  | { type: 'CACHE/CLEAR_ALL' }
+  | { type: 'CACHE/CLEAR_STUDENT'; studentId: string }
+  | { type: 'CACHE/CLEAR_PATTERNS' };
+
+/**
+ * Game event telemetry (main thread → worker)
+ */
+export interface GameEventMessage {
+  type: 'game:event';
+  payload: { kind: string; ts: number };
+}
+
+/**
+ * Game session summary (main thread → worker)
+ */
+export interface GameSessionSummaryMessage {
+  type: 'game:session_summary';
+  payload: unknown;
+}
+
+/**
+ * Insights compute task envelope (main thread → worker)
+ * This is the typed task format from buildInsightsTask
+ */
+export interface InsightsWorkerTask {
+  type: 'Insights/Compute';
+  payload: {
+    inputs: {
+      entries: TrackingEntry[];
+      emotions: EmotionEntry[];
+      sensoryInputs: SensoryEntry[];
+      goals?: Goal[];
+    };
+    config?: Partial<AnalyticsConfiguration>;
+    prewarm?: boolean;
+  };
+  cacheKey?: string;
+  ttlSeconds?: number;
+  tags?: string[];
+}
+
+/**
+ * Incoming messages (main thread → worker)
+ */
+export type WorkerIncomingMessage =
+  | AnalyticsData  // Legacy direct data posting
+  | InsightsWorkerTask
+  | CacheControlMessage
+  | GameEventMessage
+  | GameSessionSummaryMessage;
 
 // -----------------------------------------------------------------------------
 // Configuration Types (exported explicitly)
@@ -466,4 +534,83 @@ export interface AnalyticsWorkerTask {
   ttlSeconds?: number;
   /** Cache tags for invalidation. */
   tags?: string[];
+}
+
+// -----------------------------------------------------------------------------
+// Type Guards for Worker Message Discrimination
+// -----------------------------------------------------------------------------
+
+/**
+ * Type guard for InsightsWorkerTask messages
+ */
+export function isInsightsWorkerTask(msg: unknown): msg is InsightsWorkerTask {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'type' in msg &&
+    msg.type === 'Insights/Compute' &&
+    'payload' in msg &&
+    typeof msg.payload === 'object' &&
+    msg.payload !== null &&
+    'inputs' in msg.payload
+  );
+}
+
+/**
+ * Type guard for CacheControlMessage
+ */
+export function isCacheControlMessage(msg: unknown): msg is CacheControlMessage {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'type' in msg &&
+    typeof msg.type === 'string' &&
+    (msg.type === 'CACHE/CLEAR_ALL' ||
+     msg.type === 'CACHE/CLEAR_STUDENT' ||
+     msg.type === 'CACHE/CLEAR_PATTERNS')
+  );
+}
+
+/**
+ * Type guard for GameEventMessage
+ */
+export function isGameEventMessage(msg: unknown): msg is GameEventMessage {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'type' in msg &&
+    msg.type === 'game:event' &&
+    'payload' in msg
+  );
+}
+
+/**
+ * Type guard for GameSessionSummaryMessage
+ */
+export function isGameSessionMessage(msg: unknown): msg is GameSessionSummaryMessage {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'type' in msg &&
+    msg.type === 'game:session_summary' &&
+    'payload' in msg
+  );
+}
+
+/**
+ * Type guard for AnalyticsData (legacy direct data posting)
+ */
+export function isAnalyticsDataMessage(msg: unknown): msg is AnalyticsData {
+  return (
+    typeof msg === 'object' &&
+    msg !== null &&
+    'entries' in msg &&
+    Array.isArray(msg.entries) &&
+    'emotions' in msg &&
+    Array.isArray(msg.emotions) &&
+    'sensoryInputs' in msg &&
+    Array.isArray(msg.sensoryInputs) &&
+    // Must NOT have a 'type' field (that would indicate a typed envelope)
+    !('type' in msg)
+  );
 }

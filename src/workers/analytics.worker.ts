@@ -9,7 +9,19 @@
 import { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 import { PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalysis';
 import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
-import { AnalyticsData, AnalyticsResults, AnalyticsConfiguration, WorkerCacheEntry, AnalyticsWorkerMessage } from '@/types/analytics';
+import {
+  AnalyticsData,
+  AnalyticsResults,
+  AnalyticsConfiguration,
+  WorkerCacheEntry,
+  AnalyticsWorkerMessage,
+  WorkerIncomingMessage,
+  isInsightsWorkerTask,
+  isCacheControlMessage,
+  isGameEventMessage,
+  isGameSessionMessage,
+  isAnalyticsDataMessage,
+} from '@/types/analytics';
 import { createCachedPatternAnalysis } from '@/lib/cachedPatternAnalysis';
 import { logger } from '@/lib/logger';
 import { generateInsightsFromWorkerInputs } from '@/lib/insights';
@@ -20,7 +32,10 @@ import { AlertDetectionEngine } from '@/lib/alerts/engine';
 import { BaselineService } from '@/lib/alerts/baseline';
 import type { AlertEvent } from '@/lib/alerts/types';
 
-// Type is now imported from @/types/analytics
+// Type-safe wrapper for worker postMessage
+function sendMessage(message: AnalyticsWorkerMessage): void {
+  self.postMessage(message);
+}
 
 // Worker cache TTL source: cache.ttl from central analytics config (ms). Safe fallback applied.
 let workerCacheTTL = (ANALYTICS_CONFIG.cache.ttl ?? 300_000); // default from config, safe fallback 300s
@@ -132,7 +147,7 @@ const workerCache = {
   },
 
   createKey(prefix: string, params: Record<string, unknown>): string {
-    const sorted = Object.keys(params).sort().map(k => `${k}:${JSON.stringify((params as any)[k])}`).join(':');
+    const sorted = Object.keys(params).sort().map(k => `${k}:${JSON.stringify(params[k])}`).join(':');
     return `${prefix}:${sorted}`;
   },
   
@@ -227,8 +242,8 @@ const enqueueMessage = (msg: AnalyticsWorkerMessage) => {
     setTimeout(() => {
       try {
         while (outgoingQueue.length) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (postMessage as any)(outgoingQueue.shift());
+          const message = outgoingQueue.shift();
+          if (message) sendMessage(message);
         }
       } finally {
         flushScheduled = false;
@@ -249,18 +264,13 @@ export type { AnalyticsData, AnalyticsResults } from '@/types/analytics';
  * This function is triggered when the main thread calls `worker.postMessage()`.
  * It orchestrates the analysis process and posts the results back.
  */
-export async function handleMessage(e: MessageEvent<any>) {
-  // Support two message shapes:
-  // A) Cache control commands (CACHE/*)
-  // B) Typed task envelope built via buildInsightsTask
-  // C) Legacy AnalyticsData directly
-  const msg = e.data as any;
+export async function handleMessage(e: MessageEvent<WorkerIncomingMessage>) {
+  const msg = e.data;
 
-  // Lightweight event ingestion channel from game UI
-  if (msg && msg.type === 'game:event' && msg.payload) {
+  // Handle game event telemetry
+  if (isGameEventMessage(msg)) {
     try {
-      // For now, aggregate into an in-memory counter and expose via alerts channel for observability
-      const ev = msg.payload as { kind: string; ts: number };
+      const ev = msg.payload;
       const key = `game:event:count:${ev.kind}`;
       const prev = (workerCache.get(key) as number | undefined) ?? 0;
       workerCache.set(key, prev + 1, ['game-events'], 300000);
@@ -268,68 +278,77 @@ export async function handleMessage(e: MessageEvent<any>) {
     return;
   }
 
-  if (msg && msg.type === 'game:session_summary' && msg.payload) {
+  // Handle game session summary
+  if (isGameSessionMessage(msg)) {
     try {
       const key = 'game:session:last';
       workerCache.set(key, msg.payload, ['game-session'], 600000);
       // Optionally surface via alerts channel for UI hooks wanting summaries quickly
-      enqueueMessage({ type: 'alerts', payload: { alerts: [], prewarm: true } } as unknown as AnalyticsWorkerMessage);
+      enqueueMessage({ type: 'alerts', payload: { alerts: [], prewarm: true } });
     } catch {}
     return;
   }
 
-  // Intercept cache control messages first
-  if (msg && typeof msg.type === 'string' && msg.type.startsWith('CACHE/')) {
+  // Handle cache control commands
+  if (isCacheControlMessage(msg)) {
     try {
       if (msg.type === 'CACHE/CLEAR_ALL') {
         const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
         const cacheCleared = workerCache.clearAll();
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
-      } else if (msg.type === 'CACHE/CLEAR_STUDENT' && typeof msg.studentId === 'string') {
+        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() } });
+      } else if (msg.type === 'CACHE/CLEAR_STUDENT') {
         const patternsCleared = (() => { try { return cachedAnalysis.invalidateStudentCache(msg.studentId); } catch { return 0; } })();
         const cacheCleared = workerCache.clearByStudentId(msg.studentId);
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'student', studentId: msg.studentId, patternsCleared, cacheCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
+        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'student', studentId: msg.studentId, patternsCleared, cacheCleared, stats: workerCache.getStats() } });
       } else if (msg.type === 'CACHE/CLEAR_PATTERNS') {
         const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
+        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() } });
       }
     } catch (err) {
       try { logger.error('[analytics.worker] Cache clear command failed', err as Error); } catch {}
     }
     return;
   }
+
+  // Parse message into AnalyticsData
   let filteredData: AnalyticsData;
   let isPrewarm = false;
-  if (msg && msg.type === 'Insights/Compute' && msg.payload) {
+
+  if (isInsightsWorkerTask(msg)) {
+    // Typed task envelope from buildInsightsTask
     const { inputs, config, prewarm } = msg.payload;
     isPrewarm = !!prewarm;
     filteredData = {
       entries: inputs.entries,
       emotions: inputs.emotions,
       sensoryInputs: inputs.sensoryInputs,
-      goals: (inputs as any).goals ?? [],
+      goals: inputs.goals ?? [],
       cacheKey: msg.cacheKey,
-      config: (config as any) ?? null
-    } as unknown as AnalyticsData;
+      config: config ?? null,
+    };
     // Optionally honor ttlSeconds from task by updating per-message TTL
     if (typeof msg.ttlSeconds === 'number' && msg.ttlSeconds > 0) {
       workerCacheTTL = Math.max(1000, Math.floor(msg.ttlSeconds * 1000));
     }
+  } else if (isAnalyticsDataMessage(msg)) {
+    // Legacy direct data posting
+    filteredData = msg;
   } else {
-    filteredData = msg as AnalyticsData;
+    // Unknown message type - ignore
+    return;
   }
 
   // Diagnostic log: message received - use cache to limit verbosity
   try {
-    const logKey = `worker_msg_${filteredData?.cacheKey || 'nocache'}_${new Date().getMinutes()}`;
+    const logKey = `worker_msg_${filteredData.cacheKey || 'nocache'}_${new Date().getMinutes()}`;
     if (!workerCache.has(logKey)) {
       logger.debug('[analytics.worker] onmessage', {
-        hasConfig: !!filteredData?.config,
-        cacheKey: filteredData?.cacheKey ?? null,
-        entries: filteredData?.entries?.length ?? 0,
-        emotions: filteredData?.emotions?.length ?? 0,
-        sensory: filteredData?.sensoryInputs?.length ?? 0,
-        goals: (filteredData as any)?.goals?.length ?? 0,
+        hasConfig: !!filteredData.config,
+        cacheKey: filteredData.cacheKey ?? null,
+        entries: filteredData.entries.length,
+        emotions: filteredData.emotions.length,
+        sensory: filteredData.sensoryInputs.length,
+        goals: filteredData.goals?.length ?? 0,
       });
       workerCache.set(logKey, true, ['logging']);
     }
@@ -442,7 +461,7 @@ try {
         filteredData.emotions,
         filteredData.sensoryInputs,
         filteredData.entries,
-        (filteredData as any).goals ?? []
+        filteredData.goals ?? []
       );
 
       // Send partial update for predictive insights
@@ -483,12 +502,12 @@ try {
       entries: filteredData.entries,
       emotions: filteredData.emotions,
       sensoryInputs: filteredData.sensoryInputs,
-      goals: (filteredData as any).goals ?? [],
-    }, { config: currentConfig as any });
+      goals: filteredData.goals ?? [],
+    }, { config: currentConfig ?? undefined });
 
     const results: AnalyticsResults = {
       ...unified,
-      suggestedInterventions: (unified as any).suggestedInterventions ?? [],
+      suggestedInterventions: unified.suggestedInterventions ?? [],
       cacheKey: filteredData.cacheKey,
       updatedCharts: ['insightList']
     };
@@ -550,28 +569,47 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
   try {
     self.addEventListener('error', (e: ErrorEvent) => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: e.message, cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker runtime error encountered.'], updatedCharts: ['insightList']
-        }});
+        sendMessage({
+          type: 'error',
+          error: e.message,
+          cacheKey: undefined,
+          payload: {
+            patterns: [],
+            correlations: [],
+            predictiveInsights: [],
+            anomalies: [],
+            insights: ['Worker runtime error encountered.'],
+            suggestedInterventions: [],
+            updatedCharts: ['insightList'],
+          },
+        });
       } catch (err) { try { logger.warn('[analytics.worker] Failed to post error message', err as Error); } catch {} }
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    self.addEventListener('unhandledrejection', (e: any) => {
+
+    self.addEventListener('unhandledrejection', (e: PromiseRejectionEvent) => {
       const msg = typeof e?.reason === 'string' ? e.reason : (e?.reason?.message ?? 'Unhandled rejection in worker');
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: String(msg), cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker unhandled rejection.'], updatedCharts: ['insightList']
-        }});
+        sendMessage({
+          type: 'error',
+          error: String(msg),
+          cacheKey: undefined,
+          payload: {
+            patterns: [],
+            correlations: [],
+            predictiveInsights: [],
+            anomalies: [],
+            insights: ['Worker unhandled rejection.'],
+            suggestedInterventions: [],
+            updatedCharts: ['insightList'],
+          },
+        });
       } catch (err) { try { logger.warn('[analytics.worker] Failed to post rejection message', err as Error); } catch {} }
     });
   } catch (e) { try { logger.warn('[analytics.worker] Failed to setup error handlers', e as Error); } catch {} }
 
   // Signal readiness so main thread can flush any queued tasks
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (postMessage as any)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
+    sendMessage({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
   } catch (e) { try { logger.warn('[analytics.worker] Failed to post ready signal', e as Error); } catch {} }
 
   self.onmessage = handleMessage;

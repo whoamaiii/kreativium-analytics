@@ -166,30 +166,31 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
    */
   const defaultExtractTagsFromData = useCallback((data: AnalyticsData | AnalyticsResults): string[] => {
     const tags: string[] = ['analytics'];
-    
+
     // Add student-specific tags if available
-    if ('entries' in data && (data as any).entries?.length > 0) {
-      const studentIds = Array.from(new Set((data as any).entries.map((e: any) => e.studentId)));
+    if ('entries' in data && Array.isArray(data.entries) && data.entries.length > 0) {
+      const studentIds = Array.from(new Set(data.entries.map(e => e.studentId).filter((id): id is string => typeof id === 'string')));
       tags.push(...studentIds.map(id => `student-${id}`));
     }
 
     // Add date-based tags for time-sensitive invalidation
     const now = new Date();
     tags.push(`analytics-${now.getFullYear()}-${now.getMonth() + 1}`);
-    
+
     return tags;
   }, []);
   const extractTagsFn = options.extractTagsFromData ?? defaultExtractTagsFromData;
 
   const buildCacheTags = useCallback(({ data, goals, studentId, includeAiTag }: { data: AnalyticsData | AnalyticsResults; goals?: Goal[]; studentId?: string | number; includeAiTag?: boolean }): string[] => {
-    const tagsFromData = extractTagsFn({ ...data, goals } as AnalyticsData) ?? [];
+    const dataWithGoals: AnalyticsData = 'entries' in data
+      ? { ...data, goals }
+      : { entries: [], emotions: [], sensoryInputs: [], goals };
+    const tagsFromData = extractTagsFn(dataWithGoals) ?? [];
     const tagSet = new Set<string>(tagsFromData);
 
     (goals ?? []).forEach(goal => {
-      const goalId = (goal as Goal)?.id;
-      if (goalId) tagSet.add(`goal-${goalId}`);
-      const goalStudentId = (goal as Goal)?.studentId;
-      if (goalStudentId) tagSet.add(`student-${goalStudentId}`);
+      if (goal.id) tagSet.add(`goal-${goal.id}`);
+      if (goal.studentId) tagSet.add(`student-${goal.studentId}`);
     });
 
     if (studentId !== undefined && studentId !== null) {
@@ -256,12 +257,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
           cache,
           cacheTagsRef,
           activeCacheKeyRef,
-          buildCacheTags: ({ data, goals, studentId, includeAiTag }) => buildCacheTags({
-            data: data as AnalyticsResults,
-            goals: goals as Goal[] | undefined,
-            studentId,
-            includeAiTag,
-          }),
+          buildCacheTags,
           setResults,
           setError,
           setIsAnalyzing,
@@ -360,13 +356,13 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       entries: data.entries,
       emotions: data.emotions,
       sensoryInputs: data.sensoryInputs,
-      ...(goals && goals.length ? { goals: goals.map(g => ({ id: (g as any).id })) as unknown as Goal[] } : {}),
-    } as unknown as { entries: unknown[]; emotions: unknown[]; sensoryInputs: unknown[] };
+      goals: goals ?? [],
+    };
 
     // Use live runtime config to ensure keys align across app and worker
     const cfg = getValidatedConfig();
 
-    return buildInsightsCacheKey(inputs as any, { config: cfg });
+    return buildInsightsCacheKey(inputs, { config: cfg });
   }, []);
 
   const runAnalysis = useMemo(() => createRunAnalysis({
@@ -455,9 +451,9 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       }
       // Update precompute manager status on config changes
       try {
-        const pc = newConfig.precomputation as any;
-        if (pc && precompManagerRef.current) {
-          if (pc.enabled) {
+        const pc = newConfig.precomputation;
+        if (pc && typeof pc === 'object' && precompManagerRef.current) {
+          if ('enabled' in pc && pc.enabled) {
             precompManagerRef.current.resume();
           } else {
             precompManagerRef.current.stop();
@@ -535,7 +531,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       const entries = dataStorage.getTrackingEntries();
       const emotions = entries.flatMap(e => (e.emotions || []).map(em => ({ ...em, studentId: em.studentId ?? e.studentId })));
       const sensoryInputs = entries.flatMap(e => (e.sensoryInputs || []).map(s => ({ ...s, studentId: s.studentId ?? e.studentId })));
-      precompManagerRef.current.schedulePrecomputation(entries, emotions as any, sensoryInputs as any);
+      precompManagerRef.current.schedulePrecomputation(entries, emotions, sensoryInputs);
       setPrecomputeStatus(precompManagerRef.current.getStatus());
     } catch { /* noop */ }
 

@@ -246,25 +246,62 @@ const DEFAULT_RUNTIME: RuntimeAnalyticsConfig = {
 // -----------------------------
 // Merge helpers
 // -----------------------------
-function deepMerge<T extends object>(base: T, overrides: Partial<T> | undefined | null): T {
+
+/**
+ * Deep partial type that recursively makes all properties optional
+ */
+type DeepPartial<T> = T extends object
+  ? T extends Array<infer U>
+    ? Array<DeepPartial<U>>
+    : { [P in keyof T]?: DeepPartial<T[P]> }
+  : T;
+
+/**
+ * Type-safe deep merge that preserves type information
+ * @param base - Base object with all required properties
+ * @param overrides - Partial overrides to merge into base
+ * @returns Merged object with preserved types
+ */
+function deepMerge<T extends object>(base: T, overrides: DeepPartial<T> | undefined | null): T {
   if (!overrides) return base;
-  const output = Array.isArray(base) ? ([...base] as unknown as T) : ({ ...base } as T);
+
+  // Handle arrays by replacing entirely (not merging elements)
+  if (Array.isArray(base)) {
+    return (Array.isArray(overrides) ? overrides : base) as T;
+  }
+
+  // Start with a shallow copy of base
+  const output = { ...base };
+
+  // Iterate through override keys
   for (const key of Object.keys(overrides) as Array<keyof T>) {
     const overrideVal = overrides[key];
+
+    // Skip undefined values
     if (overrideVal === undefined) continue;
-    const baseVal = (base as any)[key];
+
+    const baseVal = base[key];
+
+    // Recursively merge objects (but not arrays or null)
     if (
-      baseVal &&
+      baseVal !== null &&
       typeof baseVal === 'object' &&
       !Array.isArray(baseVal) &&
+      overrideVal !== null &&
       typeof overrideVal === 'object' &&
       !Array.isArray(overrideVal)
     ) {
-      (output as any)[key] = deepMerge(baseVal, overrideVal as any);
+      // TypeScript knows both are objects here, so this is safe
+      output[key] = deepMerge(
+        baseVal as Extract<T[typeof key], object>,
+        overrideVal as DeepPartial<Extract<T[typeof key], object>>
+      ) as T[typeof key];
     } else {
-      (output as any)[key] = overrideVal as any;
+      // For primitives, arrays, or null, replace directly
+      output[key] = overrideVal as T[typeof key];
     }
   }
+
   return output;
 }
 
@@ -310,7 +347,7 @@ export function getRuntimeAnalyticsConfig(): RuntimeAnalyticsConfig {
   }
 
   // Merge full runtime including extensions, but force validated schema parts
-  const merged = deepMerge(DEFAULT_RUNTIME, overrides ?? undefined);
+  const merged = deepMerge(DEFAULT_RUNTIME, overrides as DeepPartial<RuntimeAnalyticsConfig> | undefined);
   const safeMerged: RuntimeAnalyticsConfig = {
     ...merged,
     // Overwrite schema-backed sections with validated values
@@ -320,13 +357,13 @@ export function getRuntimeAnalyticsConfig(): RuntimeAnalyticsConfig {
     charts: {
       // Preserve non-schema extensions from merged first (e.g., colorPalette, animations),
       // then enforce schema-validated core values to avoid invalid overrides leaking through.
-      ...(merged as any).charts,
+      ...merged.charts,
       ...safeSchema.charts,
     },
     worker: {
       // Preserve non-schema extensions from merged first (e.g., pool),
       // then enforce schema-validated core values.
-      ...(merged as any).worker,
+      ...merged.worker,
       ...safeSchema.worker,
     },
     features: safeSchema.features,
