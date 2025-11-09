@@ -1,5 +1,4 @@
 import { Student } from "@/types/student";
-import { computeInsights, type ComputeInsightsInputs } from "@/lib/insights/unified";
 import { dataStorage, IDataStorage } from "@/lib/dataStorage";
 import { ANALYTICS_CONFIG, DEFAULT_ANALYTICS_CONFIG, analyticsConfig, STORAGE_KEYS } from "@/lib/analyticsConfig";
 import { logger } from "@/lib/logger";
@@ -11,10 +10,8 @@ import type { AnalyticsResultsCompat } from "@/lib/analytics/types";
 import { getProfileMap, initializeStudentProfile, saveProfiles } from "@/lib/analyticsProfiles";
 import { analyticsCoordinator } from "@/lib/analyticsCoordinator";
 import type { StudentAnalyticsProfile } from "@/lib/analyticsProfiles";
-// New orchestrator-style helpers and types
-import { buildInsightsCacheKey as _buildInsightsCacheKey, buildInsightsTask as _buildInsightsTask } from "@/lib/insights/task";
+// Legacy task builders (to be deprecated)
 export { createInsightsTask as buildTask, createInsightsCacheKey as buildCacheKey } from '@/lib/analyticsTasks';
-import type { InsightsOptions, AnalyticsResult } from "@/types/insights";
 
 // Extracted modules (Phase 2a refactoring)
 import { createAnalysisEngine } from '@/lib/analytics/engine';
@@ -26,6 +23,13 @@ import {
   notifyWorkers,
   isManagerTtlCacheDisabled
 } from '@/lib/analytics/cache';
+
+// Extracted bulk operations (Phase 2b refactoring)
+import {
+  triggerAnalyticsForAll,
+  getStatusForAll,
+  type StudentAnalyticsStatus,
+} from '@/lib/analytics/orchestration';
 
 // #region Type Definitions
 
@@ -427,44 +431,28 @@ class AnalyticsManagerService {
   /**
    * Triggers an analytics refresh for all students in the system.
    * Uses Promise.allSettled to ensure that one failed analysis does not stop others.
+   *
+   * @deprecated This method is now a thin wrapper. Consider using triggerAnalyticsForAll directly.
+   *
+   * Delegated to extracted module (Phase 2b refactoring)
    */
   public async triggerAnalyticsForAllStudents(): Promise<void> {
     const students = this.storage.getStudents();
-    
-    const analyticsPromises = students.map(student => {
-      this.initializeStudentAnalytics(student.id);
-      return this.triggerAnalyticsForStudent(student);
-    });
-
-    const settledResults = await Promise.allSettled(analyticsPromises);
-
-    settledResults.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        logger.error(`Failed to process analytics for student ${students[index].id}:`, result.reason);
-      }
-    });
+    await triggerAnalyticsForAll(students, this.storage, this);
   }
 
   /**
    * Gets the current analytics status for all students, including health scores and last analysis time.
    * This is useful for displaying a high-level dashboard of the system's state.
-   * @returns {Array<object>} An array of status objects for each student.
+   * @returns {StudentAnalyticsStatus[]} An array of status objects for each student.
+   *
+   * @deprecated This method is now a thin wrapper. Consider using getStatusForAll directly.
+   *
+   * Delegated to extracted module (Phase 2b refactoring)
    */
-  public getAnalyticsStatus() {
+  public getAnalyticsStatus(): StudentAnalyticsStatus[] {
     const students = this.storage.getStudents();
-    return students.map(student => {
-      const profile = this.analyticsProfiles.get(student.id);
-      const cached = this.analyticsCache.get(student.id);
-      
-      return {
-        studentId: student.id,
-        studentName: student.name,
-        isInitialized: profile?.isInitialized ?? false,
-        lastAnalyzed: profile?.lastAnalyzedAt ?? null,
-        healthScore: profile?.analyticsHealthScore ?? 0,
-        hasMinimumData: cached?.results.hasMinimumData ?? false,
-      };
-    });
+    return getStatusForAll(students, this.analyticsProfiles, this.analyticsCache);
   }
 
   /**
@@ -563,79 +551,7 @@ export const analyticsManager = AnalyticsManagerService.getInstance();
  * constructing worker tasks, and retrieving summarized insights in a stable
  * shape for consumers like hooks or UI. They coexist with the legacy singleton
  * for backward compatibility and will become the primary API.
- */
-
-/**
- * Build a deterministic insights cache key from inputs and options.
- * Delegates to the centralized cache-key utilities.
- */
-export const buildInsightsCacheKey = _buildInsightsCacheKey;
-
-/**
- * Build a typed worker task envelope for Insights computation.
- * Suitable for posting to the analytics web worker.
- */
-export const buildInsightsTask = _buildInsightsTask;
-
-/**
- * Compute insights and return a minimal, stable AnalyticsResult summary.
- * This does not perform internal caching; callers should use the cache key
- * and their caching layer of choice.
  *
- * @example
- * const inputs = { entries, emotions, sensoryInputs, goals };
- * const result = await getInsights(inputs, { ttlSeconds: 600, tags: ["student-123"] });
+ * Extracted to @/lib/analytics/insights module (Phase 2b refactoring)
  */
-export async function getInsights(
-  inputs: ComputeInsightsInputs,
-  options?: InsightsOptions
-): Promise<AnalyticsResult> {
-  try {
-    const cacheKey = _buildInsightsCacheKey(inputs, options);
-    const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return DEFAULT_ANALYTICS_CONFIG; } })() || DEFAULT_ANALYTICS_CONFIG;
-    const ttlMs = cfg?.cache?.ttl ?? DEFAULT_ANALYTICS_CONFIG.cache.ttl;
-    const ttlSeconds = typeof options?.ttlSeconds === 'number' ? options.ttlSeconds : Math.max(1, Math.floor(ttlMs / 1000));
-    const tags = Array.from(new Set(["insights", "v2", ...(options?.tags ?? [])]));
-
-    const fullCfg = options?.config ? { config: (options.config as any) } : { config: cfg as any };
-    const detailed = await computeInsights(inputs, fullCfg as any);
-
-    // Summarize for stable payloads (avoid large arrays in summary field)
-    const summary = {
-      patternsCount: detailed.patterns?.length ?? 0,
-      correlationsCount: detailed.correlations?.length ?? 0,
-      environmentalCorrelationsCount: detailed.environmentalCorrelations?.length ?? 0,
-      predictiveInsightsCount: detailed.predictiveInsights?.length ?? 0,
-      anomaliesCount: detailed.anomalies?.length ?? 0,
-      insightsCount: detailed.insights?.length ?? 0,
-      confidence: (detailed as any).confidence,
-      hasMinimumData: (detailed as any).hasMinimumData,
-    } as Record<string, unknown>;
-
-    return {
-      cacheKey,
-      computedAt: new Date().toISOString(),
-      ttlSeconds,
-      tags,
-      summary,
-      diagnostics: {
-        entries: inputs.entries?.length ?? 0,
-        emotions: inputs.emotions?.length ?? 0,
-        sensoryInputs: inputs.sensoryInputs?.length ?? 0,
-        goals: inputs.goals?.length ?? 0,
-      },
-    };
-  } catch (error) {
-    logger.error('[analyticsManager.orchestrator] getInsights failed', { error });
-    const cacheKey = _buildInsightsCacheKey(inputs, options);
-    const ttlSeconds = typeof options?.ttlSeconds === 'number' ? options.ttlSeconds : 300;
-    const tags = Array.from(new Set(["insights", "v2", ...(options?.tags ?? [])]));
-    return {
-      cacheKey,
-      computedAt: new Date().toISOString(),
-      ttlSeconds,
-      tags,
-      summary: { error: 'INSIGHTS_COMPUTE_FAILED' },
-    };
-  }
-}
+export { getInsights, buildInsightsCacheKey, buildInsightsTask } from '@/lib/analytics/insights';
