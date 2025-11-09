@@ -1,6 +1,14 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useLocalStorage } from '../useLocalStorage';
+import {
+  useLocalStorage,
+  isString,
+  isNumber,
+  isBoolean,
+  isStringArray,
+  isNumberArray,
+  oneOf
+} from '../useLocalStorage';
 
 describe('useLocalStorage Hook', () => {
   const TEST_KEY = 'test-key';
@@ -329,32 +337,255 @@ describe('useLocalStorage Hook', () => {
   describe('Performance', () => {
     it('does not cause unnecessary re-renders', () => {
       const renderSpy = vi.fn();
-      
+
       const { result, rerender } = renderHook(() => {
         renderSpy();
         return useLocalStorage(TEST_KEY, 'initial');
       });
-      
+
       // Initial render
       expect(renderSpy).toHaveBeenCalledTimes(1);
-      
+
       // Setting same value should not trigger re-render
       act(() => {
         result.current[1]('initial');
       });
-      
+
       expect(renderSpy).toHaveBeenCalledTimes(1);
-      
+
       // Setting different value should trigger re-render
       act(() => {
         result.current[1]('updated');
       });
-      
+
       expect(renderSpy).toHaveBeenCalledTimes(2);
-      
+
       // Re-rendering parent should not reset value
       rerender();
       expect(result.current[0]).toBe('updated');
+    });
+  });
+
+  describe('Validator functionality', () => {
+    type PracticeMode = 'easy' | 'medium' | 'hard';
+
+    it('uses default value when validator rejects stored value', () => {
+      // Store invalid value
+      localStorage.setItem(TEST_KEY, JSON.stringify('invalid-mode'));
+
+      const isPracticeMode = (v: unknown): v is PracticeMode =>
+        typeof v === 'string' && ['easy', 'medium', 'hard'].includes(v);
+
+      const { result } = renderHook(() =>
+        useLocalStorage<PracticeMode>(TEST_KEY, 'medium', isPracticeMode)
+      );
+
+      expect(result.current[0]).toBe('medium');
+    });
+
+    it('accepts valid stored value that passes validation', () => {
+      // Store valid value
+      localStorage.setItem(TEST_KEY, JSON.stringify('hard'));
+
+      const isPracticeMode = (v: unknown): v is PracticeMode =>
+        typeof v === 'string' && ['easy', 'medium', 'hard'].includes(v);
+
+      const { result } = renderHook(() =>
+        useLocalStorage<PracticeMode>(TEST_KEY, 'medium', isPracticeMode)
+      );
+
+      expect(result.current[0]).toBe('hard');
+    });
+
+    it('validates values from storage events', () => {
+      const isPracticeMode = (v: unknown): v is PracticeMode =>
+        typeof v === 'string' && ['easy', 'medium', 'hard'].includes(v);
+
+      const { result } = renderHook(() =>
+        useLocalStorage<PracticeMode>(TEST_KEY, 'medium', isPracticeMode)
+      );
+
+      // Valid storage event
+      act(() => {
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: TEST_KEY,
+          newValue: JSON.stringify('easy'),
+          storageArea: localStorage,
+        }));
+      });
+
+      expect(result.current[0]).toBe('easy');
+
+      // Invalid storage event - should fall back to default
+      act(() => {
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: TEST_KEY,
+          newValue: JSON.stringify('invalid'),
+          storageArea: localStorage,
+        }));
+      });
+
+      expect(result.current[0]).toBe('medium');
+    });
+
+    it('works without validator (backward compatible)', () => {
+      localStorage.setItem(TEST_KEY, JSON.stringify('any-value'));
+
+      const { result } = renderHook(() =>
+        useLocalStorage(TEST_KEY, 'default')
+      );
+
+      expect(result.current[0]).toBe('any-value');
+    });
+  });
+
+  describe('Type guard helpers', () => {
+    describe('isString', () => {
+      it('validates strings correctly', () => {
+        expect(isString('hello')).toBe(true);
+        expect(isString('')).toBe(true);
+        expect(isString(123)).toBe(false);
+        expect(isString(null)).toBe(false);
+        expect(isString(undefined)).toBe(false);
+        expect(isString({})).toBe(false);
+      });
+    });
+
+    describe('isNumber', () => {
+      it('validates numbers correctly', () => {
+        expect(isNumber(123)).toBe(true);
+        expect(isNumber(0)).toBe(true);
+        expect(isNumber(-42.5)).toBe(true);
+        expect(isNumber('123')).toBe(false);
+        expect(isNumber(null)).toBe(false);
+        expect(isNumber(NaN)).toBe(true); // NaN is technically a number type
+      });
+    });
+
+    describe('isBoolean', () => {
+      it('validates booleans correctly', () => {
+        expect(isBoolean(true)).toBe(true);
+        expect(isBoolean(false)).toBe(true);
+        expect(isBoolean(1)).toBe(false);
+        expect(isBoolean('true')).toBe(false);
+        expect(isBoolean(null)).toBe(false);
+      });
+    });
+
+    describe('isStringArray', () => {
+      it('validates string arrays correctly', () => {
+        expect(isStringArray(['a', 'b', 'c'])).toBe(true);
+        expect(isStringArray([])).toBe(true);
+        expect(isStringArray(['a', 1, 'c'])).toBe(false);
+        expect(isStringArray([1, 2, 3])).toBe(false);
+        expect(isStringArray('not-array')).toBe(false);
+        expect(isStringArray(null)).toBe(false);
+      });
+    });
+
+    describe('isNumberArray', () => {
+      it('validates number arrays correctly', () => {
+        expect(isNumberArray([1, 2, 3])).toBe(true);
+        expect(isNumberArray([])).toBe(true);
+        expect(isNumberArray([1, '2', 3])).toBe(false);
+        expect(isNumberArray(['a', 'b'])).toBe(false);
+        expect(isNumberArray('not-array')).toBe(false);
+        expect(isNumberArray(null)).toBe(false);
+      });
+    });
+
+    describe('oneOf', () => {
+      it('creates validator for allowed values', () => {
+        const isTheme = oneOf(['light', 'dark', 'auto'] as const);
+
+        expect(isTheme('light')).toBe(true);
+        expect(isTheme('dark')).toBe(true);
+        expect(isTheme('auto')).toBe(true);
+        expect(isTheme('invalid')).toBe(false);
+        expect(isTheme(null)).toBe(false);
+        expect(isTheme(123)).toBe(false);
+      });
+
+      it('works with numbers', () => {
+        const isValidPort = oneOf([80, 443, 8080, 8443] as const);
+
+        expect(isValidPort(80)).toBe(true);
+        expect(isValidPort(443)).toBe(true);
+        expect(isValidPort(9000)).toBe(false);
+        expect(isValidPort('80')).toBe(false);
+      });
+
+      it('can be used with useLocalStorage', () => {
+        type Theme = 'light' | 'dark' | 'auto';
+        const isTheme = oneOf<Theme>(['light', 'dark', 'auto'] as const);
+
+        localStorage.setItem(TEST_KEY, JSON.stringify('dark'));
+
+        const { result } = renderHook(() =>
+          useLocalStorage<Theme>(TEST_KEY, 'light', isTheme)
+        );
+
+        expect(result.current[0]).toBe('dark');
+
+        // Try to set invalid value manually in localStorage
+        act(() => {
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: TEST_KEY,
+            newValue: JSON.stringify('invalid-theme'),
+            storageArea: localStorage,
+          }));
+        });
+
+        // Should fall back to default
+        expect(result.current[0]).toBe('light');
+      });
+    });
+  });
+
+  describe('Remove value functionality', () => {
+    it('removes value from localStorage and resets to default', () => {
+      const { result } = renderHook(() =>
+        useLocalStorage(TEST_KEY, 'default-value')
+      );
+
+      // Set a value
+      act(() => {
+        result.current[1]('stored-value');
+      });
+
+      expect(result.current[0]).toBe('stored-value');
+      expect(localStorage.getItem(TEST_KEY)).toBe(JSON.stringify('stored-value'));
+
+      // Remove value
+      act(() => {
+        result.current[2](); // Third element is removeValue
+      });
+
+      expect(result.current[0]).toBe('default-value');
+      expect(localStorage.getItem(TEST_KEY)).toBeNull();
+    });
+
+    it('removes value and uses lazy initial value', () => {
+      const lazyInit = vi.fn(() => ({ computed: 'lazy-value' }));
+
+      const { result } = renderHook(() =>
+        useLocalStorage(TEST_KEY, lazyInit)
+      );
+
+      // Set a value
+      act(() => {
+        result.current[1]({ computed: 'new-value' });
+      });
+
+      expect(result.current[0]).toEqual({ computed: 'new-value' });
+
+      // Remove value - should call lazy init again
+      act(() => {
+        result.current[2]();
+      });
+
+      expect(result.current[0]).toEqual({ computed: 'lazy-value' });
+      expect(lazyInit).toHaveBeenCalled();
     });
   });
 });
