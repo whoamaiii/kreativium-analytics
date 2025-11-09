@@ -1,317 +1,40 @@
 import { logger } from '@/lib/logger';
 import * as tf from '@tensorflow/tfjs';
 import { TrackingEntry } from '../types/student';
-import { ValidationResults } from '../types/ml';
 import { analyticsConfig } from '@/lib/analyticsConfig';
-import { 
-  toMLSessions, 
-  prepareEmotionDataset, 
+import {
+  toMLSessions,
+  prepareEmotionDataset,
   prepareSensoryDataset,
-  encodeTimeFeatures 
+  encodeTimeFeatures
 } from '@/lib/dataPreprocessing';
 import { recordEvaluation, type EvaluationRun } from '@/lib/modelEvaluation';
 import { createCacheKey } from '@/lib/analytics/cache-key';
 import { CrossValidator, type TimeSeriesValidationConfig } from '@/lib/validation/crossValidation';
 
-// Model versioning and metadata
-export interface ModelMetadata {
-  name: string;
-  version: string;
-  createdAt: Date;
-  lastTrainedAt: Date;
-  accuracy?: number;
-  loss?: number;
-  inputShape: number[];
-  outputShape: number[];
-  architecture: string;
-  epochs: number;
-  dataPoints: number;
-  validationResults?: ValidationResults;
-  /** Optional preprocessing schema version used to prepare the training data */
-  preprocessingSchemaVersion?: string;
-}
+// Import from extracted modules
+import {
+  ModelType,
+  ModelMetadata,
+  StoredModel,
+  MLSession,
+  EmotionPrediction,
+  SensoryPrediction,
+  BaselineCluster
+} from './mlModels/types';
+import { ModelStorage } from './mlModels/storage';
+import { createEmotionModel, createSensoryModel } from './mlModels/architectures';
 
-// ML Model types
-export type ModelType = 'emotion-prediction' | 'sensory-response' | 'baseline-clustering';
-
-// Model storage interface
-export interface StoredModel {
-  model: tf.LayersModel | tf.Sequential;
-  metadata: ModelMetadata;
-}
-
-/**
- * Session-like interface for ML training, capturing the state
- * of a student in various sensory and emotional dimensions.
- */
-export interface MLSession {
-  /**
-   * Unique session identifier.
-   */
-  id: string;
-  /**
-   * Identifier of the student associated with the session.
-   */
-  studentId: string;
-  /**
-   * Date of the session in ISO string format.
-   */
-  date: string;
-  emotion: {
-    /**
-     * Average intensity values for each emotional state.
-     * Ranges from 0 (none) to 10 (very intense).
-     */
-    happy?: number;
-    sad?: number;
-    angry?: number;
-    anxious?: number;
-    calm?: number;
-    energetic?: number;
-    frustrated?: number;
-  };
-  sensory: {
-    /**
-     * Sensory response types, categorized as seeking, avoiding, or neutral.
-     */
-    visual?: 'seeking' | 'avoiding' | 'neutral';
-    auditory?: 'seeking' | 'avoiding' | 'neutral';
-    tactile?: 'seeking' | 'avoiding' | 'neutral';
-    vestibular?: 'seeking' | 'avoiding' | 'neutral';
-    proprioceptive?: 'seeking' | 'avoiding' | 'neutral';
-  };
-  environment: {
-    /**
-     * Environmental conditions affecting the session.
-     */
-    lighting?: 'bright' | 'dim' | 'moderate';
-    noise?: 'loud' | 'moderate' | 'quiet';
-    temperature?: 'hot' | 'cold' | 'comfortable';
-    crowded?: 'very' | 'moderate' | 'not';
-    smells?: boolean;  // Presence of specific smells
-    textures?: boolean;  // Presence of notable textures
-  };
-  /**
-   * Activities performed during the session.
-   */
-  activities: string[];
-  /**
-   * Additional notes and observations.
-   */
-  notes: string;
-}
-
-// ML prediction results
-export interface EmotionPrediction {
-  date: Date;
-  emotions: {
-    happy: number;
-    sad: number;
-    angry: number;
-    anxious: number;
-    calm: number;
-    energetic: number;
-    frustrated: number;
-  };
-  confidence: number;
-  confidenceInterval: {
-    lower: number;
-    upper: number;
-  };
-}
-
-export interface SensoryPrediction {
-  sensoryResponse: {
-    visual: { seeking: number; avoiding: number; neutral: number };
-    auditory: { seeking: number; avoiding: number; neutral: number };
-    tactile: { seeking: number; avoiding: number; neutral: number };
-    vestibular: { seeking: number; avoiding: number; neutral: number };
-    proprioceptive: { seeking: number; avoiding: number; neutral: number };
-  };
-  environmentalTriggers: {
-    trigger: string;
-    probability: number;
-  }[];
-  confidence: number;
-}
-
-export interface BaselineCluster {
-  clusterId: number;
-  centroid: number[];
-  description: string;
-  anomalyScore: number;
-  isNormal: boolean;
-}
-
-// Model storage class using IndexedDB
-/**
- * Class for managing model storage using IndexedDB.
- * Handles model serialization and deserialization.
- */
-class ModelStorage {
-  private dbName = 'sensory-compass-ml';
-  private storeName = 'models';
-  private db: IDBDatabase | null = null;
-
-/**
- * Initialize the IndexedDB database connection.
- * Sets up the object store if it does not already exist.
- */
-async init(): Promise<void> {
-    // Check if IndexedDB is available
-    if (typeof indexedDB === 'undefined') {
-      try { logger.warn('[mlModels] IndexedDB not available, ML models will not persist'); } catch {}
-      return;
-    }
-    
-    return new Promise((resolve, reject) => {
-      try {
-        const request = indexedDB.open(this.dbName, 1);
-        
-        request.onerror = () => {
-          try { logger.warn('[mlModels] Failed to open IndexedDB', request.error as any); } catch {}
-          resolve(); // Don't reject, just continue without persistence
-        };
-        
-        request.onsuccess = () => {
-          this.db = request.result;
-          resolve();
-        };
-        
-        request.onupgradeneeded = (event) => {
-          const db = (event.target as IDBOpenDBRequest).result;
-          if (!db.objectStoreNames.contains(this.storeName)) {
-            db.createObjectStore(this.storeName, { keyPath: 'name' });
-          }
-        };
-      } catch (error) {
-        try { logger.warn('[mlModels] IndexedDB initialization failed', error as Error); } catch {}
-        resolve(); // Don't reject, just continue without persistence
-      }
-    });
-  }
-
-/**
- * Save a model to IndexedDB with its metadata.
- * Handles model artifacts serialization with a custom handler.
- *
- * @param name - Unique name for the model type.
- * @param model - The model to be saved.
- * @param metadata - Metadata associated with the model.
- */
-async saveModel(name: ModelType, model: tf.LayersModel, metadata: ModelMetadata): Promise<void> {
-    if (!this.db) await this.init();
-    if (!this.db) {
-      try { logger.warn('[mlModels] Cannot save model - IndexedDB not available'); } catch {}
-      return;
-    }
-    
-    // Save model to IndexedDB
-    const modelData = await model.save(tf.io.withSaveHandler(async (artifacts) => {
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
-      const store = transaction.objectStore(this.storeName);
-      
-      await new Promise<void>((resolve, reject) => {
-        const request = store.put({
-          name,
-          artifacts,
-          metadata,
-          timestamp: new Date()
-        });
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-      });
-      
-      return { modelArtifactsInfo: { dateSaved: new Date(), modelTopologyType: 'JSON' } };
-    }));
-  }
-
-/**
- * Load a model from IndexedDB using its name.
- * Deserializes model artifacts and reconstructs the TensorFlow.js model.
- *
- * @param name - Unique name for the model type to be loaded.
- * @returns The stored model along with its metadata, or null if not found.
- */
-async loadModel(name: ModelType): Promise<StoredModel | null> {
-    if (!this.db) await this.init();
-    if (!this.db) {
-      try { logger.warn('[mlModels] Cannot load model - IndexedDB not available'); } catch {}
-      return null;
-    }
-    
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.get(name);
-      
-      request.onsuccess = async () => {
-        const data = request.result;
-        if (!data) {
-          resolve(null);
-          return;
-        }
-        
-        // Load model from stored artifacts
-        const model = await tf.loadLayersModel(tf.io.fromMemory(data.artifacts));
-        resolve({
-          model,
-          metadata: data.metadata
-        });
-      };
-      
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-/**
- * Delete a model from IndexedDB by its name.
- *
- * @param name - The model type identifier to delete.
- */
-async deleteModel(name: ModelType): Promise<void> {
-    if (!this.db) await this.init();
-    if (!this.db) {
-      try { logger.warn('[mlModels] Cannot delete model - IndexedDB not available'); } catch {}
-      return;
-    }
-    
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.delete(name);
-      
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-/**
- * List all models stored in IndexedDB.
- *
- * @returns An array of metadata for all stored models.
- */
-async listModels(): Promise<ModelMetadata[]> {
-    if (!this.db) await this.init();
-    if (!this.db) {
-      try { logger.warn('[mlModels] Cannot list models - IndexedDB not available'); } catch {}
-      return [];
-    }
-    
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([this.storeName], 'readonly');
-      const store = transaction.objectStore(this.storeName);
-      const request = store.getAll();
-      
-      request.onsuccess = () => {
-        const models = request.result.map(item => item.metadata);
-        resolve(models);
-      };
-      
-      request.onerror = () => reject(request.error);
-    });
-  }
-}
+// Re-export types for backwards compatibility
+export type {
+  ModelType,
+  ModelMetadata,
+  StoredModel,
+  MLSession,
+  EmotionPrediction,
+  SensoryPrediction,
+  BaselineCluster
+};
 
 
 // Main ML Models class
@@ -327,9 +50,9 @@ export class MLModels {
 
   async init(): Promise<void> {
     if (this.isInitialized) return;
-    
+
     await this.storage.init();
-    
+
     // Load existing models
     const modelTypes: ModelType[] = ['emotion-prediction', 'sensory-response', 'baseline-clustering'];
     for (const type of modelTypes) {
@@ -338,74 +61,8 @@ export class MLModels {
         this.models.set(type, model);
       }
     }
-    
+
     this.isInitialized = true;
-  }
-
-  // Create emotion prediction model
-  createEmotionModel(): tf.Sequential {
-    const model = tf.sequential({
-      layers: [
-        tf.layers.lstm({
-          units: 64,
-          returnSequences: true,
-          inputShape: [7, 13] // 7 days, 13 features (7 emotions + 6 time features)
-        }),
-        tf.layers.dropout({ rate: 0.2 }),
-        tf.layers.lstm({
-          units: 32,
-          returnSequences: false
-        }),
-        tf.layers.dropout({ rate: 0.2 }),
-        tf.layers.dense({
-          units: 16,
-          activation: 'relu'
-        }),
-        tf.layers.dense({
-          units: 7,
-          activation: 'sigmoid' // Output emotions normalized to 0-1
-        })
-      ]
-    });
-    
-    model.compile({
-      optimizer: tf.train.adam(0.001),
-      loss: 'meanSquaredError',
-      metrics: ['mse', 'mae']
-    });
-    
-    return model;
-  }
-
-  // Create sensory response model
-  createSensoryModel(): tf.Sequential {
-    const model = tf.sequential({
-      layers: [
-        tf.layers.dense({
-          units: 32,
-          activation: 'relu',
-          inputShape: [12] // 6 environment + 6 time features
-        }),
-        tf.layers.dropout({ rate: 0.2 }),
-        tf.layers.dense({
-          units: 16,
-          activation: 'relu'
-        }),
-        tf.layers.dropout({ rate: 0.2 }),
-        tf.layers.dense({
-          units: 15,
-          activation: 'softmax' // 5 senses × 3 responses (seeking/avoiding/neutral)
-        })
-      ]
-    });
-    
-    model.compile({
-      optimizer: tf.train.adam(0.001),
-      loss: 'categoricalCrossentropy',
-      metrics: ['accuracy']
-    });
-    
-    return model;
   }
 
   // Train emotion model
@@ -416,7 +73,7 @@ export class MLModels {
     options?: { devRunTimeSeriesCV?: boolean; tsConfig?: Partial<TimeSeriesValidationConfig> }
   ): Promise<void> {
     const sessions = toMLSessions(trackingEntries);
-    const model = this.createEmotionModel();
+    const model = createEmotionModel();
     const { inputs, outputs, meta } = prepareEmotionDataset(sessions);
 
     // Pull defaults from analytics runtime config; fall back to sane defaults
@@ -490,7 +147,7 @@ export class MLModels {
           folds: options.tsConfig?.folds,
           taskType: 'regression',
         };
-        const tsResults = await validator.validateTimeSeriesModel(() => this.createEmotionModel(), { features: inputs, labels: outputs }, tsCfg);
+        const tsResults = await validator.validateTimeSeriesModel(() => createEmotionModel(), { features: inputs, labels: outputs }, tsCfg);
         const cvSig = createCacheKey({
           namespace: 'ml-training:cv',
           input: { tsCfg, preprocessingSchemaVersion: meta?.schemaVersion },
@@ -555,7 +212,7 @@ export class MLModels {
     options?: { devRunTimeSeriesCV?: boolean; tsConfig?: Partial<TimeSeriesValidationConfig> }
   ): Promise<void> {
     const sessions = toMLSessions(trackingEntries);
-    const model = this.createSensoryModel();
+    const model = createSensoryModel();
     const { inputs, outputs, meta } = prepareSensoryDataset(sessions);
 
     const cfgRuntime = analyticsConfig.getConfig();
@@ -626,7 +283,7 @@ export class MLModels {
           folds: options.tsConfig?.folds,
           taskType: 'classification',
         };
-        const tsResults = await validator.validateTimeSeriesModel(() => this.createSensoryModel(), { features: inputs, labels: outputs }, tsCfg);
+        const tsResults = await validator.validateTimeSeriesModel(() => createSensoryModel(), { features: inputs, labels: outputs }, tsCfg);
         const cvSig = createCacheKey({
           namespace: 'ml-training:cv',
           input: { tsCfg, preprocessingSchemaVersion: meta?.schemaVersion },
