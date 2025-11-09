@@ -54,6 +54,7 @@ import { AlertPolicies } from '@/lib/alerts/policies';
 import { AlertTelemetryService } from '@/lib/alerts/telemetry';
 import { alertPerf } from '@/lib/alerts/performance';
 import { createRunAnalysis } from '@/lib/analytics/runAnalysisTask';
+import { ANALYTICS_CACHE_TTL_MS } from '@/constants/analytics';
 import {
   ALERTS_HEALTH_EVENT,
   ensureWorkerInitialized,
@@ -129,7 +130,7 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
   const { config: liveCfg } = validateAnalyticsRuntimeConfig(liveCfgRaw ?? undefined);
   const resolvedTtl = typeof options.cacheTTL === 'number'
     ? options.cacheTTL
-    : (liveCfg?.cache?.ttl ?? 300_000); // default 300s in ms
+    : (liveCfg?.cache?.ttl ?? ANALYTICS_CACHE_TTL_MS);
   const {
     cacheTTL = resolvedTtl,
     enableCacheStats = false,

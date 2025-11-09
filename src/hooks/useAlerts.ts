@@ -5,6 +5,7 @@ import { BaselineService } from '@/lib/alerts/baseline';
 import { AlertTelemetryService } from '@/lib/alerts/telemetry';
 import { AlertSystemBridge } from '@/lib/alerts/bridge';
 import { safeGet, safeSet } from '@/lib/storage';
+import { ALERT_POLL_INTERVAL_MS } from '@/constants/analytics';
 
 function readStorage<T>(key: string): T | null {
   try {
@@ -125,7 +126,7 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
   useEffect(() => {
     // load initial and set simple polling for freshness
     load();
-    const t = setInterval(load, 10_000);
+    const t = setInterval(load, ALERT_POLL_INTERVAL_MS);
     return () => clearInterval(t);
   }, [load]);
 
