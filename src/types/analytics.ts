@@ -205,6 +205,16 @@ export type AnalyticsWorkerMessage =
     cacheKey?: string;
     payload: { alerts: AlertEvent[]; studentId?: string; prewarm?: boolean };
   }
+  | {
+    type: 'CACHE/CLEAR_DONE';
+    payload: {
+      scope: 'all' | 'student' | 'patterns';
+      studentId?: string;
+      patternsCleared?: number;
+      cacheCleared?: number;
+      stats?: { size: number };
+    };
+  }
   // Lightweight meta channel for diagnostics; worker may ignore
   | {
     type: 'game:event';

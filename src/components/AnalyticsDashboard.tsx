@@ -34,19 +34,22 @@ import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/stud
 import { useAnalyticsWorker } from "@/hooks/useAnalyticsWorker";
 import { analyticsManager } from "@/lib/analyticsManager";
 import { useTranslation } from "@/hooks/useTranslation";
-import { analyticsExport, ExportFormat } from "@/lib/analyticsExport";
+import { ExportFormat } from "@/lib/analyticsExport";
 import { toast } from '@/hooks/use-toast';
 import { logger } from "@/lib/logger";
 import { doOnce } from "@/lib/rateLimit";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { useSyncedTabParam } from '@/hooks/useSyncedTabParam';
 import { Badge } from '@/components/ui/badge';
-import { useAsyncState } from '@/hooks/useAsyncState';
 import { ExportDialog, type ExportOptions } from '@/components/ExportDialog';
 import { FiltersDrawer } from '@/components/analytics/FiltersDrawer';
 import { QuickQuestions } from '@/components/analytics/QuickQuestions';
 import type { FilterCriteria } from '@/lib/filterUtils';
 import { AnalyticsActions } from '@/components/analytics/AnalyticsActions';
+// Extracted hooks for cleaner component architecture
+import { useAnalyticsData } from '@/hooks/useAnalyticsData';
+import { useAnalyticsCache, useDataChangeDetection } from '@/hooks/useAnalyticsCache';
+import { useAnalyticsExport } from '@/hooks/useAnalyticsExport';
 
 // Typed tab keys to avoid stringly-typed errors
 
@@ -90,16 +93,11 @@ export const AnalyticsDashboard = memo(({
 }: AnalyticsDashboardProps) => {
   // All hooks must be called at the top level, not inside try-catch
   const { tStudent, tAnalytics, tCommon } = useTranslation();
-  const exportState = useAsyncState<void>(null, { autoResetMs: 1000, showErrorToast: false });
   const [exportDialogOpen, setExportDialogOpen] = useState<boolean>(false);
-  const [exportProgress, setExportProgress] = useState<number>(0);
-  const [isExporting, setIsExporting] = useState<boolean>(false);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [isSeeding, setIsSeeding] = useState<boolean>(false);
   const visualizationRef = useRef<HTMLDivElement>(null);
-  const [hasNewInsights, setHasNewInsights] = useState<boolean>(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(() => false);
-  const [pendingRefresh, setPendingRefresh] = useState<boolean>(false);
   const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
   const [filters, setFilters] = useState<FilterCriteria>(() => ({
     dateRange: { start: null, end: null },
@@ -115,7 +113,7 @@ export const AnalyticsDashboard = memo(({
     patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },
     realtime: false,
   }));
-  
+
   // Always call hook at top level - hooks cannot be inside try-catch
   const { results, isAnalyzing, error, runAnalysis, invalidateCacheForStudent } = useAnalyticsWorker({ precomputeOnIdle: false });
   // Stabilize runAnalysis usage to avoid effect re-runs from changing function identity
@@ -126,54 +124,8 @@ export const AnalyticsDashboard = memo(({
   // retriggering effects when parent passes a new object instance.
   const analyticsStudent = useMemo(() => student, [student]);
 
-  // Derive a stable signature for filteredData so effects do not re-run on
-  // mere object identity changes from parent re-renders.
-  const dataSignature = useMemo(() => {
-    const entries = filteredData.entries || [];
-    const emotions = filteredData.emotions || [];
-    const sensory = filteredData.sensoryInputs || [];
-    const toTime = (v: unknown): number => {
-      try {
-        const dt = v instanceof Date ? v : new Date(v as string);
-        return isNaN(dt.getTime()) ? 0 : dt.getTime();
-      } catch {
-        return 0;
-      }
-    };
-    const first = entries[0]?.timestamp;
-    const last = entries.length > 0 ? entries[entries.length - 1]?.timestamp : undefined;
-    return [entries.length, emotions.length, sensory.length, toTime(first), toTime(last)].join('|');
-  }, [filteredData]);
-
-  // Shared normalization for analysis input (must be declared before first use)
-  const normalizeForAnalysis = useCallback((d: typeof filteredData) => {
-    const coerce = (v: unknown): Date => {
-      try {
-        if (v instanceof Date && !isNaN(v.getTime())) return v;
-        if (typeof v === 'string' || typeof v === 'number') {
-          const dt = new Date(v);
-          return isNaN(dt.getTime()) ? new Date() : dt;
-        }
-        return new Date();
-      } catch (error) {
-        logger.error('Error coercing timestamp:', v, error);
-        return new Date();
-      }
-    };
-    try {
-      return {
-        entries: (d.entries || []).map(e => ({ ...e, timestamp: coerce(e.timestamp) })),
-        emotions: (d.emotions || []).map(e => ({ ...e, timestamp: coerce(e.timestamp) })),
-        sensoryInputs: (d.sensoryInputs || []).map(s => ({ ...s, timestamp: coerce(s.timestamp) })),
-      };
-    } catch (error) {
-      logger.error('Error normalizing filteredData:', error);
-      return { entries: [], emotions: [], sensoryInputs: [] };
-    }
-  }, []);
-
-  // Normalize once when the signature changes to avoid churn on identity-only changes
-  const normalizedData = useMemo(() => normalizeForAnalysis(filteredData), [normalizeForAnalysis, dataSignature]);
+  // Data normalization and signature generation (extracted hook)
+  const { normalizedData, dataSignature } = useAnalyticsData({ filteredData });
 
   // Dev-only guard
   const isDevSeedEnabled = useMemo(() => {
@@ -231,69 +183,35 @@ export const AnalyticsDashboard = memo(({
     }
   }, [student?.id, dataSignature, useAI, analyticsStudent, normalizedData]);
 
-  const handleCacheClear = useCallback((event: Event) => {
-    const customEvent = event as CustomEvent<{ studentId?: string } | undefined>;
-    const targetStudentId = customEvent.detail?.studentId;
-    if (targetStudentId) {
-      if (!student || targetStudentId !== student.id) {
-        return;
-      }
-    }
-    setHasNewInsights(true);
-  }, [student?.id]);
-
-  // Listen for global/student cache clear events and surface a "new insights" indicator
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const handler = (event: Event) => handleCacheClear(event);
-    window.addEventListener('analytics:cache:clear', handler);
-    window.addEventListener('analytics:cache:clear:student', handler);
-    return () => {
-      window.removeEventListener('analytics:cache:clear', handler);
-      window.removeEventListener('analytics:cache:clear:student', handler);
-    };
-  }, [handleCacheClear]);
-
-  // Detect incoming data changes to hint that insights may be outdated
-  const prevCountsRef = useRef<{ entries: number; emotions: number; sensory: number }>({ entries: 0, emotions: 0, sensory: 0 });
-  useEffect(() => {
-    try {
-      const prev = prevCountsRef.current;
-      const next = {
-        entries: filteredData.entries?.length || 0,
-        emotions: filteredData.emotions?.length || 0,
-        sensory: filteredData.sensoryInputs?.length || 0,
-      };
-      if (next.entries > prev.entries || next.emotions > prev.emotions || next.sensory > prev.sensory) {
-        setHasNewInsights(true);
-      }
-      prevCountsRef.current = next;
-    } catch { /* noop */ }
-  }, [filteredData.entries?.length, filteredData.emotions?.length, filteredData.sensoryInputs?.length]);
-
-  // Manual refresh helper kept near auto-refresh effect for shared logic
-  const handleManualRefresh = useCallback(() => {
-    setPendingRefresh(true);
-    runAnalysisRef.current(normalizedData, { useAI, student: analyticsStudent });
-  }, [normalizedData, useAI, analyticsStudent]);
-
-  // Auto-refresh if enabled
-  useEffect(() => {
-    if (!autoRefresh || !hasNewInsights) return undefined;
-    const timeoutId = window.setTimeout(() => {
-      setPendingRefresh(true);
+  // Cache management and refresh logic (extracted hooks)
+  const cacheManager = useAnalyticsCache({
+    studentId: student.id,
+    autoRefresh,
+    autoRefreshDelayMs: 1200,
+    onRefresh: () => {
       runAnalysisRef.current(normalizedData, { useAI, student: analyticsStudent });
-    }, 1200);
-    return () => window.clearTimeout(timeoutId);
-  }, [autoRefresh, hasNewInsights, normalizedData, useAI, analyticsStudent]);
+    },
+  });
+
+  // Detect incoming data changes
+  useDataChangeDetection({
+    filteredData,
+    onDataIncrease: () => {
+      cacheManager.setHasNewInsights(true);
+    },
+  });
+
+  // Manual refresh helper
+  const handleManualRefresh = useCallback(() => {
+    cacheManager.triggerRefresh();
+  }, [cacheManager]);
 
   // Clear indicator when our triggered analysis completes
   useEffect(() => {
-    if (!isAnalyzing && pendingRefresh) {
-      setHasNewInsights(false);
-      setPendingRefresh(false);
+    if (!isAnalyzing && cacheManager.pendingRefresh) {
+      cacheManager.markInsightsViewed();
     }
-  }, [isAnalyzing, pendingRefresh]);
+  }, [isAnalyzing, cacheManager]);
 
   // Rate-limited error logging (once per minute per message)
   useEffect(() => {
@@ -309,141 +227,28 @@ export const AnalyticsDashboard = memo(({
   // Decouple visualization rendering from worker readiness to avoid spinners.
   // Charts render immediately using filteredData while analysis updates other tabs.
 
-  // Export handler with useCallback for performance
-  const doExport = useCallback(async (format: ExportFormat, opts?: Partial<ExportOptions>) => {
-    try {
-      setIsExporting(true);
-      setExportProgress(5);
-
-      await exportState.run(async () => {
-        const dateRange = (() => {
-          if (filteredData.entries.length === 0) {
-            const now = new Date();
-            return { start: now, end: now };
-          }
-
-          const [firstEntry] = filteredData.entries;
-          const initial = firstEntry.timestamp instanceof Date ? firstEntry.timestamp : new Date(firstEntry.timestamp);
-          const accumulator = filteredData.entries.reduce<{ minDate: Date; maxDate: Date }>((acc, entry) => {
-            const rawTimestamp = entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp);
-            const timestamp = Number.isNaN(rawTimestamp.getTime()) ? acc.minDate : rawTimestamp;
-            return {
-              minDate: timestamp < acc.minDate ? timestamp : acc.minDate,
-              maxDate: timestamp > acc.maxDate ? timestamp : acc.maxDate,
-            };
-          }, { minDate: initial, maxDate: initial });
-
-          return { start: accumulator.minDate, end: accumulator.maxDate };
-        })();
-
-        setExportProgress(20);
-
-        const collectChartExports = async () => {
-          if (format !== 'pdf') return undefined;
-          try {
-            const { chartRegistry } = await import('@/lib/chartRegistry');
-            const registrations = chartRegistry.all();
-            if (registrations.length === 0) {
-              toast({
-                title: String(tAnalytics('export.noCharts')),
-                description: String(tAnalytics('export.noCharts')),
-              });
-              return [] as Array<{ title: string; type?: string; dataURL?: string; svgString?: string }>;
-            }
-
-            const overlappingCharts = registrations
-              .filter(chart => !chart.studentId || chart.studentId === student.id)
-              .filter(chart => {
-                if (!chart.dateRange) return true;
-                const chartStart = chart.dateRange.start.getTime();
-                const chartEnd = chart.dateRange.end.getTime();
-                const exportStart = dateRange.start.getTime();
-                const exportEnd = dateRange.end.getTime();
-                return !(chartEnd < exportStart || chartStart > exportEnd);
-              })
-              .slice(0, 6);
-
-            setExportProgress(40);
-
-            const exports = await Promise.all(overlappingCharts.map(async chart => {
-              const methods = chart.getMethods();
-              return {
-                title: chart.title,
-                type: chart.type,
-                dataURL: methods.getImage({ pixelRatio: 2, backgroundColor: '#ffffff' }),
-                svgString: methods.getSVG(),
-              };
-            }));
-
-            const usableExports = exports.filter(item => item.dataURL || item.svgString);
-            if (usableExports.length === 0) {
-              toast({
-                title: String(tAnalytics('export.noCharts')),
-                description: String(tAnalytics('export.noCharts')),
-              });
-            }
-            return usableExports;
-          } catch (collectError) {
-            logger.error('Failed to collect chart exports', collectError);
-            toast({
-              title: String(tAnalytics('export.noCharts')),
-              description: String(tAnalytics('export.noCharts')),
-            });
-            return [] as Array<{ title: string; type?: string; dataURL?: string; svgString?: string }>;
-          }
-        };
-
-        const exportData = {
-          student,
-          dateRange,
-          data: filteredData,
-          analytics: {
-            patterns,
-            correlations,
-            insights,
-            predictiveInsights: results?.predictiveInsights || [],
-            anomalies: results?.anomalies || [],
-          },
-          charts: format === 'pdf' && visualizationRef.current
-            ? [{ element: visualizationRef.current, title: String(tAnalytics('export.chartTitle')) }]
-            : undefined,
-          chartExports: await collectChartExports(),
-        } as const;
-
-        setExportProgress(65);
-        const pdfOptions = opts?.chartQuality ? { pdf: { chartQuality: opts.chartQuality } } : undefined;
-        await analyticsExport.exportTo(format, exportData, pdfOptions);
-
-        setExportProgress(100);
-
-        const successMessageKey: Record<ExportFormat, string> = {
-          pdf: 'export.success.pdf',
-          csv: 'export.success.csv',
-          json: 'export.success.json',
-        };
-        toast({
-          title: String(tAnalytics(successMessageKey[format])),
-          description: String(tAnalytics(successMessageKey[format])),
-        });
-      });
-    } catch (error) {
-      logger.error('Export failed:', error);
-      toast({
-        title: String(tAnalytics('export.failure')),
-        description: String(tAnalytics('export.failure')),
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  }, [exportState, filteredData, patterns, correlations, insights, results, student, tAnalytics]);
+  // Export management (extracted hook)
+  const exportManager = useAnalyticsExport({
+    student,
+    filteredData,
+    analyticsResults: {
+      patterns,
+      correlations,
+      insights,
+      predictiveInsights: results?.predictiveInsights,
+      anomalies: results?.anomalies,
+    },
+    tAnalytics,
+    visualizationRef,
+  });
 
   const handleExport = useCallback((format: ExportFormat) => {
     if (format === 'pdf') {
       setExportDialogOpen(true);
       return;
     }
-    void doExport(format);
-  }, [doExport]);
+    void exportManager.exportTo(format);
+  }, [exportManager]);
 
   // Track active tab synced with URL
   // URL-synced hook for persistence across reloads and deep links
@@ -526,7 +331,7 @@ export const AnalyticsDashboard = memo(({
             <Badge variant={useAI ? 'default' : 'secondary'} data-testid="ai-mode-badge" aria-label={useAI ? String(tAnalytics('ai.mode.ai', { defaultValue: 'AI' })) : String(tAnalytics('ai.mode.heuristic', { defaultValue: 'Heuristic' }))}>
               {useAI ? String(tAnalytics('ai.mode.ai', { defaultValue: 'AI' })) : String(tAnalytics('ai.mode.heuristic', { defaultValue: 'Heuristic' }))}
             </Badge>
-            {hasNewInsights && (
+            {cacheManager.hasNewInsights && (
               <Badge variant="default" data-testid="new-insights-badge" aria-live="polite">
                 {String(tAnalytics('insights.newInsightsAvailable', { defaultValue: 'New insights available' }))}
               </Badge>
@@ -550,16 +355,16 @@ export const AnalyticsDashboard = memo(({
                 setFiltersOpen(false);
               }}
             />
-            
+
             {/* Consolidated Actions Component */}
             <AnalyticsActions
               onExport={handleExport}
               onSettings={() => setShowSettings(true)}
               onRefresh={handleManualRefresh}
               onFilters={() => setFiltersOpen(true)}
-              isExporting={exportState.isLoading}
+              isExporting={exportManager.isExporting}
               isAnalyzing={isAnalyzing}
-              hasNewInsights={hasNewInsights}
+              hasNewInsights={cacheManager.hasNewInsights}
             />
           </div>
         </CardHeader>
@@ -766,10 +571,10 @@ export const AnalyticsDashboard = memo(({
           open={exportDialogOpen}
           onOpenChange={setExportDialogOpen}
           defaultFormat="pdf"
-          onConfirm={(opts) => { setExportDialogOpen(true); void doExport(opts.format, opts); }}
-          inProgress={isExporting}
-          progressPercent={exportProgress}
-          onCancel={() => { setIsExporting(false); setExportDialogOpen(false); }}
+          onConfirm={(opts) => { setExportDialogOpen(true); void exportManager.exportTo(opts.format, opts); }}
+          inProgress={exportManager.isExporting}
+          progressPercent={exportManager.exportProgress}
+          onCancel={() => { exportManager.resetExport(); setExportDialogOpen(false); }}
           closeOnConfirm={false}
         />
       )}

@@ -19,6 +19,19 @@ import { generateAnalyticsSummary } from '@/lib/analyticsSummary';
 import { AlertDetectionEngine } from '@/lib/alerts/engine';
 import { BaselineService } from '@/lib/alerts/baseline';
 import type { AlertEvent } from '@/lib/alerts/types';
+import {
+  parseWorkerRequest,
+  isInsightsComputeRequest,
+  isCacheClearAllRequest,
+  isCacheClearStudentRequest,
+  isCacheClearPatternsRequest,
+  isGameEventRequest,
+  isGameSessionSummaryRequest,
+  isLegacyAnalyticsDataRequest,
+  type WorkerRequestMessage,
+  type CacheClearDoneResponse,
+} from '@/types/worker-messages';
+import { safeGetGoals, safeConvertConfig } from '@/lib/utils/config-accessors';
 
 // Type is now imported from @/types/analytics
 
@@ -249,74 +262,114 @@ export type { AnalyticsData, AnalyticsResults } from '@/types/analytics';
  * This function is triggered when the main thread calls `worker.postMessage()`.
  * It orchestrates the analysis process and posts the results back.
  */
-export async function handleMessage(e: MessageEvent<any>) {
-  // Support two message shapes:
-  // A) Cache control commands (CACHE/*)
-  // B) Typed task envelope built via buildInsightsTask
-  // C) Legacy AnalyticsData directly
-  const msg = e.data as any;
+export async function handleMessage(e: MessageEvent<unknown>) {
+  // Parse and validate the incoming message with runtime type guards
+  const msg = parseWorkerRequest(e.data);
 
-  // Lightweight event ingestion channel from game UI
-  if (msg && msg.type === 'game:event' && msg.payload) {
+  if (!msg) {
+    // Invalid message structure - log and ignore
     try {
-      // For now, aggregate into an in-memory counter and expose via alerts channel for observability
-      const ev = msg.payload as { kind: string; ts: number };
-      const key = `game:event:count:${ev.kind}`;
-      const prev = (workerCache.get(key) as number | undefined) ?? 0;
-      workerCache.set(key, prev + 1, ['game-events'], 300000);
-    } catch {}
+      logger.warn('[analytics.worker] Received invalid message', { data: e.data });
+    } catch { /* noop */ }
     return;
   }
 
-  if (msg && msg.type === 'game:session_summary' && msg.payload) {
+  // Handle game event messages (lightweight telemetry)
+  if (isGameEventRequest(msg)) {
+    try {
+      // Aggregate into an in-memory counter and expose via alerts channel for observability
+      const key = `game:event:count:${msg.payload.kind}`;
+      const prev = (workerCache.get(key) as number | undefined) ?? 0;
+      workerCache.set(key, prev + 1, ['game-events'], 300000);
+    } catch { /* noop */ }
+    return;
+  }
+
+  // Handle game session summary
+  if (isGameSessionSummaryRequest(msg)) {
     try {
       const key = 'game:session:last';
       workerCache.set(key, msg.payload, ['game-session'], 600000);
       // Optionally surface via alerts channel for UI hooks wanting summaries quickly
       enqueueMessage({ type: 'alerts', payload: { alerts: [], prewarm: true } } as unknown as AnalyticsWorkerMessage);
-    } catch {}
+    } catch { /* noop */ }
     return;
   }
 
-  // Intercept cache control messages first
-  if (msg && typeof msg.type === 'string' && msg.type.startsWith('CACHE/')) {
+  // Handle cache control messages
+  if (isCacheClearAllRequest(msg)) {
     try {
-      if (msg.type === 'CACHE/CLEAR_ALL') {
-        const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
-        const cacheCleared = workerCache.clearAll();
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
-      } else if (msg.type === 'CACHE/CLEAR_STUDENT' && typeof msg.studentId === 'string') {
-        const patternsCleared = (() => { try { return cachedAnalysis.invalidateStudentCache(msg.studentId); } catch { return 0; } })();
-        const cacheCleared = workerCache.clearByStudentId(msg.studentId);
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'student', studentId: msg.studentId, patternsCleared, cacheCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
-      } else if (msg.type === 'CACHE/CLEAR_PATTERNS') {
-        const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
-        enqueueMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() } } as unknown as AnalyticsWorkerMessage);
-      }
+      const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
+      const cacheCleared = workerCache.clearAll();
+      const response: CacheClearDoneResponse = {
+        type: 'CACHE/CLEAR_DONE',
+        payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() }
+      };
+      enqueueMessage(response as unknown as AnalyticsWorkerMessage);
     } catch (err) {
-      try { logger.error('[analytics.worker] Cache clear command failed', err as Error); } catch {}
+      try { logger.error('[analytics.worker] Cache clear all failed', err as Error); } catch { /* noop */ }
     }
     return;
   }
+
+  if (isCacheClearStudentRequest(msg)) {
+    try {
+      const patternsCleared = (() => { try { return cachedAnalysis.invalidateStudentCache(msg.studentId); } catch { return 0; } })();
+      const cacheCleared = workerCache.clearByStudentId(msg.studentId);
+      const response: CacheClearDoneResponse = {
+        type: 'CACHE/CLEAR_DONE',
+        payload: { scope: 'student', studentId: msg.studentId, patternsCleared, cacheCleared, stats: workerCache.getStats() }
+      };
+      enqueueMessage(response as unknown as AnalyticsWorkerMessage);
+    } catch (err) {
+      try { logger.error('[analytics.worker] Cache clear student failed', err as Error); } catch { /* noop */ }
+    }
+    return;
+  }
+
+  if (isCacheClearPatternsRequest(msg)) {
+    try {
+      const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
+      const response: CacheClearDoneResponse = {
+        type: 'CACHE/CLEAR_DONE',
+        payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() }
+      };
+      enqueueMessage(response as unknown as AnalyticsWorkerMessage);
+    } catch (err) {
+      try { logger.error('[analytics.worker] Cache clear patterns failed', err as Error); } catch { /* noop */ }
+    }
+    return;
+  }
+
+  // Extract analytics data from typed message
   let filteredData: AnalyticsData;
   let isPrewarm = false;
-  if (msg && msg.type === 'Insights/Compute' && msg.payload) {
+
+  if (isInsightsComputeRequest(msg)) {
+    // Type-safe access to InsightsComputeRequest fields with config accessors
     const { inputs, config, prewarm } = msg.payload;
     isPrewarm = !!prewarm;
     filteredData = {
       entries: inputs.entries,
       emotions: inputs.emotions,
       sensoryInputs: inputs.sensoryInputs,
-      goals: (inputs as any).goals ?? [],
+      goals: safeGetGoals(inputs), // Type-safe goals accessor
       cacheKey: msg.cacheKey,
-      config: (config as any) ?? null
-    } as unknown as AnalyticsData;
+      config: safeConvertConfig(config), // Type-safe config converter
+    };
     // Optionally honor ttlSeconds from task by updating per-message TTL
     if (typeof msg.ttlSeconds === 'number' && msg.ttlSeconds > 0) {
       workerCacheTTL = Math.max(1000, Math.floor(msg.ttlSeconds * 1000));
     }
+  } else if (isLegacyAnalyticsDataRequest(msg)) {
+    // Type-safe handling of legacy AnalyticsData format
+    filteredData = msg;
   } else {
-    filteredData = msg as AnalyticsData;
+    // Unknown message type after validation - should not happen
+    try {
+      logger.warn('[analytics.worker] Unknown validated message type', { msg });
+    } catch { /* noop */ }
+    return;
   }
 
   // Diagnostic log: message received - use cache to limit verbosity
@@ -329,7 +382,7 @@ export async function handleMessage(e: MessageEvent<any>) {
         entries: filteredData?.entries?.length ?? 0,
         emotions: filteredData?.emotions?.length ?? 0,
         sensory: filteredData?.sensoryInputs?.length ?? 0,
-        goals: (filteredData as any)?.goals?.length ?? 0,
+        goals: filteredData?.goals?.length ?? 0, // Type-safe access
       });
       workerCache.set(logKey, true, ['logging']);
     }
