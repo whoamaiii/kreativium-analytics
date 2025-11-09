@@ -7,6 +7,20 @@ import type { AlertPolicies } from '@/lib/alerts/policies';
 import type { AlertTelemetryService } from '@/lib/alerts/telemetry';
 import { logger } from '@/lib/logger';
 import { alertPerf } from '@/lib/alerts/performance';
+import {
+  parseWorkerResponse,
+  isAlertsResponse,
+  isCompleteResponse,
+  isErrorResponse,
+  isPartialResponse,
+  isProgressResponse,
+  type WorkerResponseMessage,
+} from '@/types/worker-messages';
+import {
+  safeGetStringMetadata,
+  safeGetArrayMetadata,
+  safeGetObjectMetadata,
+} from '@/lib/utils/config-accessors';
 
 export interface CacheStore {
   get: (key: string) => unknown;
@@ -42,12 +56,18 @@ type LoggerInstance = typeof logger;
 const ensureLogger = (customLogger?: LoggerInstance) => customLogger ?? logger;
 
 const handleAlertsMessage = (
-  data: AnalyticsWorkerMessage,
+  data: WorkerResponseMessage,
   ctx: WorkerMessageHandlerContext,
-  log: Logger
+  log: LoggerInstance
 ) => {
-  const payload = data.payload as { alerts?: AlertEvent[]; studentId?: string; prewarm?: boolean } | undefined;
-  if (!payload || !Array.isArray(payload.alerts) || payload.alerts.length === 0) {
+  // Type guard ensures data.type === 'alerts' and payload is properly typed
+  if (!isAlertsResponse(data)) {
+    log.warn('[workerMessageHandlers] handleAlertsMessage called with non-alerts message');
+    return;
+  }
+
+  const payload = data.payload;
+  if (!Array.isArray(payload.alerts) || payload.alerts.length === 0) {
     return;
   }
 
@@ -89,13 +109,18 @@ const handleAlertsMessage = (
   const newAlerts = payload.alerts.filter((alert) => !priorMap.has(alert.id));
   newAlerts.forEach((alert) => {
     try {
-      const metadata = (alert.metadata ?? {}) as Record<string, unknown>;
-      const thresholdAdjustments = metadata.thresholdTrace as Record<string, ThresholdAdjustmentTrace> | undefined;
+      // Use type-safe metadata accessors instead of unsafe casts
+      const metadata = alert.metadata;
+      const thresholdAdjustments = safeGetObjectMetadata<Record<string, ThresholdAdjustmentTrace>>(metadata, 'thresholdTrace');
+      const detectorTypes = safeGetArrayMetadata<string>(metadata, 'detectorTypes');
+      const experimentKey = safeGetStringMetadata(metadata, 'experimentKey');
+      const experimentVariant = safeGetStringMetadata(metadata, 'experimentVariant');
+
       ctx.telemetryService.logAlertCreated(alert, {
         predictedRelevance: alert.confidence,
-        detectorTypes: (metadata.detectorTypes as string[]) ?? undefined,
-        experimentKey: typeof metadata.experimentKey === 'string' ? (metadata.experimentKey as string) : undefined,
-        experimentVariant: typeof metadata.experimentVariant === 'string' ? (metadata.experimentVariant as string) : undefined,
+        detectorTypes,
+        experimentKey,
+        experimentVariant,
         thresholdAdjustments,
         metadataSnapshot: alert.metadata,
       });
@@ -117,11 +142,17 @@ const handleAlertsMessage = (
 };
 
 const handleCompleteMessage = (
-  data: AnalyticsWorkerMessage,
+  data: WorkerResponseMessage,
   ctx: WorkerMessageHandlerContext
 ) => {
-  const cacheKeyFromMsg = (data.cacheKey || (data.payload as any)?.cacheKey) as string | undefined;
-  const prewarmFlag = ((data.payload as any)?.prewarm === true);
+  // Type guard ensures data.type === 'complete' and payload is properly typed
+  if (!isCompleteResponse(data)) {
+    logger.warn('[workerMessageHandlers] handleCompleteMessage called with non-complete message');
+    return;
+  }
+
+  const cacheKeyFromMsg = data.cacheKey || data.payload.cacheKey;
+  const prewarmFlag = data.payload.prewarm === true;
   const shouldUpdateUi = !!cacheKeyFromMsg && cacheKeyFromMsg === ctx.activeCacheKeyRef.current && !prewarmFlag;
 
   if (cacheKeyFromMsg && data.payload) {
@@ -146,21 +177,28 @@ const handleCompleteMessage = (
 };
 
 const handleErrorMessage = (
-  data: AnalyticsWorkerMessage,
+  data: WorkerResponseMessage,
   ctx: WorkerMessageHandlerContext
 ) => {
+  // Type guard ensures data.type === 'error' and error field is present
+  if (!isErrorResponse(data)) {
+    logger.warn('[workerMessageHandlers] handleErrorMessage called with non-error message');
+    return;
+  }
+
   if (data.cacheKey) {
     ctx.cacheTagsRef.current.delete(data.cacheKey);
   }
   ctx.setIsAnalyzing(false);
-  ctx.setError(typeof (data as any).error === 'string' ? ((data as any).error as string) : 'Analytics worker error');
+  ctx.setError(data.error || 'Analytics worker error');
   ctx.setResults((prev) => prev ?? ({
     patterns: [],
     correlations: [],
     environmentalCorrelations: [],
     predictiveInsights: [],
     anomalies: [],
-    insights: ['Analytics temporarily unavailable.']
+    insights: ['Analytics temporarily unavailable.'],
+    suggestedInterventions: [],
   } as AnalyticsResultsAI));
 };
 
@@ -171,8 +209,12 @@ export const createWorkerMessageHandlers = (
   const log = ensureLogger(customLogger);
 
   const onMessage = (event: MessageEvent<AnalyticsWorkerMessage>) => {
-    const data = event.data as AnalyticsWorkerMessage | undefined;
-    if (!data) return;
+    // Parse and validate incoming message with runtime type guards
+    const data = parseWorkerResponse(event.data);
+    if (!data) {
+      log.warn('[workerMessageHandlers] Received invalid worker response message', { data: event.data });
+      return;
+    }
 
     if (!ctx.isWorkerReady()) {
       ctx.markWorkerReady();
@@ -185,22 +227,22 @@ export const createWorkerMessageHandlers = (
     }
 
     try {
-      switch (data.type) {
-        case 'partial':
-          break;
-        case 'alerts':
-          handleAlertsMessage(data, ctx, log);
-          break;
-        case 'complete':
-          handleCompleteMessage(data, ctx);
-          break;
-        case 'error':
-          handleErrorMessage(data, ctx);
-          break;
-        case 'progress':
-          break;
-        default:
-          break;
+      // Use discriminated union for type-safe message handling
+      if (isAlertsResponse(data)) {
+        handleAlertsMessage(data, ctx, log);
+      } else if (isCompleteResponse(data)) {
+        handleCompleteMessage(data, ctx);
+      } else if (isErrorResponse(data)) {
+        handleErrorMessage(data, ctx);
+      } else if (isPartialResponse(data)) {
+        // Partial updates not currently handled in UI
+        log.debug('[workerMessageHandlers] Received partial update', { chartsUpdated: data.chartsUpdated });
+      } else if (isProgressResponse(data)) {
+        // Progress updates not currently handled in UI
+        log.debug('[workerMessageHandlers] Received progress update', { progress: data.progress });
+      } else {
+        // Other message types (e.g., CACHE/CLEAR_DONE, game events) - log and ignore
+        log.debug('[workerMessageHandlers] Received non-analytics message', { type: data.type });
       }
     } catch (error) {
       log.error('[useAnalyticsWorker] Failed handling worker message', error);
