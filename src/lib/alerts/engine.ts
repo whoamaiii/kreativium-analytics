@@ -24,6 +24,7 @@ import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } fr
 import { generateSparklineData } from '@/lib/chartUtils';
 import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/alerts/constants';
+import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';
 import { logger } from '@/lib/logger';
 
 /**
@@ -67,8 +68,6 @@ interface ApplyThresholdContext {
   overrides: Record<string, ThresholdOverride>;
   thresholdTraces: Record<string, ThresholdAdjustmentTrace>;
 }
-
-const DEFAULT_SERIES_LIMIT = 90;
 
 /**
  * Normalize arbitrary timestamps to epoch milliseconds.
@@ -143,7 +142,7 @@ function rankSources(detectors: DetectorResult[]): AlertSource[] {
 /**
  * Truncate a time series to the most recent `limit` points (stable memory bound).
  */
-function truncateSeries(series: TrendPoint[], limit: number = DEFAULT_SERIES_LIMIT): TrendPoint[] {
+function truncateSeries(series: TrendPoint[], limit: number = MAX_ALERT_SERIES_LENGTH): TrendPoint[] {
   if (series.length <= limit) return series;
   return series.slice(series.length - limit);
 }
@@ -210,7 +209,7 @@ export class AlertDetectionEngine {
     this.learner = opts?.learner ?? new ThresholdLearner();
     this.experiments = opts?.experiments ?? new ABTestingService();
     this.baselineThresholds = { ...DEFAULT_DETECTOR_THRESHOLDS };
-    this.seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? DEFAULT_SERIES_LIMIT));
+    this.seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SERIES_LENGTH));
     this.tauUDetector = opts?.tauUDetector;
   }
 

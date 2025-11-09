@@ -4,6 +4,7 @@ import { differenceInMinutes, subMinutes } from 'date-fns';
 import { logger } from '@/lib/logger';
 import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 import { TEMPERATURE, HUMIDITY, NOISE_LEVEL, WEATHER, PROBABILITY } from '@/config/constants';
+import { MAX_REALTIME_DATA_POINTS } from '@/constants/analytics';
 
 interface RealtimeDataOptions {
   enabled: boolean;
@@ -49,9 +50,9 @@ const realtimeDataReducer = (state: RealtimeDataState, action: RealtimeDataActio
         ...state,
         lastUpdate: new Date(),
         newDataCount: state.newDataCount + 1,
-        emotions: action.payload.emotion ? [...state.emotions, action.payload.emotion].slice(-1000) : state.emotions,
-        sensoryInputs: action.payload.sensory ? [...state.sensoryInputs, action.payload.sensory].slice(-1000) : state.sensoryInputs,
-        trackingEntries: action.payload.tracking ? [...state.trackingEntries, action.payload.tracking].slice(-1000) : state.trackingEntries,
+        emotions: action.payload.emotion ? [...state.emotions, action.payload.emotion].slice(-MAX_REALTIME_DATA_POINTS) : state.emotions,
+        sensoryInputs: action.payload.sensory ? [...state.sensoryInputs, action.payload.sensory].slice(-MAX_REALTIME_DATA_POINTS) : state.sensoryInputs,
+        trackingEntries: action.payload.tracking ? [...state.trackingEntries, action.payload.tracking].slice(-MAX_REALTIME_DATA_POINTS) : state.trackingEntries,
       };
     case 'SET_HISTORICAL_DATA':
       return {

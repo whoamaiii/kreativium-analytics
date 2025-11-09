@@ -25,6 +25,7 @@ import { analyticsConfig } from "@/lib/analyticsConfig";
 import { getMlModels, EmotionPrediction, SensoryPrediction, BaselineCluster } from "@/lib/mlModels";
 import { logger } from '@/lib/logger';
 import { pearsonCorrelation, pValueForCorrelation, zScoresMedian, huberRegression } from '@/lib/statistics';
+import { getLatestEnvironmentConditions } from '@/lib/utils/environment';
 
 export interface PredictiveInsight {
   type: 'prediction' | 'trend' | 'recommendation' | 'risk';
@@ -223,16 +224,13 @@ class EnhancedPatternAnalysisEngine {
         const ml = await this.ensureMlModels();
         const modelStatus = await ml.getModelStatus();
         if (modelStatus.get('sensory-response') && trackingEntries[trackingEntries.length - 1].environmentalData) {
+          // Use clean environment categorization utility (replaces deeply nested ternaries)
+          const environmentConditions = getLatestEnvironmentConditions(trackingEntries);
+
           const latestEnvironment = {
-            lighting: trackingEntries[trackingEntries.length - 1].environmentalData?.roomConditions?.lighting as 'bright' | 'dim' | 'moderate' || 'moderate',
-            noise: (trackingEntries[trackingEntries.length - 1].environmentalData?.roomConditions?.noiseLevel &&
-                   trackingEntries[trackingEntries.length - 1].environmentalData.roomConditions.noiseLevel > 70 ? 'loud' :
-                   trackingEntries[trackingEntries.length - 1].environmentalData?.roomConditions?.noiseLevel &&
-                   trackingEntries[trackingEntries.length - 1].environmentalData.roomConditions.noiseLevel < 40 ? 'quiet' : 'moderate') as 'loud' | 'moderate' | 'quiet',
-            temperature: (trackingEntries[trackingEntries.length - 1].environmentalData?.roomConditions?.temperature &&
-                        trackingEntries[trackingEntries.length - 1].environmentalData.roomConditions.temperature > 26 ? 'hot' :
-                        trackingEntries[trackingEntries.length - 1].environmentalData?.roomConditions?.temperature &&
-                        trackingEntries[trackingEntries.length - 1].environmentalData.roomConditions.temperature < 18 ? 'cold' : 'comfortable') as 'hot' | 'cold' | 'comfortable',
+            lighting: environmentConditions.lighting,
+            noise: environmentConditions.noise,
+            temperature: environmentConditions.temperature,
             crowded: 'moderate' as const,
             smells: false,
             textures: false
