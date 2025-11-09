@@ -12,12 +12,8 @@ import {
   ThresholdOverride,
   isValidDetectorResult,
 } from '@/lib/alerts/types';
-import { detectEWMATrend, TrendPoint } from '@/lib/alerts/detectors/ewma';
-import { detectCUSUMShift } from '@/lib/alerts/detectors/cusum';
-import { detectBetaRateShift } from '@/lib/alerts/detectors/betaRate';
-import { detectAssociation } from '@/lib/alerts/detectors/association';
-import type { AssociationDetectorInput } from '@/lib/alerts/detectors/association';
-import { detectBurst, BurstEvent } from '@/lib/alerts/detectors/burst';
+import type { TrendPoint } from '@/lib/alerts/detectors/ewma';
+import type { BurstEvent } from '@/lib/alerts/detectors/burst';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
 import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } from '@/types/student';
@@ -25,13 +21,15 @@ import { generateSparklineData } from '@/lib/chartUtils';
 import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/alerts/constants';
 import { logger } from '@/lib/logger';
-import { normalizeTimestamp, buildAlertId, truncateSeries } from '@/lib/alerts/utils';
+import { buildAlertId } from '@/lib/alerts/utils';
 import { computeRecencyScore, severityFromScore, rankSources } from '@/lib/alerts/scoring';
 import {
   aggregateDetectorResults,
   finalizeAlertEvent,
   type AggregatedResult,
 } from '@/lib/alerts/detection';
+import { CandidateGenerator } from '@/lib/alerts/detection/candidateGenerator';
+import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';
 
 /**
  * Input payload for the alert detection pipeline.
@@ -62,10 +60,6 @@ interface AlertCandidate {
   thresholdAdjustments?: Record<string, ThresholdAdjustmentTrace>;
   experimentKey?: string;
   experimentVariant?: string;
-}
-
-interface AssociationDataset extends AssociationDetectorInput {
-  timestamps: number[];
 }
 
 interface ApplyThresholdContext {
@@ -115,6 +109,7 @@ export class AlertDetectionEngine {
   private readonly seriesLimit: number;
   /** Optional Tau-U detector dependency; when absent, intervention analysis is skipped. */
   private readonly tauUDetector?: (args: { intervention: Intervention; goal: Goal | null }) => DetectorResult | null;
+  private readonly generator: CandidateGenerator;
 
   constructor(opts?: {
     baselineService?: BaselineService;
@@ -130,15 +125,25 @@ export class AlertDetectionEngine {
     this.baselineService = opts?.baselineService ?? new BaselineService();
     this.policies = opts?.policies ?? new AlertPolicies();
     const configSource = opts?.cusumConfig ?? ANALYTICS_CONFIG.alerts?.cusum;
-    this.cusumConfig = {
+    const cusumConfig = {
       kFactor: configSource?.kFactor ?? 0.5,
       decisionInterval: configSource?.decisionInterval ?? 5,
     };
+    this.cusumConfig = cusumConfig;
     this.learner = opts?.learner ?? new ThresholdLearner();
     this.experiments = opts?.experiments ?? new ABTestingService();
+    const seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SERIES_LENGTH));
+    this.seriesLimit = seriesLimit;
     this.baselineThresholds = { ...DEFAULT_DETECTOR_THRESHOLDS };
-    this.seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SERIES_LENGTH));
     this.tauUDetector = opts?.tauUDetector;
+
+    // Initialize CandidateGenerator with extracted configuration
+    this.generator = new CandidateGenerator({
+      cusumConfig,
+      seriesLimit,
+      tauUDetector: opts?.tauUDetector,
+      baselineThresholds: { ...DEFAULT_DETECTOR_THRESHOLDS },
+    });
   }
 
   /**
@@ -157,42 +162,60 @@ export class AlertDetectionEngine {
     const thresholdOverrides = this.learner.getThresholdOverrides();
     const baseline = input.baseline ?? this.baselineService.getEmotionBaseline(input.studentId);
 
-    const emotionSeries = this.buildEmotionSeries(input.emotions);
-    const sensoryAgg = this.buildSensoryAggregates(input.sensory);
-    const associationDataset = this.buildAssociationDataset(input.tracking);
-    const burstEvents = this.buildBurstEvents(input.emotions, input.sensory);
+    // Delegate data building to generator
+    const emotionSeries = this.generator.buildEmotionSeries(input.emotions);
+    const sensoryAgg = this.generator.buildSensoryAggregates(input.sensory);
+    const associationDataset = this.generator.buildAssociationDataset(input.tracking);
+    const burstEvents = this.generator.buildBurstEvents(input.emotions, input.sensory);
 
-    const emotionCandidates = this.buildEmotionCandidates({
+    // Delegate candidate building to generator with method injection
+    const emotionCandidates = this.generator.buildEmotionCandidates({
       emotionSeries,
       baseline,
       studentId: input.studentId,
       thresholdOverrides,
       nowTs,
+      applyThreshold: this.applyThreshold.bind(this),
+      createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const sensoryCandidates = this.buildSensoryCandidates({
+    const sensoryCandidates = this.generator.buildSensoryCandidates({
       sensoryAggregates: sensoryAgg,
       baseline,
       studentId: input.studentId,
       thresholdOverrides,
       nowTs,
+      applyThreshold: this.applyThreshold.bind(this),
+      createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const associationCandidates = this.buildAssociationCandidates({
+    const associationCandidates = this.generator.buildAssociationCandidates({
       dataset: associationDataset,
       studentId: input.studentId,
       thresholdOverrides,
       nowTs,
+      applyThreshold: this.applyThreshold.bind(this),
+      createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const burstCandidates = this.buildBurstCandidates({
+    const burstCandidates = this.generator.buildBurstCandidates({
       burstEvents,
       studentId: input.studentId,
       thresholdOverrides,
       nowTs,
+      applyThreshold: this.applyThreshold.bind(this),
+      createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const tauCandidates = this.detectInterventionOutcomes(input, thresholdOverrides, nowTs);
+    const tauCandidates = this.generator.detectInterventionOutcomes({
+      interventions: input.interventions ?? [],
+      goals: input.goals ?? [],
+      studentId: input.studentId,
+      thresholdOverrides,
+      nowTs,
+      applyThreshold: this.applyThreshold.bind(this),
+      createThresholdContext: this.createThresholdContext.bind(this),
+    });
 
     const candidates: AlertCandidate[] = [
       ...emotionCandidates,
@@ -210,285 +233,6 @@ export class AlertDetectionEngine {
 
     try { logger.debug?.('[AlertEngine] runDetection:end', { studentId: input.studentId, alerts: deduped.length }); } catch {}
     return deduped;
-  }
-
-  private buildEmotionCandidates(args: {
-    emotionSeries: Map<string, TrendPoint[]>;
-    baseline?: StudentBaseline | null;
-    studentId: string;
-    thresholdOverrides: Record<string, ThresholdOverride>;
-    nowTs: number;
-  }): AlertCandidate[] {
-    const { emotionSeries, baseline, studentId, thresholdOverrides, nowTs } = args;
-    const candidates: AlertCandidate[] = [];
-
-    emotionSeries.forEach((series, key) => {
-      const baselineStats = this.lookupEmotionBaseline(baseline, key);
-      const context = this.createThresholdContext(AlertKind.BehaviorSpike, studentId, thresholdOverrides);
-      const detectors: DetectorResult[] = [];
-      const detectorTypes: string[] = [];
-
-      const ewmaRaw = this.safeDetect('ewma', () => detectEWMATrend(series, {
-        label: `${key} EWMA`,
-        baselineMedian: baselineStats?.median,
-        baselineIqr: baselineStats?.iqr,
-      }));
-      const ewma = this.applyThreshold('ewma', ewmaRaw, context);
-      if (ewma) {
-        if (isValidDetectorResult(ewma)) detectors.push(ewma);
-        detectorTypes.push('ewma');
-      }
-
-      const cusumRaw = this.safeDetect('cusum', () => detectCUSUMShift(series, {
-        label: `${key} CUSUM`,
-        baselineMean: baselineStats?.median,
-        baselineSigma: baselineStats?.iqr ? baselineStats.iqr / 1.349 : undefined,
-        kFactor: this.cusumConfig.kFactor,
-        decisionInterval: this.cusumConfig.decisionInterval,
-      }));
-      const cusum = this.applyThreshold('cusum', cusumRaw, context);
-      if (cusum) {
-        if (isValidDetectorResult(cusum)) detectors.push(cusum);
-        detectorTypes.push('cusum');
-      }
-
-      if (detectors.length === 0) return;
-
-      const lastTimestamp = series[series.length - 1]?.timestamp ?? nowTs;
-      const tier = detectors.length >= 2 ? 1 : 0.8;
-      const metadata: AlertMetadata = {
-        emotionKey: key,
-        detectorCount: detectors.length,
-        baselineMedian: baselineStats?.median,
-        detectionQuality: this.computeDetectionQuality(detectors, series),
-      };
-
-      candidates.push({
-        kind: AlertKind.BehaviorSpike,
-        label: key,
-        detectors,
-        detectorTypes,
-        series,
-        lastTimestamp,
-        tier,
-        metadata,
-        thresholdAdjustments: context.thresholdTraces,
-        experimentKey: context.experimentKey,
-        experimentVariant: context.variant,
-      });
-    });
-
-    return candidates;
-  }
-
-  private buildSensoryCandidates(args: {
-    sensoryAggregates: Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }>;
-    baseline?: StudentBaseline | null;
-    studentId: string;
-    thresholdOverrides: Record<string, ThresholdOverride>;
-    nowTs: number;
-  }): AlertCandidate[] {
-    const { sensoryAggregates, baseline, studentId, thresholdOverrides, nowTs } = args;
-    const candidates: AlertCandidate[] = [];
-
-    sensoryAggregates.forEach((agg, key) => {
-      const baselineStats = this.lookupSensoryBaseline(baseline, key);
-      const context = this.createThresholdContext(AlertKind.BehaviorSpike, studentId, thresholdOverrides);
-      const detectors: DetectorResult[] = [];
-      const detectorTypes: string[] = [];
-
-      const betaRaw = this.safeDetect('beta', () => detectBetaRateShift({
-        successes: agg.successes,
-        trials: agg.trials,
-        baselinePrior: baselineStats?.ratePrior ?? { alpha: 1, beta: 1 },
-        delta: agg.delta,
-        label: `${key} rate shift`,
-      }));
-      const beta = this.applyThreshold('beta', betaRaw, context);
-      if (!beta) return;
-      if (isValidDetectorResult(beta)) detectors.push(beta);
-      detectorTypes.push('beta');
-
-      const series: TrendPoint[] = agg.series;
-      const lastTimestamp = series[series.length - 1]?.timestamp ?? nowTs;
-      const metadata: AlertMetadata = {
-        sensoryKey: key,
-        successes: agg.successes,
-        trials: agg.trials,
-        detectionQuality: this.computeDetectionQuality(detectors, series),
-      };
-
-      candidates.push({
-        kind: AlertKind.BehaviorSpike,
-        label: key,
-        detectors,
-        detectorTypes,
-        series,
-        lastTimestamp,
-        tier: 0.9,
-        metadata,
-        thresholdAdjustments: context.thresholdTraces,
-        experimentKey: context.experimentKey,
-        experimentVariant: context.variant,
-      });
-    });
-
-    return candidates;
-  }
-
-  private buildAssociationCandidates(args: {
-    dataset: AssociationDataset | null;
-    studentId: string;
-    thresholdOverrides: Record<string, ThresholdOverride>;
-    nowTs: number;
-  }): AlertCandidate[] {
-    const { dataset, studentId, thresholdOverrides, nowTs } = args;
-    if (!dataset) return [];
-
-    const context = this.createThresholdContext(AlertKind.ContextAssociation, studentId, thresholdOverrides);
-    const associationRaw = this.safeDetect('association', () => detectAssociation(dataset));
-    const association = this.applyThreshold('association', associationRaw, context);
-    if (!association) return [];
-
-    const series = dataset.seriesX.map((value, idx) => ({
-      timestamp: dataset.timestamps[idx] ?? nowTs,
-      value,
-    }));
-    const lastTimestamp = dataset.timestamps[dataset.timestamps.length - 1] ?? nowTs;
-
-    return [{
-      kind: AlertKind.ContextAssociation,
-      label: dataset.label,
-      detectors: [association],
-      detectorTypes: ['association'],
-      series,
-      lastTimestamp,
-      tier: 0.85,
-      metadata: {
-        contingency: dataset.contingency,
-        context: dataset.context,
-      },
-      thresholdAdjustments: context.thresholdTraces,
-      experimentKey: context.experimentKey,
-      experimentVariant: context.variant,
-    }];
-  }
-
-  private buildBurstCandidates(args: {
-    burstEvents: BurstEvent[];
-    studentId: string;
-    thresholdOverrides: Record<string, ThresholdOverride>;
-    nowTs: number;
-  }): AlertCandidate[] {
-    const { burstEvents, studentId, thresholdOverrides, nowTs } = args;
-    if (!burstEvents.length) return [];
-
-    const context = this.createThresholdContext(AlertKind.BehaviorSpike, studentId, thresholdOverrides);
-    const burstRaw = this.safeDetect('burst', () => detectBurst(burstEvents, { label: 'High-intensity episode' }));
-    const burst = this.applyThreshold('burst', burstRaw, context);
-    if (!burst) return [];
-
-    const series: TrendPoint[] = burstEvents.map((evt) => ({ timestamp: evt.timestamp, value: evt.value }));
-    const lastTimestamp = burstEvents[burstEvents.length - 1]?.timestamp ?? nowTs;
-
-    return [{
-      kind: AlertKind.BehaviorSpike,
-      label: 'High intensity burst',
-      detectors: [burst],
-      detectorTypes: ['burst'],
-      series,
-      lastTimestamp,
-      tier: 1,
-      metadata: {
-        eventCount: burst.sources?.[0]?.details?.eventCount ?? burstEvents.length,
-        detectionQuality: this.computeDetectionQuality([burst], series),
-      },
-      thresholdAdjustments: context.thresholdTraces,
-      experimentKey: context.experimentKey,
-      experimentVariant: context.variant,
-    }];
-  }
-
-  private detectInterventionOutcomes(
-    input: DetectionInput,
-    overrides: Record<string, ThresholdOverride>,
-    nowTs: number,
-  ): AlertCandidate[] {
-    if (!this.tauUDetector) return [];
-    const interventions = input.interventions ?? [];
-    if (!interventions.length) return [];
-    const goals = input.goals ?? [];
-    const goalIndex = new Map<string, Goal>();
-    goals.forEach((goal) => goalIndex.set(goal.id, goal));
-
-    const candidates: AlertCandidate[] = [];
-    interventions.forEach((intervention) => {
-      if (!intervention?.id) return;
-      if (intervention.status && intervention.status !== 'active' && intervention.status !== 'completed') return;
-      const linkedGoal = goals.find((goal) => (goal.interventions ?? []).includes(intervention.id)) ?? goalIndex.get(intervention.relatedGoals?.[0] ?? '');
-      const context = this.createThresholdContext(AlertKind.InterventionDue, input.studentId, overrides);
-      const tauRaw = this.safeDetect('tauU', () => this.tauUDetector!({ intervention, goal: linkedGoal ?? null }));
-      const detector = this.applyThreshold('tauU', tauRaw, context, this.baselineThresholds.tauU);
-      if (!detector || !detector.analysis?.tauU) return;
-      const tauResult = detector.analysis.tauU;
-      if (Math.abs(tauResult.effectSize) < 0.2) return;
-
-      const phaseData = (detector.analysis as Record<string, unknown>)?.phaseData as {
-        phaseA: number[];
-        phaseB: number[];
-        timestampsA: number[];
-        timestampsB: number[];
-      } | undefined;
-
-      const series: TrendPoint[] = [];
-      if (phaseData) {
-        phaseData.phaseA.forEach((value, idx) => {
-          const ts = Number.isFinite(phaseData.timestampsA?.[idx])
-            ? phaseData.timestampsA[idx]
-            : nowTs - (phaseData.phaseA.length - idx) * 86_400_000;
-          series.push({ timestamp: ts, value });
-        });
-        phaseData.phaseB.forEach((value, idx) => {
-          const ts = Number.isFinite(phaseData.timestampsB?.[idx])
-            ? phaseData.timestampsB[idx]
-            : nowTs - (phaseData.phaseB.length - idx) * 86_400_000 / 2;
-          series.push({ timestamp: ts, value });
-        });
-      } else {
-        const allValues = [...tauResult.phaseA.values, ...tauResult.phaseB.values];
-        allValues.forEach((value, idx) => {
-          series.push({ timestamp: nowTs - (allValues.length - idx) * 86_400_000, value });
-        });
-      }
-
-      series.sort((a, b) => a.timestamp - b.timestamp);
-      const lastTimestamp = series[series.length - 1]?.timestamp ?? nowTs;
-      const metadata: AlertMetadata = {
-        interventionId: intervention.id,
-        interventionLabel: intervention.title,
-        tauU: tauResult,
-        detectorCount: 1,
-        phaseLabel: tauResult.outcome,
-        label: intervention.title,
-        detectionQuality: this.computeDetectionQuality([detector], series),
-      };
-
-      candidates.push({
-        kind: AlertKind.InterventionDue,
-        label: intervention.title ?? 'Intervention review',
-        detectors: [detector],
-        detectorTypes: ['tauU'],
-        series,
-        lastTimestamp,
-        tier: 1,
-        metadata,
-        thresholdAdjustments: context.thresholdTraces,
-        experimentKey: context.experimentKey,
-        experimentVariant: context.variant,
-      });
-    });
-
-    return candidates;
   }
 
   private resolveExperimentKey(kind: AlertKind): string {
@@ -606,160 +350,6 @@ export class AlertDetectionEngine {
     );
   }
 
-  /** Build per-emotion intensity series from raw entries, sorted and truncated. */
-  private buildEmotionSeries(emotions: EmotionEntry[]): Map<string, TrendPoint[]> {
-    const map = new Map<string, TrendPoint[]>();
-    for (let i = 0; i < emotions.length; i += 1) {
-      const entry = emotions[i]!;
-      const ts = normalizeTimestamp(entry.timestamp);
-      if (ts === null) continue;
-      const intensity = Number(entry.intensity);
-      if (!Number.isFinite(intensity)) continue;
-      const key = entry.emotion || entry.subEmotion || 'unknown';
-      const arr = map.get(key) ?? [];
-      arr.push({ timestamp: ts, value: intensity });
-      map.set(key, arr);
-    }
-    map.forEach((arr, key) => {
-      const sorted = arr.sort((a, b) => a.timestamp - b.timestamp);
-      map.set(key, truncateSeries(sorted, this.seriesLimit));
-    });
-    return map;
-  }
-
-  /** Build per-sensory behavior aggregates and series with beta prior deltas. */
-  private buildSensoryAggregates(sensory: SensoryEntry[]): Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }> {
-    const map = new Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }>();
-    for (let i = 0; i < sensory.length; i += 1) {
-      const entry = sensory[i]!;
-      const ts = normalizeTimestamp(entry.timestamp);
-      if (ts === null) continue;
-      const key = entry.response || entry.type || entry.sensoryType || 'sensory';
-      const intensity = Number(entry.intensity ?? 1);
-      const isHigh = intensity >= 4;
-      const current = map.get(key) ?? { successes: 0, trials: 0, delta: 0.1, series: [] };
-      current.trials += 1;
-      if (isHigh) current.successes += 1;
-      current.series.push({ timestamp: ts, value: intensity });
-      map.set(key, current);
-    }
-
-    map.forEach((agg, key) => {
-      agg.series.sort((a, b) => a.timestamp - b.timestamp);
-      agg.series = truncateSeries(agg.series, this.seriesLimit);
-      if (agg.trials > 0) {
-        const highRate = agg.successes / agg.trials;
-        agg.delta = Math.max(0.05, Math.min(0.2, highRate - 0.1));
-      }
-      map.set(key, agg);
-    });
-    return map;
-  }
-
-  /** Build association dataset between noise level and max emotion intensity per tracking entry. */
-  private buildAssociationDataset(tracking: TrackingEntry[]): AssociationDataset | null {
-    if (!tracking.length) return null;
-    let highNoiseHighEmotion = 0;
-    let highNoiseLowEmotion = 0;
-    let lowNoiseHighEmotion = 0;
-    let lowNoiseLowEmotion = 0;
-    const noiseSeries: number[] = [];
-    const emotionSeries: number[] = [];
-    const timestamps: number[] = [];
-
-    for (let i = 0; i < tracking.length; i += 1) {
-      const entry = tracking[i]!;
-      const ts = normalizeTimestamp(entry.timestamp);
-      if (ts === null) continue;
-      const noise = entry.environmentalData?.roomConditions?.noiseLevel;
-      if (!Number.isFinite(noise)) continue;
-      const emos = entry.emotions ?? [];
-      let maxEmotion = 0;
-      for (let j = 0; j < emos.length; j += 1) {
-        const v = Number(emos[j]!.intensity);
-        if (Number.isFinite(v) && v > maxEmotion) maxEmotion = v;
-      }
-
-      const highEmotion = maxEmotion >= 4;
-      const highNoise = (noise as number) >= 70;
-
-      if (highNoise && highEmotion) highNoiseHighEmotion += 1;
-      else if (highNoise) highNoiseLowEmotion += 1;
-      else if (highEmotion) lowNoiseHighEmotion += 1;
-      else lowNoiseLowEmotion += 1;
-
-      noiseSeries.push(noise as number);
-      emotionSeries.push(maxEmotion);
-      timestamps.push(ts);
-    }
-
-    const total = highNoiseHighEmotion + highNoiseLowEmotion + lowNoiseHighEmotion + lowNoiseLowEmotion;
-    if (total < 5) return null;
-
-    return {
-      label: 'Environment association',
-      contingency: {
-        a: highNoiseHighEmotion,
-        b: highNoiseLowEmotion,
-        c: lowNoiseHighEmotion,
-        d: lowNoiseLowEmotion,
-      },
-      seriesX: noiseSeries,
-      seriesY: emotionSeries,
-      timestamps,
-      context: {
-        factor: 'noiseLevel',
-      },
-      minSupport: 5,
-    };
-  }
-
-  private buildBurstEvents(emotions: EmotionEntry[], sensory: SensoryEntry[]): BurstEvent[] {
-    const events: BurstEvent[] = [];
-    const sensoryByTime = sensory.reduce<Record<number, SensoryEntry[]>>((acc, entry) => {
-      const ts = normalizeTimestamp(entry.timestamp);
-      if (ts === null) return acc;
-      const bucket = Math.round(ts / 60_000); // minute bucket
-      acc[bucket] = acc[bucket] ?? [];
-      acc[bucket].push(entry);
-      return acc;
-    }, {});
-
-    for (let i = 0; i < emotions.length; i += 1) {
-      const entry = emotions[i]!;
-      const ts = normalizeTimestamp(entry.timestamp);
-      if (ts === null) continue;
-      const intensity = Number(entry.intensity);
-      if (!Number.isFinite(intensity) || intensity < 4) continue;
-      const bucket = Math.round(ts / 60_000);
-      const nearbySensory = [
-        ...(sensoryByTime[bucket] ?? []),
-        ...(sensoryByTime[bucket - 1] ?? []),
-        ...(sensoryByTime[bucket + 1] ?? []),
-      ];
-      const paired: number[] = [];
-      for (let j = 0; j < nearbySensory.length; j += 1) {
-        const n = Number(nearbySensory[j]!.intensity ?? 0);
-        if (Number.isFinite(n)) paired.push(n);
-      }
-      const pairedValue = paired.length ? paired.reduce((sum, val) => sum + val, 0) / paired.length : 0;
-      events.push({ timestamp: ts, value: intensity, pairedValue });
-    }
-
-    return events.sort((a, b) => a.timestamp - b.timestamp);
-  }
-
-  /** Compute lightweight detection quality metrics for diagnostics and analytics. */
-  private computeDetectionQuality(detectors: DetectorResult[], series: TrendPoint[]): { validDetectors: number; avgConfidence: number; seriesLength: number } {
-    const valid = detectors.filter((d) => isValidDetectorResult(d));
-    const avgConfidence = valid.length ? valid.reduce((s, d) => s + (d.confidence ?? 0), 0) / valid.length : 0;
-    return {
-      validDetectors: valid.length,
-      avgConfidence,
-      seriesLength: series.length,
-    };
-  }
-
   /**
    * Compute lightweight series statistics for diagnostics.
    * Returns min, max, mean, and variance (sample) to assist with validation.
@@ -789,43 +379,6 @@ export class AlertDetectionEngine {
     if (!Number.isFinite(min)) min = 0;
     if (!Number.isFinite(max)) max = 0;
     return { min, max, mean: Number.isFinite(mean) ? mean : 0, variance: Number.isFinite(variance) ? variance : 0 };
-  }
-
-  /** Wrap a detector call to ensure errors are logged without disrupting the pipeline. */
-  private safeDetect(label: string, fn: () => DetectorResult | null | undefined): DetectorResult | null | undefined {
-    try {
-      return fn();
-    } catch (err) {
-      logger.warn?.(`Detector '${label}' failed`, { error: (err as Error)?.message });
-      return null;
-    }
-  }
-
-  private lookupEmotionBaseline(baseline: StudentBaseline | null | undefined, key: string): { median: number; iqr: number } | null {
-    if (!baseline) return null;
-    const windows = [14, 7, 30];
-    for (const window of windows) {
-      const stats = baseline.emotion?.[`${key}:${window}`];
-      if (stats) {
-        return { median: stats.median, iqr: stats.iqr };
-      }
-    }
-    return null;
-  }
-
-  private lookupSensoryBaseline(
-    baseline: StudentBaseline | null | undefined,
-    key: string,
-  ): { ratePrior: { alpha: number; beta: number } } | null {
-    if (!baseline) return null;
-    const windows = [14, 7, 30];
-    for (const window of windows) {
-      const stats = baseline.sensory?.[`${key}:${window}`];
-      if (stats) {
-        return { ratePrior: stats.ratePrior };
-      }
-    }
-    return null;
   }
 }
 
