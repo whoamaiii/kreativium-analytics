@@ -23,13 +23,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { analyticsConfig, AnalyticsConfiguration, PRESET_CONFIGS } from '@/lib/analyticsConfig';
-import { getMlModels, ModelMetadata, ModelType } from '@/lib/mlModels';
+import { AnalyticsConfiguration, PRESET_CONFIGS } from '@/lib/analyticsConfig';
+import { ModelType } from '@/lib/mlModels';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
+// Extracted hooks for cleaner component architecture
+import { useModelManagement } from '@/hooks/useModelManagement';
+import { useAnalyticsConfigManager } from '@/hooks/useAnalyticsConfigManager';
 
 interface AnalyticsSettingsProps {
   onConfigChange?: (config: AnalyticsConfiguration) => void;
@@ -41,73 +44,49 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
   onClose
 }) => {
   const { tAnalytics } = useTranslation();
-  const [config, setConfig] = useState<AnalyticsConfiguration>(analyticsConfig.getConfig());
-  const [selectedPreset, setSelectedPreset] = useState<string>('balanced');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [modelStatus, setModelStatus] = useState<Map<ModelType, ModelMetadata | null>>(new Map());
-  const [isTraining, setIsTraining] = useState<ModelType | null>(null);
-  const [mlEnabled, setMlEnabled] = useState(true);
-  const [isLoadingModels, setIsLoadingModels] = useState(true);
-  const [isDeletingModel, setIsDeletingModel] = useState<ModelType | null>(null);
 
-  useEffect(() => {
-    // Subscribe to configuration changes
-    const unsubscribe = analyticsConfig.subscribe((newConfig) => {
-      setConfig(newConfig);
-      if (onConfigChange) {
-        onConfigChange(newConfig);
-      }
-    });
+  // Configuration management (extracted hook)
+  const configManager = useAnalyticsConfigManager({
+    onConfigChange,
+    onSave: () => {
+      toast({
+        title: "Analytics configuration has been updated",
+        description: "Analytics configuration has been updated",
+      });
+    },
+    onError: (error) => {
+      logger.error('Config management error', { error });
+    },
+  });
 
-    // Load ML model status
-    loadModelStatus();
-
-    return unsubscribe;
-  }, [onConfigChange]);
-
-  const loadModelStatus = async () => {
-    setIsLoadingModels(true);
-    try {
-      const ml = await getMlModels();
-      await ml.init();
-      const status = await ml.getModelStatus();
-      setModelStatus(status);
-    } catch (error) {
-      logger.error('Failed to load ML model status', { error });
+  // ML Model management (extracted hook)
+  const modelManager = useModelManagement({
+    autoLoad: true,
+    onError: (error) => {
+      logger.error('Model management error', { error });
       toast({
         title: "Failed to load ML models: Could not retrieve model status. Some features may be unavailable.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoadingModels(false);
-    }
-  };
+    },
+    onTrainingComplete: (modelType) => {
+      toast({
+        title: `${modelType} model has been updated`,
+        description: `${modelType} model has been updated`,
+      });
+    },
+  });
 
   const handleSliderChange = (path: string[], value: number[]) => {
-    const newConfig = { ...config };
-    let current: Record<string, unknown> = newConfig as unknown as Record<string, unknown>;
-    
-    for (let i = 0; i < path.length - 1; i++) {
-      current = current[path[i]] as Record<string, unknown>;
-    }
-    
-    current[path[path.length - 1]] = value[0];
-    setConfig(newConfig);
-    setHasUnsavedChanges(true);
+    configManager.actions.updateConfigValue(path, value[0]);
   };
 
   const handleSensitivityChange = (value: string) => {
-    const newConfig = { ...config };
-    newConfig.alertSensitivity.level = value as 'low' | 'medium' | 'high';
-    // Do not mutate multipliers here; users can choose presets that carry multipliers
-    setConfig(newConfig);
-    setHasUnsavedChanges(true);
+    configManager.actions.updateSensitivity(value as 'low' | 'medium' | 'high');
   };
 
   const handlePresetSelect = (preset: keyof typeof PRESET_CONFIGS) => {
-    setSelectedPreset(preset);
-    analyticsConfig.setPreset(preset);
-    setHasUnsavedChanges(false);
+    configManager.actions.applyPreset(preset);
     toast({
       title: `Applied ${PRESET_CONFIGS[preset].name} configuration`,
       description: `Applied ${PRESET_CONFIGS[preset].name} configuration`,
@@ -115,18 +94,11 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
   };
 
   const handleSave = () => {
-    analyticsConfig.updateConfig(config);
-    setHasUnsavedChanges(false);
-    toast({
-      title: "Analytics configuration has been updated",
-      description: "Analytics configuration has been updated",
-    });
+    configManager.actions.saveConfig();
   };
 
   const handleReset = () => {
-    analyticsConfig.resetToDefaults();
-    setSelectedPreset('balanced');
-    setHasUnsavedChanges(false);
+    configManager.actions.resetConfig();
     toast({
       title: "Settings have been reset to defaults",
       description: "Settings have been reset to defaults",
@@ -134,131 +106,31 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
   };
 
   const handleExport = () => {
-    const configString = analyticsConfig.exportConfig();
-    const blob = new Blob([configString], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'analytics-config.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "Configuration saved to analytics-config.json",
-      description: "Configuration saved to analytics-config.json",
-    });
+    configManager.actions.exportConfig();
   };
 
-  const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
-  const ALLOWED_IMPORT_TYPES = new Set(['application/json', 'text/json']);
-
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > MAX_IMPORT_BYTES) {
-      toast({
-        title: 'Configuration file exceeds the 5 MB limit',
-        description: 'Configuration file exceeds the 5 MB limit',
-        variant: 'destructive',
-      });
-      event.target.value = '';
-      return;
-    }
-
-    if (file.type && !ALLOWED_IMPORT_TYPES.has(file.type)) {
-      toast({
-        title: 'Only JSON configuration files are supported',
-        description: 'Only JSON configuration files are supported',
-        variant: 'destructive',
-      });
-      event.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const content = e.target?.result as string;
-        if (analyticsConfig.importConfig(content)) {
-          setHasUnsavedChanges(false);
-          toast({
-            title: "Successfully imported configuration",
-            description: "Successfully imported configuration",
-          });
-        } else {
-          toast({
-            title: "Invalid configuration file",
-            description: "Invalid configuration file",
-            variant: 'destructive',
-          });
-        }
-      } catch (_error) {
-        toast({
-          title: "Failed to read configuration file",
-          description: "Failed to read configuration file",
-          variant: 'destructive',
-        });
-      }
-      event.target.value = '';
-    };
-    reader.readAsText(file);
+    await configManager.actions.importConfig(file);
+    event.target.value = '';
   };
 
-  // Track a pending training timeout id for cleanup
-  const [trainingRequested, setTrainingRequested] = useState<ModelType | null>(null);
-
-  useEffect(() => {
-    if (!trainingRequested) return;
-    let cancelled = false;
-    const id = window.setTimeout(async () => {
-      if (cancelled) return;
-      setIsTraining(null);
-      await loadModelStatus();
-      toast({
-        title: `${trainingRequested} model has been updated`,
-        description: `${trainingRequested} model has been updated`,
-      });
-      setTrainingRequested(null);
-    }, 3000);
-    return () => {
-      cancelled = true;
-      clearTimeout(id);
-    };
-  }, [trainingRequested]);
-
   const handleModelRetrain = async (modelType: ModelType) => {
-    setIsTraining(modelType);
     toast({
       title: `Training ${modelType} model in background...`,
       description: `Training ${modelType} model in background...`,
     });
-    // Defer the actual completion via effect-managed timeout
-    setTrainingRequested(modelType);
+    await modelManager.actions.trainModel(modelType);
   };
 
   const handleDeleteModel = async (modelType: ModelType) => {
-    setIsDeletingModel(modelType);
-    try {
-      const ml = await getMlModels();
-      await ml.deleteModel(modelType);
-      await loadModelStatus();
-      
-      toast({
-        title: `${modelType} model has been removed`,
-        description: `${modelType} model has been removed`,
-      });
-    } catch (_error) {
-      toast({
-        title: "Failed to delete model",
-        description: "Failed to delete model",
-        variant: 'destructive',
-      });
-    } finally {
-      setIsDeletingModel(null);
-    }
+    await modelManager.actions.deleteModel(modelType);
+    toast({
+      title: `${modelType} model has been removed`,
+      description: `${modelType} model has been removed`,
+    });
   };
 
   const formatModelType = (type: ModelType): string => {
@@ -316,7 +188,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup value={selectedPreset} onValueChange={(value) => handlePresetSelect(value as keyof typeof PRESET_CONFIGS)}>
+              <RadioGroup value={configManager.state.selectedPreset} onValueChange={(value) => handlePresetSelect(value as keyof typeof PRESET_CONFIGS)}>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Label 
                     htmlFor="conservative" 
@@ -391,14 +263,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="minDataPoints"
-                        value={[config.patternAnalysis.minDataPoints]}
+                        value={[configManager.state.config.patternAnalysis.minDataPoints]}
                         onValueChange={(value) => handleSliderChange(['patternAnalysis', 'minDataPoints'], value)}
                         min={1}
                         max={10}
                         step={1}
                         className="flex-1"
                       />
-                      <span className="w-12 text-right">{config.patternAnalysis.minDataPoints}</span>
+                      <span className="w-12 text-right">{configManager.state.config.patternAnalysis.minDataPoints}</span>
                     </div>
                   </div>
 
@@ -410,14 +282,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="correlationThreshold"
-                        value={[config.patternAnalysis.correlationThreshold]}
+                        value={[configManager.state.config.patternAnalysis.correlationThreshold]}
                         onValueChange={(value) => handleSliderChange(['patternAnalysis', 'correlationThreshold'], value)}
                         min={0.1}
                         max={0.9}
                         step={0.05}
                         className="flex-1"
                       />
-                      <span className="w-12 text-right">{config.patternAnalysis.correlationThreshold.toFixed(2)}</span>
+                      <span className="w-12 text-right">{configManager.state.config.patternAnalysis.correlationThreshold.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -429,14 +301,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="concernFrequency"
-                        value={[config.patternAnalysis.concernFrequencyThreshold * 100]}
+                        value={[configManager.state.config.patternAnalysis.concernFrequencyThreshold * 100]}
                         onValueChange={(value) => handleSliderChange(['patternAnalysis', 'concernFrequencyThreshold'], [value[0] / 100])}
                         min={10}
                         max={50}
                         step={5}
                         className="flex-1"
                       />
-                      <span className="w-12 text-right">{(config.patternAnalysis.concernFrequencyThreshold * 100).toFixed(0)}%</span>
+                      <span className="w-12 text-right">{(configManager.state.config.patternAnalysis.concernFrequencyThreshold * 100).toFixed(0)}%</span>
                     </div>
                   </div>
                 </CardContent>
@@ -458,14 +330,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="anomalyThreshold"
-                        value={[config.enhancedAnalysis.anomalyThreshold]}
+                        value={[configManager.state.config.enhancedAnalysis.anomalyThreshold]}
                         onValueChange={(value) => handleSliderChange(['enhancedAnalysis', 'anomalyThreshold'], value)}
                         min={1}
                         max={3}
                         step={0.25}
                         className="flex-1"
                       />
-                      <span className="w-12 text-right">{config.enhancedAnalysis.anomalyThreshold.toFixed(2)}σ</span>
+                      <span className="w-12 text-right">{configManager.state.config.enhancedAnalysis.anomalyThreshold.toFixed(2)}σ</span>
                     </div>
                   </div>
 
@@ -477,14 +349,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="minSampleSize"
-                        value={[config.enhancedAnalysis.minSampleSize]}
+                        value={[configManager.state.config.enhancedAnalysis.minSampleSize]}
                         onValueChange={(value) => handleSliderChange(['enhancedAnalysis', 'minSampleSize'], value)}
                         min={3}
                         max={15}
                         step={1}
                         className="flex-1"
                       />
-                      <span className="w-12 text-right">{config.enhancedAnalysis.minSampleSize}</span>
+                      <span className="w-12 text-right">{configManager.state.config.enhancedAnalysis.minSampleSize}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -501,7 +373,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <RadioGroup 
-                    value={config.alertSensitivity.level} 
+                    value={configManager.state.config.alertSensitivity.level} 
                     onValueChange={handleSensitivityChange}
                   >
                     <div className="space-y-4">
@@ -540,9 +412,9 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                   <div className="pt-4 space-y-2">
                     <p className="text-sm font-medium text-muted-foreground">Current Multipliers:</p>
                     <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div>Emotion: {config.alertSensitivity.emotionIntensityMultiplier}x</div>
-                      <div>Frequency: {config.alertSensitivity.frequencyMultiplier}x</div>
-                      <div>Anomaly: {config.alertSensitivity.anomalyMultiplier}x</div>
+                      <div>Emotion: {configManager.state.config.alertSensitivity.emotionIntensityMultiplier}x</div>
+                      <div>Frequency: {configManager.state.config.alertSensitivity.frequencyMultiplier}x</div>
+                      <div>Anomaly: {configManager.state.config.alertSensitivity.anomalyMultiplier}x</div>
                     </div>
                   </div>
                 </CardContent>
@@ -566,14 +438,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="defaultAnalysis"
-                        value={[config.timeWindows.defaultAnalysisDays]}
+                        value={[configManager.state.config.timeWindows.defaultAnalysisDays]}
                         onValueChange={(value) => handleSliderChange(['timeWindows', 'defaultAnalysisDays'], value)}
                         min={7}
                         max={90}
                         step={7}
                         className="flex-1"
                       />
-                      <span className="w-16 text-right">{config.timeWindows.defaultAnalysisDays} days</span>
+                      <span className="w-16 text-right">{configManager.state.config.timeWindows.defaultAnalysisDays} days</span>
                     </div>
                   </div>
 
@@ -585,14 +457,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="recentData"
-                        value={[config.timeWindows.recentDataDays]}
+                        value={[configManager.state.config.timeWindows.recentDataDays]}
                         onValueChange={(value) => handleSliderChange(['timeWindows', 'recentDataDays'], value)}
                         min={3}
                         max={14}
                         step={1}
                         className="flex-1"
                       />
-                      <span className="w-16 text-right">{config.timeWindows.recentDataDays} days</span>
+                      <span className="w-16 text-right">{configManager.state.config.timeWindows.recentDataDays} days</span>
                     </div>
                   </div>
 
@@ -604,14 +476,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="longTerm"
-                        value={[config.timeWindows.longTermDays]}
+                        value={[configManager.state.config.timeWindows.longTermDays]}
                         onValueChange={(value) => handleSliderChange(['timeWindows', 'longTermDays'], value)}
                         min={30}
                         max={180}
                         step={30}
                         className="flex-1"
                       />
-                      <span className="w-16 text-right">{config.timeWindows.longTermDays} days</span>
+                      <span className="w-16 text-right">{configManager.state.config.timeWindows.longTermDays} days</span>
                     </div>
                   </div>
                 </CardContent>
@@ -630,7 +502,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                       <Label htmlFor="ml-enabled" className="text-sm font-normal">Enable ML</Label>
                       <Switch
                         id="ml-enabled"
-                        checked={mlEnabled}
+                        checked={modelManager.state.mlEnabled}
                         onCheckedChange={setMlEnabled}
                       />
                     </div>
@@ -650,8 +522,10 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <>
                       {/* Model Status List */}
                       {(['emotion-prediction', 'sensory-response', 'baseline-clustering'] as ModelType[]).map((modelType) => {
-                    const model = modelStatus.get(modelType);
-                    const isCurrentlyTraining = isTraining === modelType;
+                    const modelState = modelManager.state.models.get(modelType);
+                    const model = modelState?.metadata;
+                    const isCurrentlyTraining = modelState?.isTraining || false;
+                    const isCurrentlyDeleting = modelState?.isDeleting || false;
                     
                     return (
                       <div key={modelType} className="border rounded-lg p-4 space-y-3">
@@ -705,7 +579,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleModelRetrain(modelType)}
-                                disabled={isCurrentlyTraining || !mlEnabled}
+                                disabled={isCurrentlyTraining || !modelManager.state.mlEnabled}
                               >
                                 {isCurrentlyTraining ? (
                                   <>
@@ -723,9 +597,9 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                                 size="sm"
                                 variant="outline"
                                 onClick={() => handleDeleteModel(modelType)}
-                                disabled={isCurrentlyTraining || isDeletingModel === modelType}
+                                disabled={isCurrentlyTraining || isCurrentlyDeleting}
                               >
-                                {isDeletingModel === modelType ? (
+                                {isCurrentlyDeleting ? (
                                   <>
                                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                                     Deleting...
@@ -745,7 +619,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                               size="sm"
                               variant="outline"
                               onClick={() => handleModelRetrain(modelType)}
-                              disabled={isCurrentlyTraining || !mlEnabled}
+                              disabled={isCurrentlyTraining || !modelManager.state.mlEnabled}
                             >
                               {isCurrentlyTraining ? (
                                 <>
@@ -806,14 +680,14 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                     <div className="flex items-center gap-4">
                       <Slider
                         id="cacheTTL"
-                        value={[config.cache.ttl / 60000]}
+                        value={[configManager.state.config.cache.ttl / 60000]}
                         onValueChange={(value) => handleSliderChange(['cache', 'ttl'], [value[0] * 60000])}
                         min={1}
                         max={30}
                         step={1}
                         className="flex-1"
                       />
-                      <span className="w-16 text-right">{config.cache.ttl / 60000} min</span>
+                      <span className="w-16 text-right">{configManager.state.config.cache.ttl / 60000} min</span>
                     </div>
                   </div>
 
@@ -823,7 +697,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                       {renderTooltip("Clear cached results when settings change")}
                     </div>
                     <span className="text-sm text-muted-foreground">
-                      {config.cache.invalidateOnConfigChange ? 'Enabled' : 'Disabled'}
+                      {configManager.state.config.cache.invalidateOnConfigChange ? 'Enabled' : 'Disabled'}
                     </span>
                   </div>
                 </CardContent>
@@ -899,7 +773,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
               
               <Button 
                 onClick={handleSave}
-                disabled={!hasUnsavedChanges}
+                disabled={!configManager.state.hasUnsavedChanges}
                 className="flex items-center gap-2"
               >
                 <Save className="h-4 w-4" />
