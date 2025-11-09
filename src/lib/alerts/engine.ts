@@ -24,8 +24,9 @@ import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } fr
 import { generateSparklineData } from '@/lib/chartUtils';
 import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/alerts/constants';
-import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';
 import { logger } from '@/lib/logger';
+import { normalizeTimestamp, buildAlertId, truncateSeries } from '@/lib/alerts/utils';
+import { computeRecencyScore, severityFromScore, rankSources } from '@/lib/alerts/scoring';
 
 /**
  * Input payload for the alert detection pipeline.
@@ -67,84 +68,6 @@ interface ApplyThresholdContext {
   variant: string;
   overrides: Record<string, ThresholdOverride>;
   thresholdTraces: Record<string, ThresholdAdjustmentTrace>;
-}
-
-/**
- * Normalize arbitrary timestamps to epoch milliseconds.
- * Returns null for invalid inputs instead of throwing.
- */
-function normalizeTimestamp(ts: Date | number | string | undefined): number | null {
-  if (!ts) return null;
-  const date = new Date(ts);
-  const value = date.getTime();
-  if (Number.isFinite(value)) return value;
-  return null;
-}
-
-/**
- * Compute a 0-1 recency score that decays approximately exponentially with hours since last event.
- * 0 hours -> ~1, 24h -> ~0.37, 48h -> ~0.14.
- */
-function computeRecencyScore(lastTimestamp: number, now: number): number {
-  const deltaMs = Math.max(0, now - lastTimestamp);
-  const deltaHours = deltaMs / 3_600_000;
-  // 0h -> 1, 48h -> ~0.1
-  const score = Math.exp(-deltaHours / 24);
-  return Math.max(0, Math.min(1, score));
-}
-
-/** Map aggregate score to a severity tier using calibrated cutpoints. */
-function severityFromScore(score: number): AlertSeverity {
-  if (score >= 0.85) return AlertSeverity.Critical;
-  if (score >= 0.7) return AlertSeverity.Important;
-  if (score >= 0.55) return AlertSeverity.Moderate;
-  return AlertSeverity.Low;
-}
-
-/** Fast, stable, low-collision ID for an alert candidate. */
-function buildAlertId(studentId: string, kind: AlertKind, label: string, timestamp: number): string {
-  const base = `${studentId}|${kind}|${label}|${timestamp}`;
-  let hash = 2166136261;
-  for (let i = 0; i < base.length; i += 1) {
-    hash ^= base.charCodeAt(i);
-    hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
-  }
-  return `alert_${(hash >>> 0).toString(36)}`;
-}
-
-/**
- * Rank and attribute sources across detectors using score·confidence weighting.
- * Returns up to S1–S3 sources annotated in `details.rank`.
- */
-function rankSources(detectors: DetectorResult[]): AlertSource[] {
-  const collected: Array<{ source: AlertSource; score: number }> = [];
-  for (let i = 0; i < detectors.length; i += 1) {
-    const detector = detectors[i]!;
-    const weight = (detector.score ?? 0) * (detector.confidence ?? 0);
-    const srcs = detector.sources ?? [];
-    for (let j = 0; j < srcs.length; j += 1) {
-      collected.push({ source: srcs[j]!, score: weight });
-    }
-  }
-
-  const ranked = collected
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .slice(0, 3)
-    .map((entry, idx) => {
-      const rank = idx === 0 ? 'S1' : idx === 1 ? 'S2' : 'S3';
-      const details = { ...(entry.source.details ?? {}), rank };
-      return { ...entry.source, details };
-    });
-
-  return ranked;
-}
-
-/**
- * Truncate a time series to the most recent `limit` points (stable memory bound).
- */
-function truncateSeries(series: TrendPoint[], limit: number = MAX_ALERT_SERIES_LENGTH): TrendPoint[] {
-  if (series.length <= limit) return series;
-  return series.slice(series.length - limit);
 }
 
 /**
