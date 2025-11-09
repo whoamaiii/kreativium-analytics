@@ -27,6 +27,11 @@ import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/
 import { logger } from '@/lib/logger';
 import { normalizeTimestamp, buildAlertId, truncateSeries } from '@/lib/alerts/utils';
 import { computeRecencyScore, severityFromScore, rankSources } from '@/lib/alerts/scoring';
+import {
+  aggregateDetectorResults,
+  finalizeAlertEvent,
+  type AggregatedResult,
+} from '@/lib/alerts/detection';
 
 /**
  * Input payload for the alert detection pipeline.
@@ -581,71 +586,24 @@ export class AlertDetectionEngine {
   }
 
   private buildAlert(candidate: AlertCandidate, studentId: string, nowTs: number): AlertEvent {
-    const detectors = candidate.detectors;
-    const impact = Math.max(...detectors.map((d) => d.score ?? 0), 0);
-    const confidence = Math.max(...detectors.map((d) => d.confidence ?? 0), 0);
-    const recency = computeRecencyScore(candidate.lastTimestamp, nowTs);
-    const tierScore = Math.max(0, Math.min(1, candidate.tier));
-    const aggregateScore = Math.min(
-      1,
-      (0.4 * impact) + (0.25 * confidence) + (0.2 * recency) + (0.15 * tierScore),
+    // Step 1: Aggregate detector results using weighted formula
+    const aggregated = aggregateDetectorResults(
+      candidate.detectors,
+      candidate.lastTimestamp,
+      candidate.tier,
+      nowTs,
     );
 
-    const severity = severityFromScore(aggregateScore);
-    const id = buildAlertId(studentId, candidate.kind, candidate.label, candidate.lastTimestamp);
-    const sparkline = generateSparklineData(truncateSeries(candidate.series, this.seriesLimit));
-
-    const topSources = rankSources(detectors);
-
-    const thresholdOverridesRecord = candidate.thresholdAdjustments
-      ? Object.fromEntries(
-        Object.entries(candidate.thresholdAdjustments).map(([detectorType, trace]) => [detectorType, trace.adjustment]),
-      )
-      : undefined;
-
-    const metadata: AlertMetadata = {
-      label: candidate.label,
-      contextKey: candidate.label,
-      ...candidate.metadata,
-      sparkValues: sparkline.values,
-      sparkTimestamps: sparkline.timestamps,
-      score: aggregateScore,
-      recency,
-      tier: candidate.tier,
-      impact,
-      summary: candidate.detectors[0]?.impactHint ?? candidate.label,
-      sourceRanks: topSources.map((s) => (s.details as Record<string, unknown>)?.rank ?? null).filter(Boolean),
-      thresholdOverrides: thresholdOverridesRecord,
-      experimentKey: candidate.experimentKey,
-      experimentVariant: candidate.experimentVariant,
-      detectorTypes: candidate.detectorTypes,
-      thresholdTrace: candidate.thresholdAdjustments,
-      detectionScoreBreakdown: { impact, confidence, recency, tier: tierScore },
-      seriesStats: this.computeSeriesStats(candidate.series),
-    };
-
-    return {
-      id,
+    // Step 2: Finalize alert event with metadata enrichment and policies
+    return finalizeAlertEvent(
+      candidate,
+      aggregated,
       studentId,
-      kind: candidate.kind,
-      severity,
-      confidence,
-      createdAt: new Date(candidate.lastTimestamp || nowTs).toISOString(),
-      status: AlertStatus.New,
-      dedupeKey: this.policies.calculateDedupeKey({
-        id,
-        studentId,
-        kind: candidate.kind,
-        severity,
-        confidence,
-        createdAt: new Date(candidate.lastTimestamp || nowTs).toISOString(),
-        status: AlertStatus.New,
-        sources: topSources,
-        metadata,
-      } as AlertEvent),
-      sources: topSources,
-      metadata,
-    };
+      {
+        seriesLimit: this.seriesLimit,
+        policies: this.policies,
+      },
+    );
   }
 
   /** Build per-emotion intensity series from raw entries, sorted and truncated. */
