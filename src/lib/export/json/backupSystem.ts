@@ -230,7 +230,7 @@ export class BackupSystem {
         }
       };
     } catch (error) {
-      console.error('Failed to deserialize backup:', error);
+      // logger.error('Failed to deserialize backup:', error);
       return null;
     }
   }

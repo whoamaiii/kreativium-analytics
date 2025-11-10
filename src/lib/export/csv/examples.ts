@@ -26,7 +26,7 @@ export function exampleBasicExport(
   };
 
   const result = generateEmotionsCSV(emotions, students, options);
-  console.log(`Generated ${result.rowCount} rows, ${result.byteSize} bytes`);
+  // Generated CSV with ${result.rowCount} rows, ${result.byteSize} bytes
 
   return result.content;
 }
@@ -242,7 +242,7 @@ export function exampleDownloadCSV(
   link.click();
   document.body.removeChild(link);
 
-  console.log(`Downloaded ${filename} (${result.rowCount} rows, ${result.byteSize} bytes)`);
+  // Downloaded ${filename} (${result.rowCount} rows, ${result.byteSize} bytes)
 }
 
 /**
@@ -269,7 +269,7 @@ export function exampleStreamingExport(
     chunks.push(result.content);
   }
 
-  console.log(`Generated ${chunks.length} chunks`);
+  // Generated ${chunks.length} chunks
   return chunks;
 }
 

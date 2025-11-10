@@ -187,7 +187,7 @@ export class JSONExporter {
 
       return data as JSONExportData;
     } catch (error) {
-      console.error('Failed to parse JSON export:', error);
+      // logger.error('Failed to parse JSON export:', error);
       return null;
     }
   }

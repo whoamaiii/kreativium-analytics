@@ -336,7 +336,7 @@ export function enrichWithComputedFields<T extends Record<string, unknown>>(
       enriched[fieldName] = computeFn(obj);
     } catch (error) {
       // Skip field if computation fails
-      console.warn(`Failed to compute field ${fieldName}:`, error);
+      // logger.warn(`Failed to compute field ${fieldName}:`, error);
     }
   }
 

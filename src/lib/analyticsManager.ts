@@ -23,6 +23,7 @@ import {
   notifyWorkers,
   isManagerTtlCacheDisabled
 } from '@/lib/analytics/cache';
+import { clearAnalyticsLocalStorage } from '@/lib/analytics/cache/localStorageCleaner';
 
 // Extracted bulk operations (Phase 2b refactoring)
 import {
@@ -175,7 +176,7 @@ function loadProfilesFromStorage(_storedProfiles: string | null): AnalyticsProfi
  * const manager = AnalyticsManagerService.getInstance();
  * const analytics = await manager.getStudentAnalytics(student);
  */
-let __lastFacadeLogMinute: number | null = null;
+const __lastFacadeLogMinute: number | null = null;
 // Rate-limit map for deprecation warnings per student
 const __ttlDeprecationWarnWindow = new Map<string, number>();
 class AnalyticsManagerService {
@@ -476,7 +477,6 @@ class AnalyticsManagerService {
    * Delegated to extracted module (Phase 2a refactoring)
    */
   private clearLocalStorageCaches(): { keysCleared: string[] } {
-    const { clearAnalyticsLocalStorage } = require('@/lib/analytics/cache');
     return clearAnalyticsLocalStorage();
   }
 

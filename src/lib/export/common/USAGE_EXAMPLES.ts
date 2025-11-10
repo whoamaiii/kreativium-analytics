@@ -62,7 +62,7 @@ export async function basicValidatedExport(
   }
 
   if (validation.warnings.length > 0) {
-    console.warn('Export warnings:', validation.warnings);
+    // logger.warn('Export warnings:', validation.warnings);
   }
 
   // 3. Merge with defaults
@@ -73,21 +73,17 @@ export async function basicValidatedExport(
   const sizeCheck = isExportTooLarge(allData, options);
   if (sizeCheck.tooLarge) {
     const sizeMB = (sizeCheck.estimatedSize / (1024 * 1024)).toFixed(2);
-    console.warn(`Export will be large: ${sizeMB} MB`);
+    // logger.warn(`Export will be large: ${sizeMB} MB`);
   }
 
   // 5. Collect data with progress tracking
   const data = collectExportData(students, allData, options, (progress) => {
-    console.log(`[${progress.phase}] ${progress.percentage}% - ${progress.currentItem || ''}`);
+    // Collecting [${progress.phase}] ${progress.percentage}% - ${progress.currentItem || ''}
   });
 
   // 6. Calculate metadata
   const metadata = calculateExportMetadata(data);
-  console.log('Export metadata:', {
-    totalRecords: metadata.totalRecords,
-    dateRange: metadata.dateRange,
-    recordCounts: metadata.recordCounts
-  });
+  // Export metadata: totalRecords, dateRange, recordCounts
 
   return { data, metadata, options };
 }
@@ -126,13 +122,8 @@ export async function anonymizedExportForResearch(
   // Apply anonymization
   const anonymizedData = anonymizeData(data, anonOptions);
 
-  console.log('Anonymized export ready:', {
-    emotions: anonymizedData.emotions.length,
-    sensoryInputs: anonymizedData.sensoryInputs.length,
-    // Verify anonymization
-    sampleName: anonymizedData.students?.[0]?.name, // Should be "Student_XXXX"
-    sampleDOB: anonymizedData.students?.[0]?.dateOfBirth // Should be undefined
-  });
+  // Anonymized export ready with emotions, sensoryInputs
+  // Verify anonymization: sampleName should be "Student_XXXX", sampleDOB should be undefined
 
   return anonymizedData;
 }
@@ -159,7 +150,7 @@ export async function streamingLargeExport(
 
   // Stream data in chunks of 500 records
   for await (const chunk of streamExportData(students, allData, options, 500)) {
-    console.log(`Streaming ${chunk.type}: ${chunk.chunk.length} records`);
+    // Streaming ${chunk.type}: ${chunk.chunk.length} records
 
     // Process chunk (e.g., write to file, send to API)
     await outputHandler({
@@ -354,7 +345,7 @@ function formatDataAsCSV(data: ExportDataCollection, students: Student[]): strin
       csv += `${e.emotion},`;
       csv += `${e.intensity},`;
       csv += `"${e.triggers?.join('; ') || ''}",`;
-      csv += `"${e.notes || '"}"\n`;
+      csv += `"${e.notes || ''}"\n`;
     });
     csv += '\n';
   }
