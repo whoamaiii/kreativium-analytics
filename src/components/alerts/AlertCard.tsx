@@ -93,7 +93,7 @@ function hexToRgba(hex: string, opacity: number): string {
   return `rgba(${r}, ${g}, ${b}, ${clamped})`;
 }
 
-const Sparkline: React.FC<SparklineProps> = ({ data, color, label, height: heightProp, areaOpacity }) => {
+const Sparkline = ({ data, color, label, height: heightProp, areaOpacity }: SparklineProps) => {
   if (!data || data.values.length < 2) {
     return (
       <div className="flex h-14 w-full items-center justify-center rounded bg-slate-100 text-xs text-slate-500" role="status" aria-live="polite">
@@ -156,7 +156,7 @@ function toSparklinePoints(alert: AlertEvent): SparklineData | null {
   return generateSparklineData(points);
 }
 
-const BaseAlertCard: React.FC<Props> = ({ alert, onAcknowledge, onSnooze, onResolve, onOpenDetails, sparklineOptions }) => {
+const BaseAlertCard = ({ alert, onAcknowledge, onSnooze, onResolve, onOpenDetails, sparklineOptions }: Props) => {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const listToggleRef = useRef<HTMLButtonElement | null>(null);
   const theme = severityThemes[alert.severity];

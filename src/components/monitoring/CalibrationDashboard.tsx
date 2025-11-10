@@ -18,7 +18,7 @@ function hasData(option: unknown): boolean {
   return Array.isArray(series) ? series.some((entry) => Array.isArray((entry as any)?.data) && (entry as any).data.length > 0) : true;
 }
 
-export const CalibrationDashboard: React.FC = () => {
+export const CalibrationDashboard = () => {
   const { reports, latestReport, loading, error, trendSummaries } = useWeeklyReports();
 
   const calibrationOption = useMemo(() => {

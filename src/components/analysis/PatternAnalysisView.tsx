@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -40,7 +40,7 @@ interface PatternAnalysisViewProps {
   };
 }
 
-export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
+const PatternAnalysisViewComponent = ({
   patterns,
   predictiveInsights,
   anomalies,
@@ -48,7 +48,7 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
   highlightState,
   handleHighlight,
   filteredData,
-}) => {
+}: PatternAnalysisViewProps) => {
   if (!DEV_VIZ_ENABLED) {
     return (
       <div className="p-4 border rounded-md text-muted-foreground" role="note" aria-live="polite">
@@ -100,14 +100,14 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
             Detected Patterns ({patterns.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {patterns.map((pattern, index) => (
+            {patterns.map((pattern) => (
               <Card
-                key={index}
+                key={`${pattern.type}-${pattern.pattern}`}
                 className={cn(
                   "bg-gradient-card cursor-pointer transition-all",
                   highlightState.type === 'emotion' && pattern.type === 'emotion' && "ring-2 ring-primary"
                 )}
-                onClick={() => handleHighlight('emotion', `pattern-${index}`)}
+                onClick={() => handleHighlight('emotion', `pattern-${pattern.type}-${pattern.pattern}`)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -149,8 +149,8 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
             Predictive Insights ({predictiveInsights.length})
           </h3>
           <div className="space-y-4">
-            {predictiveInsights.map((insight, index) => (
-              <Card key={index} className="bg-gradient-card">
+            {predictiveInsights.map((insight) => (
+              <Card key={`${insight.type}-${insight.title}`} className="bg-gradient-card">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
@@ -234,14 +234,14 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
             Detected Anomalies ({anomalies.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {anomalies.map((anomaly, index) => (
+            {anomalies.map((anomaly) => (
               <Card
-                key={index}
+                key={`${anomaly.type}-${anomaly.timestamp.getTime()}`}
                 className={cn(
                   "bg-gradient-card border-orange-200 cursor-pointer",
-                  highlightState.type === 'anomaly' && highlightState.id === `anomaly-${index}` && "ring-2 ring-orange-500"
+                  highlightState.type === 'anomaly' && highlightState.id === `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}` && "ring-2 ring-orange-500"
                 )}
-                onClick={() => handleHighlight('anomaly', `anomaly-${index}`)}
+                onClick={() => handleHighlight('anomaly', `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}`)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -265,3 +265,5 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
     </div>
   );
 };
+
+export const PatternAnalysisView = memo(PatternAnalysisViewComponent);

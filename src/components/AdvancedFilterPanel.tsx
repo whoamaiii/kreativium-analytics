@@ -39,7 +39,7 @@ interface AdvancedFilterPanelProps {
   onDeleteFilter?: (id: string) => void;
 }
 
-export const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
+export const AdvancedFilterPanel = ({
   emotions,
   sensoryInputs,
   trackingEntries,
@@ -47,7 +47,7 @@ export const AdvancedFilterPanel: React.FC<AdvancedFilterPanelProps> = ({
   savedFilters = [],
   onSaveFilter,
   onDeleteFilter
-}) => {
+}: AdvancedFilterPanelProps) => {
   const { tAnalytics, tCommon } = useTranslation();
   const [criteria, setCriteria] = useState<FilterCriteria>({
     dateRange: {

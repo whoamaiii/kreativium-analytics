@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { IntensityScale } from "@/components/ui/intensity-scale";
+import { TagInput } from "@/components/ui/tag-input";
 import { EmotionEntry } from "@/types/student";
 import { Heart, Frown, Angry, Smile, Zap, Sun } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -34,16 +36,16 @@ const subEmotions: Record<string, string[]> = {
 
 /**
  * EmotionTracker Component
- * 
+ *
  * Provides an accessible interface for tracking and recording student emotions
  * with intensity levels, triggers, and contextual information.
- * 
+ *
  * @component
  * @param {EmotionTrackerProps} props - Component props
  * @param {Function} props.onEmotionAdd - Callback when emotion is added
  * @param {string} props.studentId - ID of the student being tracked
  */
-export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps) => {
+const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const [selectedEmotion, setSelectedEmotion] = useState<string>('');
   const [selectedSubEmotion, setSelectedSubEmotion] = useState<string>('');
@@ -52,18 +54,6 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
   const [escalationPattern, setEscalationPattern] = useState<'sudden' | 'gradual' | 'unknown'>('unknown');
   const [notes, setNotes] = useState('');
   const [triggers, setTriggers] = useState<string[]>([]);
-  const [newTrigger, setNewTrigger] = useState('');
-
-  const handleAddTrigger = () => {
-    if (newTrigger.trim() && !triggers.includes(newTrigger.trim())) {
-      setTriggers([...triggers, newTrigger.trim()]);
-      setNewTrigger('');
-    }
-  };
-
-  const handleRemoveTrigger = (trigger: string) => {
-    setTriggers(triggers.filter(t => t !== trigger));
-  };
 
   const handleSubmit = () => {
     if (!selectedEmotion) {
@@ -156,29 +146,15 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
 
         {/* Intensity Scale */}
         {selectedEmotion && (
-          <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">
-              {String(tTracking('emotions.intensity'))}: {intensity}/5
-            </h3>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((level) => (
-                <Button
-                  key={level}
-                  variant={intensity === level ? "default" : "outline"}
-                  size="sm"
-                  className={`w-12 h-12 rounded-full font-dyslexia hover-lift press-scale transition-all duration-200 hover:shadow-soft ${
-                    intensity === level ? 'bg-gradient-primary animate-bounce-in' : ''
-                  }`}
-                  onClick={() => setIntensity(level)}
-                  title={String(tTracking(`emotions.intensityLevels.${level}`))}
-                  aria-label={`Intensity level ${level}`}
-                  aria-pressed={intensity === level}
-                >
-                  {level}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <IntensityScale
+            value={intensity}
+            onChange={setIntensity}
+            label={String(tTracking('emotions.intensity'))}
+            min={1}
+            max={5}
+            showInput={false}
+            className="hover-lift press-scale transition-all duration-200"
+          />
         )}
 
         {/* Duration */}
@@ -262,32 +238,14 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
         {/* Triggers */}
         <div>
           <h3 className="text-sm font-medium text-foreground mb-3">Utløsere (Valgfritt)</h3>
-          <div className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={newTrigger}
-              onChange={(e) => setNewTrigger(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleAddTrigger()}
-              placeholder="Legg til en utløser..."
-              aria-label="Legg til ny utløser"
-              className="flex-1 px-3 py-2 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent"
-            />
-            <Button onClick={handleAddTrigger} size="sm" variant="outline">
-              {String(tCommon('buttons.add'))}
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {triggers.map((trigger) => (
-              <Badge
-                key={trigger}
-                variant="secondary"
-                className="font-dyslexia cursor-pointer"
-                onClick={() => handleRemoveTrigger(trigger)}
-              >
-                {trigger} ×
-              </Badge>
-            ))}
-          </div>
+          <TagInput
+            value={triggers}
+            onChange={setTriggers}
+            placeholder="Legg til en utløser..."
+            label="Legg til ny utløser"
+            addButtonText={String(tCommon('buttons.add'))}
+            className="font-dyslexia"
+          />
         </div>
 
         {/* Notes */}
@@ -313,3 +271,5 @@ export const EmotionTracker = ({ onEmotionAdd, studentId }: EmotionTrackerProps)
     </Card>
   );
 };
+
+export const EmotionTracker = memo(EmotionTrackerComponent);

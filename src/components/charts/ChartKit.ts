@@ -1,6 +1,6 @@
 import { chartColor } from '@/lib/chartColor';
 import { analyticsConfig, DEFAULT_ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
-import type { EChartsOption, SeriesOption } from 'echarts';
+import type { EChartsOption, SeriesOption, TooltipFormatterCallback } from 'echarts';
 import type { CorrelationMatrix } from '@/lib/enhancedPatternAnalysis';
 
 /**
@@ -11,6 +11,40 @@ import type { CorrelationMatrix } from '@/lib/enhancedPatternAnalysis';
  * focus: 'none', and a fully opaque blur state to improve readability
  * and avoid the visual effect of lines "disappearing" when hovering.
  */
+
+/**
+ * Extended SeriesOption with meta property for tracking data keys
+ */
+interface ExtendedSeriesOption extends SeriesOption {
+  meta?: { key: string };
+}
+
+/**
+ * Tooltip formatter parameter types
+ */
+interface TooltipFormatterParams {
+  value?: unknown[];
+  dataIndex?: number;
+}
+
+/**
+ * Extended charts config with optional risk-related properties
+ */
+interface ExtendedChartsConfig {
+  yAxisMax: number;
+  yAxisInterval: number;
+  dataZoomMinSpan: number;
+  correlationLabelThreshold: number;
+  lineWidths: {
+    average: number;
+    movingAverage: number;
+    positive: number;
+    negative: number;
+    sensory: number;
+  };
+  riskYAxisMax?: number;
+  riskYAxisInterval?: number;
+}
 
 /**
  * Strongly-typed input row for trend charts. Keep this flat and numeric so the
@@ -108,12 +142,12 @@ export function buildEmotionTrendsOption(
   const labelSensoryThreshold = String(tAnalytics('charts.sensoryThreshold'));
   const labelIntensity = String(tAnalytics('charts.intensity'));
 
-  const series: SeriesOption[] = [
+  const series: ExtendedSeriesOption[] = [
     {
       type: 'line',
       name: labelAvg,
       data: avg,
-      meta: { key: 'avgEmotionIntensity' } as any,
+      meta: { key: 'avgEmotionIntensity' },
       encode: { y: 'avgEmotionIntensity' },
       smooth: true,
       showSymbol: false,
@@ -140,7 +174,7 @@ export function buildEmotionTrendsOption(
             type: 'line',
             name: labelMA(config.movingAverageWindow),
             data: avgMA,
-            meta: { key: 'avgEmotionIntensityMA' } as any,
+            meta: { key: 'avgEmotionIntensityMA' },
             encode: { y: 'avgEmotionIntensityMA' },
             smooth: true,
             showSymbol: false,
@@ -149,13 +183,13 @@ export function buildEmotionTrendsOption(
             emphasis: { focus: 'none', disabled: true },
             blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
           },
-        ] as SeriesOption[])
+        ] as ExtendedSeriesOption[])
       : []),
     {
       type: 'line',
       name: labelPos,
       data: pos,
-      meta: { key: 'positiveEmotions' } as any,
+      meta: { key: 'positiveEmotions' },
       encode: { y: 'positiveEmotions' },
       smooth: true,
       showSymbol: false,
@@ -168,7 +202,7 @@ export function buildEmotionTrendsOption(
       type: 'line',
       name: labelNeg,
       data: neg,
-      meta: { key: 'negativeEmotions' } as any,
+      meta: { key: 'negativeEmotions' },
       encode: { y: 'negativeEmotions' },
       smooth: true,
       showSymbol: false,
@@ -181,7 +215,7 @@ export function buildEmotionTrendsOption(
       type: 'line',
       name: labelSensory,
       data: sensory,
-      meta: { key: 'totalSensoryInputs' } as any,
+      meta: { key: 'totalSensoryInputs' },
       encode: { y: 'totalSensoryInputs' },
       smooth: true,
       showSymbol: false,
@@ -273,7 +307,7 @@ export function buildAreaOption(
         type: 'line',
         name: String(tAnalytics('charts.avgEmotionIntensity')),
         data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
-        meta: { key: 'avgEmotionIntensity' } as any,
+        meta: { key: 'avgEmotionIntensity' },
         encode: { y: 'avgEmotionIntensity' },
         smooth: true,
         showSymbol: false,
@@ -285,7 +319,7 @@ export function buildAreaOption(
         type: 'line',
         name: String(tAnalytics('charts.positiveEmotions')),
         data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
-        meta: { key: 'positiveEmotions' } as any,
+        meta: { key: 'positiveEmotions' },
         encode: { y: 'positiveEmotions' },
         smooth: true,
         showSymbol: false,
@@ -336,7 +370,7 @@ export function buildComposedOption(
         type: 'bar',
         name: String(tAnalytics('charts.positiveEmotions')),
         data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
-        meta: { key: 'positiveEmotions' } as any,
+        meta: { key: 'positiveEmotions' },
         encode: { y: 'positiveEmotions' },
         yAxisIndex: 0,
         emphasis: { focus: 'none' },
@@ -345,7 +379,7 @@ export function buildComposedOption(
         type: 'bar',
         name: String(tAnalytics('charts.negativeEmotions')),
         data: rows.map(r => toFiniteNumber(r.negativeEmotions)),
-        meta: { key: 'negativeEmotions' } as any,
+        meta: { key: 'negativeEmotions' },
         encode: { y: 'negativeEmotions' },
         yAxisIndex: 0,
         emphasis: { focus: 'none' },
@@ -354,7 +388,7 @@ export function buildComposedOption(
         type: 'line',
         name: String(tAnalytics('charts.avgEmotionIntensity')),
         data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
-        meta: { key: 'avgEmotionIntensity' } as any,
+        meta: { key: 'avgEmotionIntensity' },
         encode: { y: 'avgEmotionIntensity' },
         yAxisIndex: 1,
         smooth: true,
@@ -408,14 +442,15 @@ export function buildCorrelationHeatmapOption(
       trigger: 'item',
       confine: true,
       appendToBody: true,
-      formatter: (p: any) => {
-        const i = p?.value?.[1];
-        const j = p?.value?.[0];
+      formatter: (p: TooltipFormatterParams) => {
+        const value = Array.isArray(p.value) ? p.value : [];
+        const i = typeof value[1] === 'number' ? value[1] : 0;
+        const j = typeof value[0] === 'number' ? value[0] : 0;
         const f1 = factors[i] ?? '';
         const f2 = factors[j] ?? '';
         const key = `${f1}__${f2}`;
         const sig = significanceMap.get(key)?.significance;
-        const corr = typeof p?.value?.[2] === 'number' ? p.value[2] : Number(p.value?.[2]) || 0;
+        const corr = typeof value[2] === 'number' ? value[2] : Number(value[2]) || 0;
         const sign = corr > 0 ? String(tAnalytics('charts.positive')) : corr < 0 ? String(tAnalytics('charts.negative')) : String(tAnalytics('charts.neutral'));
         return `<div style="font-weight:600;margin-bottom:6px">${f1} &harr; ${f2}</div>
                 <div>${tAnalytics('charts.correlation')}: <b>${corr.toFixed(2)}</b> (${sign})</div>
@@ -448,8 +483,9 @@ export function buildCorrelationHeatmapOption(
         data: values,
         label: {
           show: true,
-          formatter: (params: any) => {
-            const v = typeof params?.value?.[2] === 'number' ? params.value[2] : Number(params?.value?.[2]) || 0;
+          formatter: (params: TooltipFormatterParams) => {
+            const value = Array.isArray(params.value) ? params.value : [];
+            const v = typeof value[2] === 'number' ? value[2] : Number(value[2]) || 0;
             // Only label moderate/strong correlations to reduce clutter
             return Math.abs(v) >= chartsCfg.correlationLabelThreshold ? v.toFixed(2) : '';
           },
@@ -474,16 +510,16 @@ export function buildPredictionTimelineOption(
   rows: Array<{ date: string; riskScore: number; label?: string }>,
   tAnalytics: (key: string, options?: Record<string, unknown>) => string
 ): EChartsOption {
-  const chartsCfg = analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts;
+  const chartsCfg = (analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts) as ExtendedChartsConfig;
   const dates = rows.map(r => r.date);
   const values = rows.map(r => (Number.isFinite(r.riskScore) ? r.riskScore : 0));
 
   // Allow risk score scale 0..1 or 0..100 depending on config; default 0..1
-  const yMax = (chartsCfg as any)?.riskYAxisMax && Number.isFinite((chartsCfg as any).riskYAxisMax)
-    ? (chartsCfg as any).riskYAxisMax
+  const yMax = chartsCfg.riskYAxisMax && Number.isFinite(chartsCfg.riskYAxisMax)
+    ? chartsCfg.riskYAxisMax
     : 1;
-  const yInterval = (chartsCfg as any)?.riskYAxisInterval && Number.isFinite((chartsCfg as any).riskYAxisInterval)
-    ? (chartsCfg as any).riskYAxisInterval
+  const yInterval = chartsCfg.riskYAxisInterval && Number.isFinite(chartsCfg.riskYAxisInterval)
+    ? chartsCfg.riskYAxisInterval
     : yMax <= 1 ? 0.1 : Math.ceil(yMax / 10);
 
   const labelRisk = String(tAnalytics('charts.riskScore'));
@@ -492,7 +528,7 @@ export function buildPredictionTimelineOption(
     tooltip: {
       trigger: 'axis',
       confine: true,
-      formatter: (params: any) => {
+      formatter: (params: TooltipFormatterParams | TooltipFormatterParams[]) => {
         const p = Array.isArray(params) ? params[0] : params;
         const idx = p?.dataIndex ?? 0;
         const date = dates[idx] ?? '';

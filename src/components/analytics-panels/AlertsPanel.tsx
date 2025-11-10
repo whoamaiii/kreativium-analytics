@@ -42,7 +42,7 @@ function getSeverityIcon(severity: AlertSeverity) {
   }
 }
 
-export const AlertsPanel: React.FC<AlertsPanelProps> = React.memo(({ filteredData: _filteredData, studentId }) => {
+export const AlertsPanel = React.memo(({ filteredData: _filteredData, studentId }: AlertsPanelProps) => {
   const { tAnalytics, tCommon } = useTranslation();
   const { pinnedIds, isPinned, togglePin, unpinAlert, clearPinnedAlerts } = usePinnedAlerts();
 

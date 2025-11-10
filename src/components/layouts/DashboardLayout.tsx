@@ -18,14 +18,14 @@ interface DashboardLayoutProps {
   };
 }
 
-export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+export const DashboardLayout = ({
   renderTrendsChart,
   renderPatternAnalysis: _renderPatternAnalysis,
   renderCorrelationHeatmap,
   render3dVisualization: _render3dVisualization,
   renderTimeline,
   filteredData,
-}) => {
+}: DashboardLayoutProps) => {
   const { tAnalytics } = useTranslation();
   return (
     <Tabs defaultValue="trends" className="w-full">

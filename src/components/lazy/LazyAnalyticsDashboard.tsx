@@ -18,7 +18,7 @@ interface LazyAnalyticsDashboardProps {
   useAI?: boolean;
 }
 
-const AnalyticsDashboardFallback: React.FC = () => {
+const AnalyticsDashboardFallback = () => {
   const { tAnalytics, tCommon } = useTranslation();
   return (
     <div className="space-y-6">

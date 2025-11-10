@@ -20,7 +20,7 @@ export interface CategoryBrowserProps {
  * CategoryBrowser
  * A compact, searchable grid selector for categories/tags.
  */
-export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
+const CategoryBrowserComponent = ({
   label,
   options,
   selected,
@@ -29,7 +29,7 @@ export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
   columns = 3,
   searchable = true,
   showCount = false,
-}) => {
+}: CategoryBrowserProps) => {
   const [query, setQuery] = useState('');
 
   const normalizedOptions = useMemo(() => {
@@ -105,6 +105,7 @@ export const CategoryBrowser: React.FC<CategoryBrowserProps> = ({
   );
 };
 
+export const CategoryBrowser = React.memo(CategoryBrowserComponent);
 export default CategoryBrowser;
 
 

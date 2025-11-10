@@ -6,6 +6,7 @@ import { Slider } from '@/components/ui/slider';
 import { Toggle } from '@/components/ui/toggle';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import { format, subDays, addDays, differenceInMinutes, isWithinInterval } from 'date-fns';
+import { STREAM_COLORS, SEVERITY_COLORS, UI_COLORS } from '@/lib/chartColors';
 import { 
   Clock, 
   ZoomIn, 
@@ -56,14 +57,14 @@ interface DataStream {
   yScale: [number, number];
 }
 
-export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
+export const TimelineVisualization = ({
   emotions,
   sensoryInputs,
   trackingEntries,
   anomalies = [],
   onTimeRangeChange,
   realtime = false
-}) => {
+}: TimelineVisualizationProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
@@ -132,7 +133,7 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
           type: 'emotion',
           label: emotion.emotion,
           value: emotion.intensity,
-          color: '#10B981',
+          color: STREAM_COLORS.emotion,
           metadata: {
             intensity: emotion.intensity,
             triggers: emotion.triggers?.join(', ') || 'None'
@@ -149,7 +150,7 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
           timestamp: input.timestamp,
           type: 'sensory',
           label: `${input.sensoryType}: ${input.response}`,
-          color: '#3B82F6',
+          color: STREAM_COLORS.sensory,
           metadata: {
             type: input.sensoryType,
             response: input.response
@@ -166,8 +167,8 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
           timestamp: anomaly.timestamp,
           type: 'anomaly',
           label: anomaly.type,
-          color: anomaly.severity === 'high' ? '#EF4444' : 
-                 anomaly.severity === 'medium' ? '#F59E0B' : '#FCD34D'
+          color: anomaly.severity === 'high' ? SEVERITY_COLORS.high :
+                 anomaly.severity === 'medium' ? SEVERITY_COLORS.medium : SEVERITY_COLORS.info
         });
       });
     }
@@ -191,7 +192,7 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
       streams.push({
         id: 'emotion-intensity',
         label: 'Emotion Intensity',
-        color: '#10B981',
+        color: STREAM_COLORS.emotion,
         data: emotionData,
         visible: streamVisibility.emotions,
         yScale: [0, 10]
@@ -231,7 +232,7 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
       streams.push({
         id: 'sensory-response',
         label: 'Sensory Response (Seeking - Avoiding)',
-        color: '#3B82F6',
+        color: STREAM_COLORS.sensory,
         data: sensoryData,
         visible: streamVisibility.sensory,
         yScale: [minValue - 1, maxValue + 1]
@@ -382,7 +383,7 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
             y1={0}
             x2={x}
             y2={dimensions.height}
-            stroke="#e5e7eb"
+            stroke={UI_COLORS.grid}
             strokeDasharray="2,2"
           />
         );
@@ -393,7 +394,7 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
             y={dimensions.height - 5}
             textAnchor="middle"
             fontSize="12"
-            fill="#6b7280"
+            fill={UI_COLORS.text}
           >
             {format(new Date(time), formatStr)}
           </text>
@@ -710,7 +711,7 @@ export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
                 y1={0}
                 x2={timeScale(new Date())}
                 y2={dimensions.height}
-                stroke="#ef4444"
+                stroke={UI_COLORS.danger}
                 strokeWidth="2"
                 strokeDasharray="4,2"
               />

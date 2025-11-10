@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,7 @@ interface EnvironmentalTrackerProps {
   studentId: string;
 }
 
-export const EnvironmentalTracker = ({ onEnvironmentalAdd, studentId }: EnvironmentalTrackerProps) => {
+const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: EnvironmentalTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const specialEventInputId = useId();
   const [roomTemperature, setRoomTemperature] = useState<number>(22);
@@ -242,11 +242,11 @@ export const EnvironmentalTracker = ({ onEnvironmentalAdd, studentId }: Environm
           </div>
           {specialEvents.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
-              {specialEvents.map((event, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-2">
+              {specialEvents.map((event) => (
+                <Badge key={event} variant="secondary" className="flex items-center gap-2">
                   {event}
-                  <X 
-                    className="h-3 w-3 cursor-pointer" 
+                  <X
+                    className="h-3 w-3 cursor-pointer"
                     onClick={() => handleRemoveSpecialEvent(event)}
                   />
                 </Badge>
@@ -267,3 +267,5 @@ export const EnvironmentalTracker = ({ onEnvironmentalAdd, studentId }: Environm
     </Card>
   );
 };
+
+export const EnvironmentalTracker = memo(EnvironmentalTrackerComponent);

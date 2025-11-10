@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { AlertEvent, AlertSeverity, ThresholdAdjustmentTrace, TauUResult } from '@/lib/alerts/types';
 import { getInterventionsByAlertKind } from '@/lib/interventions/library';
 import { Button } from '@/components/ui/button';
@@ -12,12 +12,13 @@ import {
   SparklineData,
 } from '@/lib/chartUtils';
 import { alertPerf } from '@/lib/alerts/performance';
+import { SEVERITY_COLORS, UI_COLORS } from '@/lib/chartColors';
 
 const severityColors: Record<AlertSeverity, string> = {
-  [AlertSeverity.Critical]: '#b91c1c',
-  [AlertSeverity.Important]: '#b45309',
-  [AlertSeverity.Moderate]: '#1d4ed8',
-  [AlertSeverity.Low]: '#334155',
+  [AlertSeverity.Critical]: SEVERITY_COLORS.critical,
+  [AlertSeverity.Important]: SEVERITY_COLORS.important,
+  [AlertSeverity.Moderate]: SEVERITY_COLORS.moderate,
+  [AlertSeverity.Low]: SEVERITY_COLORS.low,
 };
 
 type Props = {
@@ -30,7 +31,7 @@ type Props = {
   onSubmitFeedback?: (alertId: string, feedback: { relevant?: boolean; comment?: string; rating?: number }) => void;
 };
 
-const WideSparkline: React.FC<{ data: SparklineData | null; color: string; label: string; interactive?: boolean }> = ({ data, color, label, interactive }) => {
+const WideSparkline = ({ data, color, label, interactive }: { data: SparklineData | null; color: string; label: string; interactive?: boolean }) => {
   if (!data || data.values.length < 2) {
     return (
       <div className="flex h-32 w-full items-center justify-center rounded bg-slate-100 text-sm text-slate-500">
@@ -80,7 +81,7 @@ const WideSparkline: React.FC<{ data: SparklineData | null; color: string; label
       onMouseLeave={interactive ? () => setHoverIdx(null) : undefined}
     >
       <title>{label}</title>
-      <rect width={width} height={height} fill="#f8fafc" rx={8} />
+      <rect width={width} height={height} fill={UI_COLORS.background} rx={8} />
       <path d={visAreaPath} fill={`${color}1a`} />
       <path d={visLinePath} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" />
       {interactive && hoverIdx !== null ? (
@@ -124,9 +125,9 @@ function renderMetadata(alert: AlertEvent): Array<{ label: string; value: string
   return entries;
 }
 
-export const AlertDetails: React.FC<Props> = ({ alert, onCreateGoal, onAddInterventionTemplate, onScheduleCheckIn, onAddToReport, onNotifyTeam, onSubmitFeedback }) => {
+const AlertDetailsComponent = ({ alert, onCreateGoal, onAddInterventionTemplate, onScheduleCheckIn, onAddToReport, onNotifyTeam, onSubmitFeedback }: Props) => {
   const interventions = getInterventionsByAlertKind(alert.kind);
-  const color = severityColors[alert.severity] ?? '#1f2937';
+  const color = severityColors[alert.severity] ?? UI_COLORS.textDark;
   const sparklineData = useMemo(() => {
     const stop = alertPerf.startTimer();
     try {
@@ -389,4 +390,5 @@ export const AlertDetails: React.FC<Props> = ({ alert, onCreateGoal, onAddInterv
   );
 };
 
+export const AlertDetails = memo(AlertDetailsComponent);
 export default AlertDetails;

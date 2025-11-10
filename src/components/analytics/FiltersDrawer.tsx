@@ -11,6 +11,17 @@ import { Separator } from '@/components/ui/separator';
 import { useAdvancedFilters } from '@/hooks/useAdvancedFilters';
 import { useTranslation } from '@/hooks/useTranslation';
 import { FILTER_PRESETS, type FilterCriteria } from '@/lib/filterUtils';
+import {
+  EMOTION_TYPES,
+  SENSORY_TYPES,
+  SENSORY_RESPONSES,
+  LOCATIONS,
+  ACTIVITIES,
+  LIGHTING,
+  WEATHER,
+  TIME_OF_DAY,
+  PATTERN_TYPES,
+} from '@/lib/filterOptions';
 
 interface FiltersDrawerProps {
   open: boolean;
@@ -19,18 +30,7 @@ interface FiltersDrawerProps {
   initialFilters?: Partial<FilterCriteria>;
 }
 
-// Option sources — using existing mockData and tracking conventions for consistency
-const EMOTION_TYPES = ['Happy', 'Calm', 'Excited', 'Anxious', 'Frustrated', 'Focused', 'Tired', 'Overwhelmed', 'Content', 'Curious'];
-const SENSORY_TYPES = ['Visual', 'Auditory', 'Tactile', 'Vestibular', 'Proprioceptive', 'Olfactory', 'Gustatory'];
-const SENSORY_RESPONSES = ['seeking', 'avoiding'];
-const LOCATIONS = ['classroom', 'playground', 'lunchroom', 'hallway', 'home', 'therapy', 'library'];
-const ACTIVITIES = ['instruction', 'transition', 'free-time', 'testing', 'group-work'];
-const LIGHTING = ['natural', 'fluorescent', 'sunlight', 'mixed', 'bright', 'moderate', 'dim'];
-const WEATHER = ['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'];
-const TIME_OF_DAY = ['morning', 'afternoon', 'evening'];
-const PATTERN_TYPES = ['trend', 'anomaly', 'correlation'];
-
-export const FiltersDrawer: React.FC<FiltersDrawerProps> = ({ open, onOpenChange, onFiltersApply, initialFilters }) => {
+export const FiltersDrawer = ({ open, onOpenChange, onFiltersApply, initialFilters }: FiltersDrawerProps) => {
   const { tAnalytics } = useTranslation();
   const { draft, setDraft, applyFilters, resetFilters, activeCounts, modifiedSinceApply } = useAdvancedFilters(initialFilters);
 

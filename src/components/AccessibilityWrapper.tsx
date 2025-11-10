@@ -7,11 +7,11 @@ interface AccessibilityWrapperProps {
   announceChanges?: boolean;
 }
 
-export const AccessibilityWrapper: React.FC<AccessibilityWrapperProps> = ({
+export const AccessibilityWrapper = ({
   children,
   skipToContent = true,
   announceChanges = true
-}) => {
+}: AccessibilityWrapperProps) => {
   const { tCommon } = useTranslation();
 
   useEffect(() => {

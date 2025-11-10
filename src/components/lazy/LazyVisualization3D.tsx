@@ -19,7 +19,7 @@ interface LazyVisualization3DProps {
   }[];
 }
 
-const Visualization3DFallback: React.FC = () => (
+const Visualization3DFallback = () => (
   <Card className="w-full">
     <CardHeader>
       <CardTitle className="flex items-center gap-2">

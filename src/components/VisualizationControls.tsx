@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,7 +56,7 @@ interface VisualizationControlsProps {
   handleExport: (format: ExportFormat) => void;
 }
 
-export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
+const VisualizationControlsComponent = ({
   studentName,
   isExporting,
   availableEmotions,
@@ -66,7 +66,7 @@ export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
   toggleFullscreen,
   togglePictureInPicture,
   handleExport,
-}) => {
+}: VisualizationControlsProps) => {
   const {
     selectedChartType,
     setSelectedChartType,
@@ -430,3 +430,5 @@ export const VisualizationControls: React.FC<VisualizationControlsProps> = ({
     </Card>
   );
 };
+
+export const VisualizationControls = memo(VisualizationControlsComponent);

@@ -3,7 +3,7 @@ import type { ComponentType } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2 } from 'lucide-react';
-import { ErrorWrapper } from '@/components/ErrorWrapper';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { logger } from '@/lib/logger';
 
 interface LazyLoadWrapperProps {
@@ -43,52 +43,19 @@ const DefaultErrorFallback = () => (
   </Card>
 );
 
-export const LazyLoadWrapper: React.FC<LazyLoadWrapperProps> = ({
+export const LazyLoadWrapper = ({
   fallback = <DefaultFallback />,
   errorFallback = <DefaultErrorFallback />,
   children
-}) => {
+}: LazyLoadWrapperProps) => {
   return (
-    <ErrorWrapper fallback={errorFallback}>
+    <ErrorBoundary fallback={errorFallback}>
       <Suspense fallback={fallback}>
         {children}
       </Suspense>
-    </ErrorWrapper>
+    </ErrorBoundary>
   );
 };
-
-// Error Boundary Component
-interface ErrorBoundaryProps {
-  fallback: React.ReactNode;
-  children: React.ReactNode;
-}
-
-interface ErrorBoundaryState {
-  hasError: boolean;
-}
-
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    logger.error('LazyLoadWrapper Error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-
-    return this.props.children;
-  }
-}
 
 // Utility function to create lazy-loaded components with proper error handling
 export function createLazyComponent<T extends ComponentType<unknown>>(

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ interface AnalyticsStatusIndicatorProps {
  * @param {boolean} [props.showDetails=false] - Whether to show detailed analytics systems status
  * @param {string} [props.className=""] - Additional CSS classes
  */
-export const AnalyticsStatusIndicator = ({ 
+const AnalyticsStatusIndicatorComponent = ({ 
   studentId, 
   showDetails = false, 
   className = "" 
@@ -268,3 +268,4 @@ export const AnalyticsStatusIndicator = ({
     </Card>
   );
 };
+export const AnalyticsStatusIndicator = memo(AnalyticsStatusIndicatorComponent);

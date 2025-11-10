@@ -38,7 +38,7 @@ const scoreToBadge = (p?: number) => {
   return <Badge variant={variant}>{pct}%</Badge>;
 };
 
-export const TeacherInsightsPanel: React.FC<Props> = ({
+export const TeacherInsightsPanel = ({
   student,
   filteredData,
   analysis,
@@ -49,7 +49,7 @@ export const TeacherInsightsPanel: React.FC<Props> = ({
   onJumpToTracking,
   onOpenPattern,
   className = ''
-}) => {
+}: Props) => {
   const sessions = filteredData?.entries?.length ?? 0;
   const emotions = filteredData?.emotions?.length ?? 0;
 

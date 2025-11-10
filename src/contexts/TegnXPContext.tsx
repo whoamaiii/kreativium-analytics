@@ -10,7 +10,7 @@ const TegnXPContext = createContext<TegnXPContextValue | null>(null);
 
 const STORAGE_KEY = 'tegn_xp_total';
 
-export const TegnXPProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TegnXPProvider = ({ children }: { children: React.ReactNode }) => {
   const [xp, setXp] = useState<number>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from 'react';
 import { HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -69,7 +69,7 @@ const buildWith = (overrides: Partial<FilterCriteria>): FilterCriteria => ({
   patterns: { ...DEFAULT_CRITERIA.patterns, ...(overrides.patterns || {}) },
 });
 
-export const QuickQuestions: React.FC<QuickQuestionsProps> = ({ onNavigate, onFiltersApply, className }) => {
+const QuickQuestionsComponent = ({ onNavigate, onFiltersApply, className }: QuickQuestionsProps) => {
   const { tAnalytics } = useTranslation();
   const [, setTab] = useSyncedTabParam();
   const [, setPreset] = useSyncedExplorePreset();
@@ -269,5 +269,7 @@ export const QuickQuestions: React.FC<QuickQuestionsProps> = ({ onNavigate, onFi
     </Popover>
   );
 };
+
+export const QuickQuestions = memo(QuickQuestionsComponent);
 
  

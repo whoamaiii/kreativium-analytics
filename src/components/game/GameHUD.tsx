@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XPProgressBar } from '@/components/game/XPProgressBar';
 import { useXPGainEffects } from '@/hooks/useXPGainEffects';
@@ -66,3 +66,5 @@ function AnimatedCount({ value }: { value: number }) {
 
 
 
+
+export const GameHUD = memo(GameHUDComponent);

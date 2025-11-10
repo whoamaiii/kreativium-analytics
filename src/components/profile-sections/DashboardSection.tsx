@@ -264,8 +264,8 @@ export function DashboardSection({
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {insights.suggestions.slice(0, 3).map((suggestion: string, index: number) => (
-                <div key={index} className="p-3 bg-accent/20 rounded-lg">
+              {insights.suggestions.slice(0, 3).map((suggestion: string) => (
+                <div key={suggestion} className="p-3 bg-accent/20 rounded-lg">
                   <p className="text-sm">{suggestion}</p>
                 </div>
               ))}

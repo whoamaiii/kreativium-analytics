@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -121,10 +121,10 @@ const defaultTemplates: QuickTemplate[] = [
  * @param {string} props.studentId - ID of the current student
  * @param {Function} props.onApplyTemplate - Callback when a template is applied
  */
-export const QuickEntryTemplates: React.FC<QuickEntryTemplatesProps> = ({
+const QuickEntryTemplatesComponent = ({
   studentId,
   onApplyTemplate
-}) => {
+}: QuickEntryTemplatesProps) => {
   /**
    * Initialize templates from localStorage with error handling.
    * Falls back to default templates if parsing fails or data is corrupted.
@@ -470,3 +470,5 @@ export const QuickEntryTemplates: React.FC<QuickEntryTemplatesProps> = ({
     </Card>
   );
 };
+
+export const QuickEntryTemplates = memo(QuickEntryTemplatesComponent);

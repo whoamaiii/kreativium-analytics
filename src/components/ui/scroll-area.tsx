@@ -6,7 +6,7 @@ export interface ScrollAreaProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
-export const ScrollArea: React.FC<ScrollAreaProps> = ({ className, children, ...props }) => {
+export const ScrollArea = ({ className, children, ...props }: ScrollAreaProps) => {
   return (
     <div className={cn("w-full h-full overflow-auto", className)} {...props}>
       {children}

@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { IntensityScale } from "@/components/ui/intensity-scale";
 import { SensoryEntry } from "@/types/student";
 import { Eye, Ear, Hand, RotateCcw, Activity } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -40,7 +41,7 @@ const copingStrategySuggestions = [
   'Compression', 'Joint compressions', 'Chewing gum', 'Water break'
 ];
 
-export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps) => {
+const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedResponse, setSelectedResponse] = useState<string>('');
@@ -152,39 +153,14 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
         )}
 
         {/* Intensity Scale */}
-{selectedResponse && (
-          <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">
-              {String(tTracking('sensory.intensity'))}: {intensity}/5
-            </h3>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((level) => (
-                <Button
-                  key={level}
-                  variant={intensity === level ? "default" : "outline"}
-                  size="sm"
-                  className={`w-12 h-12 rounded-full font-dyslexia ${
-                    intensity === level ? 'bg-gradient-primary' : ''
-                  }`}
-                  onClick={() => handleIntensity(level)}
-                  title={String(tTracking(`sensory.intensityLevels.${level}`))}
-                  aria-label={`Intensity level ${level}`}
-                  aria-pressed={intensity === level}
-                >
-                  {level}
-                </Button>
-              ))}
-            </div>
-            <input
-              type="number"
-              value={intensity}
-              min={1}
-              max={5}
-              onChange={e => handleIntensity(Number(e.target.value))}
-              className="w-16 px-2 py-1 mt-2 rounded border"
-              aria-label="Manual intensity input"
-            />
-          </div>
+        {selectedResponse && (
+          <IntensityScale
+            value={intensity}
+            onChange={handleIntensity}
+            label={String(tTracking('sensory.intensity'))}
+            min={1}
+            max={5}
+          />
         )}
 
         {/* Body Location */}
@@ -301,3 +277,5 @@ export const SensoryTracker = ({ onSensoryAdd, studentId }: SensoryTrackerProps)
     </Card>
   );
 };
+
+export const SensoryTracker = memo(SensoryTrackerComponent);

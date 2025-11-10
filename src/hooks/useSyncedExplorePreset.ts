@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import type { ExplorePreset } from '@/types/analytics';
 import { logger } from '@/lib/logger';
+import { useUrlSync } from './useUrlSync';
 
 const VALID_PRESETS: ReadonlyArray<ExplorePreset> = ['charts', 'patterns', 'correlations'] as const;
 
@@ -60,16 +61,18 @@ export type UseSyncedExplorePresetReturn = [ExplorePreset, Dispatch<SetStateActi
  * useSyncedExplorePreset
  * - Reads initial preset from the URL (?preset=...)
  * - Validates against ExplorePreset and falls back to 'charts'
- * - Writes changes to URL using history.replaceState to avoid extra renders
+ * - Writes changes to URL using useUrlSync generic hook
  * - Debounces writes to avoid spamming history on quick toggles
  * - Keeps state in sync with back/forward navigation via popstate
  */
 export function useSyncedExplorePreset(options: UseSyncedExplorePresetOptions = {}): UseSyncedExplorePresetReturn {
   const { debounceMs = 150, paramKey = 'preset', defaultPreset = 'charts', tabParamKey = 'tab', currentTab } = options;
 
-  const getPresetFromLocation = useCallback((): ExplorePreset => {
-    try {
-      const params = new URLSearchParams(window.location.search);
+  return useUrlSync<ExplorePreset>({
+    defaultValue: defaultPreset,
+    debounceMs,
+    loggerName: 'useSyncedExplorePreset',
+    read: useCallback((params: URLSearchParams): ExplorePreset => {
       const urlValue = params.get(paramKey);
 
       // Check for a legacy tab redirect intent carried via history state
@@ -106,63 +109,12 @@ export function useSyncedExplorePreset(options: UseSyncedExplorePresetOptions = 
         } catch {}
       }
 
-      try { logger.debug('[useSyncedExplorePreset] Read preset from URL', { preset, paramKey, suggestedFromLegacy }); } catch {}
       return preset;
-    } catch {
-      return defaultPreset;
-    }
-  }, [defaultPreset, paramKey]);
-
-  const [preset, setPreset] = useState<ExplorePreset>(() => getPresetFromLocation());
-
-  // Sync with back/forward navigation
-  useEffect(() => {
-    const onPop = () => {
-      const next = getPresetFromLocation();
-      try { logger.debug('[useSyncedExplorePreset] popstate -> sync preset', { preset: next, paramKey }); } catch {}
-      setPreset(next);
-    };
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
-  }, [getPresetFromLocation, paramKey]);
-
-  // Debounced URL writer
-  const debounceTimer = useRef<number | undefined>(undefined);
-  const writeToUrl = useCallback((nextPreset: ExplorePreset) => {
-    const doWrite = () => {
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.set(paramKey, nextPreset);
-        window.history.replaceState(window.history.state, '', url.toString());
-        try { logger.debug('[useSyncedExplorePreset] URL sync via history.replaceState', { preset: nextPreset, paramKey }); } catch {}
-      } catch {
-        // no-op: never throw from URL sync
-      }
-    };
-    if (debounceTimer.current) {
-      window.clearTimeout(debounceTimer.current);
-    }
-    debounceTimer.current = window.setTimeout(doWrite, debounceMs);
-  }, [debounceMs, paramKey]);
-
-  // When preset changes (from UI), write to URL
-  useEffect(() => {
-    writeToUrl(preset);
-  }, [preset, writeToUrl]);
-
-  // Cleanup any pending debounce timer on unmount to avoid post-unmount URL writes
-  useEffect(() => {
-    return () => {
-      if (debounceTimer.current) {
-        try { window.clearTimeout(debounceTimer.current); } catch {}
-        debounceTimer.current = undefined;
-      }
-    };
-  }, []);
-
-  return [preset, setPreset];
+    }, [defaultPreset, paramKey, tabParamKey, currentTab]),
+    write: useCallback((preset: ExplorePreset, params: URLSearchParams) => {
+      params.set(paramKey, preset);
+    }, [paramKey]),
+  });
 }
 
 export { VALID_PRESETS, isValidPreset, normalizePreset, LEGACY_PRESET_MAP };
-
-
