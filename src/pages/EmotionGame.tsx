@@ -147,8 +147,26 @@ export default function EmotionGame() {
   const [lastPerfect, setLastPerfect] = useState<boolean>(false);
   const [confidenceValue, setConfidenceValue] = useState<number>(0.7);
   const [showSummary, setShowSummary] = useState<{ visible: boolean; timeMs: number; stabilityMs?: number; intensity?: number; actualProb?: number } | null>(null);
-  const [particleMin] = useState<number>(() => { try { return Number(localStorage.getItem('emotion.effects.particles.min') || String(EFFECT_CONFIG.PARTICLE_MIN)); } catch { return EFFECT_CONFIG.PARTICLE_MIN; } });
-  const [particleMax] = useState<number>(() => { try { return Number(localStorage.getItem('emotion.effects.particles.max') || String(EFFECT_CONFIG.PARTICLE_MAX)); } catch { return EFFECT_CONFIG.PARTICLE_MAX; } });
+  const [particleMin] = useStorageState(
+    STORAGE_KEYS.EMOTION_PARTICLES_MIN,
+    EFFECT_CONFIG.PARTICLE_MIN,
+    {
+      deserialize: (value) => {
+        const parsed = Number(JSON.parse(value));
+        return isNaN(parsed) ? EFFECT_CONFIG.PARTICLE_MIN : parsed;
+      },
+    }
+  );
+  const [particleMax] = useStorageState(
+    STORAGE_KEYS.EMOTION_PARTICLES_MAX,
+    EFFECT_CONFIG.PARTICLE_MAX,
+    {
+      deserialize: (value) => {
+        const parsed = Number(JSON.parse(value));
+        return isNaN(parsed) ? EFFECT_CONFIG.PARTICLE_MAX : parsed;
+      },
+    }
+  );
 
   // Destructure stable pieces to avoid object identity changing in deps
   const { state: holdState, update: updateHold, reset: resetHold } = useHoldTimer({
@@ -368,7 +386,7 @@ export default function EmotionGame() {
       fps,
       detector: (() => {
         try {
-          return localStorage.getItem('emotion.detectorType') || 'faceapi-worker';
+          return localStorage.getItem(STORAGE_KEYS.EMOTION_DETECTOR_TYPE) || 'faceapi-worker';
         } catch {
           return 'faceapi-worker';
         }
@@ -680,14 +698,7 @@ export default function EmotionGame() {
               <ModeSelector value={mode} onChange={setMode} />
             <PracticeSelector
               value={practice}
-              onChange={(value) => {
-                setPractice(value);
-                try {
-                  localStorage.setItem(PRACTICE_STORAGE_KEY, value);
-                } catch {
-                  /* noop */
-                }
-              }}
+              onChange={setPractice}
             />
           </div>
         </div>
@@ -822,7 +833,7 @@ export default function EmotionGame() {
           setGamePhase('reward');
         }}
       />
-      <TutorialOverlay visible={gameState.state.modals.showTutorial} onClose={() => { try { localStorage.setItem('emotion.tutorialSeen', '1'); } catch {
+      <TutorialOverlay visible={gameState.state.modals.showTutorial} onClose={() => { try { localStorage.setItem(STORAGE_KEYS.EMOTION_TUTORIAL_SEEN, '1'); } catch {
     /* noop */
   }; gameState.hideModal('showTutorial'); }} />
       <CalibrationOverlay visible={gameState.state.modals.showCalibration} neutralProb={(detector.probabilities as Record<string, number>)['neutral'] ?? 0} onClose={() => gameState.hideModal('showCalibration')} />
@@ -865,10 +876,10 @@ export default function EmotionGame() {
         onFreePlay={() => { gameState.hideModal('showLevelComplete'); gameState.showModal('showStickerBook'); }}
         onPayout={(stickerId) => {
           try {
-            const raw = localStorage.getItem('emotion.stickers.v1');
+            const raw = localStorage.getItem(STORAGE_KEYS.EMOTION_STICKERS);
             const list = raw ? JSON.parse(raw) : [];
             list.push({ id: stickerId, x: Math.random() * STICKER_CONFIG.RANDOM_X_RANGE + STICKER_CONFIG.RANDOM_X_OFFSET, y: Math.random() * STICKER_CONFIG.RANDOM_Y_RANGE + STICKER_CONFIG.RANDOM_Y_OFFSET });
-            localStorage.setItem('emotion.stickers.v1', JSON.stringify(list));
+            localStorage.setItem(STORAGE_KEYS.EMOTION_STICKERS, JSON.stringify(list));
           } catch {
     /* noop */
   }

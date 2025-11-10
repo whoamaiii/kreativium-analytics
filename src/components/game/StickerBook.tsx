@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 interface StickerBookProps {
   visible: boolean;
@@ -6,21 +8,29 @@ interface StickerBookProps {
 
 interface OwnedSticker { id: string; x: number; y: number; }
 
-const KEY = 'emotion.stickers.v1';
-
 export function StickerBook({ visible }: StickerBookProps) {
-  const [owned, setOwned] = useState<OwnedSticker[]>([]);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) setOwned(JSON.parse(raw));
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(owned)); } catch {}
-  }, [owned]);
+  const [owned] = useStorageState<OwnedSticker[]>(
+    STORAGE_KEYS.EMOTION_STICKERS,
+    [],
+    {
+      deserialize: (value) => {
+        try {
+          const parsed = JSON.parse(value);
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(
+            (item): item is OwnedSticker =>
+              typeof item === 'object' &&
+              item !== null &&
+              typeof item.id === 'string' &&
+              typeof item.x === 'number' &&
+              typeof item.y === 'number'
+          );
+        } catch {
+          return [];
+        }
+      },
+    }
+  );
 
   if (!visible) return null;
 
