@@ -12,12 +12,13 @@ import {
   SparklineData,
 } from '@/lib/chartUtils';
 import { alertPerf } from '@/lib/alerts/performance';
+import { SEVERITY_COLORS, UI_COLORS } from '@/lib/chartColors';
 
 const severityColors: Record<AlertSeverity, string> = {
-  [AlertSeverity.Critical]: '#b91c1c',
-  [AlertSeverity.Important]: '#b45309',
-  [AlertSeverity.Moderate]: '#1d4ed8',
-  [AlertSeverity.Low]: '#334155',
+  [AlertSeverity.Critical]: SEVERITY_COLORS.critical,
+  [AlertSeverity.Important]: SEVERITY_COLORS.important,
+  [AlertSeverity.Moderate]: SEVERITY_COLORS.moderate,
+  [AlertSeverity.Low]: SEVERITY_COLORS.low,
 };
 
 type Props = {
@@ -80,7 +81,7 @@ const WideSparkline = ({ data, color, label, interactive }: { data: SparklineDat
       onMouseLeave={interactive ? () => setHoverIdx(null) : undefined}
     >
       <title>{label}</title>
-      <rect width={width} height={height} fill="#f8fafc" rx={8} />
+      <rect width={width} height={height} fill={UI_COLORS.background} rx={8} />
       <path d={visAreaPath} fill={`${color}1a`} />
       <path d={visLinePath} stroke={color} strokeWidth={2.5} fill="none" strokeLinecap="round" />
       {interactive && hoverIdx !== null ? (
@@ -126,7 +127,7 @@ function renderMetadata(alert: AlertEvent): Array<{ label: string; value: string
 
 const AlertDetailsComponent = ({ alert, onCreateGoal, onAddInterventionTemplate, onScheduleCheckIn, onAddToReport, onNotifyTeam, onSubmitFeedback }: Props) => {
   const interventions = getInterventionsByAlertKind(alert.kind);
-  const color = severityColors[alert.severity] ?? '#1f2937';
+  const color = severityColors[alert.severity] ?? UI_COLORS.textDark;
   const sparklineData = useMemo(() => {
     const stop = alertPerf.startTimer();
     try {

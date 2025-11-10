@@ -73,6 +73,64 @@ export function getSensoryColor(sensoryName: string): string | undefined {
 }
 
 /**
+ * Severity-based colors for alerts, anomalies, and warnings
+ * Uses Tailwind-compatible hex values for consistent severity indication
+ */
+export const SEVERITY_COLORS = {
+  critical: '#b91c1c',   // red-700
+  high: '#EF4444',       // red-500
+  important: '#b45309',  // amber-700
+  medium: '#F59E0B',     // amber-500
+  moderate: '#1d4ed8',   // blue-700
+  low: '#334155',        // slate-700
+  info: '#FCD34D'        // yellow-300
+} as const;
+
+/**
+ * Common UI colors for visualizations
+ * Provides consistent colors for standard chart elements
+ */
+export const UI_COLORS = {
+  // Primary action/data colors
+  success: '#10B981',     // green-500 (emerald)
+  info: '#3B82F6',        // blue-500
+  warning: '#F59E0B',     // amber-500
+  danger: '#EF4444',      // red-500
+
+  // Neutral/background colors
+  background: '#f8fafc',  // slate-50
+  border: '#e5e7eb',      // gray-200
+  text: '#6b7280',        // gray-500
+  textDark: '#1f2937',    // gray-800
+
+  // Chart gridlines and axes
+  grid: '#e5e7eb',        // gray-200
+  axis: '#6b7280'         // gray-500
+} as const;
+
+/**
+ * Categorical colors for stream visualizations
+ * Maps visualization types to semantic colors
+ */
+export const STREAM_COLORS = {
+  emotion: UI_COLORS.success,    // Green for emotions
+  sensory: UI_COLORS.info,       // Blue for sensory
+  anomaly: UI_COLORS.danger,     // Red for anomalies
+  pattern: EMOTION_COLORS.excited, // Purple for patterns
+  goal: EMOTION_COLORS.calm      // Calm blue for goals
+} as const;
+
+/**
+ * Get severity color by level
+ * @param severity - The severity level identifier
+ * @returns The hex color for the severity level or default gray
+ */
+export function getSeverityColor(severity: string): string {
+  const level = severity.toLowerCase() as keyof typeof SEVERITY_COLORS;
+  return SEVERITY_COLORS[level] ?? UI_COLORS.textDark;
+}
+
+/**
  * Get emotion icon emoji for tooltip display
  * @param emotionName - The emotion identifier
  * @returns The emoji representation of the emotion
