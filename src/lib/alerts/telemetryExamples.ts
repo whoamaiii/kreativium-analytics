@@ -36,7 +36,12 @@ export function analyzeWeeklyPerformance(students: Student[]): { reportJson: str
 export function simulateABTesting(): void {
   const telemetry = new AlertTelemetryService();
   const now = new Date().toISOString();
-  const build = (id: string, variant: 'A' | 'B', confidence: number, relevant?: boolean): AlertEvent => ({
+  const build = (
+    id: string,
+    variant: 'A' | 'B',
+    confidence: number,
+    relevant?: boolean,
+  ): AlertEvent => ({
     id,
     studentId: 's-1',
     kind: AlertKind.BehaviorSpike,
@@ -44,12 +49,26 @@ export function simulateABTesting(): void {
     confidence,
     createdAt: now,
     status: AlertStatus.New,
-    metadata: { experimentKey: 'exp-threshold', experimentVariant: variant, detectorTypes: ['ewma'] },
+    metadata: {
+      experimentKey: 'exp-threshold',
+      experimentVariant: variant,
+      detectorTypes: ['ewma'],
+    },
   });
   const a1 = build('a1', 'A', 0.6, true);
   const b1 = build('b1', 'B', 0.7, false);
-  telemetry.logAlertCreated(a1, { predictedRelevance: a1.confidence, detectorTypes: ['ewma'], experimentKey: 'exp-threshold', experimentVariant: 'A' });
-  telemetry.logAlertCreated(b1, { predictedRelevance: b1.confidence, detectorTypes: ['ewma'], experimentKey: 'exp-threshold', experimentVariant: 'B' });
+  telemetry.logAlertCreated(a1, {
+    predictedRelevance: a1.confidence,
+    detectorTypes: ['ewma'],
+    experimentKey: 'exp-threshold',
+    experimentVariant: 'A',
+  });
+  telemetry.logAlertCreated(b1, {
+    predictedRelevance: b1.confidence,
+    detectorTypes: ['ewma'],
+    experimentKey: 'exp-threshold',
+    experimentVariant: 'B',
+  });
   telemetry.logFeedback(a1.id, { relevant: true, rating: 5 });
   telemetry.logFeedback(b1.id, { relevant: false, rating: 2 });
 }
@@ -81,12 +100,13 @@ export function highVolumeIngest(alerts: AlertEvent[], students: Student[]) {
   const telemetry = new AlertTelemetryService();
   for (let i = 0; i < alerts.length; i += 1) {
     const a = alerts[i];
-    telemetry.logAlertCreated(a, { predictedRelevance: a.confidence, detectorTypes: a.metadata?.detectorTypes });
+    telemetry.logAlertCreated(a, {
+      predictedRelevance: a.confidence,
+      detectorTypes: a.metadata?.detectorTypes,
+    });
     if (i % 10 === 0) {
       // periodic batch evaluation rather than per-alert heavy operations
       new WeeklyAlertMetrics({ telemetry }).runWeeklyEvaluation({ students });
     }
   }
 }
-
-

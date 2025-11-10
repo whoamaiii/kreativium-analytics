@@ -22,7 +22,13 @@ describe('Data Validation', () => {
 
   describe('validateEmotionEntry', () => {
     it('should return true for a valid emotion entry', () => {
-      const entry: EmotionEntry = { id: 'e1', studentId: '1', emotion: 'happy', intensity: 5, timestamp: new Date() };
+      const entry: EmotionEntry = {
+        id: 'e1',
+        studentId: '1',
+        emotion: 'happy',
+        intensity: 5,
+        timestamp: new Date(),
+      };
       expect(validateEmotionEntry(entry).isValid).toBe(true);
     });
 
@@ -34,7 +40,14 @@ describe('Data Validation', () => {
 
   describe('validateSensoryEntry', () => {
     it('should return true for a valid sensory entry', () => {
-      const entry: SensoryEntry = { id: 's1', studentId: '1', sensoryType: 'auditory', response: 'seeking', intensity: 3, timestamp: new Date() };
+      const entry: SensoryEntry = {
+        id: 's1',
+        studentId: '1',
+        sensoryType: 'auditory',
+        response: 'seeking',
+        intensity: 3,
+        timestamp: new Date(),
+      };
       expect(validateSensoryEntry(entry).isValid).toBe(true);
     });
 

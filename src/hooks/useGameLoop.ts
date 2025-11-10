@@ -2,7 +2,15 @@ import { useCallback, useMemo, useState } from 'react';
 import type { ExpressionSnapshot } from './useExpressionDetector';
 import type { GameRound, World } from '@/game/levels';
 
-export type GamePhase = 'idle' | 'prompt' | 'detecting' | 'success' | 'reward' | 'next' | 'completed' | 'paused';
+export type GamePhase =
+  | 'idle'
+  | 'prompt'
+  | 'detecting'
+  | 'success'
+  | 'reward'
+  | 'next'
+  | 'completed'
+  | 'paused';
 
 export interface GameMetrics {
   roundIndex: number;
@@ -26,13 +34,20 @@ export function useGameLoop(options: UseGameLoopOptions) {
   const [xp, setXp] = useState<number>(0);
   const [lastStars, setLastStars] = useState<number>(0);
 
-  const round: GameRound | null = useMemo(() => world.rounds[roundIndex] ?? null, [world, roundIndex]);
+  const round: GameRound | null = useMemo(
+    () => world.rounds[roundIndex] ?? null,
+    [world, roundIndex],
+  );
 
   // Simple, predictable leveling curve suitable for MVP:
   // Level 1 starts at 0 XP. XP required to advance from level N to N+1 is
   // base + (N-1)*increment. With base=50, increment=25, the thresholds are:
   // L2: 50, L3: 125, L4: 225, L5: 350, ...
-  function computeLevelFromXp(totalXp: number): { level: number; xpIntoLevel: number; xpToNext: number } {
+  function computeLevelFromXp(totalXp: number): {
+    level: number;
+    xpIntoLevel: number;
+    xpToNext: number;
+  } {
     const base = 50;
     const increment = 25;
     let currentLevel = 1;
@@ -70,21 +85,25 @@ export function useGameLoop(options: UseGameLoopOptions) {
     }
   }, [roundIndex, world.rounds.length]);
 
-  const score = useCallback((timeMs: number, usedHint: boolean, extra?: { combo?: number; perfect?: boolean }) => {
-    // Simple heuristic: faster → more stars
-    let stars = 1;
-    if (timeMs < 1500) stars = 3;
-    else if (timeMs < 3000) stars = 2;
-    if (usedHint) stars = Math.max(1, stars - 1);
-    setLastStars(stars);
-    const combo = Math.max(1, Math.floor(extra?.combo ?? 1));
-    const perfect = !!extra?.perfect;
-    const comboBonus = Math.min(10, Math.max(0, (combo - 1) * 2));
-    const perfectBonus = perfect ? 5 : 0;
-    const gained = 10 + Math.max(0, (stars - 1) * 3) + Math.min(streak * 2, 10) + comboBonus + perfectBonus;
-    setXp(x => x + gained);
-    setStreak(s => s + 1);
-  }, [streak]);
+  const score = useCallback(
+    (timeMs: number, usedHint: boolean, extra?: { combo?: number; perfect?: boolean }) => {
+      // Simple heuristic: faster → more stars
+      let stars = 1;
+      if (timeMs < 1500) stars = 3;
+      else if (timeMs < 3000) stars = 2;
+      if (usedHint) stars = Math.max(1, stars - 1);
+      setLastStars(stars);
+      const combo = Math.max(1, Math.floor(extra?.combo ?? 1));
+      const perfect = !!extra?.perfect;
+      const comboBonus = Math.min(10, Math.max(0, (combo - 1) * 2));
+      const perfectBonus = perfect ? 5 : 0;
+      const gained =
+        10 + Math.max(0, (stars - 1) * 3) + Math.min(streak * 2, 10) + comboBonus + perfectBonus;
+      setXp((x) => x + gained);
+      setStreak((s) => s + 1);
+    },
+    [streak],
+  );
 
   const fail = useCallback(() => {
     setStreak(0);
@@ -100,17 +119,18 @@ export function useGameLoop(options: UseGameLoopOptions) {
       next,
       score,
       fail,
-      metrics: { roundIndex, streak, stars: lastStars, xp, level, xpIntoLevel, xpToNext } as GameMetrics,
+      metrics: {
+        roundIndex,
+        streak,
+        stars: lastStars,
+        xp,
+        level,
+        xpIntoLevel,
+        xpToNext,
+      } as GameMetrics,
       setPhase,
     };
   }, [phase, round, roundIndex, start, next, score, fail, streak, lastStars, xp]);
 
   return api;
 }
-
-
-
-
-
-
-

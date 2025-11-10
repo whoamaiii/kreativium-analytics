@@ -215,9 +215,7 @@ describe('Environment Utilities', () => {
     });
 
     it('handles entries with undefined environmentalData', () => {
-      const entries: TrackingEntryWithEnvironment[] = [
-        { environmentalData: undefined },
-      ];
+      const entries: TrackingEntryWithEnvironment[] = [{ environmentalData: undefined }];
 
       const result = getLatestEnvironmentConditions(entries);
 

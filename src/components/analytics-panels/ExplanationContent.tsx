@@ -19,7 +19,7 @@ export function ExplanationContent({
   error,
   onCopy,
   onAddToReport,
-  placeholder
+  placeholder,
 }: ExplanationContentProps): React.ReactElement {
   const hasText = Boolean(text && text.trim().length > 0);
 
@@ -36,7 +36,8 @@ export function ExplanationContent({
             aria-label="Kopier tekst"
             title="Kopier tekst"
           >
-            <Copy className="h-4 w-4 mr-2" />Kopier
+            <Copy className="h-4 w-4 mr-2" />
+            Kopier
           </Button>
           <Button
             variant="secondary"
@@ -46,29 +47,26 @@ export function ExplanationContent({
             aria-label="Legg til i rapport"
             title="Legg til i rapport"
           >
-            <FileText className="h-4 w-4 mr-2" />Rapport
+            <FileText className="h-4 w-4 mr-2" />
+            Rapport
           </Button>
         </div>
       </div>
 
       <div className="mt-3 flex-1 rounded-lg border bg-card p-3 overflow-auto whitespace-pre-wrap break-words text-sm leading-relaxed">
-        {status === 'loading' && (
-          <p className="text-muted-foreground">Henter forklaring…</p>
-        )}
+        {status === 'loading' && <p className="text-muted-foreground">Henter forklaring…</p>}
         {status === 'error' && (
           <p className="text-destructive">{error || 'Klarte ikke hente forklaring. Prøv igjen.'}</p>
         )}
         {status === 'idle' && !hasText && (
-          <div className="text-muted-foreground">{placeholder || 'Velg et mønster for å se forklaring.'}</div>
+          <div className="text-muted-foreground">
+            {placeholder || 'Velg et mønster for å se forklaring.'}
+          </div>
         )}
         {status === 'ok' && hasText && (
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            {text}
-          </div>
+          <div className="prose prose-sm max-w-none dark:prose-invert">{text}</div>
         )}
       </div>
     </div>
   );
 }
-
-

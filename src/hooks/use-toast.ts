@@ -19,25 +19,25 @@ const baseToast = (input: ToastInput, options?: ToastOptions) => {
     return sonnerToast(input, options as any);
   }
   const { title, description } = input || ({} as any);
-  return (sonnerToast as any).message?.(title, { description, ...(options as any) })
-    ?? sonnerToast(`${title}${description ? ` — ${description}` : ''}`, options as any);
+  return (
+    (sonnerToast as any).message?.(title, { description, ...(options as any) }) ??
+    sonnerToast(`${title}${description ? ` — ${description}` : ''}`, options as any)
+  );
 };
 
-export const toast = Object.assign(
-  baseToast,
-  {
-    success: (message: string, options?: ToastOptions) => sonnerToast.success(message, options as any),
-    error: (message: string, options?: ToastOptions) => sonnerToast.error(message, options as any),
-    warning: (message: string, options?: ToastOptions) => (sonnerToast as any).warning?.(message, options as any) ?? sonnerToast(message, options as any),
-    info: (message: string, options?: ToastOptions) => (sonnerToast as any).message?.(message, options as any) ?? sonnerToast(message, options as any),
-    dismiss: (id?: string | number) => sonnerToast.dismiss?.(id as any),
-  }
-);
+export const toast = Object.assign(baseToast, {
+  success: (message: string, options?: ToastOptions) =>
+    sonnerToast.success(message, options as any),
+  error: (message: string, options?: ToastOptions) => sonnerToast.error(message, options as any),
+  warning: (message: string, options?: ToastOptions) =>
+    (sonnerToast as any).warning?.(message, options as any) ?? sonnerToast(message, options as any),
+  info: (message: string, options?: ToastOptions) =>
+    (sonnerToast as any).message?.(message, options as any) ?? sonnerToast(message, options as any),
+  dismiss: (id?: string | number) => sonnerToast.dismiss?.(id as any),
+});
 
 export function useToast() {
   return { toast };
 }
 
 export default toast;
-
-

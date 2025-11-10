@@ -14,7 +14,7 @@ export const AnimatedCounter = memo(({ value, className }: AnimatedCounterProps)
 
   useEffect(() => {
     let mounted = true;
-    
+
     const animate = async () => {
       if (mounted) {
         spring.set(value);

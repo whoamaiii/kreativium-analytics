@@ -121,7 +121,7 @@ export const AlertListItem: React.FC<AlertListItemProps> = ({
           size="sm"
           onClick={() => onTogglePin(alert.id)}
           aria-label={String(
-            isPinned ? tAnalytics('aria.alerts.unpinButton') : tAnalytics('aria.alerts.pinButton')
+            isPinned ? tAnalytics('aria.alerts.unpinButton') : tAnalytics('aria.alerts.pinButton'),
           )}
           title={String(isPinned ? tAnalytics('alerts.unpinAlert') : tAnalytics('alerts.pinAlert'))}
         >

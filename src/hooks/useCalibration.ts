@@ -35,7 +35,7 @@ export function useCalibration() {
   // Use storage hook for automatic persistence
   const [result, setResult] = useStorageState<CalibrationResult | null>(
     STORAGE_KEYS.EMOTION_CALIBRATION,
-    null
+    null,
   );
   const removeCalibration = useStorageRemove(STORAGE_KEYS.EMOTION_CALIBRATION);
 
@@ -49,11 +49,14 @@ export function useCalibration() {
     samplesRef.current = [];
   }, []);
 
-  const feed = useCallback((neutralProb: number) => {
-    if (!running) return;
-    samplesRef.current.push(Math.max(0, Math.min(1, neutralProb)));
-    setProgress(p => Math.min(1, p + 1 / 180)); // ~10-15s assuming ~18fps
-  }, [running]);
+  const feed = useCallback(
+    (neutralProb: number) => {
+      if (!running) return;
+      samplesRef.current.push(Math.max(0, Math.min(1, neutralProb)));
+      setProgress((p) => Math.min(1, p + 1 / 180)); // ~10-15s assuming ~18fps
+    },
+    [running],
+  );
 
   const finish = useCallback(() => {
     const arr = samplesRef.current;
@@ -61,7 +64,12 @@ export function useCalibration() {
     const recommendedThreshold = Math.min(0.8, Math.max(0.5, median + 0.1));
     const holdMs = 900;
     const smoothingWindow = 10;
-    const payload: CalibrationResult = { threshold: recommendedThreshold, holdMs, smoothingWindow, completed: true };
+    const payload: CalibrationResult = {
+      threshold: recommendedThreshold,
+      holdMs,
+      smoothingWindow,
+      completed: true,
+    };
     setResult(payload); // Storage hook handles persistence automatically
     setRunning(false);
     setProgress(1);
@@ -74,7 +82,3 @@ export function useCalibration() {
 
   return { running, progress, result, start, feed, finish, reset };
 }
-
-
-
-

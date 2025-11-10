@@ -45,9 +45,13 @@ export function ExplanationTabs({
   onChatChange,
   dataset,
   sourcesRich = [],
-  className
+  className,
 }: ExplanationTabsProps): React.ReactElement {
-  const toSlug = (s?: string) => (s || 'pattern').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const toSlug = (s?: string) =>
+    (s || 'pattern')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
   const storageBase = React.useMemo(() => `explanationV2.${toSlug(patternTitle)}`, [patternTitle]);
 
   const tabStorageKey = React.useMemo(() => `${storageBase}.tab`, [storageBase]);
@@ -57,26 +61,31 @@ export function ExplanationTabs({
 
   const [tab, setTab] = useStorageState(tabStorageKey, 'chat');
   const [kilderVisited, setKilderVisited] = useStorageState(kilderVisitedKey, false, {
-    serialize: (v) => v ? '1' : '0',
-    deserialize: (v) => v === '1'
+    serialize: (v) => (v ? '1' : '0'),
+    deserialize: (v) => v === '1',
   });
   const [blandVisited, setBlandVisited] = useStorageState(blandVisitedKey, false, {
-    serialize: (v) => v ? '1' : '0',
-    deserialize: (v) => v === '1'
+    serialize: (v) => (v ? '1' : '0'),
+    deserialize: (v) => v === '1',
   });
   const [showAllKilder, setShowAllKilder] = useStorageState(kilderShowAllKey, false, {
-    serialize: (v) => v ? '1' : '0',
-    deserialize: (v) => v === '1'
+    serialize: (v) => (v ? '1' : '0'),
+    deserialize: (v) => v === '1',
   });
 
-  const visited = React.useMemo(() => ({
-    kilder: kilderVisited,
-    bland: blandVisited
-  }), [kilderVisited, blandVisited]);
+  const visited = React.useMemo(
+    () => ({
+      kilder: kilderVisited,
+      bland: blandVisited,
+    }),
+    [kilderVisited, blandVisited],
+  );
 
   const handleTabChange = (val: string) => {
     setTab(val);
-    try { logger.info('[UI] explanationV2.tabChange', { tab: val, pattern: patternTitle }); } catch {}
+    try {
+      logger.info('[UI] explanationV2.tabChange', { tab: val, pattern: patternTitle });
+    } catch {}
     if (val === 'kilder' && !visited.kilder) {
       setKilderVisited(true);
     }
@@ -97,7 +106,10 @@ export function ExplanationTabs({
     }
   }, [dataset]);
 
-  const sourcesList = React.useMemo<CitationListItem[]>(() => buildCitationList(sourcesRich), [sourcesRich]);
+  const sourcesList = React.useMemo<CitationListItem[]>(
+    () => buildCitationList(sourcesRich),
+    [sourcesRich],
+  );
 
   const usedCitationKeys = React.useMemo(() => {
     const lastAssistant = [...(chatMessages || [])].reverse().find((m) => m.role === 'assistant');
@@ -148,7 +160,10 @@ export function ExplanationTabs({
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
               title="Skjul alt"
               onClick={() => {
-                try { window.dispatchEvent(new CustomEvent('explanationV2:collapseAll')); logger.info('[UI] explanationV2.collapseAll'); } catch {}
+                try {
+                  window.dispatchEvent(new CustomEvent('explanationV2:collapseAll'));
+                  logger.info('[UI] explanationV2.collapseAll');
+                } catch {}
                 setShowAllKilder(false);
               }}
             >
@@ -159,7 +174,10 @@ export function ExplanationTabs({
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
               title="Vis alt"
               onClick={() => {
-                try { window.dispatchEvent(new CustomEvent('explanationV2:expandAll')); logger.info('[UI] explanationV2.expandAll'); } catch {}
+                try {
+                  window.dispatchEvent(new CustomEvent('explanationV2:expandAll'));
+                  logger.info('[UI] explanationV2.expandAll');
+                } catch {}
                 setShowAllKilder(true);
               }}
             >
@@ -197,37 +215,72 @@ export function ExplanationTabs({
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">Kilder fra data ({sourcesList.length})</div>
+                <div className="text-sm text-muted-foreground">
+                  Kilder fra data ({sourcesList.length})
+                </div>
                 <button
                   type="button"
                   className="rounded border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent/40"
-                  onClick={() => { setShowAllKilder((v) => !v); }}
+                  onClick={() => {
+                    setShowAllKilder((v) => !v);
+                  }}
                   aria-expanded={showAllKilder}
                 >
                   {showAllKilder ? 'Vis færre' : 'Vis mer'}
                 </button>
               </div>
               <ul className="grid gap-2">
-                {(showAllKilder ? sourcesList : sourcesList.slice(-8)).map(({ key, source }, idx) => {
-                  const ts = (() => {
-                    try { return new Date(source.timestamp).toISOString().replace('T', ' ').slice(0, 16); } catch { return String(source.timestamp); }
-                  })();
-                  const primary = `${source.activity || source.place || 'sosial kontekst'} ${ts}`;
-                  const emo = (source.emotions || []).map((e) => `${e.emotion}${typeof e.intensity === 'number' ? ` (${e.intensity})` : ''}`).join(', ');
-                  const sen = (source.sensory || []).map((s) => `${s.type || 'sensor'}${s.response ? `: ${s.response}` : ''}${typeof s.intensity === 'number' ? ` (${s.intensity})` : ''}`).join(', ');
-                  const meta = [source.note ? `notat: ${source.note}` : '', emo ? `følelser: ${emo}` : '', sen ? `sensorikk: ${sen}` : ''].filter(Boolean).join(' · ');
-                  return (
-                    <li key={key} className="rounded border bg-card px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="truncate font-medium">{primary}</div>
-                          {meta && <div className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">{meta}</div>}
+                {(showAllKilder ? sourcesList : sourcesList.slice(-8)).map(
+                  ({ key, source }, idx) => {
+                    const ts = (() => {
+                      try {
+                        return new Date(source.timestamp)
+                          .toISOString()
+                          .replace('T', ' ')
+                          .slice(0, 16);
+                      } catch {
+                        return String(source.timestamp);
+                      }
+                    })();
+                    const primary = `${source.activity || source.place || 'sosial kontekst'} ${ts}`;
+                    const emo = (source.emotions || [])
+                      .map(
+                        (e) =>
+                          `${e.emotion}${typeof e.intensity === 'number' ? ` (${e.intensity})` : ''}`,
+                      )
+                      .join(', ');
+                    const sen = (source.sensory || [])
+                      .map(
+                        (s) =>
+                          `${s.type || 'sensor'}${s.response ? `: ${s.response}` : ''}${typeof s.intensity === 'number' ? ` (${s.intensity})` : ''}`,
+                      )
+                      .join(', ');
+                    const meta = [
+                      source.note ? `notat: ${source.note}` : '',
+                      emo ? `følelser: ${emo}` : '',
+                      sen ? `sensorikk: ${sen}` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' · ');
+                    return (
+                      <li key={key} className="rounded border bg-card px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="truncate font-medium">{primary}</div>
+                            {meta && (
+                              <div className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">
+                                {meta}
+                              </div>
+                            )}
+                          </div>
+                          <span className="ml-2 shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            {key}
+                          </span>
                         </div>
-                        <span className="ml-2 shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{key}</span>
-                      </div>
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  },
+                )}
               </ul>
             </div>
           )}

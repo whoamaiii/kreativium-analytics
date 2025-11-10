@@ -31,12 +31,8 @@ const ReportsHub = (): JSX.Element => {
               { label: tCommon('navigation.reports'), current: true },
             ]}
           />
-          <h1 className="text-3xl font-bold text-foreground">
-            {tCommon('reports.hubTitle')}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {tCommon('reports.hubDescription')}
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">{tCommon('reports.hubTitle')}</h1>
+          <p className="text-muted-foreground mt-2">{tCommon('reports.hubDescription')}</p>
           <div className="mt-4">
             <Link to="/reports" className="inline-block">
               <Button variant="outline">

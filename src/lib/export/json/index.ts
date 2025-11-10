@@ -13,7 +13,7 @@ export {
   jsonExporter,
   type JSONExportOptions,
   type JSONExportData,
-  type ExportDataCollection
+  type ExportDataCollection,
 } from './jsonExporter';
 
 // Backup System
@@ -23,5 +23,5 @@ export {
   type BackupData,
   type BackupMetadata,
   type RestoreResult,
-  type VersionInfo
+  type VersionInfo,
 } from './backupSystem';

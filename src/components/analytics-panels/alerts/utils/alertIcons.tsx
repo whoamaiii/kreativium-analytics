@@ -64,7 +64,9 @@ export function getStatusIcon(status: AlertStatus) {
  * @param severity - The alert severity level
  * @returns Badge variant string
  */
-export function getSeverityBadgeVariant(severity: AlertSeverity): 'destructive' | 'default' | 'secondary' | 'outline' {
+export function getSeverityBadgeVariant(
+  severity: AlertSeverity,
+): 'destructive' | 'default' | 'secondary' | 'outline' {
   switch (severity) {
     case AlertSeverity.Critical:
       return 'destructive';

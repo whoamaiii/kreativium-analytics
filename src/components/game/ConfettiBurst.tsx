@@ -30,13 +30,20 @@ export function ConfettiBurst({
 }: ConfettiBurstProps) {
   // Defer initial readiness to the next paint; keep hooks order stable across renders
   const [ready, setReady] = useState(false);
-  useEffect(() => { setReady(true); }, []);
+  useEffect(() => {
+    setReady(true);
+  }, []);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   // Normalize object/array props to primitives to avoid effect re-runs from identity changes
   const originX = origin?.x ?? CONFETTI.ORIGIN_X;
   const originY = origin?.y ?? CONFETTI.ORIGIN_Y;
   // Memoize colors to a stable array to prevent React internal warnings when DevTools/dev-mode checks identity
-  const palette = useMemo(() => (Array.isArray(colors) ? [...colors] : [...CONFETTI.COLORS]), [/* static */]);
+  const palette = useMemo(
+    () => (Array.isArray(colors) ? [...colors] : [...CONFETTI.COLORS]),
+    [
+      /* static */
+    ],
+  );
 
   useEffect(() => {
     if (!active || !ready) return;
@@ -45,7 +52,10 @@ export function ConfettiBurst({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const motionReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motionReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (motionReduced) return; // respect user setting
 
     const dpr = Math.max(DPR.MIN, Math.floor(window.devicePixelRatio || DPR.MIN));
@@ -65,23 +75,46 @@ export function ConfettiBurst({
     const ro = new ResizeObserver(onResize);
     ro.observe(canvas);
 
-    const groups = (origins && origins.length
-      ? origins.map(o => ({
-          cx: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, o.x)) * width,
-          cy: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, o.y)) * height,
-          spread: Math.max(DPR.MIN, Math.min(CONFETTI.FULL_CIRCLE_DEG, o.spreadDeg ?? spreadDeg)) * ANGLE.DEG_TO_RAD,
-          speed: o.speed ?? speed,
-          particles: Math.max(DPR.MIN, Math.floor(o.particles ?? particles)),
-        }))
-      : [{ cx: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, originX)) * width, cy: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, originY)) * height, spread: Math.max(DPR.MIN, Math.min(CONFETTI.FULL_CIRCLE_DEG, spreadDeg)) * ANGLE.DEG_TO_RAD, speed, particles }]
-    );
+    const groups =
+      origins && origins.length
+        ? origins.map((o) => ({
+            cx: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, o.x)) * width,
+            cy: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, o.y)) * height,
+            spread:
+              Math.max(DPR.MIN, Math.min(CONFETTI.FULL_CIRCLE_DEG, o.spreadDeg ?? spreadDeg)) *
+              ANGLE.DEG_TO_RAD,
+            speed: o.speed ?? speed,
+            particles: Math.max(DPR.MIN, Math.floor(o.particles ?? particles)),
+          }))
+        : [
+            {
+              cx: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, originX)) * width,
+              cy: Math.max(NORMALIZATION.MIN, Math.min(NORMALIZATION.MAX, originY)) * height,
+              spread:
+                Math.max(DPR.MIN, Math.min(CONFETTI.FULL_CIRCLE_DEG, spreadDeg)) * ANGLE.DEG_TO_RAD,
+              speed,
+              particles,
+            },
+          ];
 
-    const parts: Array<{ x: number; y: number; vx: number; vy: number; r: number; c: string; g: number; life: number; rot: number }> = [];
+    const parts: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      r: number;
+      c: string;
+      g: number;
+      life: number;
+      rot: number;
+    }> = [];
     for (const g of groups) {
       const startAngle = (ANGLE.FULL_CIRCLE_RAD - g.spread) / 2;
       for (let i = 0; i < g.particles; i += 1) {
         const angle = startAngle + Math.random() * g.spread;
-        const mag = (CONFETTI.PHYSICS.VELOCITY_MIN + Math.random() * CONFETTI.PHYSICS.VELOCITY_RANGE) * g.speed;
+        const mag =
+          (CONFETTI.PHYSICS.VELOCITY_MIN + Math.random() * CONFETTI.PHYSICS.VELOCITY_RANGE) *
+          g.speed;
         parts.push({
           x: g.cx,
           y: g.cy,
@@ -125,7 +158,7 @@ export function ConfettiBurst({
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  // Intentionally exclude `colors` array to avoid effect restarts from referential changes
+    // Intentionally exclude `colors` array to avoid effect restarts from referential changes
   }, [active, ready, durationMs, particles, originX, originY, spreadDeg, speed]);
 
   return (
@@ -138,6 +171,3 @@ export function ConfettiBurst({
 }
 
 export default ConfettiBurst;
-
-
-

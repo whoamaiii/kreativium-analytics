@@ -20,7 +20,7 @@ export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 /**
@@ -73,7 +73,7 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'NETWORK_ERROR',
       severity: ErrorSeverity.HIGH,
-      isRecoverable: true
+      isRecoverable: true,
     };
   }
 
@@ -87,7 +87,7 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'STORAGE_ERROR',
       severity: ErrorSeverity.MEDIUM,
-      isRecoverable: true
+      isRecoverable: true,
     };
   }
 
@@ -101,7 +101,7 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'RENDERING_ERROR',
       severity: ErrorSeverity.MEDIUM,
-      isRecoverable: true
+      isRecoverable: true,
     };
   }
 
@@ -115,7 +115,7 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'DATA_VALIDATION_ERROR',
       severity: ErrorSeverity.LOW,
-      isRecoverable: true
+      isRecoverable: true,
     };
   }
 
@@ -128,33 +128,25 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'TIMEOUT_ERROR',
       severity: ErrorSeverity.MEDIUM,
-      isRecoverable: true
+      isRecoverable: true,
     };
   }
 
   // Worker/Processing errors
-  if (
-    message.includes('worker') ||
-    message.includes('process') ||
-    name.includes('Worker')
-  ) {
+  if (message.includes('worker') || message.includes('process') || name.includes('Worker')) {
     return {
       type: 'PROCESSING_ERROR',
       severity: ErrorSeverity.MEDIUM,
-      isRecoverable: true
+      isRecoverable: true,
     };
   }
 
   // Memory errors
-  if (
-    message.includes('memory') ||
-    message.includes('heap') ||
-    name.includes('RangeError')
-  ) {
+  if (message.includes('memory') || message.includes('heap') || name.includes('RangeError')) {
     return {
       type: 'MEMORY_ERROR',
       severity: ErrorSeverity.HIGH,
-      isRecoverable: true
+      isRecoverable: true,
     };
   }
 
@@ -163,7 +155,7 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'TYPE_ERROR',
       severity: ErrorSeverity.MEDIUM,
-      isRecoverable: false
+      isRecoverable: false,
     };
   }
 
@@ -172,7 +164,7 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'REFERENCE_ERROR',
       severity: ErrorSeverity.MEDIUM,
-      isRecoverable: false
+      isRecoverable: false,
     };
   }
 
@@ -181,7 +173,7 @@ export function classifyError(error: Error | unknown): {
     return {
       type: 'SYNTAX_ERROR',
       severity: ErrorSeverity.HIGH,
-      isRecoverable: false
+      isRecoverable: false,
     };
   }
 
@@ -189,7 +181,7 @@ export function classifyError(error: Error | unknown): {
   return {
     type: 'UNKNOWN_ERROR',
     severity: ErrorSeverity.MEDIUM,
-    isRecoverable: true
+    isRecoverable: true,
   };
 }
 
@@ -275,7 +267,7 @@ export function getErrorSuggestions(error: Error | unknown): string[] {
  */
 export function formatErrorForDisplay(
   error: Error | unknown,
-  isDevelopment: boolean = false
+  isDevelopment: boolean = false,
 ): DisplayErrorInfo {
   const classification = classifyError(error);
   const suggestions = getErrorSuggestions(error);
@@ -288,7 +280,8 @@ export function formatErrorForDisplay(
 
   switch (classification.type) {
     case 'NETWORK_ERROR':
-      userMessage = 'Network connection failed. Please check your internet connection and try again.';
+      userMessage =
+        'Network connection failed. Please check your internet connection and try again.';
       technicalMessage = `Network error: ${errorMsg}`;
       break;
 
@@ -318,14 +311,16 @@ export function formatErrorForDisplay(
       break;
 
     case 'MEMORY_ERROR':
-      userMessage = 'The application ran out of memory. Please close some other applications and try again.';
+      userMessage =
+        'The application ran out of memory. Please close some other applications and try again.';
       technicalMessage = `Memory error: ${errorMsg}`;
       break;
 
     case 'TYPE_ERROR':
     case 'REFERENCE_ERROR':
     case 'SYNTAX_ERROR':
-      userMessage = 'A software error occurred. Please refresh the page or contact support if the problem persists.';
+      userMessage =
+        'A software error occurred. Please refresh the page or contact support if the problem persists.';
       technicalMessage = `${errorName}: ${errorMsg}`;
       break;
 
@@ -345,7 +340,7 @@ export function formatErrorForDisplay(
     suggestions,
     recoveryActions: getRecoveryActionsForError(classification.type),
     errorType: classification.type,
-    timestamp: new Date()
+    timestamp: new Date(),
   };
 }
 
@@ -406,7 +401,7 @@ export function getRecoveryActionsForError(errorType: string): RecoveryAction[] 
  */
 export function logErrorForReporting(
   error: Error | unknown,
-  context: Record<string, unknown> = {}
+  context: Record<string, unknown> = {},
 ): void {
   const classification = classifyError(error);
   const displayInfo = formatErrorForDisplay(error);
@@ -420,11 +415,14 @@ export function logErrorForReporting(
     stack: error instanceof Error ? error.stack : undefined,
     url: typeof window !== 'undefined' ? window.location.href : 'unknown',
     userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
-    context
+    context,
   };
 
   // Log based on severity
-  if (classification.severity === ErrorSeverity.CRITICAL || classification.severity === ErrorSeverity.HIGH) {
+  if (
+    classification.severity === ErrorSeverity.CRITICAL ||
+    classification.severity === ErrorSeverity.HIGH
+  ) {
     logger.error('[Error Report] High severity error', reportData);
   } else {
     logger.warn('[Error Report]', reportData);
@@ -440,13 +438,13 @@ export function serializeError(error: Error | unknown): Record<string, unknown> 
       name: error.name,
       message: error.message,
       stack: error.stack,
-      cause: error.cause ? serializeError(error.cause) : undefined
+      cause: error.cause ? serializeError(error.cause) : undefined,
     };
   }
 
   return {
     value: error,
-    type: typeof error
+    type: typeof error,
   };
 }
 
@@ -456,12 +454,7 @@ export function serializeError(error: Error | unknown): Record<string, unknown> 
 export function isUserError(error: Error | unknown): boolean {
   const { type } = classifyError(error);
 
-  const userErrorTypes = [
-    'DATA_VALIDATION_ERROR',
-    'TYPE_ERROR',
-    'REFERENCE_ERROR',
-    'SYNTAX_ERROR'
-  ];
+  const userErrorTypes = ['DATA_VALIDATION_ERROR', 'TYPE_ERROR', 'REFERENCE_ERROR', 'SYNTAX_ERROR'];
 
   return userErrorTypes.includes(type);
 }
@@ -472,11 +465,7 @@ export function isUserError(error: Error | unknown): boolean {
 export function isTransientError(error: Error | unknown): boolean {
   const { type, isRecoverable } = classifyError(error);
 
-  const transientErrorTypes = [
-    'NETWORK_ERROR',
-    'TIMEOUT_ERROR',
-    'PROCESSING_ERROR'
-  ];
+  const transientErrorTypes = ['NETWORK_ERROR', 'TIMEOUT_ERROR', 'PROCESSING_ERROR'];
 
   return isRecoverable && transientErrorTypes.includes(type);
 }
@@ -499,7 +488,7 @@ export function getRetryStrategy(error: Error | unknown): {
         shouldRetry: true,
         maxAttempts: 5,
         delayMs: 1000,
-        backoffMultiplier: 1.5
+        backoffMultiplier: 1.5,
       };
 
     case 'PROCESSING_ERROR':
@@ -507,7 +496,7 @@ export function getRetryStrategy(error: Error | unknown): {
         shouldRetry: true,
         maxAttempts: 3,
         delayMs: 2000,
-        backoffMultiplier: 2
+        backoffMultiplier: 2,
       };
 
     case 'STORAGE_ERROR':
@@ -515,7 +504,7 @@ export function getRetryStrategy(error: Error | unknown): {
         shouldRetry: true,
         maxAttempts: 2,
         delayMs: 500,
-        backoffMultiplier: 1
+        backoffMultiplier: 1,
       };
 
     default:
@@ -523,7 +512,7 @@ export function getRetryStrategy(error: Error | unknown): {
         shouldRetry: false,
         maxAttempts: 1,
         delayMs: 0,
-        backoffMultiplier: 1
+        backoffMultiplier: 1,
       };
   }
 }

@@ -12,7 +12,14 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { CheckCircle } from 'lucide-react';
 import { AlertWithGovernance } from '@/lib/alerts/types';
@@ -127,7 +134,9 @@ export const PinnedAlertsRail: React.FC<PinnedAlertsRailProps> = ({
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>{String(tAnalytics('dialogs.alerts.confirmClearPinnedTitle'))}</DialogTitle>
+                      <DialogTitle>
+                        {String(tAnalytics('dialogs.alerts.confirmClearPinnedTitle'))}
+                      </DialogTitle>
                       <DialogDescription>
                         {String(tAnalytics('dialogs.alerts.confirmClearPinnedDescription'))}
                       </DialogDescription>
@@ -160,7 +169,10 @@ export const PinnedAlertsRail: React.FC<PinnedAlertsRailProps> = ({
           </CardHeader>
 
           {/* Always visible on desktop, collapsible on mobile */}
-          <CollapsibleContent forceMount className="data-[state=closed]:hidden lg:data-[state=closed]:block">
+          <CollapsibleContent
+            forceMount
+            className="data-[state=closed]:hidden lg:data-[state=closed]:block"
+          >
             <CardContent>
               {pinnedAlerts.length === 0 ? (
                 /* Empty state */

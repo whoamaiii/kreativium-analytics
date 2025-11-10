@@ -110,7 +110,7 @@ function toFiniteNumber(value: unknown): number {
 export function buildEmotionTrendsOption(
   rows: TrendRow[],
   config: EmotionTrendsConfig,
-  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string,
 ): EChartsOption {
   const chartsCfg = analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts;
   const yAxisMax = config.overrides?.yAxisMax ?? chartsCfg.yAxisMax;
@@ -118,16 +118,17 @@ export function buildEmotionTrendsOption(
   const minValueSpan = config.overrides?.dataZoomMinSpan ?? chartsCfg.dataZoomMinSpan;
   const widths = {
     average: config.overrides?.lineWidths?.average ?? chartsCfg.lineWidths.average,
-    movingAverage: config.overrides?.lineWidths?.movingAverage ?? chartsCfg.lineWidths.movingAverage,
+    movingAverage:
+      config.overrides?.lineWidths?.movingAverage ?? chartsCfg.lineWidths.movingAverage,
     positive: config.overrides?.lineWidths?.positive ?? chartsCfg.lineWidths.positive,
     negative: config.overrides?.lineWidths?.negative ?? chartsCfg.lineWidths.negative,
     sensory: config.overrides?.lineWidths?.sensory ?? chartsCfg.lineWidths.sensory,
   };
-  const dates = rows.map(r => r.date);
-  const avg = rows.map(r => toFiniteNumber(r.avgEmotionIntensity));
-  const pos = rows.map(r => toFiniteNumber(r.positiveEmotions));
-  const neg = rows.map(r => toFiniteNumber(r.negativeEmotions));
-  const sensory = rows.map(r => toFiniteNumber(r.totalSensoryInputs));
+  const dates = rows.map((r) => r.date);
+  const avg = rows.map((r) => toFiniteNumber(r.avgEmotionIntensity));
+  const pos = rows.map((r) => toFiniteNumber(r.positiveEmotions));
+  const neg = rows.map((r) => toFiniteNumber(r.negativeEmotions));
+  const sensory = rows.map((r) => toFiniteNumber(r.totalSensoryInputs));
 
   const avgMA = config.showMovingAverage
     ? computeMovingAverage(avg, Math.max(2, config.movingAverageWindow))
@@ -240,9 +241,7 @@ export function buildEmotionTrendsOption(
   ];
 
   const option: EChartsOption = {
-    title: config.title
-      ? { left: 'center', top: 0, text: config.title }
-      : undefined,
+    title: config.title ? { left: 'center', top: 0, text: config.title } : undefined,
     legend: {
       hoverLink: false,
       bottom: 0,
@@ -267,7 +266,13 @@ export function buildEmotionTrendsOption(
       right: 16,
       top: 16,
       feature: {
-        dataZoom: { yAxisIndex: 'none', title: { zoom: String(tAnalytics('charts.zoom')), back: String(tAnalytics('charts.reset')) } },
+        dataZoom: {
+          yAxisIndex: 'none',
+          title: {
+            zoom: String(tAnalytics('charts.zoom')),
+            back: String(tAnalytics('charts.reset')),
+          },
+        },
         restore: { title: String(tAnalytics('charts.reset')) },
         saveAsImage: { title: String(tAnalytics('charts.save')), pixelRatio: 2 },
       },
@@ -293,10 +298,10 @@ export function buildEmotionTrendsOption(
 /** Simpler area option builder using the same TrendRow type. */
 export function buildAreaOption(
   rows: TrendRow[],
-  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string,
 ): EChartsOption {
   const widths = (analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts).lineWidths;
-  const dates = rows.map(r => r.date);
+  const dates = rows.map((r) => r.date);
   return {
     tooltip: { trigger: 'axis' },
     legend: {},
@@ -306,7 +311,7 @@ export function buildAreaOption(
       {
         type: 'line',
         name: String(tAnalytics('charts.avgEmotionIntensity')),
-        data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
+        data: rows.map((r) => toFiniteNumber(r.avgEmotionIntensity)),
         meta: { key: 'avgEmotionIntensity' },
         encode: { y: 'avgEmotionIntensity' },
         smooth: true,
@@ -318,7 +323,7 @@ export function buildAreaOption(
       {
         type: 'line',
         name: String(tAnalytics('charts.positiveEmotions')),
-        data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
+        data: rows.map((r) => toFiniteNumber(r.positiveEmotions)),
         meta: { key: 'positiveEmotions' },
         encode: { y: 'positiveEmotions' },
         smooth: true,
@@ -334,7 +339,7 @@ export function buildAreaOption(
 /** Scatter option with numeric axes for correlation-like view. */
 export function buildScatterOption(
   rows: TrendRow[],
-  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string,
 ): EChartsOption {
   return {
     tooltip: { trigger: 'item' },
@@ -345,7 +350,10 @@ export function buildScatterOption(
       {
         name: String(tAnalytics('charts.dailyDataPoints')),
         type: 'scatter',
-        data: rows.map(r => [toFiniteNumber(r.avgEmotionIntensity), toFiniteNumber(r.totalSensoryInputs)]),
+        data: rows.map((r) => [
+          toFiniteNumber(r.avgEmotionIntensity),
+          toFiniteNumber(r.totalSensoryInputs),
+        ]),
         symbolSize: 8,
         emphasis: { focus: 'none' },
       },
@@ -356,10 +364,10 @@ export function buildScatterOption(
 /** Composed bar+line option builder using the same rows. */
 export function buildComposedOption(
   rows: TrendRow[],
-  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string,
 ): EChartsOption {
   const widths = (analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts).lineWidths;
-  const dates = rows.map(r => r.date);
+  const dates = rows.map((r) => r.date);
   return {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
     legend: {},
@@ -369,7 +377,7 @@ export function buildComposedOption(
       {
         type: 'bar',
         name: String(tAnalytics('charts.positiveEmotions')),
-        data: rows.map(r => toFiniteNumber(r.positiveEmotions)),
+        data: rows.map((r) => toFiniteNumber(r.positiveEmotions)),
         meta: { key: 'positiveEmotions' },
         encode: { y: 'positiveEmotions' },
         yAxisIndex: 0,
@@ -378,7 +386,7 @@ export function buildComposedOption(
       {
         type: 'bar',
         name: String(tAnalytics('charts.negativeEmotions')),
-        data: rows.map(r => toFiniteNumber(r.negativeEmotions)),
+        data: rows.map((r) => toFiniteNumber(r.negativeEmotions)),
         meta: { key: 'negativeEmotions' },
         encode: { y: 'negativeEmotions' },
         yAxisIndex: 0,
@@ -387,7 +395,7 @@ export function buildComposedOption(
       {
         type: 'line',
         name: String(tAnalytics('charts.avgEmotionIntensity')),
-        data: rows.map(r => toFiniteNumber(r.avgEmotionIntensity)),
+        data: rows.map((r) => toFiniteNumber(r.avgEmotionIntensity)),
         meta: { key: 'avgEmotionIntensity' },
         encode: { y: 'avgEmotionIntensity' },
         yAxisIndex: 1,
@@ -403,7 +411,7 @@ export function buildComposedOption(
 /** Correlation heatmap option builder (ECharts). */
 export function buildCorrelationHeatmapOption(
   matrix: CorrelationMatrix,
-  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string,
 ): EChartsOption {
   const chartsCfg = analyticsConfig.getConfig().charts;
   const factors = matrix.factors ?? [];
@@ -451,11 +459,16 @@ export function buildCorrelationHeatmapOption(
         const key = `${f1}__${f2}`;
         const sig = significanceMap.get(key)?.significance;
         const corr = typeof value[2] === 'number' ? value[2] : Number(value[2]) || 0;
-        const sign = corr > 0 ? String(tAnalytics('charts.positive')) : corr < 0 ? String(tAnalytics('charts.negative')) : String(tAnalytics('charts.neutral'));
+        const sign =
+          corr > 0
+            ? String(tAnalytics('charts.positive'))
+            : corr < 0
+              ? String(tAnalytics('charts.negative'))
+              : String(tAnalytics('charts.neutral'));
         return `<div style="font-weight:600;margin-bottom:6px">${f1} &harr; ${f2}</div>
                 <div>${tAnalytics('charts.correlation')}: <b>${corr.toFixed(2)}</b> (${sign})</div>
                 ${sig ? `<div>${tAnalytics('charts.significance')}: <b>${sig}</b></div>` : ''}`;
-      }
+      },
     },
     visualMap: {
       min: -1,
@@ -468,10 +481,10 @@ export function buildCorrelationHeatmapOption(
       inRange: {
         // Diverging palette from semantic tokens
         color: [
-          chartColor('--destructive', 1, '0 84% 60%'), 
-          chartColor('--muted-foreground', 1, '240 8% 63%'), 
-          chartColor('--success', 1, '142 71% 45%')
-        ]
+          chartColor('--destructive', 1, '0 84% 60%'),
+          chartColor('--muted-foreground', 1, '240 8% 63%'),
+          chartColor('--success', 1, '142 71% 45%'),
+        ],
       },
       itemWidth: 12,
       itemHeight: 100,
@@ -492,7 +505,7 @@ export function buildCorrelationHeatmapOption(
         },
         itemStyle: {
           borderWidth: 1,
-          borderColor: chartColor('--secondary', 0.5, '247 15% 17%') // Use semantic token with alpha
+          borderColor: chartColor('--secondary', 0.5, '247 15% 17%'), // Use semantic token with alpha
         },
         emphasis: { disabled: true, focus: 'none' },
         progressive: 0,
@@ -508,19 +521,22 @@ export function buildCorrelationHeatmapOption(
 /** Prediction timeline (risk score) option builder (ECharts). */
 export function buildPredictionTimelineOption(
   rows: Array<{ date: string; riskScore: number; label?: string }>,
-  tAnalytics: (key: string, options?: Record<string, unknown>) => string
+  tAnalytics: (key: string, options?: Record<string, unknown>) => string,
 ): EChartsOption {
-  const chartsCfg = (analyticsConfig.getConfig().charts ?? DEFAULT_ANALYTICS_CONFIG.charts) as ExtendedChartsConfig;
-  const dates = rows.map(r => r.date);
-  const values = rows.map(r => (Number.isFinite(r.riskScore) ? r.riskScore : 0));
+  const chartsCfg = (analyticsConfig.getConfig().charts ??
+    DEFAULT_ANALYTICS_CONFIG.charts) as ExtendedChartsConfig;
+  const dates = rows.map((r) => r.date);
+  const values = rows.map((r) => (Number.isFinite(r.riskScore) ? r.riskScore : 0));
 
   // Allow risk score scale 0..1 or 0..100 depending on config; default 0..1
-  const yMax = chartsCfg.riskYAxisMax && Number.isFinite(chartsCfg.riskYAxisMax)
-    ? chartsCfg.riskYAxisMax
-    : 1;
-  const yInterval = chartsCfg.riskYAxisInterval && Number.isFinite(chartsCfg.riskYAxisInterval)
-    ? chartsCfg.riskYAxisInterval
-    : yMax <= 1 ? 0.1 : Math.ceil(yMax / 10);
+  const yMax =
+    chartsCfg.riskYAxisMax && Number.isFinite(chartsCfg.riskYAxisMax) ? chartsCfg.riskYAxisMax : 1;
+  const yInterval =
+    chartsCfg.riskYAxisInterval && Number.isFinite(chartsCfg.riskYAxisInterval)
+      ? chartsCfg.riskYAxisInterval
+      : yMax <= 1
+        ? 0.1
+        : Math.ceil(yMax / 10);
 
   const labelRisk = String(tAnalytics('charts.riskScore'));
 
@@ -538,7 +554,7 @@ export function buildPredictionTimelineOption(
         const riskText = yMax <= 1 ? v.toFixed(2) : Math.round(v).toString();
         return `<div style="font-weight:600;margin-bottom:6px">${date}</div>
                 <div>${labelRisk}: <b>${riskText}</b>${label ? ` — ${label}` : ''}</div>`;
-      }
+      },
     },
     legend: {
       hoverLink: false,
@@ -559,9 +575,8 @@ export function buildPredictionTimelineOption(
         emphasis: { focus: 'none', disabled: true },
         blur: { itemStyle: { opacity: 1 }, lineStyle: { opacity: 1 } },
         areaStyle: {},
-      }
+      },
     ],
     grid: { bottom: 72 },
   } as EChartsOption;
 }
-

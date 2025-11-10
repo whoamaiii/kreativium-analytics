@@ -68,7 +68,11 @@ export const AlertBulkActionBar: React.FC<AlertBulkActionBarProps> = ({
   const hasFilterForSimilar = hasSingleSourceFilter || hasSingleLabelFilter;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500" role="group" aria-label="Bulk actions">
+    <div
+      className="flex flex-wrap items-center gap-2 text-xs text-slate-500"
+      role="group"
+      aria-label="Bulk actions"
+    >
       {/* Always show: Acknowledge by confidence */}
       <Button variant="outline" size="xs" onClick={() => onAcknowledgeByConfidence(0.8)}>
         Ack ≥ 80%
@@ -77,10 +81,18 @@ export const AlertBulkActionBar: React.FC<AlertBulkActionBarProps> = ({
       {/* Show when single source filter is active */}
       {hasSingleSourceFilter && (
         <>
-          <Button variant="outline" size="xs" onClick={() => onAcknowledgeBySource(sourceFilters[0])}>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => onAcknowledgeBySource(sourceFilters[0])}
+          >
             Ack {sourceFilters[0]}
           </Button>
-          <Button variant="outline" size="xs" onClick={() => onResolveBySourceType(sourceFilters[0])}>
+          <Button
+            variant="outline"
+            size="xs"
+            onClick={() => onResolveBySourceType(sourceFilters[0])}
+          >
             Resolve {sourceFilters[0]}
           </Button>
         </>
@@ -95,7 +107,11 @@ export const AlertBulkActionBar: React.FC<AlertBulkActionBarProps> = ({
 
       {/* Show when single label filter is active */}
       {hasSingleLabelFilter && (
-        <Button variant="outline" size="xs" onClick={() => onAcknowledgeByLabel(sourceLabelFilters[0])}>
+        <Button
+          variant="outline"
+          size="xs"
+          onClick={() => onAcknowledgeByLabel(sourceLabelFilters[0])}
+        >
           Ack {sourceLabelFilters[0]}
         </Button>
       )}

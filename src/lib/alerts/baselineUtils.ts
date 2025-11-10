@@ -24,17 +24,23 @@ export function calculateConfidenceInterval(
   const n = v.length;
   if (n === 0) return { lower: 0, upper: 0, level, n };
 
-  const z = level >= 0.999 ? 3.29 : level >= 0.995 ? 2.81 : level >= 0.99 ? 2.58 : level >= 0.975 ? 1.96 : 1.96;
+  const z =
+    level >= 0.999
+      ? 3.29
+      : level >= 0.995
+        ? 2.81
+        : level >= 0.99
+          ? 2.58
+          : level >= 0.975
+            ? 1.96
+            : 1.96;
   const c = center === 'median' ? median(v) : v.reduce((a, b) => a + b, 0) / n;
   const scale = mad(v, 'normal');
   const se = n > 0 ? (1.2533 * (scale || 1e-9)) / Math.sqrt(n) : 0; // approx SE(median)
   return { lower: c - z * se, upper: c + z * se, level, n };
 }
 
-export function detectTrendInBaseline(
-  timestamps: number[],
-  values: number[],
-): TrendAnalysisResult {
+export function detectTrendInBaseline(timestamps: number[], values: number[]): TrendAnalysisResult {
   if (!timestamps.length || !values.length) {
     return { slope: 0, intercept: 0, iterations: 0, converged: false };
   }
@@ -47,7 +53,12 @@ export function detectTrendInBaseline(
   }
   const ys = values.slice(0, n);
   const res = huberRegression(days, ys);
-  return { slope: res.slope, intercept: res.intercept, iterations: res.iterations, converged: res.converged };
+  return {
+    slope: res.slope,
+    intercept: res.intercept,
+    iterations: res.iterations,
+    converged: res.converged,
+  };
 }
 
 export const assessDataQuality: DetectOutliers = (values: number[], zThreshold: number = 3.5) => {
@@ -91,7 +102,8 @@ export const validateDataSufficiency = (
 
 export const validateBaselineStability: DetectBaselineShift = (series) => {
   const { timestamps, values } = series;
-  if (!timestamps.length || !values.length || timestamps.length !== values.length) return { shifted: false, score: 0 };
+  if (!timestamps.length || !values.length || timestamps.length !== values.length)
+    return { shifted: false, score: 0 };
   // Comment 7: guard for low-variance or short series
   if (timestamps.length < 3) return { shifted: false, score: 0 };
   const scale = mad(values, 'normal');
@@ -102,7 +114,9 @@ export const validateBaselineStability: DetectBaselineShift = (series) => {
   return { shifted: score > 0.5, score, trend };
 };
 
-export const assessBaselineQuality: AssessBaselineQuality = (baseline: StudentBaseline): BaselineQualityMetrics => {
+export const assessBaselineQuality: AssessBaselineQuality = (
+  baseline: StudentBaseline,
+): BaselineQualityMetrics => {
   const keys = Object.keys(baseline.emotion ?? {});
   let total = 0;
   let outliers = 0;
@@ -173,5 +187,3 @@ export function mergeBaselines(a: StudentBaseline, b: StudentBaseline): StudentB
     environment: { ...older.environment, ...newer.environment },
   };
 }
-
-

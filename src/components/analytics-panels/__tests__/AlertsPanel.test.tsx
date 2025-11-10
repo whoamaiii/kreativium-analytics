@@ -59,8 +59,16 @@ describe('useAlerts bridge integration', () => {
   });
 
   it('migrates from legacy when convertLegacyToNew returns events', async () => {
-    const legacyEvent: AlertEvent = { id: 'lx1', studentId: 's1', kind: 'data_quality' as any, severity: 'low' as any, confidence: 0.5, createdAt: new Date().toISOString(), status: 'new' as any };
-    const Bridge = (AlertSystemBridge as unknown as vi.Mock);
+    const legacyEvent: AlertEvent = {
+      id: 'lx1',
+      studentId: 's1',
+      kind: 'data_quality' as any,
+      severity: 'low' as any,
+      confidence: 0.5,
+      createdAt: new Date().toISOString(),
+      status: 'new' as any,
+    };
+    const Bridge = AlertSystemBridge as unknown as vi.Mock;
     Bridge.mockImplementationOnce(() => ({
       detectLegacyPresent: vi.fn(() => true),
       convertLegacyToNew: vi.fn(() => [legacyEvent]),
@@ -82,15 +90,38 @@ describe('AlertsPanel interactions', () => {
     const key = `alerts:list:${studentId}`;
     const now = new Date().toISOString();
     const sample: AlertEvent[] = [
-      { id: 'a1', studentId, kind: 'behavior_spike' as any, severity: 'important' as any, confidence: 0.9, createdAt: now, status: 'new' as any, metadata: { summary: 'Spike' } },
-      { id: 'a2', studentId, kind: 'data_quality' as any, severity: 'low' as any, confidence: 0.6, createdAt: now, status: 'new' as any, metadata: { summary: 'DQ' } },
+      {
+        id: 'a1',
+        studentId,
+        kind: 'behavior_spike' as any,
+        severity: 'important' as any,
+        confidence: 0.9,
+        createdAt: now,
+        status: 'new' as any,
+        metadata: { summary: 'Spike' },
+      },
+      {
+        id: 'a2',
+        studentId,
+        kind: 'data_quality' as any,
+        severity: 'low' as any,
+        confidence: 0.6,
+        createdAt: now,
+        status: 'new' as any,
+        metadata: { summary: 'DQ' },
+      },
     ];
     localStorage.setItem(key, JSON.stringify(sample));
   }
 
   it('renders filters and applies kind filter', async () => {
     seedAlerts();
-    render(<AlertsPanel filteredData={{ entries: [], emotions: [], sensoryInputs: [] }} studentId="s1" />);
+    render(
+      <AlertsPanel
+        filteredData={{ entries: [], emotions: [], sensoryInputs: [] }}
+        studentId="s1"
+      />,
+    );
     expect(await screen.findByText(/Total:/)).toBeInTheDocument();
     const kindBtn = await screen.findByRole('button', { name: /data quality/i });
     act(() => kindBtn.click());
@@ -99,7 +130,12 @@ describe('AlertsPanel interactions', () => {
 
   it('opens Create Goal dialog from details', async () => {
     seedAlerts();
-    render(<AlertsPanel filteredData={{ entries: [], emotions: [], sensoryInputs: [] }} studentId="s1" />);
+    render(
+      <AlertsPanel
+        filteredData={{ entries: [], emotions: [], sensoryInputs: [] }}
+        studentId="s1"
+      />,
+    );
     const detailsBtn = await screen.findByRole('button', { name: /details/i });
     act(() => detailsBtn.click());
     const createGoalBtn = await screen.findByRole('button', { name: /create goal/i });
@@ -113,7 +149,12 @@ describe('AlertsPanel interactions', () => {
     seedAlerts();
     mockCreateFromAlert.mockReset();
     mockCreateReminder.mockReset().mockReturnValue({ id: 'r1' });
-    render(<AlertsPanel filteredData={{ entries: [], emotions: [], sensoryInputs: [] }} studentId="s1" />);
+    render(
+      <AlertsPanel
+        filteredData={{ entries: [], emotions: [], sensoryInputs: [] }}
+        studentId="s1"
+      />,
+    );
     const detailsBtn = await screen.findByRole('button', { name: /details/i });
     act(() => detailsBtn.click());
     const addTplBtn = await screen.findByRole('button', { name: /add template/i });
@@ -126,7 +167,12 @@ describe('AlertsPanel interactions', () => {
 
   it('bulk op Acknowledge ≥ 80% updates storage', async () => {
     seedAlerts();
-    render(<AlertsPanel filteredData={{ entries: [], emotions: [], sensoryInputs: [] }} studentId="s1" />);
+    render(
+      <AlertsPanel
+        filteredData={{ entries: [], emotions: [], sensoryInputs: [] }}
+        studentId="s1"
+      />,
+    );
     const ackBtn = await screen.findByRole('button', { name: /Ack ≥ 80%/i });
     act(() => ackBtn.click());
     const raw = localStorage.getItem('alerts:list:s1');

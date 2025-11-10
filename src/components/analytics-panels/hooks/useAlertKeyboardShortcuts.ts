@@ -53,13 +53,8 @@ export interface KeyboardShortcutHandlers {
  * });
  */
 export function useAlertKeyboardShortcuts(handlers: KeyboardShortcutHandlers): void {
-  const {
-    onAcknowledgeSelected,
-    onResolve,
-    onSnoozeSimilar,
-    onClearSelection,
-    searchInputRef,
-  } = handlers;
+  const { onAcknowledgeSelected, onResolve, onSnoozeSimilar, onClearSelection, searchInputRef } =
+    handlers;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -106,11 +101,5 @@ export function useAlertKeyboardShortcuts(handlers: KeyboardShortcutHandlers): v
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    onAcknowledgeSelected,
-    onResolve,
-    onSnoozeSimilar,
-    onClearSelection,
-    searchInputRef,
-  ]);
+  }, [onAcknowledgeSelected, onResolve, onSnoozeSimilar, onClearSelection, searchInputRef]);
 }

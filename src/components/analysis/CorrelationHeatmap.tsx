@@ -1,6 +1,8 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-const EChartContainer = React.lazy(() => import('@/components/charts/EChartContainer').then(m => ({ default: m.EChartContainer })));
+const EChartContainer = React.lazy(() =>
+  import('@/components/charts/EChartContainer').then((m) => ({ default: m.EChartContainer })),
+);
 import { buildCorrelationHeatmapOption } from '@/components/charts/ChartKit';
 import { Button } from '@/components/ui/button';
 import { BarChart3 } from 'lucide-react';
@@ -52,11 +54,21 @@ const BaseCorrelationHeatmap = ({
   }
 
   const option: EChartsOption = useMemo(
-    () => (correlationMatrix ? buildCorrelationHeatmapOption(correlationMatrix, tAnalytics) : ({} as EChartsOption)),
-    [correlationMatrix, tAnalytics]
+    () =>
+      correlationMatrix
+        ? buildCorrelationHeatmapOption(correlationMatrix, tAnalytics)
+        : ({} as EChartsOption),
+    [correlationMatrix, tAnalytics],
   );
   return (
-    <React.Suspense fallback={<div className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label="Loading heatmap" />}> 
+    <React.Suspense
+      fallback={
+        <div
+          className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse"
+          aria-label="Loading heatmap"
+        />
+      }
+    >
       <EChartContainer option={option} height={420} />
     </React.Suspense>
   );
@@ -86,7 +98,7 @@ export const CorrelationHeatmap = React.memo(BaseCorrelationHeatmap, (prev, next
   }
 
   const rowsCount = pm.length;
-  const colsCount = rowsCount > 0 ? (pm[0]?.length || 0) : 0;
+  const colsCount = rowsCount > 0 ? pm[0]?.length || 0 : 0;
   if (rowsCount === 0 || colsCount === 0) return true;
   const sampleIdx: Array<[number, number]> = [
     [0, 0],

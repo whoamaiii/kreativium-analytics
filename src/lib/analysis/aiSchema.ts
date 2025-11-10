@@ -1,17 +1,17 @@
-import { z } from "zod";
+import { z } from 'zod';
 
-const ZSeverity = z.enum(["low", "medium", "high"]);
-const ZTimeHorizon = z.enum(["short", "medium", "long"]);
+const ZSeverity = z.enum(['low', 'medium', 'high']);
+const ZTimeHorizon = z.enum(['short', 'medium', 'long']);
 const ZSourceType = z.enum([
-  "emotion",
-  "behavior",
-  "sensor",
-  "environment",
-  "goal",
-  "tracking",
-  "system",
-  "external",
-  "other",
+  'emotion',
+  'behavior',
+  'sensor',
+  'environment',
+  'goal',
+  'tracking',
+  'system',
+  'external',
+  'other',
 ]);
 
 const ZTimeRange = z
@@ -54,7 +54,7 @@ const ZAiCorrelation = z
   .object({
     variables: z.tuple([z.string(), z.string()]),
     coefficient: z.number().min(-1).max(1),
-    direction: z.enum(["positive", "negative"]).optional(),
+    direction: z.enum(['positive', 'negative']).optional(),
     pValue: z.number().min(0).max(1).optional(),
     confounders: z.array(z.string()).default([]),
     evidence: z.array(ZAiEvidence).default([]),
@@ -83,8 +83,8 @@ const ZAiIntervention = z
     sources: z.array(z.string()).default([]),
     udlCheckpoints: z.array(z.string()).optional(),
     hlps: z.array(z.string()).optional(),
-    tier: z.enum(["Tier1", "Tier2", "Tier3"]).optional(),
-    scope: z.enum(["classroom", "school"]).optional(),
+    tier: z.enum(['Tier1', 'Tier2', 'Tier3']).optional(),
+    scope: z.enum(['classroom', 'school']).optional(),
   })
   .strict();
 
@@ -92,7 +92,7 @@ const ZAiAnomaly = z
   .object({
     id: z.string().optional(),
     description: z.string().min(1),
-    severity: ZSeverity.default("medium"),
+    severity: ZSeverity.default('medium'),
     at: z.string().optional(),
     range: ZTimeRange.optional(),
     evidence: z.array(ZAiEvidence).default([]),
@@ -119,14 +119,16 @@ const ZAiDataLineageItem = z
   })
   .strict();
 
-const ZAiReportCore = z.object({
-  keyFindings: z.array(z.string()).default([]),
-  patterns: z.array(ZAiPattern).default([]),
-  correlations: z.array(ZAiCorrelation).default([]),
-  hypothesizedCauses: z.array(ZAiHypothesis).default([]),
-  suggestedInterventions: z.array(ZAiIntervention).default([]),
-  dataLineage: z.array(ZAiDataLineageItem).default([]).optional(),
-}).strict();
+const ZAiReportCore = z
+  .object({
+    keyFindings: z.array(z.string()).default([]),
+    patterns: z.array(ZAiPattern).default([]),
+    correlations: z.array(ZAiCorrelation).default([]),
+    hypothesizedCauses: z.array(ZAiHypothesis).default([]),
+    suggestedInterventions: z.array(ZAiIntervention).default([]),
+    dataLineage: z.array(ZAiDataLineageItem).default([]).optional(),
+  })
+  .strict();
 
 export const ZAiReport = ZAiReportCore.extend({
   summary: z.string().optional(),
@@ -137,4 +139,3 @@ export const ZAiReport = ZAiReportCore.extend({
 }).strict();
 
 export type AiReport = z.infer<typeof ZAiReport>;
-

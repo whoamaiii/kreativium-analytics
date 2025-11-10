@@ -151,6 +151,7 @@ enhanced ML capabilities and improved analytics.
 ## Detector options
 
 You can choose the expression detector backend under Settings:
+
 - FaceAPI (Worker) – default; runs on a Web Worker using ImageBitmap and OffscreenCanvas
 - FaceAPI (Main thread) – compatibility path
 - MediaPipe (Experimental) – uses MediaPipe Tasks Face Landmarker with blendshapes→emotion mapping

@@ -19,4 +19,3 @@ export function formatFixed(value: number, digits: number = 2, locale?: string):
     maximumFractionDigits: digits,
   }).format(safe);
 }
-

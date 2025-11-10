@@ -28,7 +28,7 @@ export const GridLayout = ({ selectedVisualizations, renderVisualization }: Grid
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {selectedVisualizations.map(type => (
+      {selectedVisualizations.map((type) => (
         <div key={type}>{renderVisualization(type)}</div>
       ))}
     </div>
@@ -54,11 +54,7 @@ export const FocusLayout = ({ focusedVisualization, renderVisualization }: Focus
     );
   }
 
-  return (
-    <div className="space-y-6">
-      {renderVisualization(focusedVisualization)}
-    </div>
-  );
+  return <div className="space-y-6">{renderVisualization(focusedVisualization)}</div>;
 };
 
 // For now, ComparisonLayout can be the same as GridLayout. It can be specialized later.

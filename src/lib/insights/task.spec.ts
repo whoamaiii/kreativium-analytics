@@ -22,13 +22,32 @@ describe('buildInsightsCacheKey', () => {
         { id: 't2', timestamp: new Date('2025-01-03T00:00:00Z'), value: 2 },
       ] as any[],
       emotions: [
-        { id: 'e1', studentId: 's1', emotion: 'happy', intensity: 3, timestamp: new Date('2025-01-01T00:00:00Z') },
-        { id: 'e2', studentId: 's1', emotion: 'sad', intensity: 2, timestamp: new Date('2025-01-04T00:00:00Z') },
+        {
+          id: 'e1',
+          studentId: 's1',
+          emotion: 'happy',
+          intensity: 3,
+          timestamp: new Date('2025-01-01T00:00:00Z'),
+        },
+        {
+          id: 'e2',
+          studentId: 's1',
+          emotion: 'sad',
+          intensity: 2,
+          timestamp: new Date('2025-01-04T00:00:00Z'),
+        },
       ] as any[],
       sensoryInputs: [
-        { id: 's1', studentId: 's1', sense: 'visual', response: 'seeking', intensity: 3, timestamp: new Date('2025-01-05T00:00:00Z') },
+        {
+          id: 's1',
+          studentId: 's1',
+          sense: 'visual',
+          response: 'seeking',
+          intensity: 3,
+          timestamp: new Date('2025-01-05T00:00:00Z'),
+        },
       ] as any[],
-      goals: [{ id: 'g1' }] as any[]
+      goals: [{ id: 'g1' }] as any[],
     };
 
     const inputsB = {
@@ -47,7 +66,7 @@ describe('buildInsightsCacheKey', () => {
     // namespace + 5 count parts + hash => at least 7 parts
     expect(parts.length).toBeGreaterThanOrEqual(7);
     expect(parts[0]).toBe('insights');
-    expect(parts.slice(1, 6).every(p => /^[ciokp]\d+$/.test(p))).toBe(true);
+    expect(parts.slice(1, 6).every((p) => /^[ciokp]\d+$/.test(p))).toBe(true);
   });
 
   it('produces different keys when counts differ', () => {
@@ -57,7 +76,13 @@ describe('buildInsightsCacheKey', () => {
       sensoryInputs: [] as any[],
     };
     const k1 = buildInsightsCacheKey(base as any, {});
-    const k2 = buildInsightsCacheKey({ ...base, entries: base.entries.concat({ id: 't2', timestamp: new Date(), value: 2 } as any) } as any, {});
+    const k2 = buildInsightsCacheKey(
+      {
+        ...base,
+        entries: base.entries.concat({ id: 't2', timestamp: new Date(), value: 2 } as any),
+      } as any,
+      {},
+    );
     expect(k1).not.toBe(k2);
   });
 });

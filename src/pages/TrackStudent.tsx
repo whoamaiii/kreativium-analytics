@@ -1,17 +1,23 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { EmotionTracker } from "@/components/EmotionTracker";
-import { SensoryTracker } from "@/components/SensoryTracker";
-import { EnvironmentalTracker } from "@/components/EnvironmentalTracker";
-import { Student, EmotionEntry, SensoryEntry, TrackingEntry, EnvironmentalEntry } from "@/types/student";
-import { ArrowLeft, Save, User } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { EmotionTracker } from '@/components/EmotionTracker';
+import { SensoryTracker } from '@/components/SensoryTracker';
+import { EnvironmentalTracker } from '@/components/EnvironmentalTracker';
+import {
+  Student,
+  EmotionEntry,
+  SensoryEntry,
+  TrackingEntry,
+  EnvironmentalEntry,
+} from '@/types/student';
+import { ArrowLeft, Save, User } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useTranslation } from "@/hooks/useTranslation";
-import { LanguageSettings } from "@/components/LanguageSettings";
-import { logger } from "@/lib/logger";
-import { saveTrackingEntry as saveTrackingEntryUnified } from "@/lib/tracking/saveTrackingEntry";
-import { dataStorage } from "@/lib/dataStorage";
+import { useTranslation } from '@/hooks/useTranslation';
+import { LanguageSettings } from '@/components/LanguageSettings';
+import { logger } from '@/lib/logger';
+import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/saveTrackingEntry';
+import { dataStorage } from '@/lib/dataStorage';
 
 const TrackStudent = () => {
   const { studentId } = useParams();
@@ -19,7 +25,10 @@ const TrackStudent = () => {
   const [student, setStudent] = useState<Student | null>(null);
   const [emotions, setEmotions] = useState<Omit<EmotionEntry, 'id' | 'timestamp'>[]>([]);
   const [sensoryInputs, setSensoryInputs] = useState<Omit<SensoryEntry, 'id' | 'timestamp'>[]>([]);
-  const [environmentalData, setEnvironmentalData] = useState<Omit<EnvironmentalEntry, 'id' | 'timestamp'> | null>(null);
+  const [environmentalData, setEnvironmentalData] = useState<Omit<
+    EnvironmentalEntry,
+    'id' | 'timestamp'
+  > | null>(null);
   const [generalNotes, setGeneralNotes] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { tTracking, tCommon } = useTranslation();
@@ -44,30 +53,30 @@ const TrackStudent = () => {
   const handleEmotionAdd = (emotion: Omit<EmotionEntry, 'id' | 'timestamp'>) => {
     setEmotions([...emotions, emotion]);
     toast({
-      title: "Emotion recorded!",
-      description: "Emotion recorded!",
+      title: 'Emotion recorded!',
+      description: 'Emotion recorded!',
     });
   };
 
   const handleSensoryAdd = (sensory: Omit<SensoryEntry, 'id' | 'timestamp'>) => {
     setSensoryInputs([...sensoryInputs, sensory]);
     toast({
-      title: "Sensory input recorded!",
-      description: "Sensory input recorded!",
+      title: 'Sensory input recorded!',
+      description: 'Sensory input recorded!',
     });
   };
 
   const handleEnvironmentalAdd = (environmental: Omit<EnvironmentalEntry, 'id' | 'timestamp'>) => {
     setEnvironmentalData(environmental);
     toast({
-      title: "Environmental conditions recorded!",
-      description: "Environmental conditions recorded!",
+      title: 'Environmental conditions recorded!',
+      description: 'Environmental conditions recorded!',
     });
   };
 
   const handleSaveSession = async () => {
     if (!student) return;
-    
+
     if (emotions.length === 0 && sensoryInputs.length === 0) {
       toast({
         title: String(tTracking('session.validationError')),
@@ -80,38 +89,42 @@ const TrackStudent = () => {
     setIsLoading(true);
     try {
       const timestamp = new Date();
-      
+
       // Create the tracking entry
       const trackingEntry: TrackingEntry = {
         id: crypto.randomUUID(),
         studentId: student.id,
         timestamp,
-        emotions: emotions.map(e => ({
+        emotions: emotions.map((e) => ({
           ...e,
           id: crypto.randomUUID(),
-          timestamp
+          timestamp,
         })),
-        sensoryInputs: sensoryInputs.map(s => ({
+        sensoryInputs: sensoryInputs.map((s) => ({
           ...s,
           id: crypto.randomUUID(),
-          timestamp
+          timestamp,
         })),
-        environmentalData: environmentalData ? {
-          ...environmentalData,
-          id: crypto.randomUUID(),
-          timestamp
-        } : undefined,
-        notes: generalNotes.trim() || undefined
+        environmentalData: environmentalData
+          ? {
+              ...environmentalData,
+              id: crypto.randomUUID(),
+              timestamp,
+            }
+          : undefined,
+        notes: generalNotes.trim() || undefined,
       };
 
       // Unified save flow
       const result = await saveTrackingEntryUnified(trackingEntry, { minDataPoints: 1 });
       if (!result.success) {
-        result.errors?.forEach(err => toast({
-          title: err,
-          description: err,
-          variant: 'destructive',
-        }));
+        result.errors?.forEach((err) =>
+          toast({
+            title: err,
+            description: err,
+            variant: 'destructive',
+          }),
+        );
         return;
       }
 
@@ -159,10 +172,14 @@ const TrackStudent = () => {
             </Button>
             <LanguageSettings />
           </div>
-          
+
           <div className="flex items-center gap-3 mb-2">
             <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground font-semibold text-lg">
-              {student.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+              {student.name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()}
             </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">
@@ -170,10 +187,8 @@ const TrackStudent = () => {
               </h1>
             </div>
           </div>
-          
-          <p className="text-muted-foreground">
-            {String(tTracking('session.description'))}
-          </p>
+
+          <p className="text-muted-foreground">{String(tTracking('session.description'))}</p>
         </div>
 
         {/* Session Summary */}
@@ -184,10 +199,20 @@ const TrackStudent = () => {
           <div className="flex items-center gap-4 text-sm text-primary-foreground">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4" />
-              <span>{String(tTracking('session.emotionsRecorded')).replace('{{count}}', emotions.length.toString())}</span>
+              <span>
+                {String(tTracking('session.emotionsRecorded')).replace(
+                  '{{count}}',
+                  emotions.length.toString(),
+                )}
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <span>{String(tTracking('session.sensoryInputsRecorded')).replace('{{count}}', sensoryInputs.length.toString())}</span>
+              <span>
+                {String(tTracking('session.sensoryInputsRecorded')).replace(
+                  '{{count}}',
+                  sensoryInputs.length.toString(),
+                )}
+              </span>
             </div>
           </div>
         </div>
@@ -195,19 +220,13 @@ const TrackStudent = () => {
         {/* Tracking Forms */}
         <div className="space-y-8 mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <EmotionTracker 
-              onEmotionAdd={handleEmotionAdd}
-              studentId={student.id}
-            />
-            <SensoryTracker 
-              onSensoryAdd={handleSensoryAdd}
-              studentId={student.id}
-            />
+            <EmotionTracker onEmotionAdd={handleEmotionAdd} studentId={student.id} />
+            <SensoryTracker onSensoryAdd={handleSensoryAdd} studentId={student.id} />
           </div>
-          
+
           {/* Environmental Tracking */}
           <div className="w-full">
-            <EnvironmentalTracker 
+            <EnvironmentalTracker
               onEnvironmentalAdd={handleEnvironmentalAdd}
               studentId={student.id}
             />

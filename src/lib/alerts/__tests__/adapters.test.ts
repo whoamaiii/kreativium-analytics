@@ -8,7 +8,9 @@ const getAllAlertsMock = vi.hoisted(() => vi.fn<[], LegacyAlertHistoryEntry[]>()
 
 vi.mock('@/lib/storage', () => ({
   safeGet: (key: string) => storage.get(key) ?? null,
-  safeSet: (key: string, value: string) => { storage.set(key, value); },
+  safeSet: (key: string, value: string) => {
+    storage.set(key, value);
+  },
 }));
 
 vi.mock('@/lib/alertSystem', () => ({
@@ -28,12 +30,7 @@ import {
   validateDetectorResult,
   validateSourceRef,
 } from '@/lib/alerts/adapters';
-import {
-  AlertKind,
-  AlertSeverity,
-  AlertStatus,
-  SourceType,
-} from '@/lib/alerts/types';
+import { AlertKind, AlertSeverity, AlertStatus, SourceType } from '@/lib/alerts/types';
 import type { AlertEvent, DetectorResult, SourceRef } from '@/lib/alerts/types';
 
 describe('alert adapters', () => {
@@ -49,7 +46,9 @@ describe('alert adapters', () => {
     dataPoints: overrides.dataPoints ?? 5,
   });
 
-  const legacyEntry = (overrides: Partial<LegacyAlertHistoryEntry> = {}): LegacyAlertHistoryEntry => ({
+  const legacyEntry = (
+    overrides: Partial<LegacyAlertHistoryEntry> = {},
+  ): LegacyAlertHistoryEntry => ({
     alert: overrides.alert ?? legacyTrigger(overrides.alert as Partial<TriggerAlert>),
     viewed: overrides.viewed ?? true,
     resolved: overrides.resolved ?? false,
@@ -76,7 +75,10 @@ describe('alert adapters', () => {
   });
 
   it('maps alert history entries to alert events with legacy context', () => {
-    const history = legacyEntry({ resolved: true, resolvedAt: new Date('2024-01-02T00:00:00.000Z') });
+    const history = legacyEntry({
+      resolved: true,
+      resolvedAt: new Date('2024-01-02T00:00:00.000Z'),
+    });
     const event = alertHistoryToAlertEvent(history);
 
     expect(event.status).toBe(AlertStatus.Resolved);

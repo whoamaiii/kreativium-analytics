@@ -18,7 +18,7 @@ export const storageUtils = {
     }
     return {
       used,
-      available: used < MAX_LOCAL_STORAGE_BYTES // 5MB approximate limit
+      available: used < MAX_LOCAL_STORAGE_BYTES, // 5MB approximate limit
     };
   },
 
@@ -73,15 +73,16 @@ export const storageUtils = {
     try {
       localStorage.setItem(key, value);
     } catch (e) {
-      if (e instanceof DOMException && (
-        e.code === 22 || // Quota exceeded
-        e.code === 1014 || // NS_ERROR_DOM_QUOTA_REACHED (Firefox)
-        e.name === 'QuotaExceededError' ||
-        e.name === 'NS_ERROR_DOM_QUOTA_REACHED'
-      )) {
+      if (
+        e instanceof DOMException &&
+        (e.code === 22 || // Quota exceeded
+          e.code === 1014 || // NS_ERROR_DOM_QUOTA_REACHED (Firefox)
+          e.name === 'QuotaExceededError' ||
+          e.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+      ) {
         // Try to clear old data and retry
         this.clearOldTrackingData();
-        
+
         try {
           localStorage.setItem(key, value);
         } catch (retryError) {
@@ -99,18 +100,16 @@ export const storageUtils = {
    * Clear non-essential data when storage is full
    */
   clearNonEssentialData(): void {
-    const essentialKeys = [
-      STORAGE_KEYS.STUDENTS,
-      STORAGE_KEYS.GOALS,
-      STORAGE_KEYS.DATA_VERSION
-    ];
+    const essentialKeys = [STORAGE_KEYS.STUDENTS, STORAGE_KEYS.GOALS, STORAGE_KEYS.DATA_VERSION];
 
     for (const key in localStorage) {
-      if (localStorage.hasOwnProperty(key) &&
-          key.startsWith('sensoryTracker_') &&
-          !essentialKeys.includes(key)) {
+      if (
+        localStorage.hasOwnProperty(key) &&
+        key.startsWith('sensoryTracker_') &&
+        !essentialKeys.includes(key)
+      ) {
         localStorage.removeItem(key);
       }
     }
-  }
+  },
 };

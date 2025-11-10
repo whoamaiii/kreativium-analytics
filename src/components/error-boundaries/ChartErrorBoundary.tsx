@@ -42,7 +42,7 @@ export class ChartErrorBoundary extends Component<Props, State> {
 
   public state: State = {
     hasError: false,
-    retryCount: 0
+    retryCount: 0,
   };
 
   public static getDerivedStateFromError(error: Error): Pick<State, 'hasError' | 'error'> {
@@ -68,13 +68,13 @@ export class ChartErrorBoundary extends Component<Props, State> {
     logErrorForReporting(error, {
       boundaryType: 'ChartErrorBoundary',
       chartName,
-      componentStack: errorInfo?.componentStack
+      componentStack: errorInfo?.componentStack,
     });
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       error,
       errorInfo,
-      retryCount: prevState.retryCount + 1
+      retryCount: prevState.retryCount + 1,
     }));
 
     this.props.onError?.(error, errorInfo);
@@ -97,7 +97,7 @@ export class ChartErrorBoundary extends Component<Props, State> {
     this.setState({
       hasError: false,
       error: undefined,
-      errorInfo: undefined
+      errorInfo: undefined,
     });
     toast.info('Attempting to reload chart...');
   };
@@ -124,7 +124,8 @@ export class ChartErrorBoundary extends Component<Props, State> {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              The chart encountered an error while rendering. This might be due to invalid data or large datasets.
+              The chart encountered an error while rendering. This might be due to invalid data or
+              large datasets.
             </p>
 
             {this.props.showSuggestions !== false && (

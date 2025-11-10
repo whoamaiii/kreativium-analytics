@@ -33,4 +33,3 @@ describe('Integration: preprocessing state persistence and recovery', () => {
     expect(payload.metadata.pipelineVersion).toBeDefined();
   });
 });
-

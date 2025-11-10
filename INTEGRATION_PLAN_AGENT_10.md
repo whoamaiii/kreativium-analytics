@@ -1,32 +1,33 @@
 # Agent 10: Comprehensive Integration Strategy Report
 
-**Generated**: 2025-11-09
-**Branch**: claude/ultrathink-session-011CUxSvz3HJaFHXqxJvhqE1
+**Generated**: 2025-11-09 **Branch**: claude/ultrathink-session-011CUxSvz3HJaFHXqxJvhqE1
 **Coordinator**: Agent 10
 
 ---
 
 ## Executive Summary
 
-This document provides a comprehensive integration strategy for the modular extraction work to be performed by Agents 1-9 on two major system components: **ExportSystem** (827 lines) and **AlertDetectionEngine** (874 lines, 1,701 total).
+This document provides a comprehensive integration strategy for the modular extraction work to be
+performed by Agents 1-9 on two major system components: **ExportSystem** (827 lines) and
+**AlertDetectionEngine** (874 lines, 1,701 total).
 
 ### Current State Assessment
 
-✅ **TypeScript Compilation**: PASSING
-✅ **Total Test Files**: 109
-⚠️ **ExportSystem Tests**: NONE (needs creation)
-✅ **AlertDetectionEngine Tests**: EXISTS with comprehensive coverage
-✅ **AlertDetectionEngine Detectors**: ALREADY EXTRACTED (good pattern to follow)
+✅ **TypeScript Compilation**: PASSING ✅ **Total Test Files**: 109 ⚠️ **ExportSystem Tests**: NONE
+(needs creation) ✅ **AlertDetectionEngine Tests**: EXISTS with comprehensive coverage ✅
+**AlertDetectionEngine Detectors**: ALREADY EXTRACTED (good pattern to follow)
 
 ### Files Impacted by Refactoring
 
 **ExportSystem** (4 consumers):
+
 - `/home/user/kreativium-analytics/src/workers/reports.worker.ts`
 - `/home/user/kreativium-analytics/src/pages/StudentProfileOptimized.tsx`
 - `/home/user/kreativium-analytics/src/pages/StudentProfile.tsx`
 - `/home/user/kreativium-analytics/src/pages/ReportsClean.tsx`
 
 **AlertDetectionEngine** (7 consumers):
+
 - `/home/user/kreativium-analytics/src/workers/analytics.worker.ts`
 - `/home/user/kreativium-analytics/src/lib/analyticsWorkerFallback.ts`
 - `/home/user/kreativium-analytics/src/lib/alerts/engineExamples.ts`
@@ -126,6 +127,7 @@ Integration & Verification (Agent 10 - THIS DOCUMENT)
 ### 2.1 ExportSystem Modularization Strategy
 
 #### Current Structure Analysis
+
 ```typescript
 // src/lib/exportSystem.ts - 827 lines
 class ExportSystem {
@@ -164,6 +166,7 @@ class ExportSystem {
 ```
 
 #### Target Architecture
+
 ```
 src/lib/exportSystem/
 ├── index.ts                      # Re-exports & facade (Agent 5)
@@ -202,43 +205,45 @@ src/lib/exportSystem/
 ### 2.2 AlertDetectionEngine Modularization Strategy
 
 #### Current Structure Analysis
+
 ```typescript
 // src/lib/alerts/engine.ts - 874 lines
 class AlertDetectionEngine {
   // Orchestration: ~70 lines (139-208)
-  runDetection()             // → STAYS (thin orchestrator)
+  runDetection(); // → STAYS (thin orchestrator)
 
   // Candidate Builders: ~280 lines (210-487)
-  buildEmotionCandidates()   // → Agent 7 (candidateBuilder)
-  buildSensoryCandidates()   // → Agent 7 (candidateBuilder)
-  buildAssociationCandidates() // → Agent 7 (candidateBuilder)
-  buildBurstCandidates()     // → Agent 7 (candidateBuilder)
-  detectInterventionOutcomes() // → Agent 7 (candidateBuilder)
+  buildEmotionCandidates(); // → Agent 7 (candidateBuilder)
+  buildSensoryCandidates(); // → Agent 7 (candidateBuilder)
+  buildAssociationCandidates(); // → Agent 7 (candidateBuilder)
+  buildBurstCandidates(); // → Agent 7 (candidateBuilder)
+  detectInterventionOutcomes(); // → Agent 7 (candidateBuilder)
 
   // Threshold Management: ~80 lines (489-581)
-  resolveExperimentKey()     // → Agent 7 (thresholdManager)
-  createThresholdContext()   // → Agent 7 (thresholdManager)
-  applyThreshold()           // → Agent 7 (thresholdManager)
+  resolveExperimentKey(); // → Agent 7 (thresholdManager)
+  createThresholdContext(); // → Agent 7 (thresholdManager)
+  applyThreshold(); // → Agent 7 (thresholdManager)
 
   // Alert Building: ~70 lines (583-648)
-  buildAlert()               // → Agent 7 (alertBuilder)
+  buildAlert(); // → Agent 7 (alertBuilder)
 
   // Series Builders: ~150 lines (651-792)
-  buildEmotionSeries()       // → Agent 6 (emotionSeriesBuilder)
-  buildSensoryAggregates()   // → Agent 6 (sensoryAggBuilder)
-  buildAssociationDataset()  // → Agent 6 (associationBuilder)
-  buildBurstEvents()         // → Agent 6 (burstEventsBuilder)
+  buildEmotionSeries(); // → Agent 6 (emotionSeriesBuilder)
+  buildSensoryAggregates(); // → Agent 6 (sensoryAggBuilder)
+  buildAssociationDataset(); // → Agent 6 (associationBuilder)
+  buildBurstEvents(); // → Agent 6 (burstEventsBuilder)
 
   // Quality & Stats: ~80 lines (794-844)
-  computeDetectionQuality()  // → Agent 7 (alertBuilder)
-  computeSeriesStats()       // → Agent 6 (shared with builders)
-  safeDetect()               // → Agent 7 (alertBuilder)
-  lookupEmotionBaseline()    // → Agent 6 (baseline lookups)
-  lookupSensoryBaseline()    // → Agent 6 (baseline lookups)
+  computeDetectionQuality(); // → Agent 7 (alertBuilder)
+  computeSeriesStats(); // → Agent 6 (shared with builders)
+  safeDetect(); // → Agent 7 (alertBuilder)
+  lookupEmotionBaseline(); // → Agent 6 (baseline lookups)
+  lookupSensoryBaseline(); // → Agent 6 (baseline lookups)
 }
 ```
 
 #### Target Architecture
+
 ```
 src/lib/alerts/
 ├── engine.ts                     # Thin orchestrator (Agent 8)
@@ -297,9 +302,12 @@ exportSystem.generatePDFReport(student, data, options)
 **Key Integration Point**: `ExportSystem` becomes a facade that delegates to handlers.
 
 **Dependency Chain**:
-- Agent 1 (utils) → Agent 2 (formats) → Agent 3 (processors) → Agent 4 (templates) → Agent 5 (facade)
+
+- Agent 1 (utils) → Agent 2 (formats) → Agent 3 (processors) → Agent 4 (templates) → Agent 5
+  (facade)
 
 **Import Pattern**:
+
 ```typescript
 // ExportSystem.ts (Agent 5 final version)
 import { CSVExportHandler, JSONExportHandler, PDFExportHandler } from './formats';
@@ -351,15 +359,23 @@ engine.runDetection(input)
   → this.policies.deduplicateAlerts(alerts)           // existing
 ```
 
-**Key Integration Point**: `AlertDetectionEngine` becomes a thin orchestrator that coordinates builders and aggregators.
+**Key Integration Point**: `AlertDetectionEngine` becomes a thin orchestrator that coordinates
+builders and aggregators.
 
 **Dependency Chain**:
+
 - Agent 6 (builders) → Agent 7 (aggregation) → Agent 8 (orchestration)
 
 **Import Pattern**:
+
 ```typescript
 // engine.ts (Agent 8 final version)
-import { EmotionSeriesBuilder, SensoryAggBuilder, AssociationBuilder, BurstEventsBuilder } from './builders';
+import {
+  EmotionSeriesBuilder,
+  SensoryAggBuilder,
+  AssociationBuilder,
+  BurstEventsBuilder,
+} from './builders';
 import { CandidateBuilder, AlertBuilder, ThresholdManager } from './aggregation';
 import { detectEWMATrend, detectCUSUMShift, detectBetaRateShift } from './detectors';
 
@@ -368,13 +384,13 @@ class AlertDetectionEngine {
     emotion: new EmotionSeriesBuilder(this.seriesLimit),
     sensory: new SensoryAggBuilder(this.seriesLimit),
     association: new AssociationBuilder(),
-    burst: new BurstEventsBuilder()
+    burst: new BurstEventsBuilder(),
   };
 
   private aggregators = {
     candidate: new CandidateBuilder(this.thresholdManager),
     alert: new AlertBuilder(this.policies),
-    threshold: new ThresholdManager(this.experiments, this.learner)
+    threshold: new ThresholdManager(this.experiments, this.learner),
   };
 
   runDetection(input: DetectionInput): AlertEvent[] {
@@ -383,7 +399,7 @@ class AlertDetectionEngine {
       emotionSeries: series,
       // ...
     });
-    const alerts = candidates.map(c => this.aggregators.alert.build(c));
+    const alerts = candidates.map((c) => this.aggregators.alert.build(c));
     return this.policies.deduplicateAlerts(alerts);
   }
 }
@@ -418,7 +434,9 @@ class AlertDetectionEngine {
 #### Agent 1: Export Utilities (Start: Day 1, Duration: 4 hours)
 
 **Tasks**:
+
 1. Create directory structure:
+
    ```bash
    mkdir -p src/lib/exportSystem/utils
    ```
@@ -435,6 +453,7 @@ class AlertDetectionEngine {
 4. Update imports in `exportSystem.ts` (don't refactor yet, just import)
 
 **Success Criteria**:
+
 - ✅ All utility modules compile independently
 - ✅ Tests for each module pass (>90% coverage)
 - ✅ No breaking changes to existing ExportSystem
@@ -446,7 +465,9 @@ class AlertDetectionEngine {
 #### Agent 2: Format Handlers (Start: After Agent 1, Duration: 6 hours)
 
 **Tasks**:
+
 1. Create directory:
+
    ```bash
    mkdir -p src/lib/exportSystem/formats
    ```
@@ -471,6 +492,7 @@ class AlertDetectionEngine {
 4. Update ExportSystem to import handlers (don't refactor methods yet)
 
 **Success Criteria**:
+
 - ✅ All format handlers compile and have tests
 - ✅ Integration tests show handlers work with real data
 - ✅ Backward compatibility maintained
@@ -482,7 +504,9 @@ class AlertDetectionEngine {
 #### Agent 3: Data Processors (Start: After Agent 2, Duration: 6 hours)
 
 **Tasks**:
+
 1. Create directory:
+
    ```bash
    mkdir -p src/lib/exportSystem/processors
    ```
@@ -499,6 +523,7 @@ class AlertDetectionEngine {
 4. Create comprehensive tests with real data samples
 
 **Success Criteria**:
+
 - ✅ Each processor works independently
 - ✅ Tests validate CSV output format
 - ✅ Analysis methods produce expected results
@@ -511,7 +536,9 @@ class AlertDetectionEngine {
 #### Agent 4: Template System (Start: After Agent 3, Duration: 4 hours)
 
 **Tasks**:
+
 1. Create directory:
+
    ```bash
    mkdir -p src/lib/exportSystem/templates
    ```
@@ -526,6 +553,7 @@ class AlertDetectionEngine {
 4. Create tests including HTML validation
 
 **Success Criteria**:
+
 - ✅ HTML template generates valid, printable HTML
 - ✅ Recommendations logic tested with various scenarios
 - ✅ Template can use data from processors
@@ -537,6 +565,7 @@ class AlertDetectionEngine {
 #### Agent 5: ExportSystem Facade (Start: After Agents 1-4, Duration: 6 hours)
 
 **Tasks**:
+
 1. Refactor `src/lib/exportSystem.ts`:
    - Import all modules from Agents 1-4
    - Replace method implementations with delegations
@@ -556,6 +585,7 @@ class AlertDetectionEngine {
 4. Create integration tests for full export flows
 
 **Success Criteria**:
+
 - ✅ ExportSystem public API unchanged
 - ✅ All 4 consumer files work without changes
 - ✅ Integration tests pass
@@ -573,7 +603,9 @@ class AlertDetectionEngine {
 #### Agent 6: Series Builders (Start: After ExportSystem verified, Duration: 5 hours)
 
 **Tasks**:
+
 1. Create directory:
+
    ```bash
    mkdir -p src/lib/alerts/builders
    ```
@@ -584,7 +616,8 @@ class AlertDetectionEngine {
    - `sensoryAggBuilder.ts`: Extract `buildSensoryAggregates()` (lines 673-699)
    - `associationBuilder.ts`: Extract `buildAssociationDataset()` (lines 702-757)
    - `burstEventsBuilder.ts`: Extract `buildBurstEvents()` (lines 759-792)
-   - `baselineLookup.ts`: Extract `lookupEmotionBaseline()`, `lookupSensoryBaseline()` (lines 846-871)
+   - `baselineLookup.ts`: Extract `lookupEmotionBaseline()`, `lookupSensoryBaseline()` (lines
+     846-871)
 
 3. Each builder:
    - Uses existing `normalizeTimestamp()` and `truncateSeries()` from `utils.ts`
@@ -594,6 +627,7 @@ class AlertDetectionEngine {
 4. Create comprehensive tests using existing test patterns from engine.test.ts
 
 **Success Criteria**:
+
 - ✅ All builders compile independently
 - ✅ Tests cover edge cases (empty data, invalid timestamps, etc.)
 - ✅ Integration with existing detectors verified
@@ -606,7 +640,9 @@ class AlertDetectionEngine {
 #### Agent 7: Result Aggregation (Start: After Agent 6, Duration: 6 hours)
 
 **Tasks**:
+
 1. Create directory:
+
    ```bash
    mkdir -p src/lib/alerts/aggregation
    ```
@@ -638,6 +674,7 @@ class AlertDetectionEngine {
 4. Create comprehensive tests for scoring and aggregation logic
 
 **Success Criteria**:
+
 - ✅ Candidate builders work with Agent 6's series builders
 - ✅ Threshold management integrates with experiments & learner
 - ✅ Alert building produces correct scored alerts
@@ -650,6 +687,7 @@ class AlertDetectionEngine {
 #### Agent 8: Engine Orchestration (Start: After Agent 7, Duration: 5 hours)
 
 **Tasks**:
+
 1. Refactor `src/lib/alerts/engine.ts`:
    - Import builders from Agent 6
    - Import aggregators from Agent 7
@@ -670,6 +708,7 @@ class AlertDetectionEngine {
 4. Create integration tests for full detection pipeline
 
 **Success Criteria**:
+
 - ✅ AlertDetectionEngine public API unchanged
 - ✅ All 7 consumer files work without changes
 - ✅ Existing engine.test.ts passes without modification
@@ -688,15 +727,18 @@ class AlertDetectionEngine {
 #### Agent 9: Shared Utilities & Validation (Start: Parallel to others, Duration: 8 hours)
 
 **Tasks**:
+
 1. Monitor Agents 1-8 for shared patterns:
    - Date/time utilities
    - Validation helpers
    - Data transformation patterns
 
 2. Create shared utilities if beneficial:
+
    ```bash
    mkdir -p src/lib/shared
    ```
+
    - Only if genuine duplication detected
    - Prefer domain-specific utils unless broadly applicable
 
@@ -707,6 +749,7 @@ class AlertDetectionEngine {
    - Import path consistency
 
 4. Create dependency analysis:
+
    ```bash
    npm run analyze  # Check bundle sizes
    ```
@@ -714,6 +757,7 @@ class AlertDetectionEngine {
 5. Document integration patterns in `ARCHITECTURE.md`
 
 **Success Criteria**:
+
 - ✅ No circular dependencies
 - ✅ Import graph is clean and logical
 - ✅ No code duplication across ExportSystem and AlertEngine
@@ -729,6 +773,7 @@ class AlertDetectionEngine {
 ### 5.1 Unit Testing Requirements
 
 **ExportSystem Modules**:
+
 - [ ] **Utils** (Agent 1): >90% coverage
   - dateFilters: test edge cases (undefined ranges, invalid dates)
   - anonymization: test all data types (Student, Emotion, Sensory, Goal)
@@ -757,6 +802,7 @@ class AlertDetectionEngine {
   - Backward compatibility tests
 
 **AlertDetectionEngine Modules**:
+
 - [ ] **Builders** (Agent 6): >90% coverage
   - Series builders: test with various timestamp patterns
   - Baseline lookups: test fallback behavior
@@ -776,6 +822,7 @@ class AlertDetectionEngine {
 ### 5.2 Integration Testing Strategy
 
 **ExportSystem Integration Tests**:
+
 ```typescript
 // tests/integration/exportSystem.test.ts
 describe('ExportSystem Integration', () => {
@@ -798,6 +845,7 @@ describe('ExportSystem Integration', () => {
 ```
 
 **AlertDetectionEngine Integration Tests**:
+
 ```typescript
 // Already exists in engine.test.ts, expand:
 describe('AlertDetectionEngine Integration', () => {
@@ -816,6 +864,7 @@ describe('AlertDetectionEngine Integration', () => {
 ```
 
 **Cross-System Tests**:
+
 ```typescript
 // tests/integration/systems.test.ts
 describe('System Interoperability', () => {
@@ -830,6 +879,7 @@ describe('System Interoperability', () => {
 **Critical Verification Points**:
 
 1. **ExportSystem Consumers**:
+
    ```bash
    # After Agent 5 completes
    npm run test -- src/workers/reports.worker.test.ts
@@ -838,6 +888,7 @@ describe('System Interoperability', () => {
    ```
 
 2. **AlertDetectionEngine Consumers**:
+
    ```bash
    # After Agent 8 completes
    npm run test -- src/workers/analytics.worker.test.ts
@@ -846,6 +897,7 @@ describe('System Interoperability', () => {
    ```
 
 3. **TypeScript Compilation**:
+
    ```bash
    npm run typecheck
    # MUST pass after EVERY agent completion
@@ -860,18 +912,21 @@ describe('System Interoperability', () => {
 ### 5.4 Performance Testing
 
 **ExportSystem Benchmarks**:
+
 - PDF generation with 1000 entries: <500ms
 - CSV export with 10,000 entries: <200ms
 - JSON export with complex data: <100ms
 - Backup creation: <1s for typical dataset
 
 **AlertDetectionEngine Benchmarks**:
+
 - Detection with 180 emotions, 120 sensory, 60 tracking: <100ms
 - EWMA detection: <10ms
 - CUSUM detection: <15ms
 - Full pipeline with all detectors: <150ms
 
 **Test Command**:
+
 ```bash
 npm run test:performance
 ```
@@ -883,12 +938,14 @@ npm run test:performance
 ### Option A: Incremental Commits (Recommended)
 
 **Advantages**:
+
 - Easier to review
 - Can rollback individual agents if issues arise
 - Clear history of refactoring progression
 - CI/CD can validate each step
 
 **Commit Structure**:
+
 ```
 Commit 1 (Agent 1): refactor(export): extract utilities (utils, anonymization, csvParser, validation)
   Modified: src/lib/exportSystem.ts
@@ -942,6 +999,7 @@ Commit 9 (Agent 9): refactor(shared): add cross-module coordination and docs
 ### Option B: Atomic Commits per System
 
 **Commit Structure**:
+
 ```
 Commit 1 (Agents 1-5): refactor(export): modularize ExportSystem into facade pattern
   Modified: src/lib/exportSystem.ts
@@ -966,10 +1024,12 @@ Commit 3 (Agent 9): refactor(shared): add cross-module coordination
 ### Option C: Single Atomic Commit (Not Recommended)
 
 **Only use if**:
+
 - Working on a feature branch with no other collaborators
 - Want to squash history before merging to main
 
 **Commit Structure**:
+
 ```
 Commit 1: refactor: modularize ExportSystem and AlertDetectionEngine
 
@@ -1004,6 +1064,7 @@ Commit 1: refactor: modularize ExportSystem and AlertDetectionEngine
 ### Recommended Strategy: **Option A (Incremental Commits)**
 
 **Rationale**:
+
 - Easier code review (each commit <500 LOC changed)
 - Can validate each step independently
 - CI/CD catches issues early
@@ -1020,6 +1081,7 @@ Commit 1: refactor: modularize ExportSystem and AlertDetectionEngine
 **Risk**: Consumer files break during refactoring
 
 **Mitigation**:
+
 - ✅ Maintain exact same public API for ExportSystem class
 - ✅ Maintain exact same public API for AlertDetectionEngine class
 - ✅ Use facade pattern to preserve method signatures
@@ -1027,6 +1089,7 @@ Commit 1: refactor: modularize ExportSystem and AlertDetectionEngine
 - ✅ Test all consumer files after Agents 5 and 8
 
 **Detection**:
+
 ```bash
 # After each agent
 npm run typecheck
@@ -1038,6 +1101,7 @@ npm test
 **Risk**: Modules import each other creating cycles
 
 **Mitigation**:
+
 - ✅ Agent 9 actively monitors import graph
 - ✅ Use dependency injection where needed
 - ✅ Keep clear unidirectional flow:
@@ -1046,6 +1110,7 @@ npm test
 - ✅ Use interfaces to break tight coupling
 
 **Detection**:
+
 ```bash
 npm run analyze
 # Use madge or similar: npx madge --circular src/
@@ -1056,6 +1121,7 @@ npm run analyze
 **Risk**: New modules lack tests, reducing overall coverage
 
 **Mitigation**:
+
 - ✅ Each agent MUST create tests (requirement in tasks)
 - ✅ Target >85% coverage for all new modules
 - ✅ ExportSystem needs NEW tests (currently has 0)
@@ -1069,6 +1135,7 @@ npm run analyze
 **Risk**: Extra indirection slows down critical paths
 
 **Mitigation**:
+
 - ✅ Run performance benchmarks after Agents 5 and 8:
   ```bash
   npm run test:performance
@@ -1078,6 +1145,7 @@ npm run analyze
 - ✅ If regression detected, optimize before proceeding
 
 **Baseline Metrics** (from existing code):
+
 - AlertDetectionEngine.runDetection(): ~100ms (180 emotions, 120 sensory)
 - ExportSystem.generateCSVExport(): unmeasured (establish baseline)
 
@@ -1086,6 +1154,7 @@ npm run analyze
 **Risk**: Extra files increase bundle size
 
 **Mitigation**:
+
 - ✅ Tree shaking should eliminate unused code
 - ✅ Monitor bundle size:
   ```bash
@@ -1101,6 +1170,7 @@ npm run analyze
 **Risk**: TypeScript inference breaks with new module boundaries
 
 **Mitigation**:
+
 - ✅ Explicit type exports from each module
 - ✅ Use `types.ts` files in each subdirectory
 - ✅ Import types separately if needed:
@@ -1114,6 +1184,7 @@ npm run analyze
 **Risk**: Multiple agents working in same files
 
 **Mitigation**:
+
 - ✅ **Use sequential execution** (recommended)
 - ✅ If parallel: clear boundaries (Agents 1-5 vs 6-8)
 - ✅ Agents 1-5 only touch `exportSystem.ts` and `exportSystem/`
@@ -1125,6 +1196,7 @@ npm run analyze
 **Risk**: Extracted modules don't handle all cases original did
 
 **Mitigation**:
+
 - ✅ Comprehensive test suites for each module
 - ✅ Use original code as test oracle (same inputs → same outputs)
 - ✅ Test with real production data if available
@@ -1135,6 +1207,7 @@ npm run analyze
 **Risk**: New architecture not documented
 
 **Mitigation**:
+
 - ✅ Agent 9 updates `ARCHITECTURE.md`
 - ✅ Each agent adds JSDoc comments to new modules
 - ✅ Update `CLAUDE.md` if architecture changes
@@ -1145,6 +1218,7 @@ npm run analyze
 **Risk**: Developers don't know which module to import from
 
 **Mitigation**:
+
 - ✅ Use barrel exports (`index.ts` in each directory)
 - ✅ Re-export from main file:
   ```typescript
@@ -1179,6 +1253,7 @@ npm run analyze
    - **Minor** (style issue, missing test) → fix in follow-up commit
 
 2. **Rollback command**:
+
    ```bash
    git revert <commit-hash>
    # Or
@@ -1193,6 +1268,7 @@ npm run analyze
 **Scenario C: Issue detected after multiple commits (integration problem)**
 
 1. **Identify problematic commit(s)**:
+
    ```bash
    git bisect start
    git bisect bad HEAD
@@ -1232,6 +1308,7 @@ git push --force-with-lease
 ```
 
 **Recovery**:
+
 - Original code preserved in git history
 - Can cherry-pick successful parts if needed
 - Learn from issues and re-plan
@@ -1268,7 +1345,7 @@ git push --force-with-lease
  */
 export function filterByDateRange<T extends { timestamp: Date }>(
   data: T[],
-  dateRange?: { start: Date; end: Date }
+  dateRange?: { start: Date; end: Date },
 ): T[] {
   // ... implementation
 }
@@ -1285,8 +1362,8 @@ export function filterByDateRange<T extends { timestamp: Date }>(
 
 ### Export System
 
-The Export System provides data export capabilities in multiple formats (PDF, CSV, JSON)
-with support for backup/restore and data import.
+The Export System provides data export capabilities in multiple formats (PDF, CSV, JSON) with
+support for backup/restore and data import.
 
 **Architecture**: Facade pattern with modularized processors and handlers
 
@@ -1294,13 +1371,12 @@ with support for backup/restore and data import.
 
 **Structure**:
 ```
-src/lib/exportSystem/
-├── ExportSystem.ts          # Facade (orchestrator)
-├── utils/                   # Agent 1: Core utilities
-├── formats/                 # Agent 2: Format handlers
-├── processors/              # Agent 3: Data processors
-└── templates/               # Agent 4: Template system
-```
+
+src/lib/exportSystem/ ├── ExportSystem.ts # Facade (orchestrator) ├── utils/ # Agent 1: Core
+utilities ├── formats/ # Agent 2: Format handlers ├── processors/ # Agent 3: Data processors └──
+templates/ # Agent 4: Template system
+
+````
 
 **Key Classes**:
 - `ExportSystem`: Main facade, delegates to handlers
@@ -1315,18 +1391,19 @@ import { exportSystem } from '@/lib/exportSystem';
 
 const pdfBlob = await exportSystem.generatePDFReport(student, data, options);
 const csvString = exportSystem.generateCSVExport(students, allData, options);
-```
+````
 
 ### Alert Detection System
 
-The Alert Detection Engine orchestrates multiple statistical detectors to identify
-behavioral patterns and generate ranked, policy-governed alerts.
+The Alert Detection Engine orchestrates multiple statistical detectors to identify behavioral
+patterns and generate ranked, policy-governed alerts.
 
 **Architecture**: Thin orchestrator with builder and aggregator pattern
 
 **Location**: `src/lib/alerts/`
 
 **Structure**:
+
 ```
 src/lib/alerts/
 ├── engine.ts                # Thin orchestrator (Agent 8)
@@ -1339,6 +1416,7 @@ src/lib/alerts/
 ```
 
 **Key Classes**:
+
 - `AlertDetectionEngine`: Main orchestrator
 - `EmotionSeriesBuilder`: Builds emotion time series
 - `SensoryAggBuilder`: Aggregates sensory data
@@ -1347,6 +1425,7 @@ src/lib/alerts/
 - `ThresholdManager`: Manages detection thresholds
 
 **Detection Pipeline**:
+
 1. Build series (Agent 6 builders)
 2. Run detectors (existing detector modules)
 3. Build candidates (Agent 7 candidate builder)
@@ -1355,6 +1434,7 @@ src/lib/alerts/
 6. Deduplicate (existing policies)
 
 **Usage**:
+
 ```typescript
 import { AlertDetectionEngine } from '@/lib/alerts/engine';
 
@@ -1363,23 +1443,24 @@ const alerts = engine.runDetection({
   studentId,
   emotions,
   sensory,
-  tracking
+  tracking,
 });
 ```
 
 ## Refactoring History
 
-**Date**: 2025-11-09
-**Branch**: claude/ultrathink-session-011CUxSvz3HJaFHXqxJvhqE1
-**Agent Coordination**: Multi-agent extraction (Agents 1-10)
+**Date**: 2025-11-09 **Branch**: claude/ultrathink-session-011CUxSvz3HJaFHXqxJvhqE1 **Agent
+Coordination**: Multi-agent extraction (Agents 1-10)
 
 **Changes**:
+
 - ExportSystem: 827 lines → ~150 lines (facade)
 - AlertDetectionEngine: 874 lines → ~200 lines (orchestrator)
 - New modules: 30+ files added
 - Tests added: 1000+ lines
 - Backward compatibility: 100% maintained
-```
+
+````
 
 ### 9.3 Update CLAUDE.md
 
@@ -1402,17 +1483,17 @@ Add section on new architecture:
   - `builders/` - Series builders for detector input
   - `aggregation/` - Result aggregation and alert construction
   - `engine.ts` - Thin orchestrator class
-```
+````
 
 ### 9.4 README in New Directories
 
 **Example: `/home/user/kreativium-analytics/src/lib/exportSystem/README.md`**:
 
-```markdown
+````markdown
 # Export System
 
-Modular export system providing PDF, CSV, and JSON export capabilities with
-backup/restore functionality.
+Modular export system providing PDF, CSV, and JSON export capabilities with backup/restore
+functionality.
 
 ## Structure
 
@@ -1438,25 +1519,28 @@ import { exportSystem, ExportOptions } from '@/lib/exportSystem';
 const options: ExportOptions = {
   format: 'pdf',
   includeFields: ['emotions', 'sensory'],
-  dateRange: { start, end }
+  dateRange: { start, end },
 };
 
 const blob = await exportSystem.generatePDFReport(student, data, options);
 ```
+````
 
 ## Testing
 
 Tests located in `__tests__/` subdirectory:
+
 ```bash
 npm test -- src/lib/exportSystem
 ```
 
 ## Architecture
 
-The ExportSystem class acts as a facade, delegating to specialized handlers and
-processors. This modular design improves testability and maintainability.
+The ExportSystem class acts as a facade, delegating to specialized handlers and processors. This
+modular design improves testability and maintainability.
 
 See `ARCHITECTURE.md` for details.
+
 ```
 
 ---
@@ -1554,18 +1638,13 @@ See `ARCHITECTURE.md` for details.
 Once all checkboxes above are complete, Agent 10 certifies:
 
 ```
-✅ ExportSystem refactoring: COMPLETE
-✅ AlertDetectionEngine refactoring: COMPLETE
-✅ Cross-module coordination: COMPLETE
-✅ Testing strategy: IMPLEMENTED
-✅ Documentation: UPDATED
-✅ Backward compatibility: VERIFIED
-✅ Performance: VALIDATED
-✅ Integration: SUCCESSFUL
 
-Status: READY FOR PRODUCTION
-Date: [Date of completion]
-Coordinator: Agent 10
+✅ ExportSystem refactoring: COMPLETE ✅ AlertDetectionEngine refactoring: COMPLETE ✅ Cross-module
+coordination: COMPLETE ✅ Testing strategy: IMPLEMENTED ✅ Documentation: UPDATED ✅ Backward
+compatibility: VERIFIED ✅ Performance: VALIDATED ✅ Integration: SUCCESSFUL
+
+Status: READY FOR PRODUCTION Date: [Date of completion] Coordinator: Agent 10
+
 ```
 
 ---
@@ -1639,65 +1718,29 @@ Coordinator: Agent 10
 ### Before Refactoring
 
 ```
-src/lib/
-├── exportSystem.ts                    # 827 lines (BEFORE)
-└── alerts/
-    └── engine.ts                      # 874 lines (BEFORE)
+
+src/lib/ ├── exportSystem.ts # 827 lines (BEFORE) └── alerts/ └── engine.ts # 874 lines (BEFORE)
+
 ```
 
 ### After Refactoring
 
 ```
-src/lib/
-├── exportSystem/
-│   ├── index.ts
-│   ├── ExportSystem.ts                # ~150 lines (AFTER)
-│   ├── types.ts
-│   ├── utils/
-│   │   ├── dateFilters.ts
-│   │   ├── anonymization.ts
-│   │   ├── csvParser.ts
-│   │   └── validation.ts
-│   ├── formats/
-│   │   ├── csv.ts
-│   │   ├── json.ts
-│   │   ├── pdf.ts
-│   │   ├── backup.ts
-│   │   └── types.ts
-│   ├── processors/
-│   │   ├── emotionProcessor.ts
-│   │   ├── sensoryProcessor.ts
-│   │   ├── goalsProcessor.ts
-│   │   ├── trackingProcessor.ts
-│   │   └── reportBuilder.ts
-│   ├── templates/
-│   │   ├── htmlTemplate.ts
-│   │   ├── reportContent.ts
-│   │   └── recommendations.ts
-│   └── __tests__/
-│       ├── utils.test.ts
-│       ├── formats.test.ts
-│       ├── processors.test.ts
-│       ├── templates.test.ts
-│       ├── ExportSystem.test.ts
-│       └── integration.test.ts
-└── alerts/
-    ├── engine.ts                      # ~200 lines (AFTER)
-    ├── builders/
-    │   ├── emotionSeriesBuilder.ts
-    │   ├── sensoryAggBuilder.ts
-    │   ├── associationBuilder.ts
-    │   ├── burstEventsBuilder.ts
-    │   ├── baselineLookup.ts
-    │   └── types.ts
-    ├── aggregation/
-    │   ├── candidateBuilder.ts
-    │   ├── alertBuilder.ts
-    │   ├── thresholdManager.ts
-    │   └── types.ts
-    ├── detectors/ (existing)
-    └── __tests__/ (existing + new)
-```
+
+src/lib/ ├── exportSystem/ │ ├── index.ts │ ├── ExportSystem.ts # ~150 lines (AFTER) │ ├── types.ts
+│ ├── utils/ │ │ ├── dateFilters.ts │ │ ├── anonymization.ts │ │ ├── csvParser.ts │ │ └──
+validation.ts │ ├── formats/ │ │ ├── csv.ts │ │ ├── json.ts │ │ ├── pdf.ts │ │ ├── backup.ts │ │ └──
+types.ts │ ├── processors/ │ │ ├── emotionProcessor.ts │ │ ├── sensoryProcessor.ts │ │ ├──
+goalsProcessor.ts │ │ ├── trackingProcessor.ts │ │ └── reportBuilder.ts │ ├── templates/ │ │ ├──
+htmlTemplate.ts │ │ ├── reportContent.ts │ │ └── recommendations.ts │ └── **tests**/ │ ├──
+utils.test.ts │ ├── formats.test.ts │ ├── processors.test.ts │ ├── templates.test.ts │ ├──
+ExportSystem.test.ts │ └── integration.test.ts └── alerts/ ├── engine.ts # ~200 lines (AFTER) ├──
+builders/ │ ├── emotionSeriesBuilder.ts │ ├── sensoryAggBuilder.ts │ ├── associationBuilder.ts │ ├──
+burstEventsBuilder.ts │ ├── baselineLookup.ts │ └── types.ts ├── aggregation/ │ ├──
+candidateBuilder.ts │ ├── alertBuilder.ts │ ├── thresholdManager.ts │ └── types.ts ├── detectors/
+(existing) └── **tests**/ (existing + new)
+
+````
 
 ---
 
@@ -1731,7 +1774,7 @@ npm run build:dev
 
 # Development server
 npm run dev
-```
+````
 
 ### Validation Commands (After Each Agent)
 
@@ -1806,6 +1849,5 @@ git log --oneline --graph
 
 **END OF INTEGRATION PLAN**
 
-*Generated by Agent 10 - Coordination Agent*
-*Date: 2025-11-09*
-*Branch: claude/ultrathink-session-011CUxSvz3HJaFHXqxJvhqE1*
+_Generated by Agent 10 - Coordination Agent_ _Date: 2025-11-09_ _Branch:
+claude/ultrathink-session-011CUxSvz3HJaFHXqxJvhqE1_

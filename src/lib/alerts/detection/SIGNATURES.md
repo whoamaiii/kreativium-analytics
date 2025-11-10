@@ -14,55 +14,51 @@ function aggregateDetectorResults(
   lastTimestamp: number,
   tier: number,
   nowTs: number,
-  weights?: AggregationWeights
-): AggregatedResult
+  weights?: AggregationWeights,
+): AggregatedResult;
 
 /**
  * Filter detector results to only valid ones using type guards.
  */
-function filterValidResults(
-  detectorResults: DetectorResult[]
-): DetectorResult[]
+function filterValidResults(detectorResults: DetectorResult[]): DetectorResult[];
 
 /**
  * Combine detector scores using maximum aggregation.
  */
-function combineDetectorScores(
-  detectorResults: DetectorResult[]
-): { impact: number; confidence: number }
+function combineDetectorScores(detectorResults: DetectorResult[]): {
+  impact: number;
+  confidence: number;
+};
 
 /**
  * Calculate aggregate confidence with tier adjustment.
  * Formula: min(1, baseConfidence × (1 + tierBoost))
  * where tierBoost = (tier - 0.5) × 0.3
  */
-function calculateAggregateConfidence(
-  baseConfidence: number,
-  tier: number
-): number
+function calculateAggregateConfidence(baseConfidence: number, tier: number): number;
 
 /**
  * Compute detection quality metrics for diagnostics.
  */
 function computeDetectionQuality(
   detectorResults: DetectorResult[],
-  seriesLength: number
+  seriesLength: number,
 ): {
   validDetectors: number;
   avgConfidence: number;
   seriesLength: number;
-}
+};
 ```
 
 ### Types
 
 ```typescript
 interface AggregatedResult {
-  impact: number;              // Max detector score (0-1)
-  confidence: number;          // Max detector confidence (0-1)
-  recency: number;             // Time-decay score (0-1)
-  tierScore: number;           // Detection quality tier (0-1)
-  aggregateScore: number;      // Weighted final score (0-1)
+  impact: number; // Max detector score (0-1)
+  confidence: number; // Max detector confidence (0-1)
+  recency: number; // Time-decay score (0-1)
+  tierScore: number; // Detection quality tier (0-1)
+  aggregateScore: number; // Weighted final score (0-1)
   rankedSources: AlertSource[]; // Top 3 sources
   scoreBreakdown: {
     impact: number;
@@ -73,10 +69,10 @@ interface AggregatedResult {
 }
 
 interface AggregationWeights {
-  impact: number;     // Default: 0.4
+  impact: number; // Default: 0.4
   confidence: number; // Default: 0.25
-  recency: number;    // Default: 0.2
-  tier: number;       // Default: 0.15
+  recency: number; // Default: 0.2
+  tier: number; // Default: 0.15
 }
 ```
 
@@ -93,8 +89,8 @@ function finalizeAlertEvent(
   candidate: AlertCandidate,
   aggregated: AggregatedResult,
   studentId: string,
-  config: FinalizationConfig
-): AlertEvent
+  config: FinalizationConfig,
+): AlertEvent;
 
 /**
  * Batch finalize multiple alert candidates with deduplication.
@@ -103,16 +99,13 @@ function batchFinalizeAlerts(
   candidates: AlertCandidate[],
   aggregatedResults: AggregatedResult[],
   studentId: string,
-  config: FinalizationConfig
-): AlertEvent[]
+  config: FinalizationConfig,
+): AlertEvent[];
 
 /**
  * Apply governance policies (deduplication key calculation).
  */
-function applyPolicies(
-  alert: Omit<AlertEvent, 'dedupeKey'>,
-  policies: AlertPolicies
-): AlertEvent
+function applyPolicies(alert: Omit<AlertEvent, 'dedupeKey'>, policies: AlertPolicies): AlertEvent;
 
 /**
  * Enrich metadata with scores, thresholds, experiments, and diagnostics.
@@ -122,23 +115,21 @@ function enrichWithMetadata(
   aggregated: AggregatedResult,
   sparkline: { values: number[]; timestamps: number[] },
   candidate: AlertCandidate,
-  seriesStats: SeriesStats
-): AlertMetadata
+  seriesStats: SeriesStats,
+): AlertMetadata;
 
 /**
  * Generate sparkline visualization data from time series.
  */
 function generateSparkline(
   series: TrendPoint[],
-  limit: number
-): { values: number[]; timestamps: number[] }
+  limit: number,
+): { values: number[]; timestamps: number[] };
 
 /**
  * Compute lightweight series statistics for diagnostics.
  */
-function computeSeriesStats(
-  series: TrendPoint[]
-): SeriesStats
+function computeSeriesStats(series: TrendPoint[]): SeriesStats;
 ```
 
 ### Types
@@ -158,8 +149,8 @@ interface AlertCandidate {
 }
 
 interface FinalizationConfig {
-  seriesLimit: number;      // Max sparkline points
-  policies: AlertPolicies;  // For dedupeKey calculation
+  seriesLimit: number; // Max sparkline points
+  policies: AlertPolicies; // For dedupeKey calculation
 }
 
 interface SeriesStats {
@@ -223,6 +214,7 @@ Score Range    Severity
 ### Deduplication Key
 
 Generated from:
+
 - Student ID
 - Alert kind
 - Context key (emotion/sensory type or class period)
@@ -233,6 +225,7 @@ Format: `hash(studentId|kind|context|hourKey)` → base36 hash
 ### Threshold Adjustments
 
 Traces include:
+
 - `adjustment`: Relative change from baseline (-1 to 1+)
 - `appliedThreshold`: Final threshold after learning and experiments
 - `baselineThreshold`: Original detector default
@@ -240,6 +233,7 @@ Traces include:
 ### Experiment Tracking
 
 Metadata includes:
+
 - `experimentKey`: e.g., "alerts.thresholds.behavior"
 - `experimentVariant`: e.g., "control", "variant_a", "variant_b"
 - Used for A/B testing threshold configurations
@@ -312,17 +306,17 @@ import {
 
 // 1. Aggregate detector results
 const aggregated: AggregatedResult = aggregateDetectorResults(
-  candidate.detectors,      // DetectorResult[]
-  candidate.lastTimestamp,  // number (ms)
-  candidate.tier,           // number (0-1)
-  Date.now(),              // number (ms)
+  candidate.detectors, // DetectorResult[]
+  candidate.lastTimestamp, // number (ms)
+  candidate.tier, // number (0-1)
+  Date.now(), // number (ms)
 );
 
 // 2. Finalize alert event
 const alert: AlertEvent = finalizeAlertEvent(
-  candidate,               // AlertCandidate
-  aggregated,             // AggregatedResult
-  'student_123',          // string
+  candidate, // AlertCandidate
+  aggregated, // AggregatedResult
+  'student_123', // string
   {
     seriesLimit: 100,
     policies: new AlertPolicies(),
@@ -336,7 +330,7 @@ const alert: AlertEvent = finalizeAlertEvent(
 import type { AggregationWeights } from '@/lib/alerts/detection';
 
 const weights: AggregationWeights = {
-  impact: 0.5,      // Emphasize impact
+  impact: 0.5, // Emphasize impact
   confidence: 0.3,
   recency: 0.15,
   tier: 0.05,

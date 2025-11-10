@@ -39,7 +39,6 @@ export function hashOfString(input: string): string {
 
 // Produce a stable key for list rendering from an object that may or may not have an id
 // Preference order: explicit id -> computed hash
- 
 
 // Back-compat helper specifically named for pattern items used across analytics panels
 export function stableKeyFromPattern(pattern: IdentifiableLike): string {

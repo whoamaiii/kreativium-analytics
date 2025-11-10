@@ -55,8 +55,12 @@ describe('Config Accessors', () => {
       });
 
       it('returns false for objects with wrong property types', () => {
-        expect(isAnalyticsConfiguration({ analytics: 'not-object', insights: {}, confidence: {} })).toBe(false);
-        expect(isAnalyticsConfiguration({ analytics: {}, insights: null, confidence: {} })).toBe(false);
+        expect(
+          isAnalyticsConfiguration({ analytics: 'not-object', insights: {}, confidence: {} }),
+        ).toBe(false);
+        expect(isAnalyticsConfiguration({ analytics: {}, insights: null, confidence: {} })).toBe(
+          false,
+        );
       });
     });
 

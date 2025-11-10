@@ -5,7 +5,7 @@
  * All export formats (PDF, CSV, JSON) use these common options.
  */
 
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
 
 /**
  * Core export options interface
@@ -99,7 +99,7 @@ export const DEFAULT_EXPORT_OPTIONS: Partial<ExportOptions> = {
   includeCharts: false,
   anonymize: false,
   includeMetadata: true,
-  groupBy: 'student'
+  groupBy: 'student',
 };
 
 /**
@@ -112,7 +112,7 @@ export const AVAILABLE_FIELDS = [
   'goals',
   'trackingEntries',
   'interventions',
-  'alerts'
+  'alerts',
 ] as const;
 
 /**
@@ -149,7 +149,7 @@ export const NESTED_FIELD_PATHS = {
   'environmental.location': true,
   'environmental.socialContext': true,
   'environmental.weather': true,
-  'environmental.classroom': true
+  'environmental.classroom': true,
 } as const;
 
 /**
@@ -171,7 +171,7 @@ export function validateExportOptions(options: Partial<ExportOptions>): Validati
     warnings.push('No fields specified for export. Using default fields.');
   } else {
     const invalidFields = options.includeFields.filter(
-      field => !AVAILABLE_FIELDS.includes(field as typeof AVAILABLE_FIELDS[number])
+      (field) => !AVAILABLE_FIELDS.includes(field as (typeof AVAILABLE_FIELDS)[number]),
     );
     if (invalidFields.length > 0) {
       warnings.push(`Unknown fields will be ignored: ${invalidFields.join(', ')}`);
@@ -220,7 +220,7 @@ export function validateExportOptions(options: Partial<ExportOptions>): Validati
   return {
     valid: errors.length === 0,
     errors,
-    warnings
+    warnings,
   };
 }
 
@@ -255,10 +255,7 @@ export function validateDateRange(dateRange?: { start: Date; end: Date }): boole
 /**
  * Calculate estimated export size in bytes
  */
-export function estimateExportSize(
-  data: ExportDataCollection,
-  options: ExportOptions
-): number {
+export function estimateExportSize(data: ExportDataCollection, options: ExportOptions): number {
   let estimatedBytes = 0;
 
   // Base overhead
@@ -300,7 +297,7 @@ export function estimateExportSize(
  */
 export function isExportTooLarge(
   data: ExportDataCollection,
-  options: ExportOptions
+  options: ExportOptions,
 ): { tooLarge: boolean; estimatedSize: number; threshold: number } {
   const estimatedSize = estimateExportSize(data, options);
   const threshold = 50 * 1024 * 1024; // 50MB
@@ -308,6 +305,6 @@ export function isExportTooLarge(
   return {
     tooLarge: estimatedSize > threshold,
     estimatedSize,
-    threshold
+    threshold,
   };
 }

@@ -18,9 +18,3 @@ export function BreathCircle({ phaseMs = 3000, size = 160 }: BreathCircleProps) 
     </div>
   );
 }
-
-
-
-
-
-

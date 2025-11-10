@@ -36,13 +36,18 @@ for (const abs of files) {
   while ((match = pattern.exec(content)) !== null) {
     const upto = content.slice(0, match.index);
     const line = upto.split(/\r?\n/).length;
-    const snippet = content.split(/\r?\n/).slice(line - 1, line + 1).join('\n');
+    const snippet = content
+      .split(/\r?\n/)
+      .slice(line - 1, line + 1)
+      .join('\n');
     offenders.push({ file: rel, line, snippet });
   }
 }
 
 if (offenders.length > 0) {
-  console.error('[validate-lazy-imports] Found double-lazy usages importing from components/lazy/* via React.lazy:');
+  console.error(
+    '[validate-lazy-imports] Found double-lazy usages importing from components/lazy/* via React.lazy:',
+  );
   for (const o of offenders) {
     console.error(` - ${o.file}:${o.line}`);
     console.error(o.snippet);
@@ -52,4 +57,3 @@ if (offenders.length > 0) {
 }
 
 console.log('[validate-lazy-imports] OK: no double-lazy usages detected.');
-

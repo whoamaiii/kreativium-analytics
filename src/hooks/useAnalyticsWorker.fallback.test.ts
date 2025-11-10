@@ -29,9 +29,9 @@ vi.mock('@/lib/analyticsWorkerFallback', () => ({
       environmentalCorrelations: [],
       predictiveInsights: [],
       anomalies: [],
-      insights: ['Fallback result']
-    })
-  }
+      insights: ['Fallback result'],
+    }),
+  },
 }));
 
 // Mock the worker to fail initialization
@@ -40,7 +40,7 @@ vi.mock('@/workers/analytics.worker?worker', () => ({
     constructor() {
       throw new Error('Worker not supported');
     }
-  }
+  },
 }));
 
 // Import the hook after all mocks are set up
@@ -54,16 +54,19 @@ describe('useAnalyticsWorker - Fallback Mode', () => {
   it('should use fallback when worker initialization fails', async () => {
     const { analyticsWorkerFallback } = await import('@/lib/analyticsWorkerFallback');
     const { result } = renderHook(() => useAnalyticsWorker());
-    
-    const testData: AnalyticsData = { 
-      entries: [], 
-      emotions: [], 
-      sensoryInputs: [] 
+
+    const testData: AnalyticsData = {
+      entries: [],
+      emotions: [],
+      sensoryInputs: [],
     };
 
     // Run analysis which should use the fallback
     await act(async () => {
-      await result.current.runAnalysis(testData, { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
+      await result.current.runAnalysis(testData, {
+        student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any,
+        useAI: false,
+      });
     });
 
     // Verify fallback was called
@@ -72,9 +75,9 @@ describe('useAnalyticsWorker - Fallback Mode', () => {
       expect.objectContaining({
         student: expect.objectContaining({ id: 's1' }),
         useAI: expect.any(Boolean),
-      })
+      }),
     );
-    
+
     // Should get results from fallback
     expect(result.current.results).toEqual({
       patterns: [],
@@ -82,7 +85,7 @@ describe('useAnalyticsWorker - Fallback Mode', () => {
       environmentalCorrelations: [],
       predictiveInsights: [],
       anomalies: [],
-      insights: ['Fallback result']
+      insights: ['Fallback result'],
     });
     expect(result.current.isAnalyzing).toBe(false);
     expect(result.current.error).toBeNull();

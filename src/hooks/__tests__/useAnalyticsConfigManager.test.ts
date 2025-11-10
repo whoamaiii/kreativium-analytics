@@ -100,10 +100,7 @@ describe('useAnalyticsConfigManager', () => {
       const { result } = renderHook(() => useAnalyticsConfigManager());
 
       act(() => {
-        result.current.actions.updateConfigValue(
-          ['analytics', 'MIN_TRACKING_FOR_CORRELATION'],
-          10
-        );
+        result.current.actions.updateConfigValue(['analytics', 'MIN_TRACKING_FOR_CORRELATION'], 10);
       });
 
       expect(result.current.state.config.analytics.MIN_TRACKING_FOR_CORRELATION).toBe(10);
@@ -147,7 +144,7 @@ describe('useAnalyticsConfigManager', () => {
       expect(result.current.state.selectedPreset).toBe('performance');
       expect(result.current.state.hasUnsavedChanges).toBe(true);
       expect(logger.info).toHaveBeenCalledWith(
-        '[useAnalyticsConfigManager] Applied preset: performance'
+        '[useAnalyticsConfigManager] Applied preset: performance',
       );
     });
 
@@ -167,9 +164,7 @@ describe('useAnalyticsConfigManager', () => {
   describe('Save and Reset', () => {
     it('saves configuration successfully', () => {
       const onSave = vi.fn();
-      const { result } = renderHook(() =>
-        useAnalyticsConfigManager({ onSave })
-      );
+      const { result } = renderHook(() => useAnalyticsConfigManager({ onSave }));
 
       // Make a change
       act(() => {
@@ -188,7 +183,7 @@ describe('useAnalyticsConfigManager', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Configuration saved',
-        })
+        }),
       );
       expect(onSave).toHaveBeenCalled();
     });
@@ -210,7 +205,7 @@ describe('useAnalyticsConfigManager', () => {
         expect.objectContaining({
           title: 'Save failed',
           variant: 'destructive',
-        })
+        }),
       );
     });
 
@@ -221,9 +216,7 @@ describe('useAnalyticsConfigManager', () => {
         throw error;
       });
 
-      const { result } = renderHook(() =>
-        useAnalyticsConfigManager({ onError })
-      );
+      const { result } = renderHook(() => useAnalyticsConfigManager({ onError }));
 
       act(() => {
         result.current.actions.saveConfig();
@@ -238,7 +231,10 @@ describe('useAnalyticsConfigManager', () => {
 
       // Make changes
       act(() => {
-        result.current.actions.updateConfigValue(['analytics', 'MIN_TRACKING_FOR_CORRELATION'], 100);
+        result.current.actions.updateConfigValue(
+          ['analytics', 'MIN_TRACKING_FOR_CORRELATION'],
+          100,
+        );
       });
 
       // Reset
@@ -252,7 +248,7 @@ describe('useAnalyticsConfigManager', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Configuration reset',
-        })
+        }),
       );
     });
   });
@@ -265,8 +261,12 @@ describe('useAnalyticsConfigManager', () => {
         click: vi.fn(),
       };
       const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockLink as any);
-      const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as any);
-      const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as any);
+      const appendChildSpy = vi
+        .spyOn(document.body, 'appendChild')
+        .mockImplementation(() => mockLink as any);
+      const removeChildSpy = vi
+        .spyOn(document.body, 'removeChild')
+        .mockImplementation(() => mockLink as any);
 
       const { result } = renderHook(() => useAnalyticsConfigManager());
 
@@ -283,7 +283,7 @@ describe('useAnalyticsConfigManager', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Configuration exported',
-        })
+        }),
       );
 
       createElementSpy.mockRestore();
@@ -308,7 +308,7 @@ describe('useAnalyticsConfigManager', () => {
         expect.objectContaining({
           title: 'Export failed',
           variant: 'destructive',
-        })
+        }),
       );
     });
   });
@@ -328,7 +328,7 @@ describe('useAnalyticsConfigManager', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Configuration imported',
-        })
+        }),
       );
     });
 
@@ -346,7 +346,7 @@ describe('useAnalyticsConfigManager', () => {
         expect.objectContaining({
           title: 'Invalid configuration',
           variant: 'destructive',
-        })
+        }),
       );
     });
 
@@ -364,7 +364,7 @@ describe('useAnalyticsConfigManager', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Configuration imported',
-        })
+        }),
       );
     });
 
@@ -383,7 +383,7 @@ describe('useAnalyticsConfigManager', () => {
         expect.objectContaining({
           title: 'File too large',
           variant: 'destructive',
-        })
+        }),
       );
     });
 
@@ -401,7 +401,7 @@ describe('useAnalyticsConfigManager', () => {
         expect.objectContaining({
           title: 'Invalid file type',
           variant: 'destructive',
-        })
+        }),
       );
     });
 
@@ -427,7 +427,7 @@ describe('useAnalyticsConfigManager', () => {
       await expect(
         act(async () => {
           await result.current.actions.importConfig(file);
-        })
+        }),
       ).rejects.toThrow();
 
       global.FileReader = originalFileReader;
@@ -443,9 +443,7 @@ describe('useAnalyticsConfigManager', () => {
       });
 
       const onConfigChange = vi.fn();
-      const { result } = renderHook(() =>
-        useAnalyticsConfigManager({ onConfigChange })
-      );
+      const { result } = renderHook(() => useAnalyticsConfigManager({ onConfigChange }));
 
       const newConfig = {
         ...mockConfig,

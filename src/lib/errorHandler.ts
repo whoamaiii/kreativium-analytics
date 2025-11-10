@@ -20,9 +20,7 @@ export interface ErrorHandlerOptions {
 
 class ErrorHandler {
   private static instance: ErrorHandler;
-  private recoveryStrategies: ErrorRecoveryStrategy[] = [
-    storageQuotaRecoveryStrategy,
-  ];
+  private recoveryStrategies: ErrorRecoveryStrategy[] = [storageQuotaRecoveryStrategy];
   private errorQueue: AppError[] = [];
   private isProcessing = false;
 
@@ -63,12 +61,7 @@ class ErrorHandler {
    * Main error handling method
    */
   async handle(error: unknown, options: ErrorHandlerOptions = {}): Promise<void> {
-    const {
-      showToast = true,
-      logError = true,
-      throwError = false,
-      onError,
-    } = options;
+    const { showToast = true, logError = true, throwError = false, onError } = options;
 
     // Convert to AppError if needed
     const appError = this.normalizeError(error);
@@ -120,14 +113,10 @@ class ErrorHandler {
 
     // Standard Error
     if (error instanceof Error) {
-      return new SensoryCompassError(
-        ErrorType.UNKNOWN_ERROR,
-        error.message,
-        {
-          cause: error,
-          details: { originalError: error },
-        }
-      );
+      return new SensoryCompassError(ErrorType.UNKNOWN_ERROR, error.message, {
+        cause: error,
+        details: { originalError: error },
+      });
     }
 
     // String error
@@ -136,13 +125,9 @@ class ErrorHandler {
     }
 
     // Unknown error type
-    return new SensoryCompassError(
-      ErrorType.UNKNOWN_ERROR,
-      'An unknown error occurred',
-      {
-        details: { originalError: error },
-      }
-    );
+    return new SensoryCompassError(ErrorType.UNKNOWN_ERROR, 'An unknown error occurred', {
+      details: { originalError: error },
+    });
   }
 
   /**
@@ -234,7 +219,7 @@ class ErrorHandler {
 
     // Find applicable recovery strategies
     const applicableStrategies = this.recoveryStrategies.filter((strategy) =>
-      strategy.canRecover(error)
+      strategy.canRecover(error),
     );
 
     // Attempt recovery with each strategy
@@ -277,20 +262,12 @@ class ErrorHandler {
 export const errorHandler = ErrorHandler.getInstance();
 
 // Convenience functions
-export const handleError = (
-  error: unknown,
-  options?: ErrorHandlerOptions
-): Promise<void> => {
+export const handleError = (error: unknown, options?: ErrorHandlerOptions): Promise<void> => {
   return errorHandler.handle(error, options);
 };
 
- 
-
 // React error boundary integration
-export const handleErrorBoundaryError = (
-  error: Error,
-  errorInfo: React.ErrorInfo
-): void => {
+export const handleErrorBoundaryError = (error: Error, errorInfo: React.ErrorInfo): void => {
   const appError = new SensoryCompassError(
     ErrorType.UNKNOWN_ERROR,
     `React component error: ${error.message}`,
@@ -302,7 +279,7 @@ export const handleErrorBoundaryError = (
       },
       cause: error,
       recoverable: false,
-    }
+    },
   );
 
   errorHandler.handle(appError, {

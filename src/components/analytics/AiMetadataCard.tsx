@@ -22,20 +22,22 @@ export function AiMetadataCard({
   const { tAnalytics } = useTranslation();
   if (!results.ai) return null;
   const usage = results.ai.usage;
-  const hasCacheUsage = usage ? ((usage.cacheReadTokens ?? 0) > 0 || (usage.cacheWriteTokens ?? 0) > 0) : false;
+  const hasCacheUsage = usage
+    ? (usage.cacheReadTokens ?? 0) > 0 || (usage.cacheWriteTokens ?? 0) > 0
+    : false;
 
   const titleText = String(
     tAnalytics('interface.aiMetadataTitle', {
       model: displayModelName,
       defaultValue: 'AI‑metadata • {{model}}',
-    })
+    }),
   );
 
   const modelText = String(
     tAnalytics('interface.aiMetadataModelLabel', {
       model: results.ai.model,
       defaultValue: 'Modell: {{model}}',
-    })
+    }),
   );
 
   const latencyText =
@@ -44,7 +46,7 @@ export function AiMetadataCard({
           tAnalytics('interface.aiMetadataLatencyLabel', {
             ms: Math.round(results.ai.latencyMs),
             defaultValue: 'Latens: {{ms}} ms',
-          })
+          }),
         )
       : null;
 
@@ -56,7 +58,7 @@ export function AiMetadataCard({
             completion: usage.completionTokens ?? 0,
             total: usage.totalTokens ?? 0,
             defaultValue: 'Tokens: prompt {{prompt}} • completion {{completion}} • total {{total}}',
-          })
+          }),
         )
       : null;
 
@@ -67,7 +69,7 @@ export function AiMetadataCard({
             read: usage.cacheReadTokens ?? 0,
             write: usage.cacheWriteTokens ?? 0,
             defaultValue: 'Cache: read {{read}} • write {{write}}',
-          })
+          }),
         )
       : null;
 
@@ -82,9 +84,7 @@ export function AiMetadataCard({
         <CardTitle className="flex items-center gap-2">
           <Info className="h-4 w-4" />
           <span>{titleText}</span>
-          {hasCacheUsage && (
-            <Badge variant="outline">{fromCacheLabel}</Badge>
-          )}
+          {hasCacheUsage && <Badge variant="outline">{fromCacheLabel}</Badge>}
         </CardTitle>
       </CardHeader>
       <CardContent className="text-sm text-muted-foreground space-y-1">
@@ -93,9 +93,7 @@ export function AiMetadataCard({
         {tokensText && <div>{tokensText}</div>}
         {cacheText && <div>{cacheText}</div>}
         {caveatsText && <div>{caveatsText}</div>}
-        {globalJsonValidity && (
-          <div>{globalJsonValidity}</div>
-        )}
+        {globalJsonValidity && <div>{globalJsonValidity}</div>}
       </CardContent>
     </Card>
   );

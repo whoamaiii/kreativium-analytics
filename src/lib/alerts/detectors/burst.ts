@@ -18,7 +18,10 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function detectBurst(events: BurstEvent[], options: BurstDetectorOptions = {}): DetectorResult | null {
+export function detectBurst(
+  events: BurstEvent[],
+  options: BurstDetectorOptions = {},
+): DetectorResult | null {
   const minEvents = options.minEvents ?? 3;
   const windowMinutes = options.windowMinutes ?? 15;
   if (!Array.isArray(events) || events.length < minEvents) {
@@ -63,7 +66,11 @@ export function detectBurst(events: BurstEvent[], options: BurstDetectorOptions 
   const endTs = sorted[bestEnd].timestamp;
   const durationMinutes = (endTs - startTs) / 60_000;
   const intensity = bestSum / bestCount;
-  const durationRatio = clamp(Math.min(windowMinutes, Math.max(durationMinutes, 0)) / windowMinutes, 0, 1);
+  const durationRatio = clamp(
+    Math.min(windowMinutes, Math.max(durationMinutes, 0)) / windowMinutes,
+    0,
+    1,
+  );
   const frequencyRatio = clamp(bestCount / (minEvents * 2), 0, 1);
 
   let crossCorrelation = 0;
@@ -84,7 +91,11 @@ export function detectBurst(events: BurstEvent[], options: BurstDetectorOptions 
   const expectedDensity = minEvents / Math.max(windowMinutes, 1);
   const observedDensity = bestCount / Math.max(durationMinutes, 1e-3);
   const densityRatio = clamp(observedDensity / Math.max(expectedDensity, 1e-3), 0, 1);
-  const confidence = clamp(0.6 + (bestCount - minEvents) * 0.08 + Math.abs(crossCorrelation) * 0.2 + densityRatio * 0.12, 0.6, 0.95);
+  const confidence = clamp(
+    0.6 + (bestCount - minEvents) * 0.08 + Math.abs(crossCorrelation) * 0.2 + densityRatio * 0.12,
+    0.6,
+    0.95,
+  );
 
   return {
     score,

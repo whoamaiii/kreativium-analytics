@@ -2,16 +2,42 @@ import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
 import { openRouterClient } from '@/lib/ai/openrouterClient';
 import { loadAiConfig } from '@/lib/aiConfig';
-import type { EmotionEntry, SensoryEntry, TrackingEntry, Goal, Pattern, Correlation } from '@/types/student';
+import type {
+  EmotionEntry,
+  SensoryEntry,
+  TrackingEntry,
+  Goal,
+  Pattern,
+  Correlation,
+} from '@/types/student';
 import type { AnalyticsResults } from '@/types/analytics';
 import { HeuristicAnalysisEngine } from './heuristicAnalysisEngine';
 import { generateAnalysisPrompt } from './promptEngineering';
 import { mapAiToAnalyticsResults, mergeHeuristicWithAi } from './mapping';
 import { ZAiReport } from './aiSchema';
-import type { AnalysisEngine, TimeRange, AnalysisOptions, AnalyticsResultsAI, AiMetadata } from './analysisEngine';
-import { buildDataLineage, computeAiConfidence, createCacheKey, limitForPrompt, toDate, validateOrRepairAiReport, withinRange } from './llmUtils';
+import type {
+  AnalysisEngine,
+  TimeRange,
+  AnalysisOptions,
+  AnalyticsResultsAI,
+  AiMetadata,
+} from './analysisEngine';
+import {
+  buildDataLineage,
+  computeAiConfidence,
+  createCacheKey,
+  limitForPrompt,
+  toDate,
+  validateOrRepairAiReport,
+  withinRange,
+} from './llmUtils';
 import { analyzeLargePeriod } from './mapReduce';
-import { selectEvidence, selectEvidenceWeighted, mapCategoryToTags, inferTagsFromText } from '@/lib/evidence/select';
+import {
+  selectEvidence,
+  selectEvidenceWeighted,
+  mapCategoryToTags,
+  inferTagsFromText,
+} from '@/lib/evidence/select';
 import type { EvidenceSource } from '@/lib/evidence/types';
 import { DomainTag, GradeBand } from '@/lib/evidence/types';
 import { AI_EVIDENCE_DISABLED } from '@/lib/env';
@@ -74,8 +100,14 @@ export class LLMAnalysisEngine implements AnalysisEngine {
     goals: Goal[],
     patterns: Pattern[] | undefined,
     correlations: Correlation[] | undefined,
-    studentGrade?: string | null
-  ): { tags: DomainTag[]; category?: string; text?: string; gradeBand?: GradeBand; weights?: Map<DomainTag, number> } {
+    studentGrade?: string | null,
+  ): {
+    tags: DomainTag[];
+    category?: string;
+    text?: string;
+    gradeBand?: GradeBand;
+    weights?: Map<DomainTag, number>;
+  } {
     const patternTexts = (patterns || []).map((p) => p.description || '').filter(Boolean);
     const corrTexts = (correlations || []).map((c) => c.description || '').filter(Boolean);
 
@@ -84,7 +116,8 @@ export class LLMAnalysisEngine implements AnalysisEngine {
     const bump = (t: DomainTag, w: number) => scores.set(t, (scores.get(t) ?? 0) + w);
 
     // Goals (high weight)
-    for (const g of goals || []) for (const t of mapCategoryToTags(g.category)) bump(t as DomainTag, 0.6);
+    for (const g of goals || [])
+      for (const t of mapCategoryToTags(g.category)) bump(t as DomainTag, 0.6);
 
     // Pattern texts (medium)
     for (const s of patternTexts) for (const t of inferTagsFromText(s)) bump(t as DomainTag, 0.3);
@@ -106,7 +139,7 @@ export class LLMAnalysisEngine implements AnalysisEngine {
   private async resolveEvidenceContext(
     studentId: string,
     timeframe: TimeRange | undefined,
-    goals: Goal[]
+    goals: Goal[],
   ): Promise<EvidenceSource[] | undefined> {
     if (AI_EVIDENCE_DISABLED) return undefined;
 
@@ -115,12 +148,16 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       let correlations: Correlation[] | undefined;
 
       try {
-        const heurPreview = await this.heuristic.analyzeStudent(studentId, timeframe, { bypassCache: false });
+        const heurPreview = await this.heuristic.analyzeStudent(studentId, timeframe, {
+          bypassCache: false,
+        });
         patterns = (heurPreview as any)?.patterns || [];
         correlations = (heurPreview as any)?.correlations || [];
       } catch (error) {
         try {
-          logger.warn('[LLMAnalysisEngine] heuristic preview for evidence failed', { error: error instanceof Error ? error.message : String(error) });
+          logger.warn('[LLMAnalysisEngine] heuristic preview for evidence failed', {
+            error: error instanceof Error ? error.message : String(error),
+          });
         } catch {
           /* noop */
         }
@@ -139,11 +176,16 @@ export class LLMAnalysisEngine implements AnalysisEngine {
 
       if (domainCtx.weights && domainCtx.weights.size > 0) {
         try {
-          const weighted = Array.from(domainCtx.weights.entries()).map(([tag, weight]) => ({ tag, weight }));
+          const weighted = Array.from(domainCtx.weights.entries()).map(([tag, weight]) => ({
+            tag,
+            weight,
+          }));
           return await selectEvidenceWeighted(weighted, 5, selectionOpts);
         } catch (error) {
           try {
-            logger.warn('[LLMAnalysisEngine] weighted evidence selection failed; falling back', { error: error instanceof Error ? error.message : String(error) });
+            logger.warn('[LLMAnalysisEngine] weighted evidence selection failed; falling back', {
+              error: error instanceof Error ? error.message : String(error),
+            });
           } catch {
             /* noop */
           }
@@ -158,7 +200,9 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       return undefined;
     } catch (error) {
       try {
-        logger.warn('[LLMAnalysisEngine] evidence selection failed; proceeding without evidence', { error: error instanceof Error ? error.message : String(error) });
+        logger.warn('[LLMAnalysisEngine] evidence selection failed; proceeding without evidence', {
+          error: error instanceof Error ? error.message : String(error),
+        });
       } catch {
         /* noop */
       }
@@ -169,7 +213,7 @@ export class LLMAnalysisEngine implements AnalysisEngine {
   async analyzeStudent(
     studentId: string,
     timeframe?: TimeRange,
-    options?: AnalysisOptions
+    options?: AnalysisOptions,
   ): Promise<AnalyticsResultsAI> {
     if (!studentId || typeof studentId !== 'string') {
       logger.error('[LLMAnalysisEngine] analyzeStudent: invalid studentId', { studentId });
@@ -191,15 +235,23 @@ export class LLMAnalysisEngine implements AnalysisEngine {
     let lineage: any;
 
     try {
-      const key = createCacheKey(studentId, timeframe, { includeAiMetadata: options?.includeAiMetadata, aiProfile: options?.aiProfile });
+      const key = createCacheKey(studentId, timeframe, {
+        includeAiMetadata: options?.includeAiMetadata,
+        aiProfile: options?.aiProfile,
+      });
       const now = Date.now();
       const found = cache.get(key);
       if (!options?.bypassCache && found && found.expires > now) {
         // Return a shallow copy with a cache hint in metadata
         const cached = JSON.parse(JSON.stringify(found.data)) as AnalyticsResultsAI;
         if (cached.ai) {
-          cached.ai.caveats = Array.from(new Set([...(cached.ai.caveats || []), 'Resultater hentet fra cache']));
-          cached.ai.usage = { ...(cached.ai.usage || {}), cacheReadTokens: (cached.ai.usage?.cacheReadTokens ?? 0) + 1 };
+          cached.ai.caveats = Array.from(
+            new Set([...(cached.ai.caveats || []), 'Resultater hentet fra cache']),
+          );
+          cached.ai.usage = {
+            ...(cached.ai.usage || {}),
+            cacheReadTokens: (cached.ai.usage?.cacheReadTokens ?? 0) + 1,
+          };
         }
         return cached;
       }
@@ -210,46 +262,76 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       const start = toDate(timeframe?.start);
       const end = toDate(timeframe?.end);
 
-      entries = (start || end)
-        ? entriesAll.filter((e) => withinRange(e.timestamp, start, end))
-        : entriesAll;
+      entries =
+        start || end ? entriesAll.filter((e) => withinRange(e.timestamp, start, end)) : entriesAll;
 
-      emotions = (start || end)
-        ? entries.flatMap((e) => e.emotions || [])
-        : entriesAll.flatMap((e) => e.emotions || []);
+      emotions =
+        start || end
+          ? entries.flatMap((e) => e.emotions || [])
+          : entriesAll.flatMap((e) => e.emotions || []);
 
-      sensoryInputs = (start || end)
-        ? entries.flatMap((e) => e.sensoryInputs || [])
-        : entriesAll.flatMap((e) => e.sensoryInputs || []);
+      sensoryInputs =
+        start || end
+          ? entries.flatMap((e) => e.sensoryInputs || [])
+          : entriesAll.flatMap((e) => e.sensoryInputs || []);
 
-      const insufficient = entries.length === 0 && emotions.length === 0 && sensoryInputs.length === 0;
+      const insufficient =
+        entries.length === 0 && emotions.length === 0 && sensoryInputs.length === 0;
       if (insufficient) {
         lineage = buildDataLineage({ entries, emotions, sensoryInputs, goals }, timeframe);
         const heur = await this.heuristic.analyzeStudent(studentId, timeframe, options);
-        const aiMeta = options?.includeAiMetadata ? {
-          provider: 'heuristic',
-          model: 'insufficient-data',
-          createdAt: new Date().toISOString(),
-          dataLineage: lineage,
-          caveats: ['Insufficient data for AI analysis; heuristic engine used'],
-          confidence: computeAiConfidence({ entries, emotions, sensoryInputs, goals }, false, true),
-        } : undefined;
+        const aiMeta = options?.includeAiMetadata
+          ? {
+              provider: 'heuristic',
+              model: 'insufficient-data',
+              createdAt: new Date().toISOString(),
+              dataLineage: lineage,
+              caveats: ['Insufficient data for AI analysis; heuristic engine used'],
+              confidence: computeAiConfidence(
+                { entries, emotions, sensoryInputs, goals },
+                false,
+                true,
+              ),
+            }
+          : undefined;
         return { ...(heur as AnalyticsResults), ai: aiMeta } as AnalyticsResultsAI;
       }
 
-      const overallStart = start || entries[entries.length - 1]?.timestamp || emotions[emotions.length - 1]?.timestamp || sensoryInputs[sensoryInputs.length - 1]?.timestamp;
-      const overallEnd = end || entries[0]?.timestamp || emotions[0]?.timestamp || sensoryInputs[0]?.timestamp || new Date();
+      const overallStart =
+        start ||
+        entries[entries.length - 1]?.timestamp ||
+        emotions[emotions.length - 1]?.timestamp ||
+        sensoryInputs[sensoryInputs.length - 1]?.timestamp;
+      const overallEnd =
+        end ||
+        entries[0]?.timestamp ||
+        emotions[0]?.timestamp ||
+        sensoryInputs[0]?.timestamp ||
+        new Date();
 
       // Decide strategy: single-pass vs map-reduce
       const days = (() => {
-        try { return Math.max(1, Math.round(((overallEnd as Date).getTime() - (overallStart as Date).getTime()) / (1000*60*60*24))); } catch { return 1; }
+        try {
+          return Math.max(
+            1,
+            Math.round(
+              ((overallEnd as Date).getTime() - (overallStart as Date).getTime()) /
+                (1000 * 60 * 60 * 24),
+            ),
+          );
+        } catch {
+          return 1;
+        }
       })();
-      const tooManyRecords = (entries.length + emotions.length + sensoryInputs.length) > 375; // conservative limit for local models
+      const tooManyRecords = entries.length + emotions.length + sensoryInputs.length > 375; // conservative limit for local models
       const longHorizon = days > 60;
       const useMapReduce = longHorizon || tooManyRecords;
 
       const evidenceContext = await this.resolveEvidenceContext(studentId, timeframe, goals);
-      const mapReduceOptions = { evidence: evidenceContext, aiProfile: options?.aiProfile } as const;
+      const mapReduceOptions = {
+        evidence: evidenceContext,
+        aiProfile: options?.aiProfile,
+      } as const;
 
       let validated: any;
       let usedFallback = false;
@@ -259,9 +341,21 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       if (useMapReduce && start && end) {
         lineage = buildDataLineage({ entries, emotions, sensoryInputs, goals }, timeframe);
         const overallRange = { start, end, timezone: timeframe?.timezone } as any;
-        const mergedReport = await analyzeLargePeriod(entries, emotions, sensoryInputs, goals, overallRange, mapReduceOptions);
+        const mergedReport = await analyzeLargePeriod(
+          entries,
+          emotions,
+          sensoryInputs,
+          goals,
+          overallRange,
+          mapReduceOptions,
+        );
         if (mergedReport) {
-          validated = { ok: true, report: mergedReport, repaired: false, caveats: ['Map‑reduce pipeline benyttet for langt tidsrom'] };
+          validated = {
+            ok: true,
+            report: mergedReport,
+            repaired: false,
+            caveats: ['Map‑reduce pipeline benyttet for langt tidsrom'],
+          };
         } else {
           // fall through to single pass if map-reduce failed
         }
@@ -276,7 +370,11 @@ export class LLMAnalysisEngine implements AnalysisEngine {
         };
 
         lineage = buildDataLineage({ entries, emotions, sensoryInputs, goals }, timeframe);
-        const { system, user } = generateAnalysisPrompt({ ...limited, timeframe }, evidenceContext, options?.aiProfile ?? 'default');
+        const { system, user } = generateAnalysisPrompt(
+          { ...limited, timeframe },
+          evidenceContext,
+          options?.aiProfile ?? 'default',
+        );
         const { data: raw, response } = await openRouterClient.chatJSON(
           { system, user },
           {
@@ -289,7 +387,7 @@ export class LLMAnalysisEngine implements AnalysisEngine {
             apiKey: (aiCfg as any).apiKey,
             localOnly: (aiCfg as any).localOnly,
             ensureJson: true,
-          }
+          },
         );
         validated = validateOrRepairAiReport(raw);
         if (!validated.ok) {
@@ -308,7 +406,11 @@ export class LLMAnalysisEngine implements AnalysisEngine {
             dataLineage: lineage,
             caveats: ['AI output invalid; heuristic fallback used'],
           };
-          const conf = computeAiConfidence({ entries, emotions, sensoryInputs, goals }, false, usedFallback);
+          const conf = computeAiConfidence(
+            { entries, emotions, sensoryInputs, goals },
+            false,
+            usedFallback,
+          );
           baseMeta.confidence = conf;
           const fallback = { ...(heur as AnalyticsResults), ai: baseMeta } as AnalyticsResultsAI;
           cache.set(key, { data: fallback, expires: now + MEMORY_TTL_MS });
@@ -325,7 +427,11 @@ export class LLMAnalysisEngine implements AnalysisEngine {
         dataLineage: lineage,
         caveats,
       };
-      const conf = computeAiConfidence({ entries, emotions, sensoryInputs, goals }, repaired, usedFallback);
+      const conf = computeAiConfidence(
+        { entries, emotions, sensoryInputs, goals },
+        repaired,
+        usedFallback,
+      );
       meta.confidence = conf;
 
       const aiResults = mapAiToAnalyticsResults(validated.report, meta);
@@ -333,11 +439,21 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       const merged = aiResults;
 
       // Annotate cache write intent
-      if (merged.ai) merged.ai.usage = { ...(merged.ai.usage || {}), cacheWriteTokens: (merged.ai.usage?.cacheWriteTokens ?? 0) + 1 };
+      if (merged.ai)
+        merged.ai.usage = {
+          ...(merged.ai.usage || {}),
+          cacheWriteTokens: (merged.ai.usage?.cacheWriteTokens ?? 0) + 1,
+        };
       cache.set(key, { data: merged, expires: now + MEMORY_TTL_MS });
       return merged;
     } catch (error) {
-      logger.error('[LLMAnalysisEngine] analyzeStudent failed', { error: error instanceof Error ? { message: error.message, stack: error.stack, name: error.name } : error, studentId });
+      logger.error('[LLMAnalysisEngine] analyzeStudent failed', {
+        error:
+          error instanceof Error
+            ? { message: error.message, stack: error.stack, name: error.name }
+            : error,
+        studentId,
+      });
       try {
         const heur = await this.heuristic.analyzeStudent(studentId, timeframe, options);
         if (options?.includeAiMetadata) {
@@ -351,7 +467,11 @@ export class LLMAnalysisEngine implements AnalysisEngine {
             createdAt: new Date().toISOString(),
             dataLineage: lineage,
             caveats: ['AI request failed; heuristic fallback used'],
-            confidence: computeAiConfidence({ entries, emotions, sensoryInputs, goals }, false, true),
+            confidence: computeAiConfidence(
+              { entries, emotions, sensoryInputs, goals },
+              false,
+              true,
+            ),
           };
           return { ...(heur as AnalyticsResults), ai: aiMeta } as AnalyticsResultsAI;
         }

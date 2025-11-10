@@ -12,9 +12,3 @@ describe('Settings accessibility toggles', () => {
     expect(localStorage.getItem('emotion.quietRewards')).toBe('1');
   });
 });
-
-
-
-
-
-

@@ -5,12 +5,9 @@ interface PaginationOptions {
   initialPage?: number;
 }
 
-export function useDataPagination<T>(
-  data: T[],
-  options: PaginationOptions = {}
-) {
+export function useDataPagination<T>(data: T[], options: PaginationOptions = {}) {
   const { initialPageSize = 10, initialPage = 1 } = options;
-  
+
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [pageSize, setPageSize] = useState(initialPageSize);
 
@@ -23,10 +20,13 @@ export function useDataPagination<T>(
     return data.slice(startIndex, endIndex);
   }, [data, currentPage, pageSize]);
 
-  const goToPage = useCallback((page: number) => {
-    const clampedPage = Math.max(1, Math.min(page, totalPages));
-    setCurrentPage(clampedPage);
-  }, [totalPages]);
+  const goToPage = useCallback(
+    (page: number) => {
+      const clampedPage = Math.max(1, Math.min(page, totalPages));
+      setCurrentPage(clampedPage);
+    },
+    [totalPages],
+  );
 
   const goToNextPage = useCallback(() => {
     goToPage(currentPage + 1);
@@ -44,13 +44,16 @@ export function useDataPagination<T>(
     setCurrentPage(totalPages);
   }, [totalPages]);
 
-  const changePageSize = useCallback((newPageSize: number) => {
-    const newTotalPages = Math.ceil(totalItems / newPageSize);
-    const newCurrentPage = Math.min(currentPage, newTotalPages);
-    
-    setPageSize(newPageSize);
-    setCurrentPage(newCurrentPage || 1);
-  }, [currentPage, totalItems]);
+  const changePageSize = useCallback(
+    (newPageSize: number) => {
+      const newTotalPages = Math.ceil(totalItems / newPageSize);
+      const newCurrentPage = Math.min(currentPage, newTotalPages);
+
+      setPageSize(newPageSize);
+      setCurrentPage(newCurrentPage || 1);
+    },
+    [currentPage, totalItems],
+  );
 
   const hasNextPage = currentPage < totalPages;
   const hasPreviousPage = currentPage > 1;
@@ -61,13 +64,13 @@ export function useDataPagination<T>(
   return {
     // Data
     paginatedData,
-    
+
     // Pagination state
     currentPage,
     pageSize,
     totalItems,
     totalPages,
-    
+
     // Navigation
     goToPage,
     goToNextPage,
@@ -75,18 +78,18 @@ export function useDataPagination<T>(
     goToFirstPage,
     goToLastPage,
     changePageSize,
-    
+
     // Status
     hasNextPage,
     hasPreviousPage,
-    
+
     // Display info
     startIndex,
     endIndex,
-    
+
     // Utilities
     isFirstPage: currentPage === 1,
     isLastPage: currentPage === totalPages,
-    isEmpty: totalItems === 0
+    isEmpty: totalItems === 0,
   };
 }

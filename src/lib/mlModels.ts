@@ -24,12 +24,14 @@ export const getMlModels = async (): Promise<MLModels> => {
   }
 
   if (!inflightLoad) {
-    inflightLoad = loadMlModels().then((instance) => {
-      mlModelsInstance = instance;
-      return instance;
-    }).finally(() => {
-      inflightLoad = null;
-    });
+    inflightLoad = loadMlModels()
+      .then((instance) => {
+        mlModelsInstance = instance;
+        return instance;
+      })
+      .finally(() => {
+        inflightLoad = null;
+      });
   }
 
   return inflightLoad;

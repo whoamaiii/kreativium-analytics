@@ -30,7 +30,7 @@ export interface UseExpressionDetectorOptions {
  */
 export function useExpressionDetector(
   videoRef: React.RefObject<HTMLVideoElement>,
-  options: UseExpressionDetectorOptions = {}
+  options: UseExpressionDetectorOptions = {},
 ): ExpressionSnapshot {
   const modelBaseUrl = options.modelBaseUrl ?? '/models';
   const scoreThreshold = options.scoreThreshold ?? 0.5;
@@ -56,10 +56,10 @@ export function useExpressionDetector(
       await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
       await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
       initializedRef.current = true;
-      setSnapshot(s => ({ ...s, ready: true }));
+      setSnapshot((s) => ({ ...s, ready: true }));
       return true;
     } catch (error) {
-      setSnapshot(s => ({ ...s, ready: false }));
+      setSnapshot((s) => ({ ...s, ready: false }));
       return false;
     }
   }, [modelBaseUrl]);
@@ -71,14 +71,16 @@ export function useExpressionDetector(
 
     // Ensure the video element has current frame data before running detection
     // HAVE_CURRENT_DATA (2) is sufficient and avoids running on a 0x0 stream
-    const hasFrameData = (video.readyState ?? 0) >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
+    const hasFrameData =
+      (video.readyState ?? 0) >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
     if (!hasFrameData) return;
 
     const results = await faceapi
       .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold }))
       .withFaceExpressions();
 
-    let largest: { area: number; box: faceapi.Box; expressions: faceapi.FaceExpressions } | null = null;
+    let largest: { area: number; box: faceapi.Box; expressions: faceapi.FaceExpressions } | null =
+      null;
     for (const r of results ?? []) {
       const a = r.detection.box.width * r.detection.box.height;
       if (!largest || a > largest.area) {
@@ -96,7 +98,10 @@ export function useExpressionDetector(
       box = { x: b.x, y: b.y, width: b.width, height: b.height };
       probabilities = largest.expressions as unknown as Record<string, number>;
       for (const [k, v] of Object.entries(probabilities)) {
-        if (v > topProbability) { topProbability = v; topLabel = k; }
+        if (v > topProbability) {
+          topProbability = v;
+          topLabel = k;
+        }
       }
     }
 
@@ -108,7 +113,12 @@ export function useExpressionDetector(
     for (const k of buffer) counts.set(k, (counts.get(k) ?? 0) + 1);
     let smoothLabel = topLabel;
     let maxC = -1;
-    counts.forEach((c, k) => { if (c > maxC) { maxC = c; smoothLabel = k; } });
+    counts.forEach((c, k) => {
+      if (c > maxC) {
+        maxC = c;
+        smoothLabel = k;
+      }
+    });
 
     // fps
     const now = performance.now();
@@ -133,7 +143,11 @@ export function useExpressionDetector(
       const ok = await ensureModels();
       if (!mounted || !ok) return;
       const loop = async () => {
-        try { await detect(); } catch { /* ignore frame errors */ }
+        try {
+          await detect();
+        } catch {
+          /* ignore frame errors */
+        }
         anim = requestAnimationFrame(loop);
       };
       anim = requestAnimationFrame(loop);
@@ -147,7 +161,3 @@ export function useExpressionDetector(
   const api = useMemo(() => snapshot, [snapshot]);
   return api;
 }
-
-
-
-

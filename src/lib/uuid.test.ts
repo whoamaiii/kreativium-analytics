@@ -31,8 +31,8 @@ describe('UUID Utilities', () => {
 
   describe('generateTimestampId', () => {
     it('should generate a timestamp-based ID with the correct prefix', () => {
-        const id = generateTimestampId('test');
-        expect(id.startsWith('test_')).toBe(true);
+      const id = generateTimestampId('test');
+      expect(id.startsWith('test_')).toBe(true);
     });
 
     it('should contain a timestamp part', () => {

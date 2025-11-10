@@ -19,24 +19,24 @@ interface ToolsSectionProps {
   onSearchResults?: (results: any) => void;
 }
 
-export function ToolsSection({ 
-  student, 
-  trackingEntries, 
-  emotions, 
-  sensoryInputs, 
+export function ToolsSection({
+  student,
+  trackingEntries,
+  emotions,
+  sensoryInputs,
   goals,
   activeToolSection,
   onToolSectionChange,
-  onSearchResults 
+  onSearchResults,
 }: ToolsSectionProps) {
   const { tStudent } = useTranslation();
   const navigate = useNavigate();
 
   const handleQuickTemplateApply = (template: any) => {
-    navigate(`/track/${student.id}`, { 
-      state: { 
-        prefilledData: template 
-      } 
+    navigate(`/track/${student.id}`, {
+      state: {
+        prefilledData: template,
+      },
     });
   };
 
@@ -54,18 +54,15 @@ export function ToolsSection({
           goals={goals}
           onResultsChange={onSearchResults}
         />
-      )
+      ),
     },
     {
       id: 'templates',
       title: tStudent('interface.quickTemplates'),
       icon: Zap,
       component: (
-        <QuickEntryTemplates
-          studentId={student.id}
-          onApplyTemplate={handleQuickTemplateApply}
-        />
-      )
+        <QuickEntryTemplates studentId={student.id} onApplyTemplate={handleQuickTemplateApply} />
+      ),
     },
     {
       id: 'compare',
@@ -75,22 +72,20 @@ export function ToolsSection({
         <PeriodComparison
           emotions={emotions}
           sensoryInputs={sensoryInputs}
-          currentRange={{ start: new Date(), end: new Date(), label: "Current" }}
+          currentRange={{ start: new Date(), end: new Date(), label: 'Current' }}
         />
-      )
-    }
+      ),
+    },
   ];
 
-  const activeSection = toolSections.find(section => section.id === activeToolSection);
+  const activeSection = toolSections.find((section) => section.id === activeToolSection);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold">Verktøy</h2>
-        <p className="text-muted-foreground">
-          Avanserte verktøy for søk, maler og sammenligning
-        </p>
+        <p className="text-muted-foreground">Avanserte verktøy for søk, maler og sammenligning</p>
       </div>
 
       {/* Enhanced Tool Navigation */}
@@ -106,20 +101,24 @@ export function ToolsSection({
             }`}
           >
             <div className="flex items-center gap-3 w-full">
-              <div className={`p-2 rounded-lg ${
-                activeToolSection === section.id 
-                  ? 'bg-primary-foreground/20' 
-                  : 'bg-muted group-hover:bg-accent'
-              }`}>
+              <div
+                className={`p-2 rounded-lg ${
+                  activeToolSection === section.id
+                    ? 'bg-primary-foreground/20'
+                    : 'bg-muted group-hover:bg-accent'
+                }`}
+              >
                 <section.icon className="h-5 w-5" />
               </div>
               <div className="text-left min-w-0 flex-1">
                 <div className="font-medium text-sm">{String(section.title)}</div>
-                <div className={`text-xs mt-0.5 ${
-                  activeToolSection === section.id 
-                    ? 'text-primary-foreground/70' 
-                    : 'text-muted-foreground'
-                }`}>
+                <div
+                  className={`text-xs mt-0.5 ${
+                    activeToolSection === section.id
+                      ? 'text-primary-foreground/70'
+                      : 'text-muted-foreground'
+                  }`}
+                >
                   {section.id === 'search' && 'Finn spesifikke data og mønstre'}
                   {section.id === 'templates' && 'Rask registrering med forhåndsdefinerte maler'}
                   {section.id === 'compare' && 'Sammenlign data på tvers av perioder'}
@@ -142,9 +141,7 @@ export function ToolsSection({
               {String(activeSection.title)}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {activeSection.component}
-          </CardContent>
+          <CardContent>{activeSection.component}</CardContent>
         </Card>
       )}
     </div>

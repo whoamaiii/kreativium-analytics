@@ -31,7 +31,9 @@ export default function ChooseRight() {
   const emotions = useMemo(() => listPlayableEmotions(), []);
   const [round, setRound] = useState(1);
   const [options, setOptions] = useState<EmotionDefinition[]>(() => pickOptions(emotions, 3));
-  const [target, setTarget] = useState<EmotionDefinition>(() => options[Math.floor(Math.random() * options.length)]);
+  const [target, setTarget] = useState<EmotionDefinition>(
+    () => options[Math.floor(Math.random() * options.length)],
+  );
   const [disabled, setDisabled] = useState(false);
   const startRef = useRef<number>(performance.now());
   const [feedback, setFeedback] = useState<'idle' | 'correct' | 'hint'>('idle');
@@ -43,7 +45,7 @@ export default function ChooseRight() {
     : tCommon(target.labelKey.replace('common:', ''));
 
   function nextRound() {
-    setRound(r => r + 1);
+    setRound((r) => r + 1);
     const nextOptions = pickOptions(emotions, 3);
     setOptions(nextOptions);
     setTarget(nextOptions[Math.floor(Math.random() * nextOptions.length)]);
@@ -59,7 +61,9 @@ export default function ChooseRight() {
     if (isCorrect) {
       setDisabled(true);
       setFeedback('correct');
-      try { incCorrectChoice(); } catch {}
+      try {
+        incCorrectChoice();
+      } catch {}
       // Respect quiet rewards
       playSuccessChime(quietRewards ? 0 : soundVolume);
       setTimeout(() => nextRound(), 700);
@@ -73,30 +77,43 @@ export default function ChooseRight() {
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-semibold">{String(tCommon('navigation.emotionLab', { defaultValue: 'Velg riktig' }))}</h1>
-          <div className="text-sm text-muted-foreground">{String(tCommon('game.round', { defaultValue: 'Runde' }))}: {round}</div>
+          <h1 className="text-2xl font-semibold">
+            {String(tCommon('navigation.emotionLab', { defaultValue: 'Velg riktig' }))}
+          </h1>
+          <div className="text-sm text-muted-foreground">
+            {String(tCommon('game.round', { defaultValue: 'Runde' }))}: {round}
+          </div>
         </div>
 
         <div className="rounded-xl border bg-card p-4">
           <div className="text-sm text-muted-foreground">{instruction}</div>
-          <div className="text-lg font-medium">{String(tCommon('chooseRight.instruction', { defaultValue: 'Trykk på' }))} {targetLabel}</div>
+          <div className="text-lg font-medium">
+            {String(tCommon('chooseRight.instruction', { defaultValue: 'Trykk på' }))} {targetLabel}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {options.map(opt => (
-            <EmotionCard key={opt.id} emotion={opt} selected={feedback === 'hint' && opt.id === target.id} onClick={() => onChoose(opt)} />
+          {options.map((opt) => (
+            <EmotionCard
+              key={opt.id}
+              emotion={opt}
+              selected={feedback === 'hint' && opt.id === target.id}
+              onClick={() => onChoose(opt)}
+            />
           ))}
         </div>
 
         {feedback === 'correct' && (
-          <div className="text-green-600 font-medium">{String(tCommon('chooseRight.correct', { defaultValue: 'Riktig!' }))}</div>
+          <div className="text-green-600 font-medium">
+            {String(tCommon('chooseRight.correct', { defaultValue: 'Riktig!' }))}
+          </div>
         )}
         {feedback === 'hint' && (
-          <div className="text-amber-600">{String(tCommon('chooseRight.hint', { defaultValue: 'Se etter riktig ansikt' }))}</div>
+          <div className="text-amber-600">
+            {String(tCommon('chooseRight.hint', { defaultValue: 'Se etter riktig ansikt' }))}
+          </div>
         )}
       </div>
     </div>
   );
 }
-
-

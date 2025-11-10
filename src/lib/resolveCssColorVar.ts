@@ -41,4 +41,3 @@ export function colorForeground(): string {
 export function colorMutedForeground(): string {
   return resolveCssColorVar('hsl(var(--muted-foreground))', '#cccccc');
 }
-

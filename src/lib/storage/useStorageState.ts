@@ -33,8 +33,8 @@
  * })
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { logger } from '@/lib/logger'
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/lib/logger';
 
 /**
  * Options for customizing storage behavior
@@ -44,31 +44,31 @@ export interface StorageOptions<T> {
    * Storage backend to use (default: localStorage)
    * Can be sessionStorage or a custom Storage implementation
    */
-  storage?: Storage
+  storage?: Storage;
 
   /**
    * Custom serializer (default: JSON.stringify)
    * Use for types that need special handling (Date, Map, Set, etc.)
    */
-  serialize?: (value: T) => string
+  serialize?: (value: T) => string;
 
   /**
    * Custom deserializer (default: JSON.parse)
    * Use for validation or type coercion
    */
-  deserialize?: (value: string) => T
+  deserialize?: (value: string) => T;
 
   /**
    * Error handler called when storage operations fail
    * Useful for logging or fallback behavior
    */
-  onError?: (error: unknown, operation: 'load' | 'save' | 'sync') => void
+  onError?: (error: unknown, operation: 'load' | 'save' | 'sync') => void;
 
   /**
    * Whether to sync state across browser tabs (default: true)
    * Uses storage events to keep state in sync
    */
-  syncTabs?: boolean
+  syncTabs?: boolean;
 }
 
 /**
@@ -91,7 +91,7 @@ export interface StorageOptions<T> {
 export function useStorageState<T>(
   key: string,
   defaultValue: T,
-  options: StorageOptions<T> = {}
+  options: StorageOptions<T> = {},
 ): [T, (value: T | ((prev: T) => T)) => void] {
   const {
     storage = typeof window !== 'undefined' ? window.localStorage : undefined,
@@ -99,98 +99,98 @@ export function useStorageState<T>(
     deserialize = JSON.parse,
     onError,
     syncTabs = true,
-  } = options
+  } = options;
 
   // Track if component is mounted to prevent state updates after unmount
-  const isMountedRef = useRef(true)
+  const isMountedRef = useRef(true);
 
   // Initialize state from storage or default value
   const [state, setState] = useState<T>(() => {
     // SSR safety: return default if no storage available
     if (!storage) {
-      return defaultValue
+      return defaultValue;
     }
 
     try {
-      const stored = storage.getItem(key)
+      const stored = storage.getItem(key);
       if (stored !== null) {
-        return deserialize(stored)
+        return deserialize(stored);
       }
     } catch (error) {
-      logger.warn(`[useStorageState] Failed to load "${key}" from storage`, error)
-      onError?.(error, 'load')
+      logger.warn(`[useStorageState] Failed to load "${key}" from storage`, error);
+      onError?.(error, 'load');
     }
 
-    return defaultValue
-  })
+    return defaultValue;
+  });
 
   // Memoized setter that updates both state and storage
   const setValue = useCallback(
     (value: T | ((prev: T) => T)) => {
       if (!isMountedRef.current) {
-        return // Don't update if component unmounted
+        return; // Don't update if component unmounted
       }
 
       setState((prev) => {
         // Resolve function-based updates
-        const nextValue = typeof value === 'function' ? (value as (prev: T) => T)(prev) : value
+        const nextValue = typeof value === 'function' ? (value as (prev: T) => T)(prev) : value;
 
         // Persist to storage
         if (storage) {
           try {
-            const serialized = serialize(nextValue)
-            storage.setItem(key, serialized)
+            const serialized = serialize(nextValue);
+            storage.setItem(key, serialized);
           } catch (error) {
-            logger.error(`[useStorageState] Failed to save "${key}" to storage`, error)
-            onError?.(error, 'save')
+            logger.error(`[useStorageState] Failed to save "${key}" to storage`, error);
+            onError?.(error, 'save');
           }
         }
 
-        return nextValue
-      })
+        return nextValue;
+      });
     },
-    [key, serialize, storage, onError]
-  )
+    [key, serialize, storage, onError],
+  );
 
   // Sync state across browser tabs using storage events
   useEffect(() => {
     if (!storage || !syncTabs || typeof window === 'undefined') {
-      return
+      return;
     }
 
     const handleStorageChange = (e: StorageEvent) => {
       // Only respond to changes to our key from other tabs
       if (e.key !== key || e.storageArea !== storage) {
-        return
+        return;
       }
 
       try {
         if (e.newValue !== null && isMountedRef.current) {
-          const newValue = deserialize(e.newValue)
-          setState(newValue)
+          const newValue = deserialize(e.newValue);
+          setState(newValue);
         } else if (e.newValue === null && isMountedRef.current) {
           // Key was deleted in another tab
-          setState(defaultValue)
+          setState(defaultValue);
         }
       } catch (error) {
-        logger.warn(`[useStorageState] Failed to sync "${key}" from other tab`, error)
-        onError?.(error, 'sync')
+        logger.warn(`[useStorageState] Failed to sync "${key}" from other tab`, error);
+        onError?.(error, 'sync');
       }
-    }
+    };
 
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [key, defaultValue, deserialize, storage, syncTabs, onError])
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [key, defaultValue, deserialize, storage, syncTabs, onError]);
 
   // Track mount status
   useEffect(() => {
-    isMountedRef.current = true
+    isMountedRef.current = true;
     return () => {
-      isMountedRef.current = false
-    }
-  }, [])
+      isMountedRef.current = false;
+    };
+  }, []);
 
-  return [state, setValue]
+  return [state, setValue];
 }
 
 /**
@@ -203,13 +203,13 @@ export function useStorageState<T>(
 export function useSessionState<T>(
   key: string,
   defaultValue: T,
-  options: Omit<StorageOptions<T>, 'storage' | 'syncTabs'> = {}
+  options: Omit<StorageOptions<T>, 'storage' | 'syncTabs'> = {},
 ): [T, (value: T | ((prev: T) => T)) => void] {
   return useStorageState(key, defaultValue, {
     ...options,
     storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
     syncTabs: false, // sessionStorage doesn't sync across tabs
-  })
+  });
 }
 
 /**
@@ -223,13 +223,13 @@ export function useSessionState<T>(
 export function useStorageFlag(
   key: string,
   defaultValue: boolean,
-  options: Omit<StorageOptions<boolean>, 'serialize' | 'deserialize'> = {}
+  options: Omit<StorageOptions<boolean>, 'serialize' | 'deserialize'> = {},
 ): [boolean, (value: boolean | ((prev: boolean) => boolean)) => void] {
   return useStorageState(key, defaultValue, {
     ...options,
     serialize: (value) => String(value),
     deserialize: (value) => value === 'true',
-  })
+  });
 }
 
 /**
@@ -242,21 +242,22 @@ export function useStorageFlag(
  */
 export function useStorageRemove(
   key: string,
-  options: Pick<StorageOptions<unknown>, 'storage'> = {}
+  options: Pick<StorageOptions<unknown>, 'storage'> = {},
 ): () => void {
-  const storage = options.storage || (typeof window !== 'undefined' ? window.localStorage : undefined)
+  const storage =
+    options.storage || (typeof window !== 'undefined' ? window.localStorage : undefined);
 
   return useCallback(() => {
     if (!storage) {
-      return
+      return;
     }
 
     try {
-      storage.removeItem(key)
+      storage.removeItem(key);
     } catch (error) {
-      logger.error(`[useStorageRemove] Failed to remove "${key}" from storage`, error)
+      logger.error(`[useStorageRemove] Failed to remove "${key}" from storage`, error);
     }
-  }, [key, storage])
+  }, [key, storage]);
 }
 
 /**
@@ -269,20 +270,20 @@ export function useStorageRemove(
  */
 export function getStorageKeys(
   prefix?: string,
-  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage),
 ): string[] {
   if (!storage.length) {
-    return []
+    return [];
   }
 
-  const keys: string[] = []
+  const keys: string[] = [];
   for (let i = 0; i < storage.length; i++) {
-    const key = storage.key(i)
+    const key = storage.key(i);
     if (key && (!prefix || key.startsWith(prefix))) {
-      keys.push(key)
+      keys.push(key);
     }
   }
-  return keys
+  return keys;
 }
 
 /**
@@ -294,14 +295,14 @@ export function getStorageKeys(
  */
 export function clearStorageKeys(
   prefix: string,
-  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage),
 ): void {
-  const keys = getStorageKeys(prefix, storage)
+  const keys = getStorageKeys(prefix, storage);
   keys.forEach((key) => {
     try {
-      storage.removeItem(key)
+      storage.removeItem(key);
     } catch (error) {
-      logger.warn(`Failed to clear storage key: ${key}`, error)
+      logger.warn(`Failed to clear storage key: ${key}`, error);
     }
-  })
+  });
 }

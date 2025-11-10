@@ -17,20 +17,24 @@ describe('chartRegistry', () => {
     chartRegistry.register(reg);
     expect(chartRegistry.get('c1')).toBeDefined();
     const all = chartRegistry.all();
-    expect(all.find(c => c.id === 'c1')).toBeTruthy();
+    expect(all.find((c) => c.id === 'c1')).toBeTruthy();
   });
 
   it('filters by student', () => {
     const reg2 = createReg('c2', { studentId: 's2' });
     chartRegistry.register(reg2);
     const list = chartRegistry.byStudent('s2');
-    expect(list.map(c => c.id)).toContain('c2');
+    expect(list.map((c) => c.id)).toContain('c2');
   });
 
   it('updates metadata', () => {
     const reg3 = createReg('c3', { title: 'Old', type: 'trends' });
     chartRegistry.register(reg3);
-    chartRegistry.updateMetadata('c3', { title: 'New', type: 'distribution', filters: { emotion: 'happy' } });
+    chartRegistry.updateMetadata('c3', {
+      title: 'New',
+      type: 'distribution',
+      filters: { emotion: 'happy' },
+    });
     const updated = chartRegistry.get('c3')!;
     expect(updated.title).toBe('New');
     expect(updated.type).toBe('distribution');
@@ -44,4 +48,3 @@ describe('chartRegistry', () => {
     expect(chartRegistry.get('c4')).toBeUndefined();
   });
 });
-

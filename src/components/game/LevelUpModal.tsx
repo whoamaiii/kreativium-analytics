@@ -13,12 +13,15 @@ export function LevelUpModal({ visible, level, onClose }: LevelUpModalProps) {
   useEffect(() => {
     if (!visible) return;
     // One-shot side-effect; no state updates here beyond sound
-    try { playLevelUpFanfare(0.16); } catch {}
+    try {
+      playLevelUpFanfare(0.16);
+    } catch {}
   }, [visible]);
   return (
     <AnimatePresence>
       {visible && (
-        <motion.div className="fixed inset-0 z-40 grid place-items-center"
+        <motion.div
+          className="fixed inset-0 z-40 grid place-items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -38,7 +41,12 @@ export function LevelUpModal({ visible, level, onClose }: LevelUpModalProps) {
           >
             <div className="text-3xl font-bold">Level {level}</div>
             <div className="mt-2 text-foreground/80">Ny bonus låst opp!</div>
-            <button className="mt-5 rounded-md bg-white/10 px-4 py-2 hover:bg-white/15 transition" onClick={onClose}>Fortsett</button>
+            <button
+              className="mt-5 rounded-md bg-white/10 px-4 py-2 hover:bg-white/15 transition"
+              onClick={onClose}
+            >
+              Fortsett
+            </button>
           </motion.div>
         </motion.div>
       )}
@@ -47,12 +55,3 @@ export function LevelUpModal({ visible, level, onClose }: LevelUpModalProps) {
 }
 
 export default LevelUpModal;
-
-
-
-
-
-
-
-
-

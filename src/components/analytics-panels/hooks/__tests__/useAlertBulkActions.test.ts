@@ -8,7 +8,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAlertBulkActions } from '../useAlertBulkActions';
-import { AlertSeverity, AlertKind, AlertStatus, type AlertWithGovernance } from '@/lib/alerts/types';
+import {
+  AlertSeverity,
+  AlertKind,
+  AlertStatus,
+  type AlertWithGovernance,
+} from '@/lib/alerts/types';
 
 // Mock toast
 vi.mock('@/hooks/use-toast', () => ({
@@ -108,7 +113,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -118,9 +123,7 @@ describe('useAlertBulkActions', () => {
       expect(mockAcknowledge).toHaveBeenCalledTimes(2);
       expect(mockAcknowledge).toHaveBeenCalledWith('alert-1');
       expect(mockAcknowledge).toHaveBeenCalledWith('alert-2');
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining('Acknowledged 2 alerts')
-      );
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('Acknowledged 2 alerts'));
     });
 
     it('shows info when no alerts meet threshold', () => {
@@ -133,7 +136,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -142,7 +145,7 @@ describe('useAlertBulkActions', () => {
 
       expect(mockAcknowledge).not.toHaveBeenCalled();
       expect(toast.info).toHaveBeenCalledWith(
-        expect.stringContaining('No alerts at or above 99% confidence')
+        expect.stringContaining('No alerts at or above 99% confidence'),
       );
     });
 
@@ -156,7 +159,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -164,11 +167,9 @@ describe('useAlertBulkActions', () => {
       });
 
       expect(mockAcknowledge).toHaveBeenCalledTimes(1);
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('Acknowledged 1 alert'));
       expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining('Acknowledged 1 alert')
-      );
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.not.stringContaining('alerts') // Singular, not plural
+        expect.not.stringContaining('alerts'), // Singular, not plural
       );
     });
 
@@ -188,7 +189,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -213,7 +214,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -224,9 +225,7 @@ describe('useAlertBulkActions', () => {
       expect(mockAcknowledge).toHaveBeenCalledWith('alert-1');
       expect(mockAcknowledge).toHaveBeenCalledWith('alert-3');
       expect(mockAcknowledge).toHaveBeenCalledWith('alert-4');
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining('from heuristic')
-      );
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('from heuristic'));
     });
 
     it('shows info when no alerts match source', () => {
@@ -239,7 +238,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -248,7 +247,7 @@ describe('useAlertBulkActions', () => {
 
       expect(mockAcknowledge).not.toHaveBeenCalled();
       expect(toast.info).toHaveBeenCalledWith(
-        expect.stringContaining('No alerts for source nonexistent')
+        expect.stringContaining('No alerts for source nonexistent'),
       );
     });
 
@@ -269,16 +268,14 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
         result.current.acknowledgeBySource('custom');
       });
 
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining('1 alert from')
-      );
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('1 alert from'));
     });
   });
 
@@ -293,7 +290,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -303,7 +300,7 @@ describe('useAlertBulkActions', () => {
       expect(mockResolve).toHaveBeenCalledTimes(1);
       expect(mockResolve).toHaveBeenCalledWith('alert-2');
       expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining('Resolved 1 alert from ml')
+        expect.stringContaining('Resolved 1 alert from ml'),
       );
     });
 
@@ -317,7 +314,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -326,7 +323,7 @@ describe('useAlertBulkActions', () => {
 
       expect(mockResolve).not.toHaveBeenCalled();
       expect(toast.info).toHaveBeenCalledWith(
-        expect.stringContaining('No alerts for source nonexistent')
+        expect.stringContaining('No alerts for source nonexistent'),
       );
     });
 
@@ -344,7 +341,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -368,7 +365,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -391,7 +388,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -412,7 +409,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -434,7 +431,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -455,7 +452,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -480,7 +477,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -504,7 +501,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -514,9 +511,7 @@ describe('useAlertBulkActions', () => {
       expect(mockAcknowledge).toHaveBeenCalledTimes(2);
       expect(mockAcknowledge).toHaveBeenCalledWith('alert-1');
       expect(mockAcknowledge).toHaveBeenCalledWith('alert-4');
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining('for emotion-detector')
-      );
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('for emotion-detector'));
     });
 
     it('falls back to source type if label is missing', () => {
@@ -536,7 +531,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -556,7 +551,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -565,7 +560,7 @@ describe('useAlertBulkActions', () => {
 
       expect(mockAcknowledge).not.toHaveBeenCalled();
       expect(toast.info).toHaveBeenCalledWith(
-        expect.stringContaining('No alerts for nonexistent-label')
+        expect.stringContaining('No alerts for nonexistent-label'),
       );
     });
 
@@ -579,16 +574,14 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
         result.current.acknowledgeByLabel('ml-classifier');
       });
 
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining('1 alert for')
-      );
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('1 alert for'));
     });
   });
 
@@ -603,7 +596,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -615,9 +608,7 @@ describe('useAlertBulkActions', () => {
     });
 
     it('handles alerts without sources', () => {
-      const alertsWithoutSources = [
-        createMockAlert({ id: 'alert-no-source', sources: undefined }),
-      ];
+      const alertsWithoutSources = [createMockAlert({ id: 'alert-no-source', sources: undefined })];
 
       const { result } = renderHook(() =>
         useAlertBulkActions({
@@ -628,7 +619,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -640,9 +631,7 @@ describe('useAlertBulkActions', () => {
     });
 
     it('handles alerts with empty sources array', () => {
-      const alertsWithEmptySources = [
-        createMockAlert({ id: 'alert-empty-sources', sources: [] }),
-      ];
+      const alertsWithEmptySources = [createMockAlert({ id: 'alert-empty-sources', sources: [] })];
 
       const { result } = renderHook(() =>
         useAlertBulkActions({
@@ -653,7 +642,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -677,7 +666,7 @@ describe('useAlertBulkActions', () => {
           acknowledge: mockAcknowledge,
           resolve: mockResolve,
           snooze: mockSnooze,
-        })
+        }),
       );
 
       act(() => {
@@ -690,17 +679,20 @@ describe('useAlertBulkActions', () => {
 
   describe('Memoization', () => {
     it('maintains function references across re-renders', () => {
-      const { result, rerender } = renderHook(() =>
-        useAlertBulkActions({
-          alerts: mockAlerts,
-          activeAlerts: mockActiveAlerts,
-          sourceFilters: [],
-          sourceLabelFilters: [],
-          acknowledge: mockAcknowledge,
-          resolve: mockResolve,
-          snooze: mockSnooze,
-        })
-      );
+      // Use stable prop instances to test memoization
+      const stableSourceFilters: string[] = [];
+      const stableSourceLabelFilters: string[] = [];
+      const props = {
+        alerts: mockAlerts,
+        activeAlerts: mockActiveAlerts,
+        sourceFilters: stableSourceFilters,
+        sourceLabelFilters: stableSourceLabelFilters,
+        acknowledge: mockAcknowledge,
+        resolve: mockResolve,
+        snooze: mockSnooze,
+      };
+
+      const { result, rerender } = renderHook(() => useAlertBulkActions(props));
 
       const firstRenderFunctions = {
         acknowledgeByConfidence: result.current.acknowledgeByConfidence,
@@ -713,7 +705,9 @@ describe('useAlertBulkActions', () => {
       rerender();
 
       // Functions should be stable
-      expect(result.current.acknowledgeByConfidence).toBe(firstRenderFunctions.acknowledgeByConfidence);
+      expect(result.current.acknowledgeByConfidence).toBe(
+        firstRenderFunctions.acknowledgeByConfidence,
+      );
       expect(result.current.acknowledgeBySource).toBe(firstRenderFunctions.acknowledgeBySource);
       expect(result.current.resolveBySourceType).toBe(firstRenderFunctions.resolveBySourceType);
       expect(result.current.snoozeSimilar).toBe(firstRenderFunctions.snoozeSimilar);

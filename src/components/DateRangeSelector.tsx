@@ -1,9 +1,15 @@
-import { useState } from "react";
-import { format, subDays, subMonths, startOfDay, endOfDay } from "date-fns";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { DateRange } from "react-day-picker";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { useState } from 'react';
+import { format, subDays, subMonths, startOfDay, endOfDay } from 'date-fns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { DateRange } from 'react-day-picker';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 
 export interface TimeRange {
   start: Date;
@@ -17,7 +23,11 @@ interface DateRangeSelectorProps {
   className?: string;
 }
 
-export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: DateRangeSelectorProps) => {
+export const DateRangeSelector = ({
+  onRangeChange,
+  selectedRange,
+  className,
+}: DateRangeSelectorProps) => {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: selectedRange.start,
     to: selectedRange.end,
@@ -26,44 +36,44 @@ export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: D
   // Canonical presets; keep in sync across the app
   const presetRanges = [
     {
-      label: "Last 7 days",
-      value: "7d",
+      label: 'Last 7 days',
+      value: '7d',
       getRange: () => ({
         start: startOfDay(subDays(new Date(), 6)),
         end: endOfDay(new Date()),
-        label: "Last 7 days"
-      })
+        label: 'Last 7 days',
+      }),
     },
     {
-      label: "Last 30 days",
-      value: "30d",
+      label: 'Last 30 days',
+      value: '30d',
       getRange: () => ({
         start: startOfDay(subDays(new Date(), 29)),
         end: endOfDay(new Date()),
-        label: "Last 30 days"
-      })
+        label: 'Last 30 days',
+      }),
     },
     {
-      label: "Last 3 months",
-      value: "3m",
+      label: 'Last 3 months',
+      value: '3m',
       getRange: () => ({
         start: startOfDay(subMonths(new Date(), 3)),
         end: endOfDay(new Date()),
-        label: "Last 3 months"
-      })
+        label: 'Last 3 months',
+      }),
     },
     {
-      label: "Last 6 months",
-      value: "6m",
+      label: 'Last 6 months',
+      value: '6m',
       getRange: () => ({
         start: startOfDay(subMonths(new Date(), 6)),
         end: endOfDay(new Date()),
-        label: "Last 6 months"
-      })
+        label: 'Last 6 months',
+      }),
     },
     {
-      label: "This week",
-      value: "week",
+      label: 'This week',
+      value: 'week',
       getRange: () => {
         const now = new Date();
         const dayOfWeek = now.getDay();
@@ -71,27 +81,27 @@ export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: D
         return {
           start: startOfDay(startOfWeek),
           end: endOfDay(now),
-          label: "This week"
+          label: 'This week',
         };
-      }
+      },
     },
     {
-      label: "This month",
-      value: "month",
+      label: 'This month',
+      value: 'month',
       getRange: () => {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         return {
           start: startOfDay(startOfMonth),
           end: endOfDay(now),
-          label: "This month"
+          label: 'This month',
         };
-      }
-    }
+      },
+    },
   ];
 
   const handlePresetSelect = (value: string) => {
-    const preset = presetRanges.find(p => p.value === value);
+    const preset = presetRanges.find((p) => p.value === value);
     if (preset) {
       const range = preset.getRange();
       onRangeChange(range);
@@ -105,13 +115,13 @@ export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: D
       onRangeChange({
         start: startOfDay(range.from),
         end: endOfDay(range.to),
-        label: `${format(range.from, "MMM d")} - ${format(range.to, "MMM d, yyyy")}`
+        label: `${format(range.from, 'MMM d')} - ${format(range.to, 'MMM d, yyyy')}`,
       });
     }
   };
 
   return (
-    <div className={cn("flex items-center gap-2 font-dyslexia", className)}>
+    <div className={cn('flex items-center gap-2 font-dyslexia', className)}>
       {/* Preset Selector */}
       <Select onValueChange={handlePresetSelect}>
         <SelectTrigger className="w-[160px] bg-input border-border">
@@ -130,7 +140,7 @@ export const DateRangeSelector = ({ onRangeChange, selectedRange, className }: D
       <DatePickerWithRange
         value={dateRange}
         onChange={handleCustomDateSelect}
-        className={cn("w-[280px]")}
+        className={cn('w-[280px]')}
       />
 
       {/* Current Selection Display */}

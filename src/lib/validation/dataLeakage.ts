@@ -96,7 +96,8 @@ function getNumericColumn(records: Array<Record<string, unknown>>, key: string):
 function fractionEqual(a: unknown[], b: unknown[]): number {
   const n = Math.min(a.length, b.length);
   if (n === 0) return 0;
-  let eq = 0, total = 0;
+  let eq = 0,
+    total = 0;
   for (let i = 0; i < n; i++) {
     const av = a[i];
     const bv = b[i];
@@ -108,20 +109,37 @@ function fractionEqual(a: unknown[], b: unknown[]): number {
   return eq / total;
 }
 
-function pickFeatureKeys(records: Array<Record<string, unknown>>, targetKey?: string, provided?: string[]): string[] {
+function pickFeatureKeys(
+  records: Array<Record<string, unknown>>,
+  targetKey?: string,
+  provided?: string[],
+): string[] {
   if (Array.isArray(provided) && provided.length > 0) return provided;
   const first = records[0] ?? {};
   const keys = Object.keys(first);
-  return keys.filter(k => k !== targetKey);
+  return keys.filter((k) => k !== targetKey);
 }
 
 function containsLeakNamePattern(name: string): boolean {
   const lowered = name.toLowerCase();
   // Patterns that often indicate leakage (future knowledge or explicit labels)
   const patterns = [
-    'target', 'label', 'outcome', 'y', 'groundtruth', 'ground_truth', 'true_', 'future', 't+1', 't+2', 'next', 'leak', 'post', 'after_event'
+    'target',
+    'label',
+    'outcome',
+    'y',
+    'groundtruth',
+    'ground_truth',
+    'true_',
+    'future',
+    't+1',
+    't+2',
+    'next',
+    'leak',
+    'post',
+    'after_event',
   ];
-  return patterns.some(p => lowered.includes(p));
+  return patterns.some((p) => lowered.includes(p));
 }
 
 export class DataLeakageDetector {
@@ -142,7 +160,10 @@ export class DataLeakageDetector {
     };
   }
 
-  public analyze(records: AnalyzeOptions['records'], opts: Omit<AnalyzeOptions, 'records'>): LeakageReport {
+  public analyze(
+    records: AnalyzeOptions['records'],
+    opts: Omit<AnalyzeOptions, 'records'>,
+  ): LeakageReport {
     const issues: LeakageIssue[] = [];
 
     // 1) Train/Test split validation
@@ -154,10 +175,18 @@ export class DataLeakageDetector {
     }
 
     // 3) Feature contamination checks
-    issues.push(...this.checkFeatureContamination(records, opts.trainIndex, opts.testIndex, opts.targetKey, opts.featureKeys));
+    issues.push(
+      ...this.checkFeatureContamination(
+        records,
+        opts.trainIndex,
+        opts.testIndex,
+        opts.targetKey,
+        opts.featureKeys,
+      ),
+    );
 
     // Logging and strict/permissive behavior
-    const summary = issues.map(i => `${i.severity.toUpperCase()} ${i.type} – ${i.message}`);
+    const summary = issues.map((i) => `${i.severity.toUpperCase()} ${i.type} – ${i.message}`);
     for (const issue of issues) {
       const payload = { type: issue.type, severity: issue.severity, details: issue.details };
       if (issue.severity === 'high') {
@@ -169,7 +198,7 @@ export class DataLeakageDetector {
       }
     }
 
-    const hasHighRisk = issues.some(i => i.severity === 'high');
+    const hasHighRisk = issues.some((i) => i.severity === 'high');
     if (this.config.mode === 'strict' && hasHighRisk) {
       // Throwing in strict mode to fail fast
       const err = new Error(`High-risk data leakage detected: \n- ${summary.join('\n- ')}`);
@@ -228,7 +257,7 @@ export class DataLeakageDetector {
   public detectTemporalLeakage(
     records: Array<Record<string, unknown>>,
     trainIndex: number[],
-    testIndex: number[]
+    testIndex: number[],
   ): LeakageIssue[] {
     const issues: LeakageIssue[] = [];
     const timeKey = this.config.temporal.timeColumn;
@@ -267,13 +296,15 @@ export class DataLeakageDetector {
         const row = records[i];
         const ent = String(row?.[entityKey] ?? '');
         const t = toTime(row?.[timeKey]);
-        if (ent && t != null) perEntityTrain[ent] = Math.max(perEntityTrain[ent] ?? Number.NEGATIVE_INFINITY, t);
+        if (ent && t != null)
+          perEntityTrain[ent] = Math.max(perEntityTrain[ent] ?? Number.NEGATIVE_INFINITY, t);
       }
       for (const i of testIndex) {
         const row = records[i];
         const ent = String(row?.[entityKey] ?? '');
         const t = toTime(row?.[timeKey]);
-        if (ent && t != null) perEntityTest[ent] = Math.min(perEntityTest[ent] ?? Number.POSITIVE_INFINITY, t);
+        if (ent && t != null)
+          perEntityTest[ent] = Math.min(perEntityTest[ent] ?? Number.POSITIVE_INFINITY, t);
       }
 
       const offenders: Array<{ entity: string; maxTrain: number; minTest: number }> = [];
@@ -302,7 +333,7 @@ export class DataLeakageDetector {
     trainIndex: number[],
     testIndex: number[],
     targetKey?: string,
-    featureKeys?: string[]
+    featureKeys?: string[],
   ): LeakageIssue[] {
     const issues: LeakageIssue[] = [];
     const features = pickFeatureKeys(records, targetKey, featureKeys);
@@ -332,12 +363,12 @@ export class DataLeakageDetector {
     }
 
     // Compute correlations on train subset (numeric only)
-    const yAll = records.map(r => r?.[targetKey]);
+    const yAll = records.map((r) => r?.[targetKey]);
     const yNum = getNumericColumn(records, targetKey);
 
     // Extract feature arrays
     for (const f of features) {
-      const xAll = records.map(r => r?.[f]);
+      const xAll = records.map((r) => r?.[f]);
 
       // Near-identity check across all rows (handles categorical as well)
       const fracEq = fractionEqual(xAll, yAll);

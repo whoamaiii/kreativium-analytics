@@ -2,10 +2,7 @@ import { logger } from '@/lib/logger';
 import { errorHandler } from '@/lib/errorHandler';
 import { loadAiConfig, type AiConfig } from '@/lib/aiConfig';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
-import {
-  SensoryCompassError,
-  ErrorType,
-} from '@/types/errors';
+import { SensoryCompassError, ErrorType } from '@/types/errors';
 
 import type {
   ChatMessage,
@@ -48,7 +45,14 @@ export class OpenRouterClient {
     // Resolve model/key from env with safe browser fallbacks
     const envAny: Record<string, unknown> = (import.meta as any)?.env ?? {};
     const getLS = (k: string) => {
-      try { return typeof localStorage !== 'undefined' ? (localStorage.getItem(k) || '') : ''; } catch (e) { try { logger.warn('[OpenRouterClient] localStorage access failed', e as Error); } catch {} return ''; }
+      try {
+        return typeof localStorage !== 'undefined' ? localStorage.getItem(k) || '' : '';
+      } catch (e) {
+        try {
+          logger.warn('[OpenRouterClient] localStorage access failed', e as Error);
+        } catch {}
+        return '';
+      }
     };
     const pickFirstNonEmpty = (...values: Array<unknown>): string => {
       for (const value of values) {
@@ -63,7 +67,9 @@ export class OpenRouterClient {
     // Precedence: explicit overrides > validated ai.modelName > env/localStorage > default
     let liveModel = overrides?.modelName ?? ai.modelName;
     if (!liveModel || liveModel.trim().length === 0) {
-      liveModel = pickFirstNonEmpty(envAny.VITE_AI_MODEL_NAME, getLS(STORAGE_KEYS.AI_MODEL_NAME)) || ai.modelName;
+      liveModel =
+        pickFirstNonEmpty(envAny.VITE_AI_MODEL_NAME, getLS(STORAGE_KEYS.AI_MODEL_NAME)) ||
+        ai.modelName;
     }
 
     const liveKey = pickFirstNonEmpty(
@@ -88,7 +94,16 @@ export class OpenRouterClient {
       localOnly: overrides?.localOnly ?? (ai as any)?.localOnly ?? false,
     } as Required<OpenRouterClientConfig>;
 
-    try { logger.debug('[OpenRouterClient] init config', { hasKey: !!this.config.apiKey, model: this.config.modelName }); } catch (e) { try { logger.warn('[OpenRouterClient] Constructor debug logging failed', e as Error); } catch {} }
+    try {
+      logger.debug('[OpenRouterClient] init config', {
+        hasKey: !!this.config.apiKey,
+        model: this.config.modelName,
+      });
+    } catch (e) {
+      try {
+        logger.warn('[OpenRouterClient] Constructor debug logging failed', e as Error);
+      } catch {}
+    }
   }
 
   private requiresApiKey(): boolean {
@@ -108,7 +123,12 @@ export class OpenRouterClient {
       const err = new SensoryCompassError(
         ErrorType.AI_CONFIGURATION_ERROR,
         'Local-only mode enabled but base URL is not local',
-        { code: 'AI_LOCAL_ONLY', userMessage: 'Appen er satt til kun lokal AI. Sett VITE_AI_BASE_URL til http://localhost:1234/v1.', recoverable: false }
+        {
+          code: 'AI_LOCAL_ONLY',
+          userMessage:
+            'Appen er satt til kun lokal AI. Sett VITE_AI_BASE_URL til http://localhost:1234/v1.',
+          recoverable: false,
+        },
       );
       throw err;
     }
@@ -116,11 +136,21 @@ export class OpenRouterClient {
       const err = new SensoryCompassError(
         ErrorType.AI_CONFIGURATION_ERROR,
         'Missing API key for OpenRouter',
-        { code: 'AI_API_KEY_MISSING', userMessage: 'AI configuration error. Please contact support.', recoverable: false }
+        {
+          code: 'AI_API_KEY_MISSING',
+          userMessage: 'AI configuration error. Please contact support.',
+          recoverable: false,
+        },
       );
       throw err;
     }
-    try { logger.debug('[OpenRouterClient] buildHeaders hasKey', { hasKey: !!apiKey }); } catch (e) { try { logger.warn('[OpenRouterClient] Debug logging failed', e as Error); } catch {} }
+    try {
+      logger.debug('[OpenRouterClient] buildHeaders hasKey', { hasKey: !!apiKey });
+    } catch (e) {
+      try {
+        logger.warn('[OpenRouterClient] Debug logging failed', e as Error);
+      } catch {}
+    }
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
     headers.set('Accept', 'application/json');
@@ -147,10 +177,14 @@ export class OpenRouterClient {
     return body;
   }
 
-  private async postChatCompletions(body: OpenRouterChatRequest, retry: RetryOptions): Promise<{ response: OpenRouterChatResponse; attempts: number; durationMs: number }>
-  {
+  private async postChatCompletions(
+    body: OpenRouterChatRequest,
+    retry: RetryOptions,
+  ): Promise<{ response: OpenRouterChatResponse; attempts: number; durationMs: number }> {
     const endpoint = `${this.config.baseUrl}/chat/completions`;
-    try { aiMetrics.recordRequestStart(); } catch {
+    try {
+      aiMetrics.recordRequestStart();
+    } catch {
       // Swallow metrics init errors to avoid noisy logs in production
     }
     const started = performance.now();
@@ -169,9 +203,15 @@ export class OpenRouterClient {
 
       // Pre-request logging (sanitized)
       if (attempt === 0) {
-        logger.info('[OpenRouter] Request start', sanitizeRequestForLog({ url: endpoint, method: 'POST', headers, body }));
+        logger.info(
+          '[OpenRouter] Request start',
+          sanitizeRequestForLog({ url: endpoint, method: 'POST', headers, body }),
+        );
       } else {
-        logger.warn('[OpenRouter] Retrying request', { attempt, ...sanitizeRequestForLog({ url: endpoint, method: 'POST', headers }) });
+        logger.warn('[OpenRouter] Retrying request', {
+          attempt,
+          ...sanitizeRequestForLog({ url: endpoint, method: 'POST', headers }),
+        });
       }
 
       try {
@@ -190,14 +230,25 @@ export class OpenRouterClient {
           try {
             const parsed = JSON.parse(text) as OpenRouterErrorPayload;
             if (parsed?.error?.message) message = parsed.error.message;
-          } catch (e) { try { logger.debug('[OpenRouterClient] Failed to parse error payload as JSON', { error: e instanceof Error ? { name: e.name, message: e.message } : String(e), snippet: text.slice(0, 160) }); } catch {} }
+          } catch (e) {
+            try {
+              logger.debug('[OpenRouterClient] Failed to parse error payload as JSON', {
+                error: e instanceof Error ? { name: e.name, message: e.message } : String(e),
+                snippet: text.slice(0, 160),
+              });
+            } catch {}
+          }
 
           if (res.status === 429) {
             // Rate limited – signal retryable
             const retryable = new SensoryCompassError(
               ErrorType.AI_QUOTA_EXCEEDED,
               message || 'Rate limited by AI provider',
-              { code: 'AI_RATE_LIMITED', recoverable: true, details: { status: res.status, retryAfterMs } }
+              {
+                code: 'AI_RATE_LIMITED',
+                recoverable: true,
+                details: { status: res.status, retryAfterMs },
+              },
             );
             throw retryable;
           }
@@ -206,7 +257,11 @@ export class OpenRouterClient {
             const retryable = new SensoryCompassError(
               ErrorType.AI_API_FAILURE,
               message || 'Transient AI API error',
-              { code: `HTTP_${res.status}`, recoverable: true, details: { status: res.status, retryAfterMs } }
+              {
+                code: `HTTP_${res.status}`,
+                recoverable: true,
+                details: { status: res.status, retryAfterMs },
+              },
             );
             throw retryable;
           }
@@ -214,7 +269,7 @@ export class OpenRouterClient {
           const err = new SensoryCompassError(
             ErrorType.AI_API_FAILURE,
             message || `AI API request failed with status ${res.status}`,
-            { code: `HTTP_${res.status}`, recoverable: false, details: { status: res.status } }
+            { code: `HTTP_${res.status}`, recoverable: false, details: { status: res.status } },
           );
           throw err;
         }
@@ -225,11 +280,10 @@ export class OpenRouterClient {
         clearTimeout(timeoutId);
         // Network or Abort errors should be typed and possibly retried
         if ((error as any)?.name === 'AbortError') {
-          const err = new SensoryCompassError(
-            ErrorType.TIMEOUT_ERROR,
-            'AI request timed out',
-            { code: 'AI_TIMEOUT', recoverable: true }
-          );
+          const err = new SensoryCompassError(ErrorType.TIMEOUT_ERROR, 'AI request timed out', {
+            code: 'AI_TIMEOUT',
+            recoverable: true,
+          });
           throw err;
         }
         throw error;
@@ -243,7 +297,8 @@ export class OpenRouterClient {
         logger.warn('[OpenRouter] Retry scheduled', {
           attempt,
           delayMs,
-          error: error instanceof Error ? { name: error.name, message: error.message } : String(error),
+          error:
+            error instanceof Error ? { name: error.name, message: error.message } : String(error),
         });
       },
     );
@@ -258,17 +313,21 @@ export class OpenRouterClient {
       throw new SensoryCompassError(
         ErrorType.AI_INVALID_RESPONSE,
         'AI returned an unexpected response format',
-        { code: 'AI_INVALID_RESPONSE', recoverable: true, details: { data } }
+        { code: 'AI_INVALID_RESPONSE', recoverable: true, details: { data } },
       );
     }
 
-    const refusal = typeof (message as any).refusal === 'string' ? ((message as any).refusal as string).trim() : '';
+    const refusal =
+      typeof (message as any).refusal === 'string'
+        ? ((message as any).refusal as string).trim()
+        : '';
     if (refusal.length > 0) {
-      throw new SensoryCompassError(
-        ErrorType.AI_REFUSAL,
-        'AI refused to provide a response',
-        { code: 'AI_REFUSAL', userMessage: refusal, recoverable: false, details: { refusal, data } },
-      );
+      throw new SensoryCompassError(ErrorType.AI_REFUSAL, 'AI refused to provide a response', {
+        code: 'AI_REFUSAL',
+        userMessage: refusal,
+        recoverable: false,
+        details: { refusal, data },
+      });
     }
 
     // Some providers place JSON only in tool_calls.function.arguments with empty/null content
@@ -283,12 +342,16 @@ export class OpenRouterClient {
     throw new SensoryCompassError(
       ErrorType.AI_INVALID_RESPONSE,
       'AI returned an unexpected response format',
-      { code: 'AI_INVALID_RESPONSE', recoverable: true, details: { data } }
+      { code: 'AI_INVALID_RESPONSE', recoverable: true, details: { data } },
     );
   }
 
   // Public: generic chat call returning raw text
-  async chat(messages: ChatMessage[] | string, overrides?: Partial<OpenRouterClientConfig>, options?: RequestOptions): Promise<ChatResponse> {
+  async chat(
+    messages: ChatMessage[] | string,
+    overrides?: Partial<OpenRouterClientConfig>,
+    options?: RequestOptions,
+  ): Promise<ChatResponse> {
     try {
       const merged = overrides ? new OpenRouterClient({ ...this.config, ...overrides }) : this;
       const msgs: ChatMessage[] = Array.isArray(messages)
@@ -296,21 +359,22 @@ export class OpenRouterClient {
         : [{ role: 'user', content: String(messages) }];
       const body = merged.buildRequestBody(msgs, false);
 
-      const { response, attempts, durationMs } = await merged.postChatCompletions(
-        body,
-        {
-          retries: merged.config.maxRetries,
-          baseDelayMs: merged.config.baseDelayMs,
-          maxDelayMs: merged.config.maxDelayMs,
-        }
-      );
+      const { response, attempts, durationMs } = await merged.postChatCompletions(body, {
+        retries: merged.config.maxRetries,
+        baseDelayMs: merged.config.baseDelayMs,
+        maxDelayMs: merged.config.maxDelayMs,
+      });
 
       const content = merged.pickFirstMessageContent(response);
       if (content.trim().length === 0) {
         throw new SensoryCompassError(
           ErrorType.AI_EMPTY_RESPONSE,
           'AI returned an empty response',
-          { code: 'AI_EMPTY_RESPONSE', recoverable: true, details: { responseModel: response.model } },
+          {
+            code: 'AI_EMPTY_RESPONSE',
+            recoverable: true,
+            details: { responseModel: response.model },
+          },
         );
       }
       const usage = response.usage ?? { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -330,18 +394,32 @@ export class OpenRouterClient {
         cost,
         metrics: { durationMs, attempts },
       } as const;
-      try { aiMetrics.recordSuccess(durationMs); aiMetrics.recordRetries(attempts); } catch (e) { try { logger.warn('[OpenRouterClient] Success metrics failed', e as Error); } catch {} }
+      try {
+        aiMetrics.recordSuccess(durationMs);
+        aiMetrics.recordRetries(attempts);
+      } catch (e) {
+        try {
+          logger.warn('[OpenRouterClient] Success metrics failed', e as Error);
+        } catch {}
+      }
       return resp as ChatResponse;
     } catch (error) {
-      try { aiMetrics.recordFailure(); } catch (e) { try { logger.warn('[OpenRouterClient] Failure metrics failed', e as Error); } catch {} }
+      try {
+        aiMetrics.recordFailure();
+      } catch (e) {
+        try {
+          logger.warn('[OpenRouterClient] Failure metrics failed', e as Error);
+        } catch {}
+      }
       // Delegate to global error handler and rethrow wrapped
-      const wrapped = error instanceof SensoryCompassError
-        ? error
-        : new SensoryCompassError(
-            ErrorType.AI_API_FAILURE,
-            (error as Error)?.message || 'AI request failed',
-            { details: { error }, recoverable: true },
-          );
+      const wrapped =
+        error instanceof SensoryCompassError
+          ? error
+          : new SensoryCompassError(
+              ErrorType.AI_API_FAILURE,
+              (error as Error)?.message || 'AI request failed',
+              { details: { error }, recoverable: true },
+            );
       await errorHandler.handle(wrapped, { showToast: !options?.suppressToasts, logError: true });
       throw wrapped;
     }
@@ -352,34 +430,34 @@ export class OpenRouterClient {
     input: ChatMessage[] | string | { system?: string; user: string },
     configOptions?: Partial<OpenRouterClientConfig> & JsonModeOptions<TOut>,
     requestOptions?: RequestOptions,
-  ): Promise<{ data: TOut; response: ChatResponse }>
-  {
+  ): Promise<{ data: TOut; response: ChatResponse }> {
     const jsonMode = true;
     const ensure = configOptions?.ensureJson ?? true;
     try {
-      const merged = configOptions ? new OpenRouterClient({ ...this.config, ...configOptions }) : this;
+      const merged = configOptions
+        ? new OpenRouterClient({ ...this.config, ...configOptions })
+        : this;
       const messages: ChatMessage[] = Array.isArray(input)
         ? input
         : typeof input === 'string'
           ? [{ role: 'user', content: input }]
           : [
-              ...(input.system ? [{ role: 'system', content: input.system }] as ChatMessage[] : []),
+              ...(input.system
+                ? ([{ role: 'system', content: input.system }] as ChatMessage[])
+                : []),
               { role: 'user', content: input.user },
             ];
 
       const body = merged.buildRequestBody(messages, jsonMode);
-      const { response, attempts, durationMs } = await merged.postChatCompletions(
-        body,
-        {
-          retries: merged.config.maxRetries,
-          baseDelayMs: merged.config.baseDelayMs,
-          maxDelayMs: merged.config.maxDelayMs,
-        }
-      );
+      const { response, attempts, durationMs } = await merged.postChatCompletions(body, {
+        retries: merged.config.maxRetries,
+        baseDelayMs: merged.config.baseDelayMs,
+        maxDelayMs: merged.config.maxDelayMs,
+      });
 
       const text = merged.pickFirstMessageContent(response);
       const trimmedText = text.trim();
-      
+
       let value: TOut;
       if (!ensure) {
         // Skip JSON parsing/validation and return raw content
@@ -391,7 +469,8 @@ export class OpenRouterClient {
         if (!parsed.ok) {
           // 0) Tool/function-call style responses
           try {
-            const toolArgs = (response as any)?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+            const toolArgs = (response as any)?.choices?.[0]?.message?.tool_calls?.[0]?.function
+              ?.arguments;
             if (typeof toolArgs === 'string') {
               const trimmedToolArgs = toolArgs.trim();
               if (trimmedToolArgs.length > 0) {
@@ -417,36 +496,68 @@ export class OpenRouterClient {
           }
         }
         if (!parsed.ok) {
-          try { aiMetrics.recordJsonParseError(); } catch (e) { try { logger.warn('[OpenRouterClient] JSON parse error metrics failed', e as Error); } catch {} }
+          try {
+            aiMetrics.recordJsonParseError();
+          } catch (e) {
+            try {
+              logger.warn('[OpenRouterClient] JSON parse error metrics failed', e as Error);
+            } catch {}
+          }
           if (trimmedText.length === 0 && !hasToolArgs) {
             throw new SensoryCompassError(
               ErrorType.AI_EMPTY_RESPONSE,
               'AI returned an empty response',
-              { code: 'AI_EMPTY_RESPONSE', recoverable: true, details: { responseModel: response.model } }
+              {
+                code: 'AI_EMPTY_RESPONSE',
+                recoverable: true,
+                details: { responseModel: response.model },
+              },
             );
           }
           throw new SensoryCompassError(
             ErrorType.AI_INVALID_RESPONSE,
             'AI returned invalid JSON response',
-            { code: 'AI_JSON_PARSE_ERROR', recoverable: true, details: { textSnippet: text.slice(0, 200) } }
+            {
+              code: 'AI_JSON_PARSE_ERROR',
+              recoverable: true,
+              details: { textSnippet: text.slice(0, 200) },
+            },
           );
         }
 
         if (configOptions?.refine) {
           try {
             value = configOptions.refine(parsed.value);
-            try { aiMetrics.recordJsonValid(); } catch (e) { try { logger.warn('[OpenRouterClient] JSON valid metrics failed', e as Error); } catch {} }
+            try {
+              aiMetrics.recordJsonValid();
+            } catch (e) {
+              try {
+                logger.warn('[OpenRouterClient] JSON valid metrics failed', e as Error);
+              } catch {}
+            }
           } catch (err) {
-            try { aiMetrics.recordJsonValidateError(); } catch (e) { try { logger.warn('[OpenRouterClient] JSON validate error metrics failed', e as Error); } catch {} }
+            try {
+              aiMetrics.recordJsonValidateError();
+            } catch (e) {
+              try {
+                logger.warn('[OpenRouterClient] JSON validate error metrics failed', e as Error);
+              } catch {}
+            }
             throw new SensoryCompassError(
               ErrorType.AI_INVALID_RESPONSE,
               'AI returned JSON that failed validation',
-              { code: 'AI_JSON_VALIDATE_ERROR', details: { error: String(err) } }
+              { code: 'AI_JSON_VALIDATE_ERROR', details: { error: String(err) } },
             );
           }
         } else {
           value = parsed.value as TOut;
-          try { aiMetrics.recordJsonValid(); } catch (e) { try { logger.warn('[OpenRouterClient] JSON valid metrics failed', e as Error); } catch {} }
+          try {
+            aiMetrics.recordJsonValid();
+          } catch (e) {
+            try {
+              logger.warn('[OpenRouterClient] JSON valid metrics failed', e as Error);
+            } catch {}
+          }
         }
       }
       const usage = response.usage ?? { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -466,18 +577,35 @@ export class OpenRouterClient {
         cost,
         metrics: { durationMs, attempts },
       };
-      try { aiMetrics.recordSuccess(durationMs); aiMetrics.recordRetries(attempts); } catch (e) { try { logger.warn('[OpenRouterClient] Success metrics failed', e as Error); } catch {} }
+      try {
+        aiMetrics.recordSuccess(durationMs);
+        aiMetrics.recordRetries(attempts);
+      } catch (e) {
+        try {
+          logger.warn('[OpenRouterClient] Success metrics failed', e as Error);
+        } catch {}
+      }
       return { data: value, response: resp };
     } catch (error) {
-      try { aiMetrics.recordFailure(); } catch (e) { try { logger.warn('[OpenRouterClient] Failure metrics failed', e as Error); } catch {} }
-      const wrapped = error instanceof SensoryCompassError
-        ? error
-        : new SensoryCompassError(
-            ErrorType.AI_API_FAILURE,
-            (error as Error)?.message || 'AI JSON request failed',
-            { details: { error }, recoverable: true },
-          );
-      await errorHandler.handle(wrapped, { showToast: !requestOptions?.suppressToasts, logError: true });
+      try {
+        aiMetrics.recordFailure();
+      } catch (e) {
+        try {
+          logger.warn('[OpenRouterClient] Failure metrics failed', e as Error);
+        } catch {}
+      }
+      const wrapped =
+        error instanceof SensoryCompassError
+          ? error
+          : new SensoryCompassError(
+              ErrorType.AI_API_FAILURE,
+              (error as Error)?.message || 'AI JSON request failed',
+              { details: { error }, recoverable: true },
+            );
+      await errorHandler.handle(wrapped, {
+        showToast: !requestOptions?.suppressToasts,
+        logError: true,
+      });
       throw wrapped;
     }
   }

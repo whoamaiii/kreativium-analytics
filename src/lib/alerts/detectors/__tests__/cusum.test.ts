@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { detectCUSUMShift } from '@/lib/alerts/detectors/cusum';
-import { toTrendSeries, generateStableBaseline, generateStepChange, addMissing } from './syntheticData';
+import {
+  toTrendSeries,
+  generateStableBaseline,
+  generateStepChange,
+  addMissing,
+} from './syntheticData';
 import { isValidDetectorResult } from '@/lib/alerts/types';
 
 describe('CUSUM detector', () => {
@@ -35,8 +40,16 @@ describe('CUSUM detector', () => {
   it('applies baselineQualityScore to increase decision interval multiplier when low quality', () => {
     const values = generateStableBaseline(400, 0, 1, 2024);
     const series = toTrendSeries(values);
-    const low = detectCUSUMShift(series, { kFactor: 0.5, targetFalseAlertsPerN: 336, baselineQualityScore: 0.3 });
-    const high = detectCUSUMShift(series, { kFactor: 0.5, targetFalseAlertsPerN: 336, baselineQualityScore: 0.95 });
+    const low = detectCUSUMShift(series, {
+      kFactor: 0.5,
+      targetFalseAlertsPerN: 336,
+      baselineQualityScore: 0.3,
+    });
+    const high = detectCUSUMShift(series, {
+      kFactor: 0.5,
+      targetFalseAlertsPerN: 336,
+      baselineQualityScore: 0.95,
+    });
     const mLow = (low?.sources?.[0]?.details as any)?.decisionIntervalMultiplier ?? 0;
     const mHigh = (high?.sources?.[0]?.details as any)?.decisionIntervalMultiplier ?? 0;
     expect(mLow).toBeGreaterThanOrEqual(mHigh);
@@ -46,7 +59,11 @@ describe('CUSUM detector', () => {
     const base = generateStableBaseline(400, 0, 1, 4242);
     const withNaNs = addMissing(base, 0.05);
     const series = toTrendSeries(withNaNs);
-    const res = detectCUSUMShift(series, { kFactor: 0.5, minPoints: 20, targetFalseAlertsPerN: 336 });
+    const res = detectCUSUMShift(series, {
+      kFactor: 0.5,
+      minPoints: 20,
+      targetFalseAlertsPerN: 336,
+    });
     expect(res === null || isValidDetectorResult(res)).toBeTruthy();
     if (res) expect(res.confidence).toBeLessThan(0.9);
   });
@@ -56,11 +73,17 @@ describe('CUSUM detector', () => {
     const stepIdx = 120;
     const up = generateStepChange(n, stepIdx, -2, 0, 1, 6060); // negative shift
     const series = toTrendSeries(up);
-    const resLower = detectCUSUMShift(series, { sided: 'lower', kFactor: 0.5, targetFalseAlertsPerN: 336 });
-    const resBoth = detectCUSUMShift(series, { sided: 'both', kFactor: 0.5, targetFalseAlertsPerN: 336 });
+    const resLower = detectCUSUMShift(series, {
+      sided: 'lower',
+      kFactor: 0.5,
+      targetFalseAlertsPerN: 336,
+    });
+    const resBoth = detectCUSUMShift(series, {
+      sided: 'both',
+      kFactor: 0.5,
+      targetFalseAlertsPerN: 336,
+    });
     expect(resLower === null || isValidDetectorResult(resLower)).toBeTruthy();
     expect(resBoth === null || isValidDetectorResult(resBoth)).toBeTruthy();
   });
 });
-
-

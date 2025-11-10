@@ -12,7 +12,7 @@ interface AccessibilityWrapperProps {
 export const AccessibilityWrapper = ({
   children,
   skipToContent = true,
-  announceChanges = true
+  announceChanges = true,
 }: AccessibilityWrapperProps) => {
   const { tCommon } = useTranslation();
   const [highContrast] = useStorageFlag(STORAGE_KEYS.HIGH_CONTRAST, false);
@@ -33,7 +33,8 @@ export const AccessibilityWrapper = ({
     if (main) {
       main.focus();
       try {
-        const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+        const reduceMotion =
+          window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
         main.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
       } catch {
         // no-op
@@ -53,7 +54,7 @@ export const AccessibilityWrapper = ({
           {String(tCommon('accessibility.skipToContent'))}
         </a>
       )}
-      
+
       <main id="main-content" tabIndex={-1}>
         {children}
       </main>

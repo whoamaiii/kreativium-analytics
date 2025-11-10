@@ -6,8 +6,8 @@
  * - Severity classification and recommendation generation
  */
 
-import { EmotionEntry, SensoryEntry, TrackingEntry } from "@/types/student";
-import { analyticsConfig } from "@/lib/analyticsConfig";
+import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
+import { analyticsConfig } from '@/lib/analyticsConfig';
 import { zScoresMedian } from '@/lib/statistics';
 import { groupSensoryByDay } from './utils';
 
@@ -32,7 +32,7 @@ export interface AnomalyDetection {
 export function detectAnomalies(
   emotions: EmotionEntry[],
   sensoryInputs: SensoryEntry[],
-  trackingEntries: TrackingEntry[]
+  trackingEntries: TrackingEntry[],
 ): AnomalyDetection[] {
   const cfg = analyticsConfig.getConfig();
   const { enhancedAnalysis, alertSensitivity } = cfg;
@@ -40,7 +40,7 @@ export function detectAnomalies(
   const anomalies: AnomalyDetection[] = [];
 
   // Emotion intensity anomalies
-  const emotionIntensities = emotions.map(e => e.intensity);
+  const emotionIntensities = emotions.map((e) => e.intensity);
 
   // Apply anomaly sensitivity multiplier (base threshold)
   const anomalyThreshold = enhancedAnalysis.anomalyThreshold * alertSensitivity.anomalyMultiplier;
@@ -59,7 +59,7 @@ export function detectAnomalies(
         severity,
         description: `Unusual ${emotion.emotion} intensity detected (${emotion.intensity}/5)`,
         deviationScore: zScore,
-        recommendations: getAnomalyRecommendations('emotion', emotion.emotion, zScore)
+        recommendations: getAnomalyRecommendations('emotion', emotion.emotion, zScore),
       });
     }
   });
@@ -76,14 +76,18 @@ export function detectAnomalies(
       const zScore = Math.abs(zCounts[idx] ?? 0);
       if (zScore > anomalyThreshold) {
         const severity: 'low' | 'medium' | 'high' =
-          zScore >= severityLevels.high ? 'high' : zScore >= severityLevels.medium ? 'medium' : 'low';
+          zScore >= severityLevels.high
+            ? 'high'
+            : zScore >= severityLevels.medium
+              ? 'medium'
+              : 'low';
         anomalies.push({
           timestamp: new Date(date),
           type: 'sensory',
           severity,
           description: `Unusual sensory activity level detected (${count} inputs)`,
           deviationScore: zScore,
-          recommendations: getAnomalyRecommendations('sensory', 'frequency', zScore)
+          recommendations: getAnomalyRecommendations('sensory', 'frequency', zScore),
         });
       }
     });
@@ -103,27 +107,27 @@ export function detectAnomalies(
 export function getAnomalyRecommendations(
   type: string,
   context: string,
-  severity: number
+  severity: number,
 ): string[] {
   if (type === 'emotion') {
     return [
       'Investigate potential triggers for this emotional spike',
       'Provide immediate support and coping strategies',
       'Monitor closely for additional unusual patterns',
-      'Consider environmental or schedule changes'
+      'Consider environmental or schedule changes',
     ];
   } else if (type === 'sensory') {
     return [
       'Review sensory environment for unusual factors',
       'Check for changes in routine or schedule',
       'Provide additional sensory regulation support',
-      'Monitor for illness or other physical factors'
+      'Monitor for illness or other physical factors',
     ];
   }
   return [
     'Investigate potential causes',
     'Provide additional support',
     'Monitor closely',
-    'Document and track patterns'
+    'Document and track patterns',
   ];
 }

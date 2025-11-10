@@ -15,14 +15,15 @@ export function useReducedMotion(): boolean {
   useEffect(() => {
     // Check CSS media query
     const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    
+
     const handleMediaQueryChange = (event: MediaQueryListEvent) => {
       setPrefersReducedMotion(event.matches);
     };
 
     // Also check for data-reduce-motion attribute on document element
     const checkDataAttribute = () => {
-      const hasDataAttribute = document.documentElement.getAttribute('data-reduce-motion') === 'true';
+      const hasDataAttribute =
+        document.documentElement.getAttribute('data-reduce-motion') === 'true';
       if (hasDataAttribute) {
         setPrefersReducedMotion(true);
       }
@@ -33,7 +34,7 @@ export function useReducedMotion(): boolean {
 
     // Set up listeners
     mediaQuery?.addEventListener?.('change', handleMediaQueryChange);
-    
+
     // Watch for changes to the data attribute
     const observer = new MutationObserver(() => {
       checkDataAttribute();
@@ -41,7 +42,7 @@ export function useReducedMotion(): boolean {
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['data-reduce-motion']
+      attributeFilter: ['data-reduce-motion'],
     });
 
     return () => {

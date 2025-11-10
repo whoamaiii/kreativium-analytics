@@ -91,7 +91,14 @@ export interface Goal {
   targetDate: Date;
   createdDate: Date;
   updatedAt: Date;
-  status: 'active' | 'achieved' | 'modified' | 'discontinued' | 'not_started' | 'in_progress' | 'on_hold';
+  status:
+    | 'active'
+    | 'achieved'
+    | 'modified'
+    | 'discontinued'
+    | 'not_started'
+    | 'in_progress'
+    | 'on_hold';
   measurableObjective: string;
   currentProgress: number; // 0-100 percentage
   milestones?: Milestone[];
@@ -101,7 +108,7 @@ export interface Goal {
   dataPoints?: GoalDataPoint[];
   notes?: string;
   progress: number;
-};
+}
 
 export interface Milestone {
   id: string;
@@ -265,7 +272,7 @@ export type Pattern = {
   recommendations?: string[];
   type: 'emotion' | 'sensory' | 'environmental' | 'correlation';
   dataPoints: number;
-}
+};
 
 /**
  * @typedef {object} Correlation
@@ -282,7 +289,7 @@ export type Correlation = {
   description: string;
   significance: 'low' | 'medium' | 'high' | 'moderate';
   recommendations?: string[];
-}
+};
 
 /**
  * @typedef {object} Insights

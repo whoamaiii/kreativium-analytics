@@ -28,78 +28,137 @@ interface TranslationHookReturn {
 export const useTranslation = (): TranslationHookReturn => {
   const { t, i18n } = useI18nTranslation(namespace);
 
-  const guardedT = useCallback((key: string, options?: Record<string, unknown>) => {
-    const result = t(key, options);
-    const nsOption = (options as { ns?: string } | undefined)?.ns;
-    const effectiveNamespace = typeof nsOption === 'string' ? nsOption : namespace;
-    const fullKey = effectiveNamespace ? `${effectiveNamespace}:${key}` : key;
+  const guardedT = useCallback(
+    (key: string, options?: Record<string, unknown>) => {
+      const result = t(key, options);
+      const nsOption = (options as { ns?: string } | undefined)?.ns;
+      const effectiveNamespace = typeof nsOption === 'string' ? nsOption : namespace;
+      const fullKey = effectiveNamespace ? `${effectiveNamespace}:${key}` : key;
 
-    if (result === key && !missingTranslationKeysLogged.has(fullKey)) {
-      missingTranslationKeysLogged.add(fullKey);
-      logger.warn('Missing translation key', { key: fullKey });
-    }
+      if (result === key && !missingTranslationKeysLogged.has(fullKey)) {
+        missingTranslationKeysLogged.add(fullKey);
+        logger.warn('Missing translation key', { key: fullKey });
+      }
 
-    return result;
-  }, [t]);
+      return result;
+    },
+    [t],
+  );
 
-  const changeLanguage = useCallback((lng: 'nb' | 'en') => {
-    i18n.changeLanguage(lng);
-    localStorage.setItem(STORAGE_KEYS.LANGUAGE, lng);
-  }, [i18n]);
+  const changeLanguage = useCallback(
+    (lng: 'nb' | 'en') => {
+      i18n.changeLanguage(lng);
+      localStorage.setItem(STORAGE_KEYS.LANGUAGE, lng);
+    },
+    [i18n],
+  );
 
   const currentLanguage = (i18n.language as 'nb' | 'en') || 'nb';
   const locale = currentLanguage === 'nb' ? 'nb-NO' : 'en-US';
 
   // Helper functions for common translations
-  const tCommon = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'common', ...options }), [guardedT]);
-  const tDashboard = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'dashboard', ...options }), [guardedT]);
-  const tStudent = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'student', ...options }), [guardedT]);
-  const tTracking = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'tracking', ...options }), [guardedT]);
-  const tAnalytics = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'analytics', ...options }), [guardedT]);
-  const tSettings = useCallback((key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'settings', ...options }), [guardedT]);
+  const tCommon = useCallback(
+    (key: string, options?: Record<string, unknown>) => guardedT(key, { ns: 'common', ...options }),
+    [guardedT],
+  );
+  const tDashboard = useCallback(
+    (key: string, options?: Record<string, unknown>) =>
+      guardedT(key, { ns: 'dashboard', ...options }),
+    [guardedT],
+  );
+  const tStudent = useCallback(
+    (key: string, options?: Record<string, unknown>) =>
+      guardedT(key, { ns: 'student', ...options }),
+    [guardedT],
+  );
+  const tTracking = useCallback(
+    (key: string, options?: Record<string, unknown>) =>
+      guardedT(key, { ns: 'tracking', ...options }),
+    [guardedT],
+  );
+  const tAnalytics = useCallback(
+    (key: string, options?: Record<string, unknown>) =>
+      guardedT(key, { ns: 'analytics', ...options }),
+    [guardedT],
+  );
+  const tSettings = useCallback(
+    (key: string, options?: Record<string, unknown>) =>
+      guardedT(key, { ns: 'settings', ...options }),
+    [guardedT],
+  );
 
   // Locale-aware date/time formatting
-  const formatDate = useCallback((date: Date): string => {
-    return new Intl.DateTimeFormat(locale, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(date);
-  }, [locale]);
+  const formatDate = useCallback(
+    (date: Date): string => {
+      return new Intl.DateTimeFormat(locale, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date);
+    },
+    [locale],
+  );
 
-  const formatDateTime = useCallback((date: Date): string => {
-    return new Intl.DateTimeFormat(locale, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  }, [locale]);
+  const formatDateTime = useCallback(
+    (date: Date): string => {
+      return new Intl.DateTimeFormat(locale, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(date);
+    },
+    [locale],
+  );
 
-  const formatNumber = useCallback((value: number, options?: Intl.NumberFormatOptions): string => {
-    return new Intl.NumberFormat(locale, options).format(value);
-  }, [locale]);
+  const formatNumber = useCallback(
+    (value: number, options?: Intl.NumberFormatOptions): string => {
+      return new Intl.NumberFormat(locale, options).format(value);
+    },
+    [locale],
+  );
 
-  const formatCurrency = useCallback((value: number, currency: 'NOK' | 'USD' = currentLanguage === 'nb' ? 'NOK' : 'USD'): string => {
-    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
-  }, [locale, currentLanguage]);
+  const formatCurrency = useCallback(
+    (value: number, currency: 'NOK' | 'USD' = currentLanguage === 'nb' ? 'NOK' : 'USD'): string => {
+      return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(value);
+    },
+    [locale, currentLanguage],
+  );
 
   // Include i18n in deps to ensure fresh reference
-  return useMemo(() => ({
-    t: guardedT,
-    tCommon,
-    tDashboard,
-    tStudent,
-    tTracking,
-    tAnalytics,
-    tSettings,
-    changeLanguage,
-    currentLanguage,
-    formatDate,
-    formatDateTime,
-    formatNumber,
-    formatCurrency,
-    i18n,
-  }), [guardedT, tCommon, tDashboard, tStudent, tTracking, tAnalytics, tSettings, changeLanguage, currentLanguage, formatDate, formatDateTime, formatNumber, formatCurrency, i18n]);
+  return useMemo(
+    () => ({
+      t: guardedT,
+      tCommon,
+      tDashboard,
+      tStudent,
+      tTracking,
+      tAnalytics,
+      tSettings,
+      changeLanguage,
+      currentLanguage,
+      formatDate,
+      formatDateTime,
+      formatNumber,
+      formatCurrency,
+      i18n,
+    }),
+    [
+      guardedT,
+      tCommon,
+      tDashboard,
+      tStudent,
+      tTracking,
+      tAnalytics,
+      tSettings,
+      changeLanguage,
+      currentLanguage,
+      formatDate,
+      formatDateTime,
+      formatNumber,
+      formatCurrency,
+      i18n,
+    ],
+  );
 };

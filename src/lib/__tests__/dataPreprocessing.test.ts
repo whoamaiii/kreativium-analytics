@@ -26,7 +26,12 @@ describe('normalizeNumericArray', () => {
 
   it('respects provided min/max and minVariance; predictable outputs', () => {
     const arr = [0, 5, 10];
-    const result = normalizeNumericArray(arr, { min: 0, max: 10, clampToUnit: true, minVariance: 1e-12 });
+    const result = normalizeNumericArray(arr, {
+      min: 0,
+      max: 10,
+      clampToUnit: true,
+      minVariance: 1e-12,
+    });
     expect(result).toEqual([0, 0.5, 1]);
 
     // If range less than minVariance, returns 0.5 array
@@ -60,13 +65,38 @@ describe('toMLSessions', () => {
         studentId,
         timestamp: new Date('2024-01-01T09:00:00Z'),
         emotions: [
-          { id: 'em1', emotion: 'Happy', intensity: 6, timestamp: new Date('2024-01-01T09:00:00Z') },
-          { id: 'em2', emotion: 'Anxious', intensity: 4, timestamp: new Date('2024-01-01T09:15:00Z') },
+          {
+            id: 'em1',
+            emotion: 'Happy',
+            intensity: 6,
+            timestamp: new Date('2024-01-01T09:00:00Z'),
+          },
+          {
+            id: 'em2',
+            emotion: 'Anxious',
+            intensity: 4,
+            timestamp: new Date('2024-01-01T09:15:00Z'),
+          },
         ],
         sensoryInputs: [
-          { id: 's1', response: 'seeking', sensoryType: 'visual', timestamp: new Date('2024-01-01T09:05:00Z') },
-          { id: 's2', response: 'avoiding', sensoryType: 'auditory', timestamp: new Date('2024-01-01T09:10:00Z') },
-          { id: 's3', response: 'neutral', sensoryType: 'tactile', timestamp: new Date('2024-01-01T09:20:00Z') },
+          {
+            id: 's1',
+            response: 'seeking',
+            sensoryType: 'visual',
+            timestamp: new Date('2024-01-01T09:05:00Z'),
+          },
+          {
+            id: 's2',
+            response: 'avoiding',
+            sensoryType: 'auditory',
+            timestamp: new Date('2024-01-01T09:10:00Z'),
+          },
+          {
+            id: 's3',
+            response: 'neutral',
+            sensoryType: 'tactile',
+            timestamp: new Date('2024-01-01T09:20:00Z'),
+          },
         ],
         environmentalData: {
           roomConditions: {
@@ -89,8 +119,18 @@ describe('toMLSessions', () => {
           { id: 'em4', emotion: 'Calm', intensity: 5, timestamp: new Date('2024-01-01T13:30:00Z') },
         ],
         sensoryInputs: [
-          { id: 's4', response: 'seeking', sensoryType: 'visual', timestamp: new Date('2024-01-01T13:05:00Z') },
-          { id: 's5', response: 'dislike', sensoryType: 'auditory', timestamp: new Date('2024-01-01T13:10:00Z') },
+          {
+            id: 's4',
+            response: 'seeking',
+            sensoryType: 'visual',
+            timestamp: new Date('2024-01-01T13:05:00Z'),
+          },
+          {
+            id: 's5',
+            response: 'dislike',
+            sensoryType: 'auditory',
+            timestamp: new Date('2024-01-01T13:10:00Z'),
+          },
         ],
         // no environmentalData, no notes
       },
@@ -138,13 +178,12 @@ describe('toMLSessions', () => {
 describe('prepareEmotionDataset', () => {
   beforeEach(() => {
     // Open a TF scope for allocations in each test
-     
+
     (tf.engine() as any).startScope?.();
   });
   afterEach(() => {
     // Make sure no stray tensors left allocated
     try {
-       
       (tf.engine() as any).endScope?.();
     } catch {
       // ignore if scope was not started
@@ -255,12 +294,10 @@ describe('prepareEmotionDataset', () => {
 
 describe('prepareSensoryDataset', () => {
   beforeEach(() => {
-     
     (tf.engine() as any).startScope?.();
   });
   afterEach(() => {
     try {
-       
       (tf.engine() as any).endScope?.();
     } catch {
       // ignore if scope was not started
@@ -275,7 +312,14 @@ describe('prepareSensoryDataset', () => {
         date: '2024-01-01T00:00:00.000Z',
         emotion: {},
         sensory: { visual: 'seeking', auditory: 'avoiding', tactile: 'neutral' },
-        environment: { lighting: 'bright', noise: 'loud', temperature: 'comfortable', crowded: 'very', smells: true, textures: false },
+        environment: {
+          lighting: 'bright',
+          noise: 'loud',
+          temperature: 'comfortable',
+          crowded: 'very',
+          smells: true,
+          textures: false,
+        },
         activities: [],
         notes: '',
       },
@@ -284,8 +328,21 @@ describe('prepareSensoryDataset', () => {
         studentId: 's1',
         date: '2024-01-02T00:00:00.000Z',
         emotion: {},
-        sensory: { visual: 'neutral', auditory: 'seeking', tactile: 'avoiding', vestibular: 'neutral', proprioceptive: 'seeking' },
-        environment: { lighting: 'dim', noise: 'moderate', temperature: 'hot', crowded: 'moderate', smells: false, textures: true },
+        sensory: {
+          visual: 'neutral',
+          auditory: 'seeking',
+          tactile: 'avoiding',
+          vestibular: 'neutral',
+          proprioceptive: 'seeking',
+        },
+        environment: {
+          lighting: 'dim',
+          noise: 'moderate',
+          temperature: 'hot',
+          crowded: 'moderate',
+          smells: false,
+          textures: true,
+        },
         activities: [],
         notes: '',
       },
@@ -313,4 +370,3 @@ describe('prepareSensoryDataset', () => {
     outputs.dispose();
   });
 });
-

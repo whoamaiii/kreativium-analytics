@@ -24,7 +24,11 @@ function storageKeyForStudent(studentId: string): string {
 }
 
 function getCurrentStudentId(): string {
-  try { return localStorage.getItem(STORAGE_KEYS.CURRENT_STUDENT_ID) || 'anonymous'; } catch { return 'anonymous'; }
+  try {
+    return localStorage.getItem(STORAGE_KEYS.CURRENT_STUDENT_ID) || 'anonymous';
+  } catch {
+    return 'anonymous';
+  }
 }
 
 function migrateGlobalToStudentOnce(studentId: string): void {
@@ -41,7 +45,9 @@ function migrateGlobalToStudentOnce(studentId: string): void {
   } catch {}
 }
 
-export function loadStudentProgress(studentId: string = getCurrentStudentId()): Record<string, DailyProgress> {
+export function loadStudentProgress(
+  studentId: string = getCurrentStudentId(),
+): Record<string, DailyProgress> {
   try {
     migrateGlobalToStudentOnce(studentId);
     const raw = localStorage.getItem(storageKeyForStudent(studentId));
@@ -52,7 +58,9 @@ export function loadStudentProgress(studentId: string = getCurrentStudentId()): 
 }
 
 export function saveStudentProgress(studentId: string, map: Record<string, DailyProgress>): void {
-  try { localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(map)); } catch {}
+  try {
+    localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(map));
+  } catch {}
 }
 
 // Backwards‑compatible aliases now scoped to current student
@@ -61,13 +69,22 @@ export function loadProgress(): Record<string, DailyProgress> {
 }
 
 export function saveProgress(map: Record<string, DailyProgress>): void {
-  try { saveStudentProgress(getCurrentStudentId(), map); } catch {}
+  try {
+    saveStudentProgress(getCurrentStudentId(), map);
+  } catch {}
 }
 
 function ensureToday(map: Record<string, DailyProgress>): DailyProgress {
   const key = todayKey();
   if (!map[key]) {
-    map[key] = { date: key, neutralHolds: 0, correctChoices: 0, nameItCorrect: 0, streak: 0, stickers: [] };
+    map[key] = {
+      date: key,
+      neutralHolds: 0,
+      correctChoices: 0,
+      nameItCorrect: 0,
+      streak: 0,
+      stickers: [],
+    };
   }
   return map[key];
 }
@@ -98,6 +115,3 @@ export function incNeutralHold(studentId?: string): void {
   t.streak += 1;
   saveStudentProgress(sid, map);
 }
-
-
-

@@ -1,6 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface ConfidencePromptProps {
@@ -13,11 +19,18 @@ interface ConfidencePromptProps {
 export function ConfidencePrompt({ visible, value, onChange, onSubmit }: ConfidencePromptProps) {
   const { tCommon } = useTranslation();
   return (
-    <Dialog open={visible} onOpenChange={(open) => { if (!open) onSubmit(); }}>
+    <Dialog
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open) onSubmit();
+      }}
+    >
       <DialogContent aria-describedby="confidence-desc">
         <DialogHeader>
           <DialogTitle>{String(tCommon('confidencePrompt.title'))}</DialogTitle>
-          <DialogDescription id="confidence-desc">{String(tCommon('confidencePrompt.description'))}</DialogDescription>
+          <DialogDescription id="confidence-desc">
+            {String(tCommon('confidencePrompt.description'))}
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <input
@@ -31,7 +44,9 @@ export function ConfidencePrompt({ visible, value, onChange, onSubmit }: Confide
           />
           <div className="text-sm">{Math.round(value * 100)}%</div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="default" onClick={onSubmit}>{String(tCommon('confidencePrompt.submit'))}</Button>
+            <Button variant="default" onClick={onSubmit}>
+              {String(tCommon('confidencePrompt.submit'))}
+            </Button>
           </div>
         </div>
       </DialogContent>
@@ -40,6 +55,3 @@ export function ConfidencePrompt({ visible, value, onChange, onSubmit }: Confide
 }
 
 export default ConfidencePrompt;
-
-
-

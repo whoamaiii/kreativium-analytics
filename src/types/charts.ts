@@ -17,4 +17,3 @@ export interface ProgressiveChartDataState {
   };
   error: Error | null;
 }
-

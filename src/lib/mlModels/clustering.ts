@@ -14,37 +14,44 @@ import { euclideanDistance, normalizeFeatures } from './utils';
  */
 export async function performBaselineClustering(
   trackingEntries: TrackingEntry[],
-  numClusters: number = 3
+  numClusters: number = 3,
 ): Promise<BaselineCluster[]> {
   if (trackingEntries.length < numClusters) {
     throw new Error('Not enough data points for clustering');
   }
 
   // Extract features for clustering
-  const features = trackingEntries.map(entry => {
-    const avgEmotionIntensity = entry.emotions.length > 0
-      ? entry.emotions.reduce((sum, e) => sum + e.intensity, 0) / entry.emotions.length
-      : 0;
+  const features = trackingEntries.map((entry) => {
+    const avgEmotionIntensity =
+      entry.emotions.length > 0
+        ? entry.emotions.reduce((sum, e) => sum + e.intensity, 0) / entry.emotions.length
+        : 0;
 
     const cfg = analyticsConfig.getConfig();
-    const positiveSet = new Set((cfg.taxonomy?.positiveEmotions || []).map(e => e.toLowerCase()));
-    const positiveEmotionRatio = entry.emotions.length > 0
-      ? entry.emotions.filter(e => positiveSet.has(e.emotion.toLowerCase())).length / entry.emotions.length
-      : 0;
+    const positiveSet = new Set((cfg.taxonomy?.positiveEmotions || []).map((e) => e.toLowerCase()));
+    const positiveEmotionRatio =
+      entry.emotions.length > 0
+        ? entry.emotions.filter((e) => positiveSet.has(e.emotion.toLowerCase())).length /
+          entry.emotions.length
+        : 0;
 
-    const sensorySeekingRatio = entry.sensoryInputs.length > 0
-      ? entry.sensoryInputs.filter(s => s.response.toLowerCase().includes('seeking')).length / entry.sensoryInputs.length
-      : 0;
+    const sensorySeekingRatio =
+      entry.sensoryInputs.length > 0
+        ? entry.sensoryInputs.filter((s) => s.response.toLowerCase().includes('seeking')).length /
+          entry.sensoryInputs.length
+        : 0;
 
-    const sensoryAvoidingRatio = entry.sensoryInputs.length > 0
-      ? entry.sensoryInputs.filter(s => s.response.toLowerCase().includes('avoiding')).length / entry.sensoryInputs.length
-      : 0;
+    const sensoryAvoidingRatio =
+      entry.sensoryInputs.length > 0
+        ? entry.sensoryInputs.filter((s) => s.response.toLowerCase().includes('avoiding')).length /
+          entry.sensoryInputs.length
+        : 0;
 
     return [
       avgEmotionIntensity / 5, // Normalize to 0-1
       positiveEmotionRatio,
       sensorySeekingRatio,
-      sensoryAvoidingRatio
+      sensoryAvoidingRatio,
     ];
   });
 
@@ -58,9 +65,11 @@ export async function performBaselineClustering(
   const clusters: BaselineCluster[] = [];
   for (let i = 0; i < numClusters; i++) {
     const clusterPoints = normalizedFeatures.filter((_, idx) => assignments[idx] === i);
-    const avgDistance = clusterPoints.length > 0
-      ? clusterPoints.reduce((sum, point) => sum + euclideanDistance(point, centroids[i]), 0) / clusterPoints.length
-      : 0;
+    const avgDistance =
+      clusterPoints.length > 0
+        ? clusterPoints.reduce((sum, point) => sum + euclideanDistance(point, centroids[i]), 0) /
+          clusterPoints.length
+        : 0;
 
     // Determine cluster characteristics
     const description = describeCluster(centroids[i]);
@@ -70,7 +79,7 @@ export async function performBaselineClustering(
       centroid: centroids[i],
       description,
       anomalyScore: avgDistance,
-      isNormal: avgDistance < 0.5 // Threshold for normal behavior
+      isNormal: avgDistance < 0.5, // Threshold for normal behavior
     });
   }
 
@@ -90,7 +99,7 @@ export async function performBaselineClustering(
 async function kMeansClustering(
   data: number[][],
   k: number,
-  maxIterations: number = 100
+  maxIterations: number = 100,
 ): Promise<{ centroids: number[][]; assignments: number[] }> {
   const n = data.length;
   const dimensions = data[0].length;
@@ -128,9 +137,12 @@ async function kMeansClustering(
     for (let j = 0; j < k; j++) {
       const clusterPoints = data.filter((_, idx) => assignments[idx] === j);
       if (clusterPoints.length > 0) {
-        centroids[j] = new Array(dimensions).fill(0).map((_, dim) =>
-          clusterPoints.reduce((sum, point) => sum + point[dim], 0) / clusterPoints.length
-        );
+        centroids[j] = new Array(dimensions)
+          .fill(0)
+          .map(
+            (_, dim) =>
+              clusterPoints.reduce((sum, point) => sum + point[dim], 0) / clusterPoints.length,
+          );
       }
     }
   }
@@ -155,9 +167,11 @@ function initializeCentroids(data: number[][], k: number): number[][] {
 
   // Choose remaining centroids
   for (let i = 1; i < k; i++) {
-    const distances = data.map(point => {
-      const minDist = centroids.reduce((min, centroid) =>
-        Math.min(min, euclideanDistance(point, centroid)), Infinity);
+    const distances = data.map((point) => {
+      const minDist = centroids.reduce(
+        (min, centroid) => Math.min(min, euclideanDistance(point, centroid)),
+        Infinity,
+      );
       return minDist * minDist;
     });
 

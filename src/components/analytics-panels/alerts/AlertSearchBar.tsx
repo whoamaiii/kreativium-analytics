@@ -51,7 +51,7 @@ export const AlertSearchBar = forwardRef<HTMLInputElement, AlertSearchBarProps>(
         aria-label="Search alerts"
       />
     );
-  }
+  },
 );
 
 AlertSearchBar.displayName = 'AlertSearchBar';

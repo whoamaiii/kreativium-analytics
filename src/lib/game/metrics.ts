@@ -62,7 +62,7 @@ export class MetricsAccumulator {
       const idx = (this.writeIndex - total + i + this.buffer.length) % this.buffer.length;
       const s = this.buffer[idx];
       if (!s) continue;
-      const dt = Math.max(0, (i === 0 ? 0 : (s.ts - lastTs)));
+      const dt = Math.max(0, i === 0 ? 0 : s.ts - lastTs);
       if (s.targetProb >= this.threshold) {
         current += dt;
         longest = Math.max(longest, current);
@@ -75,7 +75,17 @@ export class MetricsAccumulator {
       lastTs = s.ts;
     }
 
-    const reactionTimeMs = this.firstPassTs == null ? -1 : Math.max(0, Math.floor(this.firstPassTs - (this.buffer[(this.writeIndex - total + this.buffer.length) % this.buffer.length]?.ts ?? now)));
+    const reactionTimeMs =
+      this.firstPassTs == null
+        ? -1
+        : Math.max(
+            0,
+            Math.floor(
+              this.firstPassTs -
+                (this.buffer[(this.writeIndex - total + this.buffer.length) % this.buffer.length]
+                  ?.ts ?? now),
+            ),
+          );
     const longestStabilityMs = Math.floor(longest);
     const intensityScore = count > 0 ? Math.max(0, Math.min(1, intensityAccum / count)) : 0;
 
@@ -89,8 +99,9 @@ export class MetricsAccumulator {
   }
 }
 
-export function createMetricsAccumulator(threshold: number, bufferSize?: number): MetricsAccumulator {
+export function createMetricsAccumulator(
+  threshold: number,
+  bufferSize?: number,
+): MetricsAccumulator {
   return new MetricsAccumulator({ threshold, bufferSize });
 }
-
-

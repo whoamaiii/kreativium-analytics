@@ -20,7 +20,7 @@ const createMockTrackingEntry = (id: string, timestamp: Date): TrackingEntry => 
   timestamp,
   emotions: [],
   sensoryInputs: [],
-  notes: 'Test entry'
+  notes: 'Test entry',
 });
 
 const createMockEmotionEntry = (id: string, timestamp: Date): EmotionEntry => ({
@@ -30,7 +30,7 @@ const createMockEmotionEntry = (id: string, timestamp: Date): EmotionEntry => ({
   emotion: 'happy',
   intensity: 3,
   triggers: [],
-  notes: ''
+  notes: '',
 });
 
 const createMockSensoryEntry = (id: string, timestamp: Date): SensoryEntry => ({
@@ -40,7 +40,7 @@ const createMockSensoryEntry = (id: string, timestamp: Date): SensoryEntry => ({
   type: 'visual',
   description: 'Test sensory input',
   intensity: 3,
-  response: 'positive'
+  response: 'positive',
 });
 
 describe('Hooks Exhaustive Dependencies Tests', () => {
@@ -49,30 +49,28 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       const mockEntries = [
         createMockTrackingEntry('1', new Date('2024-01-01')),
         createMockTrackingEntry('2', new Date('2024-01-15')),
-        createMockTrackingEntry('3', new Date('2024-02-01'))
+        createMockTrackingEntry('3', new Date('2024-02-01')),
       ];
 
       const mockEmotions = [
         createMockEmotionEntry('1', new Date('2024-01-01')),
-        createMockEmotionEntry('2', new Date('2024-01-15'))
+        createMockEmotionEntry('2', new Date('2024-01-15')),
       ];
 
-      const mockSensory = [
-        createMockSensoryEntry('1', new Date('2024-01-01'))
-      ];
+      const mockSensory = [createMockSensoryEntry('1', new Date('2024-01-01'))];
 
       const { result } = renderHook(() => {
         const [range, setRange] = useState<TimeRange>({
           start: startOfDay(new Date('2024-01-01')),
           end: endOfDay(new Date('2024-01-31')),
-          label: 'January'
+          label: 'January',
         });
 
         const filtering = useDataFiltering(mockEntries, mockEmotions, mockSensory);
-        
+
         return {
           ...filtering,
-          setRange
+          setRange,
         };
       });
 
@@ -81,7 +79,7 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
         result.current.handleRangeChange({
           start: startOfDay(new Date('2024-01-01')),
           end: endOfDay(new Date('2024-01-31')),
-          label: 'January'
+          label: 'January',
         });
       });
 
@@ -94,7 +92,7 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
         result.current.handleRangeChange({
           start: startOfDay(new Date('2024-02-01')),
           end: endOfDay(new Date('2024-02-29')),
-          label: 'February'
+          label: 'February',
         });
       });
 
@@ -107,41 +105,40 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
     it('should recompute when input data arrays change', () => {
       const initialEntries = [createMockTrackingEntry('1', new Date())];
       const { result, rerender } = renderHook(
-        ({ entries }: { entries: TrackingEntry[] }) => 
-          useDataFiltering(entries, [], [])
-      , { initialProps: { entries: initialEntries } });
+        ({ entries }: { entries: TrackingEntry[] }) => useDataFiltering(entries, [], []),
+        { initialProps: { entries: initialEntries } },
+      );
 
       expect(result.current.filteredData.entries).toHaveLength(1);
 
       // Change the entries array
-      const newEntries = [
-        ...initialEntries,
-        createMockTrackingEntry('2', new Date())
-      ];
-      
+      const newEntries = [...initialEntries, createMockTrackingEntry('2', new Date())];
+
       rerender({ entries: newEntries });
-      
+
       expect(result.current.filteredData.entries).toHaveLength(2);
     });
   });
 
   describe('usePerformanceCache', () => {
     it('should properly handle cache operations with stable function references', () => {
-      const { result } = renderHook(() => usePerformanceCache<string>({ 
-        enableStats: true,
-        maxSize: 10
-      }));
+      const { result } = renderHook(() =>
+        usePerformanceCache<string>({
+          enableStats: true,
+          maxSize: 10,
+        }),
+      );
 
       // Test stable function references
       const initialGet = result.current.get;
       const initialSet = result.current.set;
-      
+
       act(() => {
         result.current.set('key1', 'value1', ['tag1']);
       });
 
       expect(result.current.get('key1')).toBe('value1');
-      
+
       // Function references should remain stable
       expect(result.current.get).toBe(initialGet);
       expect(result.current.set).toBe(initialSet);
@@ -154,10 +151,12 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       const t2 = new Date('2024-01-02T00:00:00Z').getTime();
       const t3 = new Date('2024-01-03T00:00:00Z').getTime();
 
-      const { result } = renderHook(() => usePerformanceCache<string>({ 
-        maxSize: 2,
-        enableStats: true
-      }));
+      const { result } = renderHook(() =>
+        usePerformanceCache<string>({
+          maxSize: 2,
+          enableStats: true,
+        }),
+      );
 
       // Fill cache with deterministic timestamps
       nowSpy.mockReturnValueOnce(t1);
@@ -192,9 +191,11 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
     });
 
     it('should update hit rate correctly', () => {
-      const { result } = renderHook(() => usePerformanceCache<string>({ 
-        enableStats: true
-      }));
+      const { result } = renderHook(() =>
+        usePerformanceCache<string>({
+          enableStats: true,
+        }),
+      );
 
       act(() => {
         result.current.set('key1', 'value1');
@@ -215,13 +216,13 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
 
   describe('useAnalyticsWorker', () => {
     // Mock the analytics worker module
-  beforeEach(() => {
+    beforeEach(() => {
       vi.clearAllMocks();
     });
 
     it('should use fresh extractTagsFromData function', async () => {
       const mockExtractTags = vi.fn(() => ['tag1', 'tag2']);
-      
+
       const { result } = renderHook(() => {
         const worker = useAnalyticsWorker({ extractTagsFromData: mockExtractTags });
         return worker;
@@ -231,11 +232,14 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       const mockData = {
         emotions: [],
         sensoryInputs: [],
-        entries: []
+        entries: [],
       };
 
       await act(async () => {
-        await result.current.runAnalysis(mockData, { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
+        await result.current.runAnalysis(mockData, {
+          student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any,
+          useAI: false,
+        });
       });
 
       // The function should have been called at least once
@@ -251,7 +255,7 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       });
 
       expect(result.current.cacheSize).toBe(0);
-      
+
       // Test student-specific invalidation
       act(() => {
         result.current.invalidateCacheForStudent('test-student');
@@ -267,7 +271,7 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       const { result, rerender } = renderHook(() => {
         const [studentId, setStudentId] = useState('student1');
         const [showOnlyUnresolved, setShowOnlyUnresolved] = useState(false);
-        
+
         // Simulate the loadAlerts function from AlertManager
         const loadAlerts = useCallback(() => {
           // Mock implementation
@@ -290,7 +294,7 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       // But if we don't change dependencies, it should remain stable
       rerender();
       const afterRerender = result.current.loadAlerts;
-      
+
       rerender();
       expect(result.current.loadAlerts).toBe(afterRerender);
     });
@@ -302,7 +306,7 @@ describe('Hooks Exhaustive Dependencies Tests', () => {
       const mockI18n = {
         language: 'en',
         changeLanguage: vi.fn(),
-        t: vi.fn((key: string) => key)
+        t: vi.fn((key: string) => key),
       };
 
       // This test would require proper mocking of react-i18next
@@ -319,10 +323,10 @@ describe('Memory Leak Prevention', () => {
 
     const { unmount } = renderHook(() => {
       const [, setTrigger] = useState(0);
-      
+
       // Simulate a component that sets up intervals
       const refreshInterval = setInterval(() => {
-        setTrigger(prev => prev + 1);
+        setTrigger((prev) => prev + 1);
       }, 1000);
 
       return { refreshInterval };
@@ -349,7 +353,7 @@ describe('Memory Leak Prevention', () => {
     const { unmount } = renderHook(() => {
       // Simulate event listener setup
       const handleClick = () => {};
-      
+
       return { handleClick };
     });
 

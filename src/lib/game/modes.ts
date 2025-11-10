@@ -27,5 +27,3 @@ export function getModeLabel(mode: GameMode): string {
       return String(mode);
   }
 }
-
-

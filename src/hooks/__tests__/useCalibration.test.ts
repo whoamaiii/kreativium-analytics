@@ -12,7 +12,3 @@ describe('calibration persistence', () => {
     expect(loaded?.smoothingWindow).toBe(10);
   });
 });
-
-
-
-

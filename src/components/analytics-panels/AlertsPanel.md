@@ -1,6 +1,7 @@
 ## Alerts Panel Integration and Legacy Bridge
 
-This document outlines how the Alerts Panel consumes alerts from both the legacy `TriggerAlert` system and the new `AlertEvent` domain model via the alert bridge.
+This document outlines how the Alerts Panel consumes alerts from both the legacy `TriggerAlert`
+system and the new `AlertEvent` domain model via the alert bridge.
 
 ### Bridge Overview
 
@@ -45,5 +46,3 @@ This document outlines how the Alerts Panel consumes alerts from both the legacy
 
 - All actions have toasts and proper ARIA labels in the Panel
 - Keyboard navigation follows the underlying UI primitives
-
-

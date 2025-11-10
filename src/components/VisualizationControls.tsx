@@ -2,9 +2,22 @@ import React, { memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Toggle } from '@/components/ui/toggle';
 import {
   DropdownMenu,
@@ -30,7 +43,12 @@ import {
   Wifi,
 } from 'lucide-react';
 import { AdvancedFilterPanel } from './AdvancedFilterPanel';
-import { useVisualizationState, ChartType, TimeRange, VisualizationType } from '@/hooks/useVisualizationState';
+import {
+  useVisualizationState,
+  ChartType,
+  TimeRange,
+  VisualizationType,
+} from '@/hooks/useVisualizationState';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import { ExportFormat } from '@/lib/analyticsExport';
 
@@ -88,7 +106,10 @@ const VisualizationControlsComponent = ({
     setFilterCriteria,
   } = visualizationState;
 
-  const motionPrefersReduced = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const motionPrefersReduced =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (motionPrefersReduced && !visualizationState.motionSafe) {
     visualizationState.setMotionSafe(true);
     visualizationState.setProjectionMode('2d');
@@ -149,25 +170,38 @@ const VisualizationControlsComponent = ({
 
           <Sheet open={showFilterPanel} onOpenChange={setShowFilterPanel}>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm" aria-label="Open filters panel" title="Open filters panel">
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="Open filters panel"
+                title="Open filters panel"
+              >
                 <Filter className="h-4 w-4 mr-2" />
                 Filters
-                {Object.keys(filterCriteria).filter(k =>
-                  JSON.stringify(filterCriteria[k as keyof typeof filterCriteria]) !==
-                  JSON.stringify({
-                    dateRange: { start: null, end: null },
-                    emotions: { types: [], intensityRange: [0, 10], includeTriggers: [], excludeTriggers: [] },
-                    sensory: { types: [], responses: [], intensityRange: [0, 10] },
-                    environmental: {
-                      locations: [],
-                      activities: [],
-                      conditions: { noiseLevel: [0, 10], temperature: [15, 30], lighting: [] },
-                      weather: [],
-                      timeOfDay: []
-                    },
-                    patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },
-                    realtime: false
-                  }[k as keyof typeof filterCriteria])
+                {Object.keys(filterCriteria).filter(
+                  (k) =>
+                    JSON.stringify(filterCriteria[k as keyof typeof filterCriteria]) !==
+                    JSON.stringify(
+                      {
+                        dateRange: { start: null, end: null },
+                        emotions: {
+                          types: [],
+                          intensityRange: [0, 10],
+                          includeTriggers: [],
+                          excludeTriggers: [],
+                        },
+                        sensory: { types: [], responses: [], intensityRange: [0, 10] },
+                        environmental: {
+                          locations: [],
+                          activities: [],
+                          conditions: { noiseLevel: [0, 10], temperature: [15, 30], lighting: [] },
+                          weather: [],
+                          timeOfDay: [],
+                        },
+                        patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },
+                        realtime: false,
+                      }[k as keyof typeof filterCriteria],
+                    ),
                 ).length > 0 && (
                   <Badge variant="default" className="ml-1">
                     Active
@@ -237,19 +271,33 @@ const VisualizationControlsComponent = ({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => visualizationState.setProjectionMode(visualizationState.projectionMode === '3d' ? '2d' : '3d')}>
+              <DropdownMenuItem
+                onClick={() =>
+                  visualizationState.setProjectionMode(
+                    visualizationState.projectionMode === '3d' ? '2d' : '3d',
+                  )
+                }
+              >
                 {visualizationState.projectionMode === '3d' ? 'Switch to 2D' : 'Switch to 3D'}
               </DropdownMenuItem>
               {visualizationState.projectionMode === '2d' && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => visualizationState.setProjectionPlane('xy')}>2D: Emotional energy vs Sensory load (XY)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => visualizationState.setProjectionPlane('xz')}>2D: Emotional energy vs Time (XZ)</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => visualizationState.setProjectionPlane('yz')}>2D: Sensory load vs Time (YZ)</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => visualizationState.setProjectionPlane('xy')}>
+                    2D: Emotional energy vs Sensory load (XY)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => visualizationState.setProjectionPlane('xz')}>
+                    2D: Emotional energy vs Time (XZ)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => visualizationState.setProjectionPlane('yz')}>
+                    2D: Sensory load vs Time (YZ)
+                  </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => visualizationState.setMotionSafe(!visualizationState.motionSafe)}>
+              <DropdownMenuItem
+                onClick={() => visualizationState.setMotionSafe(!visualizationState.motionSafe)}
+              >
                 {visualizationState.motionSafe ? 'Disable motion-safe' : 'Enable motion-safe'}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={toggleFullscreen}>
@@ -261,9 +309,11 @@ const VisualizationControlsComponent = ({
                 Picture-in-Picture
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => {
-                setHighlightState({ type: null, id: null, relatedIds: [] });
-              }}>
+              <DropdownMenuItem
+                onClick={() => {
+                  setHighlightState({ type: null, id: null, relatedIds: [] });
+                }}
+              >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Clear Highlights
               </DropdownMenuItem>
@@ -272,30 +322,27 @@ const VisualizationControlsComponent = ({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isExporting} aria-label="Export analytics" title="Export analytics">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isExporting}
+                aria-label="Export analytics"
+                title="Export analytics"
+              >
                 <Download className="h-4 w-4 mr-2" />
                 {isExporting ? 'Exporting...' : 'Export'}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => handleExport('pdf')}
-                disabled={isExporting}
-              >
+              <DropdownMenuItem onClick={() => handleExport('pdf')} disabled={isExporting}>
                 <FileText className="h-4 w-4 mr-2" />
                 Export as PDF
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleExport('csv')}
-                disabled={isExporting}
-              >
+              <DropdownMenuItem onClick={() => handleExport('csv')} disabled={isExporting}>
                 <FileSpreadsheet className="h-4 w-4 mr-2" />
                 Export as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => handleExport('json')}
-                disabled={isExporting}
-              >
+              <DropdownMenuItem onClick={() => handleExport('json')} disabled={isExporting}>
                 <FileJson className="h-4 w-4 mr-2" />
                 Export as JSON
               </DropdownMenuItem>
@@ -313,8 +360,15 @@ const VisualizationControlsComponent = ({
             >
               Chart Type
             </label>
-            <Select value={selectedChartType} onValueChange={(value: ChartType) => setSelectedChartType(value)}>
-              <SelectTrigger id={chartTypeTriggerId} className="w-32" aria-labelledby={chartTypeLabelId}>
+            <Select
+              value={selectedChartType}
+              onValueChange={(value: ChartType) => setSelectedChartType(value)}
+            >
+              <SelectTrigger
+                id={chartTypeTriggerId}
+                className="w-32"
+                aria-labelledby={chartTypeLabelId}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -329,7 +383,7 @@ const VisualizationControlsComponent = ({
           <div className="space-y-2">
             <p className="text-sm font-medium">Select Emotions</p>
             <div className="grid grid-cols-2 gap-2 w-64 p-2 border rounded-md">
-              {availableEmotions.map(emotion => {
+              {availableEmotions.map((emotion) => {
                 const checked = selectedEmotions.includes(emotion);
                 return (
                   <label key={emotion} className="flex items-center gap-2 text-sm">
@@ -337,8 +391,8 @@ const VisualizationControlsComponent = ({
                       checked={checked}
                       onCheckedChange={(v) => {
                         const isChecked = Boolean(v);
-                        setSelectedEmotions(prev =>
-                          isChecked ? [...prev, emotion] : prev.filter(e => e !== emotion)
+                        setSelectedEmotions((prev) =>
+                          isChecked ? [...prev, emotion] : prev.filter((e) => e !== emotion),
                         );
                       }}
                       aria-label={`Toggle ${emotion}`}
@@ -358,8 +412,15 @@ const VisualizationControlsComponent = ({
             >
               Time Range
             </label>
-            <Select value={selectedTimeRange} onValueChange={(value: TimeRange) => setSelectedTimeRange(value)}>
-              <SelectTrigger id={timeRangeTriggerId} className="w-32" aria-labelledby={timeRangeLabelId}>
+            <Select
+              value={selectedTimeRange}
+              onValueChange={(value: TimeRange) => setSelectedTimeRange(value)}
+            >
+              <SelectTrigger
+                id={timeRangeTriggerId}
+                className="w-32"
+                aria-labelledby={timeRangeLabelId}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -391,39 +452,45 @@ const VisualizationControlsComponent = ({
 
         {layoutMode === 'focus' && (
           <div className="mt-4 flex gap-2">
-            {(['trends', 'correlations', 'patterns', '3d', 'timeline'] as VisualizationType[]).map(type => (
-              <Toggle
-                key={type}
-                size="sm"
-                pressed={focusedVisualization === type}
-                onPressedChange={() => setFocusedVisualization(focusedVisualization === type ? null : type)}
-                className="capitalize"
-              >
-                {type === '3d' ? '3D View' : type}
-              </Toggle>
-            ))}
+            {(['trends', 'correlations', 'patterns', '3d', 'timeline'] as VisualizationType[]).map(
+              (type) => (
+                <Toggle
+                  key={type}
+                  size="sm"
+                  pressed={focusedVisualization === type}
+                  onPressedChange={() =>
+                    setFocusedVisualization(focusedVisualization === type ? null : type)
+                  }
+                  className="capitalize"
+                >
+                  {type === '3d' ? '3D View' : type}
+                </Toggle>
+              ),
+            )}
           </div>
         )}
 
         {(layoutMode === 'grid' || layoutMode === 'comparison') && (
           <div className="mt-4 flex gap-2">
-            {(['trends', 'correlations', 'patterns', '3d', 'timeline'] as VisualizationType[]).map(type => (
-              <Toggle
-                key={type}
-                size="sm"
-                pressed={selectedVisualizations.includes(type)}
-                onPressedChange={(pressed) => {
-                  if (pressed) {
-                    setSelectedVisualizations([...selectedVisualizations, type]);
-                  } else {
-                    setSelectedVisualizations(selectedVisualizations.filter(v => v !== type));
-                  }
-                }}
-                className="capitalize"
-              >
-                {type === '3d' ? '3D View' : type}
-              </Toggle>
-            ))}
+            {(['trends', 'correlations', 'patterns', '3d', 'timeline'] as VisualizationType[]).map(
+              (type) => (
+                <Toggle
+                  key={type}
+                  size="sm"
+                  pressed={selectedVisualizations.includes(type)}
+                  onPressedChange={(pressed) => {
+                    if (pressed) {
+                      setSelectedVisualizations([...selectedVisualizations, type]);
+                    } else {
+                      setSelectedVisualizations(selectedVisualizations.filter((v) => v !== type));
+                    }
+                  }}
+                  className="capitalize"
+                >
+                  {type === '3d' ? '3D View' : type}
+                </Toggle>
+              ),
+            )}
           </div>
         )}
       </CardContent>

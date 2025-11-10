@@ -18,5 +18,3 @@ test.describe('Emotion Game', () => {
     expect(Number.isFinite(Number(max))).toBeTruthy();
   });
 });
-
-

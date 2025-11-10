@@ -15,21 +15,14 @@ export {
   generateConfidenceExplanation,
   getTrendSeverity,
   getEmotionTrendRecommendations,
-  getSensoryTrendRecommendations
+  getSensoryTrendRecommendations,
 } from './trends';
 
 // Export all anomaly detection functionality
-export {
-  type AnomalyDetection,
-  detectAnomalies,
-  getAnomalyRecommendations
-} from './anomalies';
+export { type AnomalyDetection, detectAnomalies, getAnomalyRecommendations } from './anomalies';
 
 // Export all correlation analysis functionality
-export {
-  type CorrelationMatrix,
-  generateCorrelationMatrix
-} from './correlations';
+export { type CorrelationMatrix, generateCorrelationMatrix } from './correlations';
 
 // Export all prediction functionality
 export {
@@ -39,11 +32,8 @@ export {
   assessRisks,
   getGoalRecommendations,
   getMLEmotionRecommendations,
-  getMLSensoryRecommendations
+  getMLSensoryRecommendations,
 } from './predictions';
 
 // Export utility functions
-export {
-  groupSensoryByDay,
-  convertLightingToNumeric
-} from './utils';
+export { groupSensoryByDay, convertLightingToNumeric } from './utils';

@@ -7,7 +7,13 @@ vi.mock('@/lib/dataValidation', () => ({
 }));
 
 import { describe, it, expect } from 'vitest';
-import { generateMockStudents, generateEmotionEntry, generateSensoryEntry, generateTrackingEntry, generateAllMockData } from './mockDataGenerator';
+import {
+  generateMockStudents,
+  generateEmotionEntry,
+  generateSensoryEntry,
+  generateTrackingEntry,
+  generateAllMockData,
+} from './mockDataGenerator';
 import { Student } from '@/types/student';
 
 describe('Mock Data Generator', () => {

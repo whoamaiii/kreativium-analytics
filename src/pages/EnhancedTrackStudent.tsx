@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { SmartDataEntry } from "@/components/SmartDataEntry";
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/student";
-import { dataStorage } from "@/lib/dataStorage";
-import { ArrowLeft, Save, X, Clock, CheckCircle } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { useTranslation } from "@/hooks/useTranslation";
-import { analyticsManager } from "@/lib/analyticsManager";
-import { format } from "date-fns";
-import { logger } from "@/lib/logger";
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { SmartDataEntry } from '@/components/SmartDataEntry';
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
+import { dataStorage } from '@/lib/dataStorage';
+import { ArrowLeft, Save, X, Clock, CheckCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/useTranslation';
+import { analyticsManager } from '@/lib/analyticsManager';
+import { format } from 'date-fns';
+import { logger } from '@/lib/logger';
 
 const EnhancedTrackStudent = () => {
   const { studentId } = useParams();
@@ -21,7 +21,7 @@ const EnhancedTrackStudent = () => {
   const [student, setStudent] = useState<Student | null>(null);
   const [sessionEmotions, setSessionEmotions] = useState<EmotionEntry[]>([]);
   const [sessionSensoryInputs, setSessionSensoryInputs] = useState<SensoryEntry[]>([]);
-  const [generalNotes, setGeneralNotes] = useState("");
+  const [generalNotes, setGeneralNotes] = useState('');
   const [sessionStartTime] = useState(new Date());
   const [recentData, setRecentData] = useState<{
     emotions: EmotionEntry[];
@@ -49,12 +49,12 @@ const EnhancedTrackStudent = () => {
         .slice(0, 10); // Get last 10 sessions
 
       // Flatten recent emotions and sensory inputs
-      const recentEmotions = studentEntries.flatMap(entry => entry.emotions);
-      const recentSensoryInputs = studentEntries.flatMap(entry => entry.sensoryInputs);
+      const recentEmotions = studentEntries.flatMap((entry) => entry.emotions);
+      const recentSensoryInputs = studentEntries.flatMap((entry) => entry.sensoryInputs);
 
       setRecentData({
         emotions: recentEmotions,
-        sensoryInputs: recentSensoryInputs
+        sensoryInputs: recentSensoryInputs,
       });
     } catch (error) {
       logger.error('Failed to load student data', { error });
@@ -67,20 +67,26 @@ const EnhancedTrackStudent = () => {
     const newEmotion: EmotionEntry = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
-      ...emotion
+      ...emotion,
     };
-    setSessionEmotions(prev => [...prev, newEmotion]);
-    toast.success(String(tTracking('emotions.added', { emotion: emotion.emotion, intensity: emotion.intensity })));
+    setSessionEmotions((prev) => [...prev, newEmotion]);
+    toast.success(
+      String(
+        tTracking('emotions.added', { emotion: emotion.emotion, intensity: emotion.intensity }),
+      ),
+    );
   };
 
   const handleSensoryAdd = (sensory: Omit<SensoryEntry, 'id' | 'timestamp'>) => {
     const newSensory: SensoryEntry = {
       id: crypto.randomUUID(),
       timestamp: new Date(),
-      ...sensory
+      ...sensory,
     };
-    setSessionSensoryInputs(prev => [...prev, newSensory]);
-    toast.success(String(tTracking('sensory.added', { type: sensory.type, response: sensory.response })));
+    setSessionSensoryInputs((prev) => [...prev, newSensory]);
+    toast.success(
+      String(tTracking('sensory.added', { type: sensory.type, response: sensory.response })),
+    );
   };
 
   const handleSaveSession = async () => {
@@ -103,11 +109,11 @@ const EnhancedTrackStudent = () => {
           roomConditions: {
             noiseLevel: 0,
             lighting: '',
-            temperature: 0
+            temperature: 0,
           },
-          socialContext: ''
+          socialContext: '',
         },
-        notes: generalNotes
+        notes: generalNotes,
       };
 
       dataStorage.saveTrackingEntry(sessionData);
@@ -137,17 +143,17 @@ const EnhancedTrackStudent = () => {
   };
 
   const removeEmotion = (id: string) => {
-    setSessionEmotions(prev => prev.filter(e => e.id !== id));
+    setSessionEmotions((prev) => prev.filter((e) => e.id !== id));
   };
 
   const removeSensory = (id: string) => {
-    setSessionSensoryInputs(prev => prev.filter(s => s.id !== id));
+    setSessionSensoryInputs((prev) => prev.filter((s) => s.id !== id));
   };
 
   if (!student) {
     return (
       <div className="min-h-screen bg-background font-dyslexia flex items-center justify-center">
-          <div className="text-center">
+        <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">{String(tCommon('status.loading'))}</h1>
           <div className="animate-pulse">{String(tCommon('loading_student_data'))}</div>
         </div>
@@ -155,7 +161,9 @@ const EnhancedTrackStudent = () => {
     );
   }
 
-  const sessionDuration = Math.round((new Date().getTime() - sessionStartTime.getTime()) / 1000 / 60);
+  const sessionDuration = Math.round(
+    (new Date().getTime() - sessionStartTime.getTime()) / 1000 / 60,
+  );
 
   return (
     <div className="min-h-screen bg-background font-dyslexia">
@@ -173,7 +181,9 @@ const EnhancedTrackStudent = () => {
               {String(tStudent('profile.backToProfile'))}
             </Button>
             <div>
-              <h1 className="text-xl font-bold">{String(tTracking('session.title', { studentName: student.name }))}</h1>
+              <h1 className="text-xl font-bold">
+                {String(tTracking('session.title', { studentName: student.name }))}
+              </h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 {String(tTracking('session.duration', { minutes: sessionDuration }))}
@@ -185,7 +195,7 @@ const EnhancedTrackStudent = () => {
               <X className="h-4 w-4 mr-2" />
               {String(tTracking('session.cancelSession'))}
             </Button>
-            <Button 
+            <Button
               onClick={handleSaveSession}
               disabled={sessionEmotions.length === 0 && sessionSensoryInputs.length === 0}
             >
@@ -209,17 +219,24 @@ const EnhancedTrackStudent = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{sessionEmotions.length}</div>
-                <div className="text-sm text-muted-foreground">{String(tStudent('interface.emotionsTracked'))}</div>
+                <div className="text-sm text-muted-foreground">
+                  {String(tStudent('interface.emotionsTracked'))}
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">{sessionSensoryInputs.length}</div>
-                <div className="text-sm text-muted-foreground">{String(tStudent('interface.sensoryInputs'))}</div>
+                <div className="text-sm text-muted-foreground">
+                  {String(tStudent('interface.sensoryInputs'))}
+                </div>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary">
-                  {sessionDuration}{String(tTracking('session.minutesSuffix'))}
+                  {sessionDuration}
+                  {String(tTracking('session.minutesSuffix'))}
                 </div>
-                <div className="text-sm text-muted-foreground">{String(tTracking('session.sessionTime'))}</div>
+                <div className="text-sm text-muted-foreground">
+                  {String(tTracking('session.sessionTime'))}
+                </div>
               </div>
             </div>
             {sessionEmotions.length === 0 && sessionSensoryInputs.length === 0 && (
@@ -249,14 +266,20 @@ const EnhancedTrackStudent = () => {
               {/* Current Session Emotions */}
               {sessionEmotions.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2">{String(tTracking('session.emotionsThisSession'))}</h4>
+                  <h4 className="font-medium mb-2">
+                    {String(tTracking('session.emotionsThisSession'))}
+                  </h4>
                   <div className="space-y-2">
                     {sessionEmotions.map((emotion) => (
-                      <div key={emotion.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div
+                        key={emotion.id}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="font-medium">{emotion.emotion}</div>
                           <div className="text-sm text-muted-foreground">
-                            {String(tTracking('emotions.intensity'))}: {emotion.intensity}{String(tTracking('emotions.outOf', { max: 5 }))}
+                            {String(tTracking('emotions.intensity'))}: {emotion.intensity}
+                            {String(tTracking('emotions.outOf', { max: 5 }))}
                           </div>
                           {emotion.context && (
                             <div className="text-sm text-muted-foreground">
@@ -267,11 +290,7 @@ const EnhancedTrackStudent = () => {
                             {format(emotion.timestamp, 'HH:mm')}
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeEmotion(emotion.id)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => removeEmotion(emotion.id)}>
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
@@ -283,10 +302,15 @@ const EnhancedTrackStudent = () => {
               {/* Current Session Sensory Inputs */}
               {sessionSensoryInputs.length > 0 && (
                 <div>
-                  <h4 className="font-medium mb-2">{String(tTracking('session.sensoryInputsThisSession'))}</h4>
+                  <h4 className="font-medium mb-2">
+                    {String(tTracking('session.sensoryInputsThisSession'))}
+                  </h4>
                   <div className="space-y-2">
                     {sessionSensoryInputs.map((sensory) => (
-                      <div key={sensory.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                      <div
+                        key={sensory.id}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      >
                         <div className="flex items-center gap-3">
                           <div className="font-medium">{sensory.type}</div>
                           <div className="text-sm text-muted-foreground">
@@ -301,11 +325,7 @@ const EnhancedTrackStudent = () => {
                             {format(sensory.timestamp, 'HH:mm')}
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSensory(sensory.id)}
-                        >
+                        <Button variant="ghost" size="sm" onClick={() => removeSensory(sensory.id)}>
                           <X className="h-3 w-3" />
                         </Button>
                       </div>
@@ -324,7 +344,9 @@ const EnhancedTrackStudent = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Label htmlFor="general-notes">{String(tTracking('session.generalNotesLabel'))}</Label>
+              <Label htmlFor="general-notes">
+                {String(tTracking('session.generalNotesLabel'))}
+              </Label>
               <Textarea
                 id="general-notes"
                 value={generalNotes}

@@ -1,16 +1,16 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { useTranslation } from "@/hooks/useTranslation";
-import { SIGN_ITEMS } from "@/lib/tegn/signData";
-import { Input } from "@/components/ui/input";
-import { useMemo, useState } from "react";
+import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/useTranslation';
+import { SIGN_ITEMS } from '@/lib/tegn/signData';
+import { Input } from '@/components/ui/input';
+import { useMemo, useState } from 'react';
 
 const SignIndexPage = () => {
   const { tCommon } = useTranslation();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return SIGN_ITEMS;
-    return SIGN_ITEMS.filter(item => item.word.toLowerCase().includes(q));
+    return SIGN_ITEMS.filter((item) => item.word.toLowerCase().includes(q));
   }, [query]);
 
   return (
@@ -23,7 +23,9 @@ const SignIndexPage = () => {
       </Card>
 
       <div className="space-y-2">
-        <label htmlFor="sign-search" className="text-sm text-foreground">{String(tCommon('tegn.searchLabel'))}</label>
+        <label htmlFor="sign-search" className="text-sm text-foreground">
+          {String(tCommon('tegn.searchLabel'))}
+        </label>
         <Input
           id="sign-search"
           type="text"
@@ -38,10 +40,17 @@ const SignIndexPage = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {filtered.map(sign => (
+        {filtered.map((sign) => (
           <figure key={sign.id} className="glass-card rounded-2xl p-3 border border-primary/10">
-            <img src={sign.imageUrl} alt={sign.alt} className="w-full h-28 object-contain" loading="lazy" />
-            <figcaption className="mt-2 text-sm text-center text-foreground">{sign.word}</figcaption>
+            <img
+              src={sign.imageUrl}
+              alt={sign.alt}
+              className="w-full h-28 object-contain"
+              loading="lazy"
+            />
+            <figcaption className="mt-2 text-sm text-center text-foreground">
+              {sign.word}
+            </figcaption>
           </figure>
         ))}
       </div>
@@ -50,5 +59,3 @@ const SignIndexPage = () => {
 };
 
 export default SignIndexPage;
-
-

@@ -8,11 +8,7 @@
  * @module insights
  */
 
-export {
-  getInsights,
-  buildInsightsCacheKey,
-  buildInsightsTask,
-} from './insightsOrchestrator';
+export { getInsights, buildInsightsCacheKey, buildInsightsTask } from './insightsOrchestrator';
 
 // Re-export types for convenience
 export type { InsightsOptions, AnalyticsResult } from '@/types/insights';

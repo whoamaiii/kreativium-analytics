@@ -16,7 +16,10 @@ export interface AxeLogOptions {
 
 // Runs Axe while hiding common app chrome (e.g., toast containers) to avoid incidental violations.
 // You can pass additional selectors to hide via options.hideSelectors.
-export async function runAxeWithAppChromeHidden(page: Page, options: AxeRunOptions = {}): Promise<Result> {
+export async function runAxeWithAppChromeHidden(
+  page: Page,
+  options: AxeRunOptions = {},
+): Promise<Result> {
   const hideSelectors = [
     '[data-sonner-toaster]', // sonner toast container
     // add more chrome here if needed
@@ -24,7 +27,7 @@ export async function runAxeWithAppChromeHidden(page: Page, options: AxeRunOptio
   ];
 
   if (hideSelectors.length > 0) {
-    const css = hideSelectors.map(sel => `${sel}{display:none !important}`).join('\n');
+    const css = hideSelectors.map((sel) => `${sel}{display:none !important}`).join('\n');
     await page.addStyleTag({ content: css });
   }
 
@@ -40,7 +43,7 @@ export async function runAxeWithAppChromeHidden(page: Page, options: AxeRunOptio
 export async function writeAxeViolations(
   name: string,
   result: Result,
-  opts: AxeLogOptions = {}
+  opts: AxeLogOptions = {},
 ): Promise<string> {
   const outDir = opts.outDir || 'test-results';
   const ts = new Date().toISOString().replace(/[:.]/g, '-');
@@ -53,4 +56,3 @@ export async function writeAxeViolations(
   await fs.writeFile(full, JSON.stringify(result.violations, null, 2), 'utf8');
   return full;
 }
-

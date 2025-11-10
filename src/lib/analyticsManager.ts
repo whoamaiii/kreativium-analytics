@@ -1,17 +1,25 @@
-import { Student } from "@/types/student";
-import { dataStorage, IDataStorage } from "@/lib/dataStorage";
-import { ANALYTICS_CONFIG, DEFAULT_ANALYTICS_CONFIG, analyticsConfig, STORAGE_KEYS } from "@/lib/analyticsConfig";
-import { logger } from "@/lib/logger";
-import type { AnalyticsResults } from "@/types/analytics";
-import type { AnalysisEngine } from "@/lib/analysis";
+import { Student } from '@/types/student';
+import { dataStorage, IDataStorage } from '@/lib/dataStorage';
+import {
+  ANALYTICS_CONFIG,
+  DEFAULT_ANALYTICS_CONFIG,
+  analyticsConfig,
+  STORAGE_KEYS,
+} from '@/lib/analyticsConfig';
+import { logger } from '@/lib/logger';
+import type { AnalyticsResults } from '@/types/analytics';
+import type { AnalysisEngine } from '@/lib/analysis';
 
-import { AnalyticsRunner } from "@/lib/analytics/runner";
-import type { AnalyticsResultsCompat } from "@/lib/analytics/types";
-import { getProfileMap, initializeStudentProfile, saveProfiles } from "@/lib/analyticsProfiles";
-import { analyticsCoordinator } from "@/lib/analyticsCoordinator";
-import type { StudentAnalyticsProfile } from "@/lib/analyticsProfiles";
+import { AnalyticsRunner } from '@/lib/analytics/runner';
+import type { AnalyticsResultsCompat } from '@/lib/analytics/types';
+import { getProfileMap, initializeStudentProfile, saveProfiles } from '@/lib/analyticsProfiles';
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import type { StudentAnalyticsProfile } from '@/lib/analyticsProfiles';
 // Legacy task builders (to be deprecated)
-export { createInsightsTask as buildTask, createInsightsCacheKey as buildCacheKey } from '@/lib/analyticsTasks';
+export {
+  createInsightsTask as buildTask,
+  createInsightsCacheKey as buildCacheKey,
+} from '@/lib/analyticsTasks';
 
 // Extracted modules (Phase 2a refactoring)
 import { createAnalysisEngine } from '@/lib/analytics/engine';
@@ -21,7 +29,7 @@ import {
   clearStudentCaches,
   clearManagerCache,
   notifyWorkers,
-  isManagerTtlCacheDisabled
+  isManagerTtlCacheDisabled,
 } from '@/lib/analytics/cache';
 import { clearAnalyticsLocalStorage } from '@/lib/analytics/cache/localStorageCleaner';
 
@@ -36,39 +44,51 @@ import {
 
 /**
  * Ensures universal analytics initialization for all students in the system.
- * 
+ *
  * @async
  * @function ensureUniversalAnalyticsInitialization
  * @returns {Promise<void>} A promise that resolves when initialization is complete
- * 
+ *
  * @description This function handles the complete analytics initialization process:
  * 1. **Mock Data Generation**: If no students exist, generates a minimal set of 3 mock students
  *    to seed the analytics system with baseline data.
  * 2. **Minimum Data Thresholds**: Checks each student against configurable thresholds:
  *    - EMOTION_ENTRIES: Minimum emotion entries required
- *    - SENSORY_ENTRIES: Minimum sensory input entries required  
+ *    - SENSORY_ENTRIES: Minimum sensory input entries required
  *    - TRACKING_ENTRIES: Minimum tracking session entries required
  * 3. **Cache Warming Strategy**: For students meeting minimum data requirements, performs
  *    lightweight precomputation of analytics to populate caches:
  *    - Emotion pattern analysis
  *    - Sensory pattern analysis
  *    - Environmental correlation analysis (if sufficient tracking entries)
- * 
+ *
  * The function gracefully handles errors and treats cache warming as best-effort.
  * Configuration is loaded from live analytics config with fallback to defaults.
  */
 export const ensureUniversalAnalyticsInitialization = async (): Promise<void> => {
   try {
     // Ensure profiles for existing students; no auto generation of mock data here
-    const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
+    const cfg = (() => {
+      try {
+        return analyticsConfig.getConfig();
+      } catch {
+        return null;
+      }
+    })();
     // Minimum data thresholds source:
     // - confidence.THRESHOLDS.EMOTION_ENTRIES
     // - confidence.THRESHOLDS.SENSORY_ENTRIES
     // - confidence.THRESHOLDS.TRACKING_ENTRIES
     // Read from live analyticsConfig with safe fallback to defaults (Task 8, rule j9uS...).
-    const minEmotions = cfg?.confidence?.THRESHOLDS?.EMOTION_ENTRIES ?? ANALYTICS_CONFIG.confidence.THRESHOLDS.EMOTION_ENTRIES;
-    const minSensory = cfg?.confidence?.THRESHOLDS?.SENSORY_ENTRIES ?? ANALYTICS_CONFIG.confidence.THRESHOLDS.SENSORY_ENTRIES;
-    const minTracking = cfg?.confidence?.THRESHOLDS?.TRACKING_ENTRIES ?? ANALYTICS_CONFIG.confidence.THRESHOLDS.TRACKING_ENTRIES;
+    const minEmotions =
+      cfg?.confidence?.THRESHOLDS?.EMOTION_ENTRIES ??
+      ANALYTICS_CONFIG.confidence.THRESHOLDS.EMOTION_ENTRIES;
+    const minSensory =
+      cfg?.confidence?.THRESHOLDS?.SENSORY_ENTRIES ??
+      ANALYTICS_CONFIG.confidence.THRESHOLDS.SENSORY_ENTRIES;
+    const minTracking =
+      cfg?.confidence?.THRESHOLDS?.TRACKING_ENTRIES ??
+      ANALYTICS_CONFIG.confidence.THRESHOLDS.TRACKING_ENTRIES;
 
     const allStudents = dataStorage.getStudents();
     for (const student of allStudents) {
@@ -77,13 +97,13 @@ export const ensureUniversalAnalyticsInitialization = async (): Promise<void> =>
 
       // Optional: evaluate minimum data for future warming decisions
       const tracking = dataStorage.getEntriesForStudent(student.id);
-      const emotions = tracking.flatMap(t => t.emotions ?? []);
-      const sensoryInputs = tracking.flatMap(t => t.sensoryInputs ?? []);
+      const emotions = tracking.flatMap((t) => t.emotions ?? []);
+      const sensoryInputs = tracking.flatMap((t) => t.sensoryInputs ?? []);
 
       const hasMinimumData =
-        (emotions.length) >= minEmotions ||
-        (sensoryInputs.length) >= minSensory ||
-        (tracking.length) >= minTracking;
+        emotions.length >= minEmotions ||
+        sensoryInputs.length >= minSensory ||
+        tracking.length >= minTracking;
 
       if (hasMinimumData) {
         // Warming handled elsewhere; no direct action here
@@ -112,25 +132,25 @@ type AnalyticsProfileMap = Map<string, StudentAnalyticsProfile>;
 
 /**
  * Safely parses analytics profiles from localStorage with validation and error handling.
- * 
+ *
  * @function loadProfilesFromStorage
  * @param {string | null} storedProfiles - The stringified profiles from localStorage
  * @returns {AnalyticsProfileMap} A map of valid student profiles, keyed by student ID
- * 
+ *
  * @description This function provides robust loading of persisted analytics profiles:
- * 
+ *
  * **Validation Process**:
  * - Checks if input is null/empty, returns empty Map if so
  * - Attempts JSON parsing with try/catch for malformed data
  * - Runtime type validation for each profile object
  * - Validates required fields: studentId (string) and isInitialized (boolean)
  * - Converts date strings back to Date objects for lastAnalyzedAt field
- * 
+ *
  * **Error Handling**:
  * - Catches and logs JSON parsing errors
  * - Skips invalid profile entries rather than failing completely
  * - Returns empty Map on complete failure to ensure app stability
- * 
+ *
  * This defensive approach ensures the analytics system remains functional even
  * if localStorage data becomes corrupted or outdated.
  */
@@ -143,35 +163,35 @@ function loadProfilesFromStorage(_storedProfiles: string | null): AnalyticsProfi
 
 /**
  * Singleton service managing all analytics operations for the Sensory Tracker application.
- * 
+ *
  * @class AnalyticsManagerService
  * @singleton
- * 
+ *
  * @description This service orchestrates all analytics-related operations:
- * 
+ *
  * **Singleton Pattern Implementation**:
  * - Single instance ensures consistent state across the application
  * - Lazy initialization with getInstance() method
  * - Private constructor prevents direct instantiation
  * - Thread-safe in JavaScript's single-threaded environment
- * 
+ *
  * **Core Responsibilities**:
  * 1. **Profile Management**: Maintains analytics profiles for each student
  * 2. **Caching Strategy**: Implements TTL-based caching to optimize performance
  * 3. **Analytics Orchestration**: Coordinates pattern analysis, correlations, and predictions
  * 4. **Data Persistence**: Manages localStorage for profile persistence
- * 
+ *
  * **Caching Behavior**:
  * - Cache entries stored with timestamp
  * - TTL (Time To Live) configured via ANALYTICS_CONFIG.CACHE_TTL
  * - Automatic cache invalidation on data updates
  * - Manual cache clearing available per student or globally
- * 
+ *
  * **Performance Optimizations**:
  * - Lazy loading of analytics data
  * - Batch processing for multiple students
  * - Graceful error handling with Promise.allSettled
- * 
+ *
  * @example
  * const manager = AnalyticsManagerService.getInstance();
  * const analytics = await manager.getStudentAnalytics(student);
@@ -209,7 +229,7 @@ class AnalyticsManagerService {
    */
   static getInstance(
     storage: IDataStorage = dataStorage,
-    profiles?: AnalyticsProfileMap
+    profiles?: AnalyticsProfileMap,
   ): AnalyticsManagerService {
     if (!AnalyticsManagerService.instance) {
       // Load profiles from the analyticsProfiles module which handles storage
@@ -221,35 +241,37 @@ class AnalyticsManagerService {
 
   /**
    * Initializes analytics profile for a new student.
-   * 
+   *
    * @public
    * @method initializeStudentAnalytics
    * @param {string} studentId - Unique identifier for the student
    * @returns {void}
-   * 
+   *
    * @description Creates and persists an analytics profile for a student if not already initialized.
-   * 
+   *
    * **Profile Initialization**:
    * - Checks if profile already exists (idempotent operation)
    * - Creates default profile with all analytics features enabled
    * - Sets minimal data requirements (1 entry each for emotions, sensory, tracking)
    * - Initializes health score to 0 (will be calculated on first analysis)
    * - Persists profile to localStorage immediately
-   * 
+   *
    * **Default Configuration**:
    * - patternAnalysisEnabled: true
    * - correlationAnalysisEnabled: true
    * - predictiveInsightsEnabled: true
    * - anomalyDetectionEnabled: true
    * - alertSystemEnabled: true
-   * 
+   *
    * This method is automatically called when accessing student analytics,
    * ensuring profiles exist before analysis.
    */
   public initializeStudentAnalytics(studentId: string): void {
     try {
       if (!studentId || typeof studentId !== 'string') {
-        logger.warn('[analyticsManager] initializeStudentAnalytics: invalid studentId', { studentId });
+        logger.warn('[analyticsManager] initializeStudentAnalytics: invalid studentId', {
+          studentId,
+        });
         return;
       }
 
@@ -286,40 +308,43 @@ class AnalyticsManagerService {
 
   /**
    * Retrieves comprehensive analytics for a specific student.
-   * 
+   *
    * @public
    * @async
    * @method getStudentAnalytics
    * @param {Student} student - The student object to analyze
    * @param {{ useAI?: boolean }} [options] - Optional runtime toggle for AI analysis
    * @returns {Promise<AnalyticsResults>} Complete analytics results including patterns, correlations, and insights
-   * 
+   *
    * @description Main entry point for retrieving student analytics with intelligent caching.
-   * 
+   *
    * **Caching Strategy**:
    * 1. Ensures student profile is initialized
    * 2. Checks cache for existing results
    * 3. Returns cached results if within TTL (Time To Live)
    * 4. Generates fresh analytics if cache miss or expired
    * 5. Updates cache with new results and timestamp
-   * 
+   *
    * **TTL Behavior**:
    * - Default TTL: Configured in ANALYTICS_CONFIG.CACHE_TTL
    * - Cache validity: timestamp + TTL > current time
    * - Expired entries trigger regeneration
-   * 
+   *
    * **Side Effects**:
    * - Updates lastAnalyzedAt timestamp in profile
    * - Recalculates and updates health score
    * - Persists updated profile to localStorage
-   * 
+   *
    * @throws {Error} If analytics generation fails (wrapped from generateAnalytics)
-   * 
+   *
    * @example
    * const results = await analyticsManager.getStudentAnalytics(student);
    * logger.info(`Confidence: ${results.confidence * 100}%`);
    */
-  public async getStudentAnalytics(student: Student, options?: { useAI?: boolean }): Promise<AnalyticsResults> {
+  public async getStudentAnalytics(
+    student: Student,
+    options?: { useAI?: boolean },
+  ): Promise<AnalyticsResults> {
     this.initializeStudentAnalytics(student.id);
 
     // Check TTL cache for existing results (unless disabled)
@@ -329,7 +354,13 @@ class AnalyticsManagerService {
       if (cached) {
         const now = new Date();
         const cacheAge = now.getTime() - cached.timestamp.getTime();
-        const liveCfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
+        const liveCfg = (() => {
+          try {
+            return analyticsConfig.getConfig();
+          } catch {
+            return null;
+          }
+        })();
         const ttl = liveCfg?.cache?.ttl ?? ANALYTICS_CONFIG.cache.ttl;
         const preferAI = options?.useAI === true;
         const preferHeuristic = options?.useAI === false;
@@ -345,10 +376,15 @@ class AnalyticsManagerService {
             const nowMs = Date.now();
             const last = __ttlDeprecationWarnWindow.get(key) ?? 0;
             if (nowMs - last > 60_000) {
-              logger.warn('[analyticsManager] Using deprecated manager TTL cache for student. Migrate to useAnalyticsWorker + usePerformanceCache. Set VITE_DISABLE_MANAGER_TTL_CACHE=true to test disabling.', { studentId: student.id });
+              logger.warn(
+                '[analyticsManager] Using deprecated manager TTL cache for student. Migrate to useAnalyticsWorker + usePerformanceCache. Set VITE_DISABLE_MANAGER_TTL_CACHE=true to test disabling.',
+                { studentId: student.id },
+              );
               __ttlDeprecationWarnWindow.set(key, nowMs);
             }
-          } catch { /* noop */ }
+          } catch {
+            /* noop */
+          }
 
           // When runtime explicitly requests heuristic (useAI=false) and cache holds AI, bypass cache
           if (preferHeuristic) {
@@ -376,7 +412,9 @@ class AnalyticsManagerService {
     } else {
       try {
         logger.info('[analyticsManager] Manager TTL cache disabled; not storing results.');
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     }
 
     const profile = this.analyticsProfiles.get(student.id);
@@ -401,7 +439,13 @@ class AnalyticsManagerService {
    */
   // Delegated to extracted module (Phase 2a refactoring)
   private calculateHealthScore(results: AnalyticsResultsCompat): number {
-    const liveCfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
+    const liveCfg = (() => {
+      try {
+        return analyticsConfig.getConfig();
+      } catch {
+        return null;
+      }
+    })();
     return calculateHealthScore(results, liveCfg ?? undefined);
   }
 
@@ -419,7 +463,10 @@ class AnalyticsManagerService {
       this.analyticsCache.delete(student.id);
       await this.getStudentAnalytics(student);
     } catch (error) {
-      logger.error('[analyticsManager] triggerAnalyticsForStudent failed', { error, studentId: student?.id });
+      logger.error('[analyticsManager] triggerAnalyticsForStudent failed', {
+        error,
+        studentId: student?.id,
+      });
       // fail-soft: continue without triggering analytics to prevent cascade failures
     }
   }
@@ -485,7 +532,9 @@ class AnalyticsManagerService {
    *
    * Delegated to extracted module (Phase 2a refactoring)
    */
-  public async clearAllAnalyticsCaches(broadcast = true): Promise<{ ok: boolean; summary: Record<string, unknown> }> {
+  public async clearAllAnalyticsCaches(
+    broadcast = true,
+  ): Promise<{ ok: boolean; summary: Record<string, unknown> }> {
     return clearAllCaches(this.analyticsCache, broadcast);
   }
 
@@ -504,7 +553,11 @@ class AnalyticsManagerService {
    */
   private saveAnalyticsProfiles(): void {
     // Deprecated in favor of analyticsProfiles.saveProfiles()
-    try { saveProfiles(); } catch (error) { logger.error('Error saving analytics profiles:', error); }
+    try {
+      saveProfiles();
+    } catch (error) {
+      logger.error('Error saving analytics profiles:', error);
+    }
   }
 
   /**
@@ -538,6 +591,12 @@ class AnalyticsManagerService {
  * Use this for orchestrating analytics without creating new instances.
  */
 export const analyticsManager = AnalyticsManagerService.getInstance();
+
+/**
+ * Export the class for type definitions and testing.
+ * In production, use the singleton instance `analyticsManager` instead.
+ */
+export { AnalyticsManagerService as AnalyticsManager };
 
 /**
  * Thin orchestrator-style API (gradual migration target)

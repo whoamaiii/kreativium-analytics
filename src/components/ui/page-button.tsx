@@ -23,4 +23,3 @@ export const PageButton = memo(({ pageNum, isCurrent, onClick }: PageButtonProps
     </Button>
   );
 });
-

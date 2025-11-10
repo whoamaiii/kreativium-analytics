@@ -28,7 +28,12 @@ export default function EmotionLab() {
   const modelBaseUrl = useMemo(() => '/models', []);
 
   // Workerized detector hook (idle unless toggled and camera active)
-  const workerDet = useDetector(videoRef, { smoothingWindow: 8, scoreThreshold: 0.5, targetFps: 20, modelBaseUrl });
+  const workerDet = useDetector(videoRef, {
+    smoothingWindow: 8,
+    scoreThreshold: 0.5,
+    targetFps: 20,
+    modelBaseUrl,
+  });
 
   useEffect(() => {
     let raf = 0;
@@ -96,7 +101,10 @@ export default function EmotionLab() {
             let top = 'neutral';
             let topV = 0;
             for (const [k, v] of Object.entries(expressions)) {
-              if (v > topV) { top = k; topV = v; }
+              if (v > topV) {
+                top = k;
+                topV = v;
+              }
             }
             const label = `${translateExpression(top)} ${(topV * 100).toFixed(0)}%`;
             ctx.fillStyle = 'rgba(239,68,68,0.95)';
@@ -117,17 +125,32 @@ export default function EmotionLab() {
 
     raf = requestAnimationFrame(analyze);
     return () => cancelAnimationFrame(raf);
-  }, [consented, cameraActive, modelStatus, modelBaseUrl, showOverlay, useWorkerDetector, workerDet.fps, translateExpression]);
+  }, [
+    consented,
+    cameraActive,
+    modelStatus,
+    modelBaseUrl,
+    showOverlay,
+    useWorkerDetector,
+    workerDet.fps,
+    translateExpression,
+  ]);
 
-  const translateExpression = React.useCallback((key: string): string => {
-    const tKey = `emotionLab.expressions.${key}`;
-    const value = tCommon(tKey);
-    return value === tKey ? key : value;
-  }, [tCommon]);
+  const translateExpression = React.useCallback(
+    (key: string): string => {
+      const tKey = `emotionLab.expressions.${key}`;
+      const value = tCommon(tKey);
+      return value === tKey ? key : value;
+    },
+    [tCommon],
+  );
 
   async function startCamera() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user' },
+        audio: false,
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
@@ -156,8 +179,12 @@ export default function EmotionLab() {
         {String(tCommon('emotionLab.consentText'))}
       </p>
       <div className="flex gap-3">
-        <Button variant="default" onClick={() => setConsented(true)}>{String(tCommon('buttons.confirm'))}</Button>
-        <Button variant="outline" onClick={() => history.back()}>{String(tCommon('buttons.back'))}</Button>
+        <Button variant="default" onClick={() => setConsented(true)}>
+          {String(tCommon('buttons.confirm'))}
+        </Button>
+        <Button variant="outline" onClick={() => history.back()}>
+          {String(tCommon('buttons.back'))}
+        </Button>
       </div>
     </div>
   );
@@ -168,16 +195,24 @@ export default function EmotionLab() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{String(tCommon('navigation.emotionLab'))}</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setUseWorkerDetector(v => !v)}>
+            <Button variant="outline" onClick={() => setUseWorkerDetector((v) => !v)}>
               {useWorkerDetector ? 'Main-thread' : 'Worker'}
             </Button>
-            <Button variant="outline" onClick={() => setShowOverlay(v => !v)}>
-              {showOverlay ? String(tCommon('emotionLab.hideOverlay')) : String(tCommon('emotionLab.showOverlay'))}
+            <Button variant="outline" onClick={() => setShowOverlay((v) => !v)}>
+              {showOverlay
+                ? String(tCommon('emotionLab.hideOverlay'))
+                : String(tCommon('emotionLab.showOverlay'))}
             </Button>
             {cameraActive ? (
-              <Button variant="destructive" onClick={stopCamera}>{String(tCommon('tegn.cameraDisable'))}</Button>
+              <Button variant="destructive" onClick={stopCamera}>
+                {String(tCommon('tegn.cameraDisable'))}
+              </Button>
             ) : (
-              <Button variant="default" onClick={startCamera} disabled={!consented || modelStatus !== 'ready'}>
+              <Button
+                variant="default"
+                onClick={startCamera}
+                disabled={!consented || modelStatus !== 'ready'}
+              >
                 {String(tCommon('tegn.cameraEnable'))}
               </Button>
             )}
@@ -185,9 +220,15 @@ export default function EmotionLab() {
         </div>
 
         <div className="text-sm text-muted-foreground">
-          <span className="mr-3">{String(tCommon('emotionLab.model'))}: {modelStatus}</span>
-          <span className="ml-3">{String(tCommon('emotionLab.origin'))}: {modelsOrigin}</span>
-          <span>{String(tCommon('emotionLab.fps'))}: {fps.toFixed(1)}</span>
+          <span className="mr-3">
+            {String(tCommon('emotionLab.model'))}: {modelStatus}
+          </span>
+          <span className="ml-3">
+            {String(tCommon('emotionLab.origin'))}: {modelsOrigin}
+          </span>
+          <span>
+            {String(tCommon('emotionLab.fps'))}: {fps.toFixed(1)}
+          </span>
           {lastError && <span className="ml-3 text-red-500">{lastError}</span>}
         </div>
 
@@ -224,7 +265,9 @@ export default function EmotionLab() {
               {(!cameraActive || modelStatus !== 'ready') && (
                 <div className="absolute inset-0 grid place-items-center bg-background/40 backdrop-blur-sm">
                   <div className="text-center text-sm text-foreground/80">
-                    {modelStatus !== 'ready' ? String(tCommon('emotionLab.loadingModels')) : String(tCommon('emotionLab.cameraOff'))}
+                    {modelStatus !== 'ready'
+                      ? String(tCommon('emotionLab.loadingModels'))
+                      : String(tCommon('emotionLab.cameraOff'))}
                   </div>
                 </div>
               )}

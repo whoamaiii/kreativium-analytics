@@ -37,7 +37,7 @@ function getSystemRules(profile?: 'iep' | 'default'): string {
   if (profile === 'iep') {
     baseNo.push(
       'Kun pedagogiske anbefalinger. Ingen medisinske/kliniske diagnoser eller råd.',
-      'Tiltak skal kunne gjennomføres i klasserommet og være målbare.'
+      'Tiltak skal kunne gjennomføres i klasserommet og være målbare.',
     );
   }
   return baseNo.join(' ');
@@ -50,14 +50,26 @@ function fmtDate(d?: Date): string | undefined {
 }
 
 function summarizeTimeframe(ctx: StudentAnalysisContext): string {
-  const start = ctx.timeframe?.start instanceof Date ? ctx.timeframe.start : (ctx.timeframe?.start ? new Date(ctx.timeframe.start) : undefined);
-  const end = ctx.timeframe?.end instanceof Date ? ctx.timeframe.end : (ctx.timeframe?.end ? new Date(ctx.timeframe.end) : undefined);
+  const start =
+    ctx.timeframe?.start instanceof Date
+      ? ctx.timeframe.start
+      : ctx.timeframe?.start
+        ? new Date(ctx.timeframe.start)
+        : undefined;
+  const end =
+    ctx.timeframe?.end instanceof Date
+      ? ctx.timeframe.end
+      : ctx.timeframe?.end
+        ? new Date(ctx.timeframe.end)
+        : undefined;
   const tz = ctx.timeframe?.timezone;
   const p = [
     start ? `start=${fmtDate(start)}` : undefined,
     end ? `end=${fmtDate(end)}` : undefined,
     tz ? `tz=${tz}` : undefined,
-  ].filter(Boolean).join(', ');
+  ]
+    .filter(Boolean)
+    .join(', ');
   return p ? `Timeframe: ${p}` : 'Timeframe: full history available';
 }
 
@@ -78,15 +90,27 @@ function sampleSnapshot(ctx: StudentAnalysisContext, maxEntries = 12): string {
   const entries = pickRecent(ctx.entries, maxEntries);
   const lines: string[] = [];
   for (const e of entries) {
-    const em = (e.emotions || []).map(x => `${x.emotion}${typeof x.intensity === 'number' ? `(${x.intensity})` : ''}`).join(', ');
-    const sn = (e.sensoryInputs || []).map(x => `${x.response}${x.intensity ? `(${x.intensity})` : ''}`).join(', ');
-    const env = e.environmentalData ? [
-      e.environmentalData.location,
-      e.environmentalData.classroom?.activity,
-      (typeof e.environmentalData.roomConditions?.noiseLevel === 'number') ? `noise=${e.environmentalData.roomConditions?.noiseLevel}` : undefined,
-      e.environmentalData.weather?.condition,
-    ].filter(Boolean).join(' | ') : '';
-    lines.push(`- ${fmtDate(e.timestamp)} | emotions: [${em}] | sensory: [${sn}]${env ? ` | env: ${env}` : ''}${e.notes ? ` | notes: ${e.notes}` : ''}`);
+    const em = (e.emotions || [])
+      .map((x) => `${x.emotion}${typeof x.intensity === 'number' ? `(${x.intensity})` : ''}`)
+      .join(', ');
+    const sn = (e.sensoryInputs || [])
+      .map((x) => `${x.response}${x.intensity ? `(${x.intensity})` : ''}`)
+      .join(', ');
+    const env = e.environmentalData
+      ? [
+          e.environmentalData.location,
+          e.environmentalData.classroom?.activity,
+          typeof e.environmentalData.roomConditions?.noiseLevel === 'number'
+            ? `noise=${e.environmentalData.roomConditions?.noiseLevel}`
+            : undefined,
+          e.environmentalData.weather?.condition,
+        ]
+          .filter(Boolean)
+          .join(' | ')
+      : '';
+    lines.push(
+      `- ${fmtDate(e.timestamp)} | emotions: [${em}] | sensory: [${sn}]${env ? ` | env: ${env}` : ''}${e.notes ? ` | notes: ${e.notes}` : ''}`,
+    );
   }
   return lines.join('\n');
 }
@@ -94,19 +118,19 @@ function sampleSnapshot(ctx: StudentAnalysisContext, maxEntries = 12): string {
 function summarizeGoals(goals: Goal[], max = 6): string {
   if (!goals?.length) return 'No active goals provided.';
   const pick = goals.slice(0, max);
-  const lines = pick.map(g => `- ${g.title} [${g.category}] status=${g.status} progress=${Math.round(g.progress)}% target=${fmtDate(g.targetDate)}`);
+  const lines = pick.map(
+    (g) =>
+      `- ${g.title} [${g.category}] status=${g.status} progress=${Math.round(g.progress)}% target=${fmtDate(g.targetDate)}`,
+  );
   return lines.join('\n');
 }
 
 export function generateAnalysisPrompt(
   ctx: StudentAnalysisContext,
   evidenceContext?: EvidenceSource[],
-  profile: 'iep' | 'default' = 'default'
+  profile: 'iep' | 'default' = 'default',
 ): LlmPrompt {
-  const header = [
-    summarizeTimeframe(ctx),
-    summarizeCounts(ctx),
-  ].join('\n');
+  const header = [summarizeTimeframe(ctx), summarizeCounts(ctx)].join('\n');
 
   const dataset = [
     'Recent Tracking Snapshot:',
@@ -142,14 +166,18 @@ export function generateAnalysisPrompt(
       'IEP-modus: kun klasseroms-gjennomførbare tiltak; ingen medisinsk rådgivning.',
       'Merk: Dette er pedagogisk veiledning og erstatter ikke medisinsk eller klinisk rådgivning.',
       'IEP-modus: tier må være en av "Tier1"|"Tier2"|"Tier3"; scope må være en av "classroom"|"school".',
-      'IEP-modus: legg SMART-detaljene eksplisitt inn: betingelse/materiell i description, atferd i title/description, kriterier i metrics (målbare indikatorer), tidsramme i timeHorizon.'
+      'IEP-modus: legg SMART-detaljene eksplisitt inn: betingelse/materiell i description, atferd i title/description, kriterier i metrics (målbare indikatorer), tidsramme i timeHorizon.',
     );
   }
 
   if (evidenceBlock) {
-    baseInstructions.push('Bruk kun Evidence Context for eksterne kilder, og siter kilder med id i refs/sources.');
+    baseInstructions.push(
+      'Bruk kun Evidence Context for eksterne kilder, og siter kilder med id i refs/sources.',
+    );
   } else {
-    baseInstructions.push('Ikke finn på eksterne kilder; utelat referanser hvis Evidence Context ikke er gitt.');
+    baseInstructions.push(
+      'Ikke finn på eksterne kilder; utelat referanser hvis Evidence Context ikke er gitt.',
+    );
   }
 
   const instructions = baseInstructions.join('\n');

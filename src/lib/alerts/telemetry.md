@@ -1,6 +1,8 @@
 ## Alert Telemetry System
 
-This document describes the alert telemetry architecture used in Kreativium. The system captures alert lifecycle events, teacher interactions, calibration data, A/B experiments, fairness metrics, and supports adaptive threshold learning. It is privacy-preserving and aligned with GDPR principles.
+This document describes the alert telemetry architecture used in Kreativium. The system captures
+alert lifecycle events, teacher interactions, calibration data, A/B experiments, fairness metrics,
+and supports adaptive threshold learning. It is privacy-preserving and aligned with GDPR principles.
 
 ### Components
 
@@ -17,13 +19,15 @@ This document describes the alert telemetry architecture used in Kreativium. The
   - Computes fairness metrics for demographic groups
   - Aggregates threshold learning overrides
   - Persists and lists weekly reports; dispatches update events
-  - Enhancements: governance audit log, performance metrics, exports, retention, health checks, historical batch
+  - Enhancements: governance audit log, performance metrics, exports, retention, health checks,
+    historical batch
 
 ### Privacy & GDPR
 
 - Telemetry stores a hashed `studentHash` instead of raw `studentId`.
 - Only the minimum data required for evaluation is persisted.
-- Retention can be managed via `WeeklyAlertMetrics.cleanupRetention(...)` to prune old entries/reports.
+- Retention can be managed via `WeeklyAlertMetrics.cleanupRetention(...)` to prune old
+  entries/reports.
 
 ### Teacher Interaction Tracking
 
@@ -42,12 +46,15 @@ This document describes the alert telemetry architecture used in Kreativium. The
 
 ### Adaptive Threshold Learning
 
-- `generateWeeklyReport()` emits labelled samples to `ThresholdLearner`, which may output per-detector threshold overrides.
-- Overrides are aggregated in weekly evaluations and available via `report.thresholdLearning.overrides`.
+- `generateWeeklyReport()` emits labelled samples to `ThresholdLearner`, which may output
+  per-detector threshold overrides.
+- Overrides are aggregated in weekly evaluations and available via
+  `report.thresholdLearning.overrides`.
 
 ### Integration Guide
 
-1) Detection Engine → Telemetry
+1. Detection Engine → Telemetry
+
 ```ts
 telemetry.logAlertCreated(alert, {
   predictedRelevance: alert.confidence,
@@ -59,15 +66,20 @@ telemetry.logAlertCreated(alert, {
 });
 ```
 
-2) UI → Telemetry
+2. UI → Telemetry
+
 ```ts
 telemetry.logAlertAcknowledged(alert.id);
 telemetry.logFeedback(alert.id, { relevant: true, rating: 4, comment: 'Accurate' });
 telemetry.logAlertResolved(alert.id, { notes: 'Handled with plan', actionId: 'plan-42' });
-telemetry.logAlertSnoozed(alert.id, { until: new Date(Date.now()+24*3600_000).toISOString(), reason: 'Busy period' });
+telemetry.logAlertSnoozed(alert.id, {
+  until: new Date(Date.now() + 24 * 3600_000).toISOString(),
+  reason: 'Busy period',
+});
 ```
 
-3) Weekly Evaluation
+3. Weekly Evaluation
+
 ```ts
 const metrics = new WeeklyAlertMetrics({ telemetry });
 const report = metrics.runWeeklyEvaluation({ weekContaining: new Date(), students });
@@ -75,14 +87,17 @@ const report = metrics.runWeeklyEvaluation({ weekContaining: new Date(), student
 
 ### Governance Audit Trail
 
-Use `WeeklyAlertMetrics.logGovernanceDecision` to capture policy decisions (e.g., quiet hours, caps, throttling, deduplication).
+Use `WeeklyAlertMetrics.logGovernanceDecision` to capture policy decisions (e.g., quiet hours, caps,
+throttling, deduplication).
+
 ```ts
 metrics.logGovernanceDecision({ policy: 'quiet_hours', decision: 'suppressed', alertId: 'a1' });
 ```
 
 ### Exports & Retention
 
-- `exportReports('csv' | 'json', range?)` and `exportEntries('csv' | 'json', { start, end }?)` for external analysis.
+- `exportReports('csv' | 'json', range?)` and `exportEntries('csv' | 'json', { start, end }?)` for
+  external analysis.
 - `cleanupRetention({ maxEntryAgeDays, maxReports })` for data minimization.
 
 ### Health Monitoring
@@ -97,13 +112,15 @@ metrics.logGovernanceDecision({ policy: 'quiet_hours', decision: 'suppressed', a
 - Fairness groups absent: pass `students` with demographic fields to `runWeeklyEvaluation`.
 
 ### Performance Guidance
+
 ### Store Semantics
 
-Weekly reports are persisted by the monitoring service under `alerts:weeklyReports:*` (indexed by `alerts:weeklyReports:index`). Telemetry does not persist report copies. Consumers must use `WeeklyAlertMetrics.listReports()` for canonical listing or `WeeklyAlertMetrics.getReport(weekStartIso)` for direct access. Retention cleanup is handled by `WeeklyAlertMetrics.cleanupRetention(...)` and applies to the canonical weekly reports only.
-
+Weekly reports are persisted by the monitoring service under `alerts:weeklyReports:*` (indexed by
+`alerts:weeklyReports:index`). Telemetry does not persist report copies. Consumers must use
+`WeeklyAlertMetrics.listReports()` for canonical listing or
+`WeeklyAlertMetrics.getReport(weekStartIso)` for direct access. Retention cleanup is handled by
+`WeeklyAlertMetrics.cleanupRetention(...)` and applies to the canonical weekly reports only.
 
 - Batch UI interactions when possible; avoid synchronous reads after every write.
 - Use weekly batch processing for heavy computations.
 - Export large datasets in JSON to retain structure and minimize precision loss.
-
-

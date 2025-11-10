@@ -27,8 +27,16 @@ const INTERVENTIONS: InterventionCard[] = [
     rationale: 'Student shows acute distress markers; reduce stimuli and provide safe space.',
     strategies: [
       { id: 'cp-1', title: 'Calm Corner', description: 'Offer a calm corner with sensory tools.' },
-      { id: 'cp-2', title: 'Adult Check-In', description: 'Immediate supportive check-in by trusted adult.' },
-      { id: 'cp-3', title: 'Visual Schedule', description: 'Clarify expectations with a visual schedule.' },
+      {
+        id: 'cp-2',
+        title: 'Adult Check-In',
+        description: 'Immediate supportive check-in by trusted adult.',
+      },
+      {
+        id: 'cp-3',
+        title: 'Visual Schedule',
+        description: 'Clarify expectations with a visual schedule.',
+      },
     ],
     evidenceBase: 'PBIS Tier 2; CPI de-escalation framework',
     reviewScheduleDays: BASE_REVIEW_DAYS,
@@ -39,9 +47,21 @@ const INTERVENTIONS: InterventionCard[] = [
     hypothesis: 'Behavior spike linked to transition difficulty',
     rationale: 'Transitions correlate with spikes; scaffold transitions and pre-correct.',
     strategies: [
-      { id: 'ds-1', title: 'Pre-correction', description: 'Briefly remind expectations before transitions.' },
-      { id: 'ds-2', title: 'Choice Making', description: 'Provide two acceptable choices to increase control.' },
-      { id: 'ds-3', title: 'Breaks', description: 'Offer short movement breaks between activities.' },
+      {
+        id: 'ds-1',
+        title: 'Pre-correction',
+        description: 'Briefly remind expectations before transitions.',
+      },
+      {
+        id: 'ds-2',
+        title: 'Choice Making',
+        description: 'Provide two acceptable choices to increase control.',
+      },
+      {
+        id: 'ds-3',
+        title: 'Breaks',
+        description: 'Offer short movement breaks between activities.',
+      },
     ],
     evidenceBase: 'HLP 7, 13; PBIS effective classroom practices',
     reviewScheduleDays: BASE_REVIEW_DAYS,
@@ -52,9 +72,21 @@ const INTERVENTIONS: InterventionCard[] = [
     hypothesis: 'Specific context elevates challenge (noise, peers, task demand)',
     rationale: 'Modify environment to reduce triggers and support access.',
     strategies: [
-      { id: 'em-1', title: 'Preferential Seating', description: 'Seat away from high traffic/noise.' },
-      { id: 'em-2', title: 'Task Chunking', description: 'Chunk tasks into short, manageable steps.' },
-      { id: 'em-3', title: 'Peer Support', description: 'Pair with supportive peer for collaborative tasks.' },
+      {
+        id: 'em-1',
+        title: 'Preferential Seating',
+        description: 'Seat away from high traffic/noise.',
+      },
+      {
+        id: 'em-2',
+        title: 'Task Chunking',
+        description: 'Chunk tasks into short, manageable steps.',
+      },
+      {
+        id: 'em-3',
+        title: 'Peer Support',
+        description: 'Pair with supportive peer for collaborative tasks.',
+      },
     ],
     evidenceBase: 'HLP 19; UDL considerations',
     reviewScheduleDays: BASE_REVIEW_DAYS,
@@ -65,8 +97,16 @@ const INTERVENTIONS: InterventionCard[] = [
     hypothesis: 'Intervention progress review due',
     rationale: 'Periodic review maintains fidelity and responsiveness to need.',
     strategies: [
-      { id: 'pm-1', title: 'Progress Monitoring', description: 'Schedule data collection and review meeting.' },
-      { id: 'pm-2', title: 'Goal Adjust', description: 'Adjust goal or strategy intensity based on data.' },
+      {
+        id: 'pm-1',
+        title: 'Progress Monitoring',
+        description: 'Schedule data collection and review meeting.',
+      },
+      {
+        id: 'pm-2',
+        title: 'Goal Adjust',
+        description: 'Adjust goal or strategy intensity based on data.',
+      },
       { id: 'pm-3', title: 'Family Update', description: 'Share concise update with caregivers.' },
     ],
     evidenceBase: 'MTSS cycles; data-driven decision-making',
@@ -78,9 +118,21 @@ const INTERVENTIONS: InterventionCard[] = [
     hypothesis: 'Data completeness or quality issue detected',
     rationale: 'Reliable data underpins trustworthy alerts and progress review.',
     strategies: [
-      { id: 'dq-1', title: 'Fill Gaps', description: 'Prompt to enter missed observations for this week.' },
-      { id: 'dq-2', title: 'Calibrate', description: 'Review rubric anchors for consistent ratings.' },
-      { id: 'dq-3', title: 'Automations', description: 'Enable reminders or simplify data entry workflow.' },
+      {
+        id: 'dq-1',
+        title: 'Fill Gaps',
+        description: 'Prompt to enter missed observations for this week.',
+      },
+      {
+        id: 'dq-2',
+        title: 'Calibrate',
+        description: 'Review rubric anchors for consistent ratings.',
+      },
+      {
+        id: 'dq-3',
+        title: 'Automations',
+        description: 'Enable reminders or simplify data entry workflow.',
+      },
     ],
     evidenceBase: 'Measurement validity practices',
     reviewScheduleDays: BASE_REVIEW_DAYS,
@@ -99,9 +151,13 @@ export function searchInterventions(query: string, locale?: string): Interventio
   const q = query.trim().toLowerCase();
   if (!q) return [];
   return INTERVENTIONS.filter((i) => {
-    const text = [i.hypothesis, i.rationale, ...i.strategies.map((s) => `${s.title} ${s.description}`)].join(' ').toLowerCase();
+    const text = [
+      i.hypothesis,
+      i.rationale,
+      ...i.strategies.map((s) => `${s.title} ${s.description}`),
+    ]
+      .join(' ')
+      .toLowerCase();
     return text.includes(q) && (!locale || i.locale === locale);
   });
 }
-
-

@@ -14,9 +14,3 @@ describe('adaptive rules', () => {
     expect(high.holdDurationMs).toBeGreaterThan(low.holdDurationMs);
   });
 });
-
-
-
-
-
-

@@ -10,9 +10,7 @@ import { logger } from '@/lib/logger';
 /**
  * Result type for operations that can fail
  */
-export type Result<T, E = Error> =
-  | { success: true; value: T }
-  | { success: false; error: E };
+export type Result<T, E = Error> = { success: true; value: T } | { success: false; error: E };
 
 /**
  * Safely parse JSON with fallback and logging
@@ -31,11 +29,7 @@ export type Result<T, E = Error> =
  * );
  * ```
  */
-export function safeJsonParse<T>(
-  json: string | null | undefined,
-  fallback: T,
-  context: string
-): T {
+export function safeJsonParse<T>(json: string | null | undefined, fallback: T, context: string): T {
   if (!json) {
     return fallback;
   }
@@ -59,11 +53,7 @@ export function safeJsonParse<T>(
  * @param context - Context string for logging
  * @returns JSON string or fallback
  */
-export function safeJsonStringify<T>(
-  value: T,
-  fallback: string,
-  context: string
-): string {
+export function safeJsonStringify<T>(value: T, fallback: string, context: string): string {
   try {
     return JSON.stringify(value);
   } catch (error) {
@@ -95,7 +85,7 @@ export function safeLocalStorageGet(
   key: string,
   fallback: string,
   context: string,
-  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage),
 ): string {
   try {
     if (!storage || typeof storage.getItem !== 'function') {
@@ -132,7 +122,7 @@ export function safeLocalStorageSet(
   key: string,
   value: string,
   context: string,
-  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage),
 ): boolean {
   try {
     if (!storage || typeof storage.setItem !== 'function') {
@@ -169,7 +159,7 @@ export function safeLocalStorageSet(
 export function safeLocalStorageRemove(
   key: string,
   context: string,
-  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage),
 ): boolean {
   try {
     if (!storage || typeof storage.removeItem !== 'function') {
@@ -207,7 +197,7 @@ export function safeLocalStorageRemove(
 export function safeNumberParse(
   value: string | null | undefined,
   fallback: number,
-  context: string
+  context: string,
 ): number {
   if (!value) {
     return fallback;
@@ -254,7 +244,7 @@ export function safeNumberParse(
  */
 export async function tryCatch<T>(
   operation: () => Promise<T>,
-  context: string
+  context: string,
 ): Promise<Result<T>> {
   try {
     const value = await operation();
@@ -292,10 +282,7 @@ export async function tryCatch<T>(
  * }
  * ```
  */
-export function tryCatchSync<T>(
-  operation: () => T,
-  context: string
-): Result<T> {
+export function tryCatchSync<T>(operation: () => T, context: string): Result<T> {
   try {
     const value = operation();
     return { success: true, value };
@@ -334,7 +321,7 @@ export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
   context: string,
   maxRetries: number = 3,
-  initialDelayMs: number = 1000
+  initialDelayMs: number = 1000,
 ): Promise<Result<T>> {
   let lastError: Error | undefined;
 
@@ -355,7 +342,7 @@ export async function retryWithBackoff<T>(
           maxRetries,
           error: lastError.message,
         });
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
   }
@@ -387,7 +374,7 @@ export async function retryWithBackoff<T>(
 export function assertCondition(
   condition: boolean,
   message: string,
-  context: string
+  context: string,
 ): asserts condition {
   if (!condition) {
     logger.error(`[${context}] Assertion failed: ${message}`);
@@ -410,10 +397,7 @@ export function assertCondition(
  * }
  * ```
  */
-export function isDefined<T>(
-  value: T | null | undefined,
-  context?: string
-): value is T {
+export function isDefined<T>(value: T | null | undefined, context?: string): value is T {
   const defined = value !== null && value !== undefined;
   if (!defined && context) {
     logger.debug(`[${context}] Value is null or undefined`);

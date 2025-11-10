@@ -11,18 +11,14 @@ interface TegnXPContextValue {
 const TegnXPContext = createContext<TegnXPContextValue | null>(null);
 
 export const TegnXPProvider = ({ children }: { children: React.ReactNode }) => {
-  const [xp, setXp] = useStorageState(
-    STORAGE_KEYS.TEGN_XP_TOTAL,
-    0,
-    {
-      serialize: (value) => String(Math.max(0, value)),
-      deserialize: (value) => Math.max(0, parseInt(value, 10) || 0),
-    }
-  );
+  const [xp, setXp] = useStorageState(STORAGE_KEYS.TEGN_XP_TOTAL, 0, {
+    serialize: (value) => String(Math.max(0, value)),
+    deserialize: (value) => Math.max(0, parseInt(value, 10) || 0),
+  });
 
   const addXP = useCallback((amount: number) => {
     if (!Number.isFinite(amount) || amount <= 0) return;
-    setXp(prev => prev + Math.floor(amount));
+    setXp((prev) => prev + Math.floor(amount));
   }, []);
 
   const level = useMemo(() => {
@@ -31,11 +27,7 @@ export const TegnXPProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = useMemo(() => ({ xp, level, addXP }), [xp, level, addXP]);
 
-  return (
-    <TegnXPContext.Provider value={value}>
-      {children}
-    </TegnXPContext.Provider>
-  );
+  return <TegnXPContext.Provider value={value}>{children}</TegnXPContext.Provider>;
 };
 
 export const useTegnXP = (): TegnXPContextValue => {
@@ -43,5 +35,3 @@ export const useTegnXP = (): TegnXPContextValue => {
   if (!ctx) throw new Error('useTegnXP must be used within TegnXPProvider');
   return ctx;
 };
-
-

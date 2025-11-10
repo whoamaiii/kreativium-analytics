@@ -16,7 +16,7 @@ import { STORAGE_KEYS } from '@/lib/storage/keys';
 /**
  * @interface AnalyticsSectionProps
  * Props for the AnalyticsSection component.
- * 
+ *
  * @property {Student} student - The student object.
  * @property {TrackingEntry[]} trackingEntries - All tracking entries for the student.
  * @property {object} filteredData - Data filtered by the selected date range.
@@ -39,14 +39,14 @@ interface AnalyticsSectionProps {
   isLoadingInsights: boolean;
 }
 
-export function AnalyticsSection({ 
-  student, 
-  trackingEntries, 
-  filteredData, 
+export function AnalyticsSection({
+  student,
+  trackingEntries,
+  filteredData,
   insights,
   isLoadingInsights,
 }: AnalyticsSectionProps) {
-const { tAnalytics } = useTranslation();
+  const { tAnalytics } = useTranslation();
   // Storage-based defaults for API keys
   const [lsModelName] = useStorageState(STORAGE_KEYS.AI_MODEL_NAME, '');
   const [lsApiKeyOld] = useStorageState(STORAGE_KEYS.OPENROUTER_API_KEY, '');
@@ -54,22 +54,41 @@ const { tAnalytics } = useTranslation();
 
   // Resolve defaults and availability for AI analysis
   const defaults = useMemo(() => {
-    const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
+    const cfg = (() => {
+      try {
+        return analyticsConfig.getConfig();
+      } catch {
+        return null;
+      }
+    })();
     // Prefer live env to avoid stale module-level defaults
     const env = getRuntimeEnv();
     const toBool = (v: unknown) => {
       const s = (v ?? '').toString().toLowerCase();
       return s === '1' || s === 'true' || s === 'yes';
     };
-    const enabledByConfig = cfg?.features?.aiAnalysisEnabled === true || toBool(env.VITE_AI_ANALYSIS_ENABLED);
-    const model = typeof env.VITE_AI_MODEL_NAME === 'string' && (env.VITE_AI_MODEL_NAME as string).trim().length > 0
-      ? (env.VITE_AI_MODEL_NAME as string)
-      : (lsModelName || loadAiConfig().modelName);
-    const apiKey = typeof env.VITE_OPENROUTER_API_KEY === 'string' && (env.VITE_OPENROUTER_API_KEY as string).trim().length > 0
-      ? (env.VITE_OPENROUTER_API_KEY as string)
-      : (lsApiKeyOld || lsApiKeyNew || (loadAiConfig().apiKey || ''));
+    const enabledByConfig =
+      cfg?.features?.aiAnalysisEnabled === true || toBool(env.VITE_AI_ANALYSIS_ENABLED);
+    const model =
+      typeof env.VITE_AI_MODEL_NAME === 'string' &&
+      (env.VITE_AI_MODEL_NAME as string).trim().length > 0
+        ? (env.VITE_AI_MODEL_NAME as string)
+        : lsModelName || loadAiConfig().modelName;
+    const apiKey =
+      typeof env.VITE_OPENROUTER_API_KEY === 'string' &&
+      (env.VITE_OPENROUTER_API_KEY as string).trim().length > 0
+        ? (env.VITE_OPENROUTER_API_KEY as string)
+        : lsApiKeyOld || lsApiKeyNew || loadAiConfig().apiKey || '';
     const available = !!apiKey && !!model; // availability only depends on key + model
-    try { logger.debug('[AnalyticsSection.defaults]', { envAi: env.VITE_AI_ANALYSIS_ENABLED, envModel: env.VITE_AI_MODEL_NAME, hasKey: !!apiKey, enabledByConfig, available }); } catch {}
+    try {
+      logger.debug('[AnalyticsSection.defaults]', {
+        envAi: env.VITE_AI_ANALYSIS_ENABLED,
+        envModel: env.VITE_AI_MODEL_NAME,
+        hasKey: !!apiKey,
+        enabledByConfig,
+        available,
+      });
+    } catch {}
     return { enabledByConfig, available };
   }, [lsModelName, lsApiKeyOld, lsApiKeyNew]);
 
@@ -82,9 +101,18 @@ const { tAnalytics } = useTranslation();
       filteredDataEntriesCount: filteredData?.entries?.length,
       hasInsights: !!insights,
       isLoadingInsights,
-      ai: { enabledByConfig: defaults.enabledByConfig, available: defaults.available, useAI }
+      ai: { enabledByConfig: defaults.enabledByConfig, available: defaults.available, useAI },
     });
-  }, [student, trackingEntries, filteredData, insights, isLoadingInsights, defaults.enabledByConfig, defaults.available, useAI]);
+  }, [
+    student,
+    trackingEntries,
+    filteredData,
+    insights,
+    isLoadingInsights,
+    defaults.enabledByConfig,
+    defaults.available,
+    useAI,
+  ]);
 
   if (!student || !filteredData || !trackingEntries) {
     return (
@@ -94,9 +122,7 @@ const { tAnalytics } = useTranslation();
             <div className="text-center text-muted-foreground">
               <AlertCircle className="h-8 w-8 mx-auto mb-2" />
               <p>{tAnalytics('missingDataTitle')}</p>
-              <p className="text-sm mt-2">
-                {tAnalytics('missingDataMessage')}
-              </p>
+              <p className="text-sm mt-2">{tAnalytics('missingDataMessage')}</p>
             </div>
           </CardContent>
         </Card>
@@ -109,7 +135,6 @@ const { tAnalytics } = useTranslation();
     emotions: filteredData.emotions || [],
     sensoryInputs: filteredData.sensoryInputs || [],
   };
-
 
   return (
     <div className="space-y-6">
@@ -132,18 +157,34 @@ const { tAnalytics } = useTranslation();
             data-testid="ai-toggle"
           />
           <div>
-            <label id="ai-analysis-toggle-label" htmlFor="ai-analysis-toggle" className="text-sm font-medium">
+            <label
+              id="ai-analysis-toggle-label"
+              htmlFor="ai-analysis-toggle"
+              className="text-sm font-medium"
+            >
               {String(tAnalytics('ai.toggle.label', { defaultValue: 'AI Analysis' }))}
             </label>
-            <p id="ai-analysis-toggle-desc" className="text-xs text-muted-foreground" data-testid="ai-toggle-status">
+            <p
+              id="ai-analysis-toggle-desc"
+              className="text-xs text-muted-foreground"
+              data-testid="ai-toggle-status"
+            >
               {defaults.available
-                ? (useAI
-                    ? String(tAnalytics('ai.toggle.enabled', { defaultValue: 'Enabled' }))
-                    : String(tAnalytics('ai.toggle.disabled', { defaultValue: 'Disabled' })))
-                : String(tAnalytics('ai.toggle.unavailable', { defaultValue: 'Unavailable (missing key or model)' }))}
+                ? useAI
+                  ? String(tAnalytics('ai.toggle.enabled', { defaultValue: 'Enabled' }))
+                  : String(tAnalytics('ai.toggle.disabled', { defaultValue: 'Disabled' }))
+                : String(
+                    tAnalytics('ai.toggle.unavailable', {
+                      defaultValue: 'Unavailable (missing key or model)',
+                    }),
+                  )}
               {!defaults.enabledByConfig && useAI && (
                 <span className="block text-yellow-600 dark:text-yellow-400 text-xs mt-1">
-                  {String(tAnalytics('ai.toggle.configWarning', { defaultValue: 'Warning: AI disabled in config, using runtime override' }))}
+                  {String(
+                    tAnalytics('ai.toggle.configWarning', {
+                      defaultValue: 'Warning: AI disabled in config, using runtime override',
+                    }),
+                  )}
                 </span>
               )}
             </p>
@@ -153,11 +194,7 @@ const { tAnalytics } = useTranslation();
 
       {/* Main Analytics Dashboard */}
       <ErrorBoundary showToast={false}>
-        <LazyAnalyticsDashboard
-          student={student}
-          filteredData={safeFilteredData}
-          useAI={useAI}
-        />
+        <LazyAnalyticsDashboard student={student} filteredData={safeFilteredData} useAI={useAI} />
       </ErrorBoundary>
     </div>
   );

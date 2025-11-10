@@ -32,7 +32,7 @@ export {
   validateReportData,
   type ProgressCallback,
   type PDFGenerationOptions,
-  type PDFGenerationResult
+  type PDFGenerationResult,
 } from './pdfGenerator';
 
 // Report building functions
@@ -41,18 +41,11 @@ export {
   analyzeEmotionsForReport,
   analyzeSensoryForReport,
   analyzeGoalsForReport,
-  generateRecommendations
+  generateRecommendations,
 } from './reportBuilder';
 
 // HTML formatting functions
-export {
-  generateHTMLReport
-} from './htmlFormatter';
+export { generateHTMLReport } from './htmlFormatter';
 
 // Type definitions
-export type {
-  ReportContent,
-  ReportDataCollection,
-  PDFReportOptions,
-  ReportContext
-} from './types';
+export type { ReportContent, ReportDataCollection, PDFReportOptions, ReportContext } from './types';

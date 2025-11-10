@@ -15,7 +15,14 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import { TrainingData, ValidationResults, ValidationMetrics, TrainingFold, CrossValidationConfig, EarlyStoppingConfig } from '../../types/ml';
+import {
+  TrainingData,
+  ValidationResults,
+  ValidationMetrics,
+  TrainingFold,
+  CrossValidationConfig,
+  EarlyStoppingConfig,
+} from '../../types/ml';
 
 /**
  * Strategy for time-series cross-validation.
@@ -86,7 +93,7 @@ export class CrossValidator {
   public async validateModel(
     createModel: () => tf.Sequential,
     data: TrainingData,
-    config: CrossValidationConfig
+    config: CrossValidationConfig,
   ): Promise<ValidationResults> {
     const folds = await this.generateFolds(data, config.folds, config.stratified);
     const foldMetrics: ValidationMetrics[] = [];
@@ -107,13 +114,18 @@ export class CrossValidator {
         shuffle: config.fitArgs?.shuffle ?? true,
         verbose: config.fitArgs?.verbose ?? 0,
         validationData: [valFeatures, valLabels],
-        callbacks: this.buildEarlyStoppingCallbacks(config.earlyStopping, /*task*/ 'classification'),
+        callbacks: this.buildEarlyStoppingCallbacks(
+          config.earlyStopping,
+          /*task*/ 'classification',
+        ),
       };
 
       await model.fit(trainFeatures, trainLabels, fitArgs);
 
       const predictionsTensor = model.predict(valFeatures) as tf.Tensor;
-      const predictions = Array.from((await predictionsTensor.argMax(1).data()) as unknown as Iterable<number>);
+      const predictions = Array.from(
+        (await predictionsTensor.argMax(1).data()) as unknown as Iterable<number>,
+      );
       const actuals = Array.from((await valLabels.argMax(1).data()) as unknown as Iterable<number>);
 
       const metrics = this.calculateValidationMetrics(predictions, actuals);
@@ -125,11 +137,16 @@ export class CrossValidator {
 
     // Aggregate results
     const averageMetrics = this.aggregateMetrics(foldMetrics, (arr) => tf.mean(arr).dataSync()[0]);
-    const stdDeviationMetrics = this.aggregateMetrics(foldMetrics, (arr) => tf.moments(arr).variance.sqrt().dataSync()[0]);
+    const stdDeviationMetrics = this.aggregateMetrics(
+      foldMetrics,
+      (arr) => tf.moments(arr).variance.sqrt().dataSync()[0],
+    );
 
     // Aggregate confusion matrices across folds (binary only) and recompute PR/F1/accuracy
     let overallConfusionMatrix: { tp: number; tn: number; fp: number; fn: number } | undefined;
-    let overallPRF1: { precision: number; recall: number; f1Score: number; accuracy: number } | undefined;
+    let overallPRF1:
+      | { precision: number; recall: number; f1Score: number; accuracy: number }
+      | undefined;
 
     const matrices = foldMetrics
       .map((m) => m.confusionMatrix)
@@ -143,7 +160,7 @@ export class CrossValidator {
           fp: acc.fp + cm.fp,
           fn: acc.fn + cm.fn,
         }),
-        { tp: 0, tn: 0, fp: 0, fn: 0 }
+        { tp: 0, tn: 0, fp: 0, fn: 0 },
       );
 
       overallConfusionMatrix = sum;
@@ -158,18 +175,26 @@ export class CrossValidator {
       overallPRF1 = { precision, recall, f1Score, accuracy };
     }
 
-    return { foldMetrics, averageMetrics, stdDeviationMetrics, overallConfusionMatrix, overallPRF1 };
+    return {
+      foldMetrics,
+      averageMetrics,
+      stdDeviationMetrics,
+      overallConfusionMatrix,
+      overallPRF1,
+    };
   }
 
   /** Create EarlyStopping callbacks if configured. */
   private buildEarlyStoppingCallbacks(
     cfg: EarlyStoppingConfig | undefined,
-    task: 'classification' | 'regression'
+    task: 'classification' | 'regression',
   ): tf.CustomCallbackArgs['callbacks'] {
     if (!cfg || cfg.enabled === false) return undefined;
-    const monitor = cfg.monitor
-      ?? (task === 'classification' ? 'val_accuracy' : 'val_loss');
-    const mode: 'min' | 'max' = monitor.includes('loss') || monitor.includes('mse') || monitor.includes('mae') ? 'min' : 'max';
+    const monitor = cfg.monitor ?? (task === 'classification' ? 'val_accuracy' : 'val_loss');
+    const mode: 'min' | 'max' =
+      monitor.includes('loss') || monitor.includes('mse') || monitor.includes('mae')
+        ? 'min'
+        : 'max';
     return [
       tf.callbacks.earlyStopping({
         monitor,
@@ -177,7 +202,7 @@ export class CrossValidator {
         minDelta: cfg.minDelta ?? 0,
         mode,
         restoreBestWeights: true,
-      })
+      }),
     ];
   }
 
@@ -192,7 +217,7 @@ export class CrossValidator {
   public async generateFolds(
     data: TrainingData,
     k: number,
-    stratified: boolean = false
+    stratified: boolean = false,
   ): Promise<TrainingFold[]> {
     const numSamples = data.features.shape[0];
     const indices = tf.util.createShuffledIndices(numSamples);
@@ -202,8 +227,12 @@ export class CrossValidator {
       const folds: TrainingFold[] = [];
 
       for (let i = 0; i < k; i++) {
-        const validationIndices = Array.from(indices.slice(i * foldSize, (i + 1) * foldSize)) as number[];
-        const trainIndices = (Array.from(indices) as number[]).filter((index) => !validationIndices.includes(index));
+        const validationIndices = Array.from(
+          indices.slice(i * foldSize, (i + 1) * foldSize),
+        ) as number[];
+        const trainIndices = (Array.from(indices) as number[]).filter(
+          (index) => !validationIndices.includes(index),
+        );
         folds.push({ trainIndices, validationIndices });
       }
       return folds;
@@ -221,11 +250,16 @@ export class CrossValidator {
       classIndices[label].push(i);
     }
 
-    const folds: TrainingFold[] = Array.from({ length: k }, () => ({ trainIndices: [], validationIndices: [] }));
+    const folds: TrainingFold[] = Array.from({ length: k }, () => ({
+      trainIndices: [],
+      validationIndices: [],
+    }));
 
     for (const label in classIndices) {
       const indicesForClass = tf.util.createShuffledIndices(classIndices[label].length);
-      const shuffledClassIndices = classIndices[label].map((_, i) => classIndices[label][indicesForClass[i]]);
+      const shuffledClassIndices = classIndices[label].map(
+        (_, i) => classIndices[label][indicesForClass[i]],
+      );
 
       for (let i = 0; i < shuffledClassIndices.length; i++) {
         const foldIndex = i % k;
@@ -318,7 +352,7 @@ export class CrossValidator {
   public async validateTimeSeriesModel(
     createModel: () => tf.Sequential,
     data: TrainingData,
-    config: TimeSeriesValidationConfig
+    config: TimeSeriesValidationConfig,
   ): Promise<TimeSeriesValidationResults> {
     const folds = this.generateTimeSeriesFolds(data, config);
     const foldMetrics: TimeSeriesFoldMetrics[] = [];
@@ -345,8 +379,12 @@ export class CrossValidator {
       const yPredTensor = model.predict(valFeatures) as tf.Tensor;
 
       if (config.taskType === 'classification') {
-        const preds = Array.from((await yPredTensor.argMax(1).data()) as unknown as Iterable<number>);
-        const actuals = Array.from((await valLabels.argMax(1).data()) as unknown as Iterable<number>);
+        const preds = Array.from(
+          (await yPredTensor.argMax(1).data()) as unknown as Iterable<number>,
+        );
+        const actuals = Array.from(
+          (await valLabels.argMax(1).data()) as unknown as Iterable<number>,
+        );
         const classification = this.calculateValidationMetrics(preds, actuals);
         foldMetrics.push({ classification });
       } else {
@@ -401,7 +439,8 @@ export class CrossValidator {
       }
       const precision = tp + fp === 0 ? 0 : tp / (tp + fp);
       const recall = tp + fn === 0 ? 0 : tp / (tp + fn);
-      const f1Score = precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
+      const f1Score =
+        precision + recall === 0 ? 0 : (2 * precision * recall) / (precision + recall);
       return { accuracy, precision, recall, f1Score, confusionMatrix: { tp, tn, fp, fn } };
     }
 
@@ -443,7 +482,10 @@ export class CrossValidator {
     return { mse, rmse, mae, mape };
   }
 
-  private aggregateMetrics(foldMetrics: ValidationMetrics[], aggFn: (arr: number[]) => number): ValidationMetrics {
+  private aggregateMetrics(
+    foldMetrics: ValidationMetrics[],
+    aggFn: (arr: number[]) => number,
+  ): ValidationMetrics {
     const aggregated: ValidationMetrics = {};
     const metricKeys = Object.keys(foldMetrics[0]) as (keyof ValidationMetrics)[];
 
@@ -463,23 +505,21 @@ export class CrossValidator {
   }
 
   /** Average time-series metrics across folds. */
-  private averageTimeSeriesMetrics(foldMetrics: TimeSeriesFoldMetrics[]): TimeSeriesFoldMetrics | undefined {
+  private averageTimeSeriesMetrics(
+    foldMetrics: TimeSeriesFoldMetrics[],
+  ): TimeSeriesFoldMetrics | undefined {
     if (foldMetrics.length === 0) return undefined;
 
     const avg: TimeSeriesFoldMetrics = {};
 
     // Classification
-    const cls = foldMetrics
-      .map((f) => f.classification)
-      .filter((m): m is ValidationMetrics => !!m);
+    const cls = foldMetrics.map((f) => f.classification).filter((m): m is ValidationMetrics => !!m);
     if (cls.length > 0) {
       avg.classification = this.aggregateMetrics(cls, (arr) => tf.mean(arr).dataSync()[0]);
     }
 
     // Regression
-    const regs = foldMetrics
-      .map((f) => f.regression)
-      .filter((m): m is RegressionMetrics => !!m);
+    const regs = foldMetrics.map((f) => f.regression).filter((m): m is RegressionMetrics => !!m);
     if (regs.length > 0) {
       avg.regression = this.aggregateRegression(regs, (arr) => tf.mean(arr).dataSync()[0]);
     }
@@ -488,28 +528,26 @@ export class CrossValidator {
   }
 
   /** Std deviation of time-series metrics across folds. */
-  private stdTimeSeriesMetrics(foldMetrics: TimeSeriesFoldMetrics[]): TimeSeriesFoldMetrics | undefined {
+  private stdTimeSeriesMetrics(
+    foldMetrics: TimeSeriesFoldMetrics[],
+  ): TimeSeriesFoldMetrics | undefined {
     if (foldMetrics.length === 0) return undefined;
 
     const std: TimeSeriesFoldMetrics = {};
 
-    const cls = foldMetrics
-      .map((f) => f.classification)
-      .filter((m): m is ValidationMetrics => !!m);
+    const cls = foldMetrics.map((f) => f.classification).filter((m): m is ValidationMetrics => !!m);
     if (cls.length > 0) {
       std.classification = this.aggregateMetrics(
         cls,
-        (arr) => tf.moments(arr).variance.sqrt().dataSync()[0]
+        (arr) => tf.moments(arr).variance.sqrt().dataSync()[0],
       );
     }
 
-    const regs = foldMetrics
-      .map((f) => f.regression)
-      .filter((m): m is RegressionMetrics => !!m);
+    const regs = foldMetrics.map((f) => f.regression).filter((m): m is RegressionMetrics => !!m);
     if (regs.length > 0) {
       std.regression = this.aggregateRegression(
         regs,
-        (arr) => tf.moments(arr).variance.sqrt().dataSync()[0]
+        (arr) => tf.moments(arr).variance.sqrt().dataSync()[0],
       );
     }
 
@@ -518,7 +556,7 @@ export class CrossValidator {
 
   private aggregateRegression(
     foldMetrics: RegressionMetrics[],
-    aggFn: (arr: number[]) => number
+    aggFn: (arr: number[]) => number,
   ): RegressionMetrics {
     const keys: (keyof RegressionMetrics)[] = ['mse', 'rmse', 'mae', 'mape'];
     const out: RegressionMetrics = { mse: 0, rmse: 0, mae: 0, mape: 0 };

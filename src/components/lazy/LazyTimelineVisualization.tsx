@@ -40,8 +40,9 @@ const LoadingFallback = () => (
 );
 
 export const LazyTimelineVisualization = createLazyComponent(
-  () => import('@/components/TimelineVisualization').then(module => ({
-    default: module.TimelineVisualization
-  })),
-  <LoadingFallback />
+  () =>
+    import('@/components/TimelineVisualization').then((module) => ({
+      default: module.TimelineVisualization,
+    })),
+  <LoadingFallback />,
 );

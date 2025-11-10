@@ -80,14 +80,18 @@ export class PolicyConfigManager {
     return { ...PRESETS[preset] };
   }
 
-  validateSettings(settings?: PartialSettings | AlertSettings): ReturnType<typeof validateAlertSettings> {
+  validateSettings(
+    settings?: PartialSettings | AlertSettings,
+  ): ReturnType<typeof validateAlertSettings> {
     const started = Date.now();
     const result = validateAlertSettings(settings as AlertSettings);
     this.metrics.validateCalls += 1;
     this.metrics.lastValidateMs = Date.now() - started;
     if (!result.isValid) {
       this.audit('validateSettings', { errors: result.errors });
-      try { logger.warn('[PolicyConfigManager] Validation produced errors', { errors: result.errors }); } catch {}
+      try {
+        logger.warn('[PolicyConfigManager] Validation produced errors', { errors: result.errors });
+      } catch {}
     }
     return result;
   }
@@ -108,7 +112,9 @@ export class PolicyConfigManager {
       this.audit('exportSettings', { size: json.length });
       return json;
     } catch (e) {
-      try { logger.error('[PolicyConfigManager] Failed to export settings', e as Error); } catch {}
+      try {
+        logger.error('[PolicyConfigManager] Failed to export settings', e as Error);
+      } catch {}
       return '{}';
     }
   }
@@ -116,12 +122,14 @@ export class PolicyConfigManager {
   migrateSettings(input: Record<string, any>): AlertSettings {
     // Minimal migration example: map legacy keys -> new schema
     const legacyCaps = (input as any).caps ?? (input as any).dailyCaps;
-    const dailyCaps = legacyCaps ? {
-      critical: Number(legacyCaps.critical ?? legacyCaps.CRIT ?? 1),
-      important: Number(legacyCaps.important ?? legacyCaps.IMP ?? 2),
-      moderate: Number(legacyCaps.moderate ?? legacyCaps.MOD ?? 4),
-      low: Number(legacyCaps.low ?? legacyCaps.LOW ?? 999),
-    } : undefined;
+    const dailyCaps = legacyCaps
+      ? {
+          critical: Number(legacyCaps.critical ?? legacyCaps.CRIT ?? 1),
+          important: Number(legacyCaps.important ?? legacyCaps.IMP ?? 2),
+          moderate: Number(legacyCaps.moderate ?? legacyCaps.MOD ?? 4),
+          low: Number(legacyCaps.low ?? legacyCaps.LOW ?? 999),
+        }
+      : undefined;
     const next: PartialSettings = {
       studentId: input.studentId ?? '__global__',
       quietHours: input.quietHours,
@@ -133,29 +141,50 @@ export class PolicyConfigManager {
     return normalized;
   }
 
-  getMetrics(): PolicyConfigMetrics { return { ...this.metrics }; }
+  getMetrics(): PolicyConfigMetrics {
+    return { ...this.metrics };
+  }
 
   getPolicyExplanation(settings: AlertSettings): string {
     const parts: string[] = [];
-    if (settings.quietHours) parts.push(`Quiet hours from ${settings.quietHours.start} to ${settings.quietHours.end}.`);
+    if (settings.quietHours)
+      parts.push(`Quiet hours from ${settings.quietHours.start} to ${settings.quietHours.end}.`);
     if (settings.dailyCaps) {
       const c = settings.dailyCaps;
-      parts.push(`Daily caps – critical: ${c.critical}, important: ${c.important}, moderate: ${c.moderate}, low: ${c.low}.`);
+      parts.push(
+        `Daily caps – critical: ${c.critical}, important: ${c.important}, moderate: ${c.moderate}, low: ${c.low}.`,
+      );
     }
-    if (settings.snoozePreferences) parts.push(`Default snooze: ${settings.snoozePreferences.defaultHours ?? 24}h; Don't show again: ${settings.snoozePreferences.dontShowAgainDays ?? 7} days.`);
+    if (settings.snoozePreferences)
+      parts.push(
+        `Default snooze: ${settings.snoozePreferences.defaultHours ?? 24}h; Don't show again: ${settings.snoozePreferences.dontShowAgainDays ?? 7} days.`,
+      );
     return parts.join(' ');
   }
 
-  simulatePolicyDecisions(alerts: AlertEvent[], settings?: AlertSettings, fn: (result: { allowed: boolean; reasons: string[]; severity: AlertSeverity }) => void = () => {}): void {
+  simulatePolicyDecisions(
+    alerts: AlertEvent[],
+    settings?: AlertSettings,
+    fn: (result: {
+      allowed: boolean;
+      reasons: string[];
+      severity: AlertSeverity;
+    }) => void = () => {},
+  ): void {
     // Lightweight simulator intended for testing tools; implementation remains minimal here.
-    try { this.audit('simulatePolicyDecisions', { count: alerts.length }); } catch {}
+    try {
+      this.audit('simulatePolicyDecisions', { count: alerts.length });
+    } catch {}
     // Defer heavy simulations to dedicated tests
   }
 
   private audit(action: string, payload?: Record<string, unknown>): void {
     try {
       const key = this.storageKey;
-      const entries = readStorage<Array<{ at: string; action: string; payload?: Record<string, unknown> }>>(key) ?? [];
+      const entries =
+        readStorage<Array<{ at: string; action: string; payload?: Record<string, unknown> }>>(
+          key,
+        ) ?? [];
       entries.push({ at: new Date().toISOString(), action, payload });
       const trimmed = entries.length > 200 ? entries.slice(entries.length - 200) : entries;
       writeStorage(key, trimmed);
@@ -166,5 +195,3 @@ export class PolicyConfigManager {
 }
 
 export default PolicyConfigManager;
-
-

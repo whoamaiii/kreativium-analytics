@@ -1,6 +1,6 @@
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
-import { format } from "date-fns";
-import { generatePDFReport as generatePDF } from "./export/pdf";
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
+import { format } from 'date-fns';
+import { generatePDFReport as generatePDF } from './export/pdf';
 import {
   generateCSVExport as generateCSV,
   generateEmotionsCSV as generateEmotionsCSVImpl,
@@ -8,18 +8,18 @@ import {
   generateGoalsCSV as generateGoalsCSVImpl,
   generateTrackingCSV as generateTrackingCSVImpl,
   filterByDateRange,
-  type CSVExportOptions
-} from "./export/csv";
+  type CSVExportOptions,
+} from './export/csv';
 import {
   JSONExporter,
   BackupSystem,
   type JSONExportOptions,
-  type BackupData as BackupDataType
-} from "./export/json";
+  type BackupData as BackupDataType,
+} from './export/json';
 import {
   type ExportOptions as CommonExportOptions,
-  type ExportDataCollection as CommonDataCollection
-} from "./export/common";
+  type ExportDataCollection as CommonDataCollection,
+} from './export/common';
 
 // CSV parsing result
 interface CSVParseResult {
@@ -84,12 +84,12 @@ class ExportSystem {
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
     },
-    options: ExportOptions
+    options: ExportOptions,
   ): Promise<Blob> {
     // Delegate to the focused PDF module
     return generatePDF(student, data, {
       includeCharts: options.includeCharts,
-      dateRange: options.dateRange
+      dateRange: options.dateRange,
     });
   }
 
@@ -102,7 +102,7 @@ class ExportSystem {
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
     },
-    options: ExportOptions
+    options: ExportOptions,
   ): string {
     // Convert legacy options to CSV module format
     const csvOptions: CSVExportOptions = {
@@ -112,8 +112,8 @@ class ExportSystem {
       groupBy: options.groupBy,
       formatting: {
         includeUtf8Bom: false, // Match legacy behavior
-        dateFormat: 'yyyy-MM-dd HH:mm'
-      }
+        dateFormat: 'yyyy-MM-dd HH:mm',
+      },
     };
 
     const result = generateCSV(students, allData, csvOptions);
@@ -129,13 +129,13 @@ class ExportSystem {
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
     },
-    options: ExportOptions
+    options: ExportOptions,
   ): string {
     // Convert to JSON module format
     const jsonOptions: JSONExportOptions = {
       includeFields: options.includeFields,
       dateRange: options.dateRange,
-      anonymize: options.anonymize
+      anonymize: options.anonymize,
     };
 
     return this.jsonExporter.generateExport(students, allData, jsonOptions);
@@ -149,7 +149,7 @@ class ExportSystem {
       emotions: EmotionEntry[];
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
-    }
+    },
   ): BackupData {
     return this.backupSystem.createBackup(students, allData);
   }
@@ -170,7 +170,10 @@ class ExportSystem {
   }
 
   // Import from CSV
-  async importFromCSV(csvContent: string, dataType: 'emotions' | 'sensoryInputs' | 'students'): Promise<{
+  async importFromCSV(
+    csvContent: string,
+    dataType: 'emotions' | 'sensoryInputs' | 'students',
+  ): Promise<{
     success: boolean;
     errors: string[];
     imported: (EmotionEntry | SensoryEntry | Student)[];
@@ -179,7 +182,7 @@ class ExportSystem {
     const imported: (EmotionEntry | SensoryEntry | Student)[] = [];
 
     try {
-      const lines = csvContent.split('\n').filter(line => line.trim() !== '');
+      const lines = csvContent.split('\n').filter((line) => line.trim() !== '');
       if (lines.length < 2) {
         errors.push('CSV file must contain at least a header row and one data row');
         return { success: false, errors, imported };
@@ -187,9 +190,9 @@ class ExportSystem {
 
       const headers = this.parseCSVLine(lines[0]);
       const requiredHeaders = this.getRequiredHeaders(dataType);
-      
+
       // Validate headers
-      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
       if (missingHeaders.length > 0) {
         errors.push(`Missing required headers: ${missingHeaders.join(', ')}`);
         return { success: false, errors, imported };
@@ -216,9 +219,8 @@ class ExportSystem {
       return {
         success: imported.length > 0,
         errors,
-        imported
+        imported,
       };
-
     } catch (error) {
       errors.push(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return { success: false, errors, imported };
@@ -231,7 +233,7 @@ class ExportSystem {
     const headerMap = {
       emotions: ['Date', 'Emotion', 'Intensity'],
       sensoryInputs: ['Date', 'Sensory Type', 'Response', 'Intensity'],
-      students: ['Name', 'Grade']
+      students: ['Name', 'Grade'],
     };
     return headerMap[dataType as keyof typeof headerMap] || [];
   }
@@ -256,7 +258,11 @@ class ExportSystem {
     return result;
   }
 
-  private parseCSVRowData(headers: string[], values: string[], dataType: string): EmotionEntry | SensoryEntry | Student | null {
+  private parseCSVRowData(
+    headers: string[],
+    values: string[],
+    dataType: string,
+  ): EmotionEntry | SensoryEntry | Student | null {
     const data: Record<string, string> = {};
     headers.forEach((header, index) => {
       data[header] = values[index];
@@ -272,7 +278,7 @@ class ExportSystem {
           timestamp: new Date(data.Date),
           studentId: '', // Would need to be mapped
           triggers: data.Triggers ? data.Triggers.split(';') : [],
-          notes: data.Notes || ''
+          notes: data.Notes || '',
         };
       case 'sensoryInputs':
         return {
@@ -283,7 +289,7 @@ class ExportSystem {
           timestamp: new Date(data.Date),
           studentId: '', // Would need to be mapped
           context: data.Context || '',
-          notes: data.Notes || ''
+          notes: data.Notes || '',
         };
       case 'students':
         return {
@@ -295,8 +301,8 @@ class ExportSystem {
           baselineData: {
             emotionalRegulation: 5,
             sensoryProcessing: 5,
-            environmentalPreferences: {}
-          }
+            environmentalPreferences: {},
+          },
         };
       default:
         return null;

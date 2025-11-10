@@ -5,13 +5,9 @@
  * Pure functions with dependency injection for easy testing.
  */
 
-import { format } from "date-fns";
-import type { Student, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
-import type {
-  ReportContent,
-  ReportDataCollection,
-  PDFReportOptions
-} from "./types";
+import { format } from 'date-fns';
+import type { Student, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
+import type { ReportContent, ReportDataCollection, PDFReportOptions } from './types';
 
 /**
  * Builds structured report content from student data
@@ -24,7 +20,7 @@ import type {
 export function buildReportContent(
   student: Student,
   data: ReportDataCollection,
-  options: PDFReportOptions
+  options: PDFReportOptions,
 ): ReportContent {
   return {
     header: {
@@ -36,20 +32,20 @@ export function buildReportContent(
       studentInfo: {
         name: student.name,
         grade: student.grade,
-        id: student.id
-      }
+        id: student.id,
+      },
     },
     summary: {
       totalSessions: data.trackingEntries.length,
       totalEmotions: data.emotions.length,
       totalSensoryInputs: data.sensoryInputs.length,
-      activeGoals: data.goals.filter(g => g.status === 'active').length,
-      completedGoals: data.goals.filter(g => g.status === 'achieved').length
+      activeGoals: data.goals.filter((g) => g.status === 'active').length,
+      completedGoals: data.goals.filter((g) => g.status === 'achieved').length,
     },
     emotionAnalysis: analyzeEmotionsForReport(data.emotions),
     sensoryAnalysis: analyzeSensoryForReport(data.sensoryInputs),
     goalProgress: analyzeGoalsForReport(data.goals),
-    recommendations: generateRecommendations(data)
+    recommendations: generateRecommendations(data),
   };
 }
 
@@ -68,31 +64,33 @@ export function analyzeEmotionsForReport(emotions: EmotionEntry[]): {
     return {
       mostCommon: 'No data',
       avgIntensity: '0.0',
-      positiveRate: '0'
+      positiveRate: '0',
     };
   }
 
-  const emotionCounts = emotions.reduce((acc, e) => {
-    acc[e.emotion] = (acc[e.emotion] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const emotionCounts = emotions.reduce(
+    (acc, e) => {
+      acc[e.emotion] = (acc[e.emotion] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
-  const mostCommon = Object.entries(emotionCounts)
-    .sort(([, a], [, b]) => b - a)[0][0];
+  const mostCommon = Object.entries(emotionCounts).sort(([, a], [, b]) => b - a)[0][0];
 
   const avgIntensity = (
     emotions.reduce((sum, e) => sum + e.intensity, 0) / emotions.length
   ).toFixed(1);
 
-  const positiveEmotions = emotions.filter(e =>
-    ['happy', 'calm', 'focused', 'excited', 'proud'].includes(e.emotion.toLowerCase())
+  const positiveEmotions = emotions.filter((e) =>
+    ['happy', 'calm', 'focused', 'excited', 'proud'].includes(e.emotion.toLowerCase()),
   ).length;
   const positiveRate = Math.round((positiveEmotions / emotions.length) * 100);
 
   return {
     mostCommon,
     avgIntensity,
-    positiveRate: positiveRate.toString()
+    positiveRate: positiveRate.toString(),
   };
 }
 
@@ -109,26 +107,28 @@ export function analyzeSensoryForReport(sensoryInputs: SensoryEntry[]): {
   if (sensoryInputs.length === 0) {
     return {
       seekingRatio: '0',
-      mostCommonType: 'No data'
+      mostCommonType: 'No data',
     };
   }
 
-  const seekingCount = sensoryInputs.filter(s =>
-    s.response.toLowerCase().includes('seeking')
+  const seekingCount = sensoryInputs.filter((s) =>
+    s.response.toLowerCase().includes('seeking'),
   ).length;
   const seekingRatio = Math.round((seekingCount / sensoryInputs.length) * 100);
 
-  const typeCounts = sensoryInputs.reduce((acc, s) => {
-    acc[s.sensoryType] = (acc[s.sensoryType] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const typeCounts = sensoryInputs.reduce(
+    (acc, s) => {
+      acc[s.sensoryType] = (acc[s.sensoryType] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
-  const mostCommonType = Object.entries(typeCounts)
-    .sort(([, a], [, b]) => b - a)[0][0];
+  const mostCommonType = Object.entries(typeCounts).sort(([, a], [, b]) => b - a)[0][0];
 
   return {
     seekingRatio: seekingRatio.toString(),
-    mostCommonType
+    mostCommonType,
   };
 }
 
@@ -143,12 +143,14 @@ export function analyzeGoalsForReport(goals: Goal[]): Array<{
   progress: number;
   status: string;
 }> {
-  return goals.map(goal => ({
+  return goals.map((goal) => ({
     title: goal.title,
     progress: Math.round(
-      ((goal.dataPoints?.length ? goal.dataPoints[goal.dataPoints.length - 1].value : 0) / goal.targetValue) * 100
+      ((goal.dataPoints?.length ? goal.dataPoints[goal.dataPoints.length - 1].value : 0) /
+        goal.targetValue) *
+        100,
     ),
-    status: goal.status
+    status: goal.status,
   }));
 }
 
@@ -163,7 +165,8 @@ export function generateRecommendations(data: ReportDataCollection): string[] {
 
   // Analyze emotion patterns
   if (data.emotions.length > 0) {
-    const avgIntensity = data.emotions.reduce((sum, e) => sum + e.intensity, 0) / data.emotions.length;
+    const avgIntensity =
+      data.emotions.reduce((sum, e) => sum + e.intensity, 0) / data.emotions.length;
     if (avgIntensity > 7) {
       recommendations.push('Consider implementing stress reduction strategies');
     }
@@ -171,9 +174,9 @@ export function generateRecommendations(data: ReportDataCollection): string[] {
 
   // Analyze sensory patterns
   if (data.sensoryInputs.length > 0) {
-    const seekingRatio = data.sensoryInputs.filter(s =>
-      s.response.toLowerCase().includes('seeking')
-    ).length / data.sensoryInputs.length;
+    const seekingRatio =
+      data.sensoryInputs.filter((s) => s.response.toLowerCase().includes('seeking')).length /
+      data.sensoryInputs.length;
 
     if (seekingRatio > 0.7) {
       recommendations.push('Provide more structured sensory breaks and tools');

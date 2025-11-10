@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect } from 'vitest';
@@ -36,37 +35,41 @@ vi.mock('@/hooks/useTranslation', () => ({
 // Mock the web worker
 vi.mock('@/hooks/useAnalyticsWorker');
 
-
 const mockStudent: Student = {
-    id: '1',
-    name: 'Test Student',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    archived: false,
-    dateOfBirth: "2015-01-01",
-    grade: "1st Grade",
-    goals: [],
-    trackingEntries: [],
-    emotions: [],
-    sensory: []
+  id: '1',
+  name: 'Test Student',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  archived: false,
+  dateOfBirth: '2015-01-01',
+  grade: '1st Grade',
+  goals: [],
+  trackingEntries: [],
+  emotions: [],
+  sensory: [],
 };
 
 const generateMockData = (count: number, correlationFactor: number): TrackingEntry[] => {
   const entries: TrackingEntry[] = [];
   for (let i = 0; i < count; i++) {
     const noiseLevel = Math.random() * 5;
-    const emotionIntensity = Math.max(1, Math.min(5, noiseLevel * correlationFactor + Math.random()));
+    const emotionIntensity = Math.max(
+      1,
+      Math.min(5, noiseLevel * correlationFactor + Math.random()),
+    );
     entries.push({
       id: `tracking_${i}`,
       studentId: '1',
       timestamp: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
-      emotions: [{
+      emotions: [
+        {
           id: `emotion_${i}`,
-          studentId: "1",
+          studentId: '1',
           emotion: 'anxious',
           intensity: emotionIntensity as any,
-          timestamp: new Date()
-      }],
+          timestamp: new Date(),
+        },
+      ],
       sensoryInputs: [],
       environmentalData: {
         id: `env_${i}`,
@@ -75,28 +78,26 @@ const generateMockData = (count: number, correlationFactor: number): TrackingEnt
           noiseLevel: noiseLevel,
           temperature: 20,
           lighting: 'normal',
-          humidity: 0
+          humidity: 0,
         },
         weather: {
-            condition: "cloudy",
-            pressure: 0,
-            temperature: 0
+          condition: 'cloudy',
+          pressure: 0,
+          temperature: 0,
         },
         classroom: {
-            activity: 'instruction',
-            studentCount: 20,
-            timeOfDay: 'morning'
-        }
+          activity: 'instruction',
+          studentCount: 20,
+          timeOfDay: 'morning',
+        },
       },
-      version: 1
+      version: 1,
     });
   }
   return entries;
 };
 
-
 describe('EnvironmentalCorrelations', () => {
-
   it('should produce the same results for worker and fallback paths', () => {
     const mockData = generateMockData(20, 0.8);
     const fallbackResult = patternAnalysis.analyzeEnvironmentalCorrelations(mockData);
@@ -107,6 +108,4 @@ describe('EnvironmentalCorrelations', () => {
 
     expect(workerResult).toEqual(fallbackResult);
   });
-
 });
-

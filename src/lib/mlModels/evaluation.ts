@@ -114,7 +114,9 @@ function extractRegressionMetrics(history: tf.History): { mse?: number; mae?: nu
 function extractClassificationMetrics(history: tf.History): { accuracy?: number } {
   // TFJS sometimes exposes val_accuracy or acc
   const finalValAcc =
-    (history.history.val_accuracy?.[history.history.val_accuracy.length - 1] as number | undefined) ??
+    (history.history.val_accuracy?.[history.history.val_accuracy.length - 1] as
+      | number
+      | undefined) ??
     (history.history.accuracy?.[history.history.accuracy.length - 1] as number | undefined) ??
     (history.history.acc?.[history.history.acc.length - 1] as number | undefined);
 
@@ -192,7 +194,9 @@ export async function recordModelEvaluation(params: RecordEvaluationParams): Pro
       taskType: taskConfig.taskType,
       metrics,
       schemaVersion: cfg.schemaVersion,
-      notes: preprocessingSchemaVersion ? `preprocessingSchemaVersion=${preprocessingSchemaVersion}` : undefined,
+      notes: preprocessingSchemaVersion
+        ? `preprocessingSchemaVersion=${preprocessingSchemaVersion}`
+        : undefined,
     };
 
     recordEvaluation(run);
@@ -254,7 +258,7 @@ async function recordTimeSeriesCrossValidation(params: TimeSeriesCVParams): Prom
   const inputLength = inputs.shape[0];
   const calculatedWindowSize = Math.min(
     taskConfig.defaultWindowSize,
-    Math.max(3, Math.floor(inputLength / 3) || 3)
+    Math.max(3, Math.floor(inputLength / 3) || 3),
   );
 
   // Build time-series CV configuration
@@ -271,7 +275,7 @@ async function recordTimeSeriesCrossValidation(params: TimeSeriesCVParams): Prom
   const tsResults = await validator.validateTimeSeriesModel(
     createModelFn,
     { features: inputs, labels: outputs },
-    tsCfg
+    tsCfg,
   );
 
   // Create CV signature

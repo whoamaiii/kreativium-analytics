@@ -43,7 +43,7 @@ export const ANALYTICS_KEYS = {
 
   /** Cross-tab student-specific cache clear signal */
   CACHE_SIGNAL_STUDENT: 'analytics:cache:signal:student',
-} as const
+} as const;
 
 /** Student tracking data */
 export const TRACKING_KEYS = {
@@ -64,7 +64,7 @@ export const TRACKING_KEYS = {
 
   /** Active session recovery data prefix (deprecated TrackingContext) */
   ACTIVE_SESSION_PREFIX: 'sensoryTracker_activeSession_',
-} as const
+} as const;
 
 // =============================================================================
 // DATA STORAGE & MANAGEMENT
@@ -89,7 +89,7 @@ export const DATA_STORAGE_KEYS = {
 
   /** User preferences */
   PREFERENCES: 'sensoryTracker_preferences',
-} as const
+} as const;
 
 // =============================================================================
 // SESSION MANAGEMENT
@@ -102,7 +102,7 @@ export const SESSION_MANAGEMENT_KEYS = {
 
   /** Session history */
   SESSION_HISTORY: 'sensoryTracker_sessionHistory',
-} as const
+} as const;
 
 // =============================================================================
 // GAMIFICATION & XP
@@ -112,7 +112,7 @@ export const SESSION_MANAGEMENT_KEYS = {
 export const GAMIFICATION_KEYS = {
   /** Total XP accumulated (TegnXP) */
   TEGN_XP_TOTAL: 'tegn_xp_total',
-} as const
+} as const;
 
 // =============================================================================
 // EMOTION GAME
@@ -149,7 +149,7 @@ export const EMOTION_GAME_KEYS = {
 
   /** Daily hints state */
   HINTS_DAILY: 'emotion.hints.daily',
-} as const
+} as const;
 
 /** Emotion game visual effects settings */
 export const EMOTION_EFFECTS_KEYS = {
@@ -158,7 +158,7 @@ export const EMOTION_EFFECTS_KEYS = {
 
   /** Maximum particle count */
   PARTICLES_MAX: 'emotion.effects.particles.max',
-} as const
+} as const;
 
 // =============================================================================
 // ACCESSIBILITY & SETTINGS
@@ -183,7 +183,7 @@ export const SETTINGS_KEYS = {
 
   /** Language preference ('nb' or 'en') */
   LANGUAGE: 'sensoryTracker_language',
-} as const
+} as const;
 
 // =============================================================================
 // ADULT/ADMIN
@@ -196,7 +196,7 @@ export const ADULT_KEYS = {
 
   /** PIN verification expiry timestamp */
   PIN_VERIFIED_UNTIL: 'adult.pin.verifiedUntil',
-} as const
+} as const;
 
 // =============================================================================
 // AI & API CONFIGURATION
@@ -218,7 +218,7 @@ export const API_KEYS = {
 
   /** AI metrics and telemetry */
   METRICS: 'kreativium_ai_metrics_v1',
-} as const
+} as const;
 
 // =============================================================================
 // DIAGNOSTICS
@@ -228,7 +228,7 @@ export const API_KEYS = {
 export const DIAGNOSTICS_KEYS = {
   /** Diagnostic mode flag */
   MODE: 'diagnostics',
-} as const
+} as const;
 
 // =============================================================================
 // SESSION STORAGE KEYS
@@ -241,7 +241,7 @@ export const SESSION_KEYS = {
 
   /** Explanation chat: sources collapsed flag */
   EXPLANATION_SOURCES_COLLAPSED: 'explanationChat.sourcesCollapsed',
-} as const
+} as const;
 
 // =============================================================================
 // PROGRESS & GAMIFICATION
@@ -260,7 +260,7 @@ export const PROGRESS_KEYS = {
 
   /** Progress migration marker prefix */
   MIGRATION_MARKER_PREFIX: 'progress.migratedFor:',
-} as const
+} as const;
 
 // =============================================================================
 // REPORTS & EXPORT SETTINGS
@@ -270,7 +270,7 @@ export const PROGRESS_KEYS = {
 export const EXPORT_KEYS = {
   /** Export preferences for data export dialog */
   PREFERENCES: 'sensory-tracker_export_prefs_v1',
-} as const
+} as const;
 
 // =============================================================================
 // VIEWED/INTERACTION STATE
@@ -283,7 +283,7 @@ export const VIEWED_KEYS = {
 
   /** Dismissed hints */
   HINTS_DISMISSED: 'hints:dismissed',
-} as const
+} as const;
 
 // =============================================================================
 // FLAT EXPORT FOR CONVENIENCE
@@ -383,13 +383,13 @@ export const STORAGE_KEYS = {
   // Viewed
   ALERTS_VIEWED: VIEWED_KEYS.ALERTS_VIEWED,
   HINTS_DISMISSED: VIEWED_KEYS.HINTS_DISMISSED,
-} as const
+} as const;
 
 /**
  * Type for all valid storage keys
  * Enables TypeScript autocomplete and type checking
  */
-export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
+export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
 
 /**
  * Helper to check if a string is a valid storage key
@@ -400,7 +400,7 @@ export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS]
  * }
  */
 export function isStorageKey(key: string): key is StorageKey {
-  return Object.values(STORAGE_KEYS).includes(key as StorageKey)
+  return Object.values(STORAGE_KEYS).includes(key as StorageKey);
 }
 
 /**
@@ -413,5 +413,5 @@ export function isStorageKey(key: string): key is StorageKey {
 export function getKeysByCategory(category: string): StorageKey[] {
   return Object.entries(STORAGE_KEYS)
     .filter(([key]) => key.startsWith(category))
-    .map(([, value]) => value) as StorageKey[]
+    .map(([, value]) => value) as StorageKey[];
 }

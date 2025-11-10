@@ -4,5 +4,3 @@ export interface SignItem {
   imageUrl: string;
   alt: string;
 }
-
-

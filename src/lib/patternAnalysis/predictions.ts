@@ -7,10 +7,10 @@
  * - Risk assessment and intervention recommendations
  */
 
-import { EmotionEntry, SensoryEntry, TrackingEntry, Goal } from "@/types/student";
-import { subDays } from "date-fns";
-import { analyticsConfig } from "@/lib/analyticsConfig";
-import { getMlModels, EmotionPrediction, SensoryPrediction } from "@/lib/mlModels";
+import { EmotionEntry, SensoryEntry, TrackingEntry, Goal } from '@/types/student';
+import { subDays } from 'date-fns';
+import { analyticsConfig } from '@/lib/analyticsConfig';
+import { getMlModels, EmotionPrediction, SensoryPrediction } from '@/lib/mlModels';
 import { logger } from '@/lib/logger';
 import { getLatestEnvironmentConditions } from '@/lib/utils/environment';
 import {
@@ -20,7 +20,7 @@ import {
   analyzeSensoryTrend,
   getEmotionTrendRecommendations,
   getSensoryTrendRecommendations,
-  getTrendSeverity
+  getTrendSeverity,
 } from './trends';
 
 export interface PredictiveInsight {
@@ -60,7 +60,7 @@ export async function generatePredictiveInsights(
   trackingEntries: TrackingEntry[],
   goals: Goal[] = [],
   mlModelsInstance: MlModelsInstance | null = null,
-  mlModelsInitialized: boolean = false
+  mlModelsInitialized: boolean = false,
 ): Promise<PredictiveInsight[]> {
   const cfg = analyticsConfig.getConfig();
   const { enhancedAnalysis, patternAnalysis } = cfg;
@@ -79,11 +79,11 @@ export async function generatePredictiveInsights(
       prediction: {
         value: emotionTrend.forecast.next7Days,
         trend: emotionTrend.direction,
-        accuracy: emotionTrend.confidence
+        accuracy: emotionTrend.confidence,
       },
       recommendations: getEmotionTrendRecommendations(emotionTrend),
       severity: getTrendSeverity(emotionTrend),
-      source: 'statistical'
+      source: 'statistical',
     };
     collectedInsights.push(statisticalInsight);
   }
@@ -95,29 +95,38 @@ export async function generatePredictiveInsights(
       if (modelStatus.get('emotion-prediction')) {
         const mlEmotionPredictions = await mlModelsInstance.predictEmotions(
           trackingEntries.slice(-14), // Use last 14 days for better context
-          7
+          7,
         );
 
         if (mlEmotionPredictions.length > 0) {
           // Calculate overall trend from ML predictions
-          const avgPredictedIntensity = mlEmotionPredictions.reduce((sum, pred) => {
-            const emotionSum = Object.values(pred.emotions).reduce((s, v) => s + v, 0);
-            return sum + emotionSum / Object.keys(pred.emotions).length;
-          }, 0) / mlEmotionPredictions.length;
+          const avgPredictedIntensity =
+            mlEmotionPredictions.reduce((sum, pred) => {
+              const emotionSum = Object.values(pred.emotions).reduce((s, v) => s + v, 0);
+              return sum + emotionSum / Object.keys(pred.emotions).length;
+            }, 0) / mlEmotionPredictions.length;
 
-          const currentAvgIntensity = emotions.slice(-7).reduce((sum, e) => sum + e.intensity, 0) /
+          const currentAvgIntensity =
+            emotions.slice(-7).reduce((sum, e) => sum + e.intensity, 0) /
             Math.max(emotions.slice(-7).length, 1);
 
           const upMultiplier = 1 + enhancedAnalysis.trendThreshold;
           const downMultiplier = 1 - enhancedAnalysis.trendThreshold;
-          const mlTrend = avgPredictedIntensity >= currentAvgIntensity * upMultiplier ? 'increasing' :
-                         avgPredictedIntensity <= currentAvgIntensity * downMultiplier ? 'decreasing' : 'stable';
+          const mlTrend =
+            avgPredictedIntensity >= currentAvgIntensity * upMultiplier
+              ? 'increasing'
+              : avgPredictedIntensity <= currentAvgIntensity * downMultiplier
+                ? 'decreasing'
+                : 'stable';
 
           const highT = patternAnalysis.highIntensityThreshold;
           const mediumCut = Math.max(highT - 2, 1);
           const severity: 'low' | 'medium' | 'high' =
-            avgPredictedIntensity >= highT ? 'high' :
-            avgPredictedIntensity <= mediumCut ? 'medium' : 'low';
+            avgPredictedIntensity >= highT
+              ? 'high'
+              : avgPredictedIntensity <= mediumCut
+                ? 'medium'
+                : 'low';
 
           collectedInsights.push({
             type: 'prediction',
@@ -128,12 +137,12 @@ export async function generatePredictiveInsights(
             prediction: {
               value: avgPredictedIntensity,
               trend: mlTrend,
-              accuracy: mlEmotionPredictions[0].confidence
+              accuracy: mlEmotionPredictions[0].confidence,
             },
             recommendations: getMLEmotionRecommendations(mlEmotionPredictions, mlTrend),
             severity,
             source: 'ml',
-            mlPrediction: mlEmotionPredictions
+            mlPrediction: mlEmotionPredictions,
           });
         }
       }
@@ -154,11 +163,11 @@ export async function generatePredictiveInsights(
       prediction: {
         value: sensoryTrend.forecast.next7Days,
         trend: sensoryTrend.direction,
-        accuracy: sensoryTrend.confidence
+        accuracy: sensoryTrend.confidence,
       },
       recommendations: getSensoryTrendRecommendations(sensoryTrend),
       severity: getTrendSeverity(sensoryTrend),
-      source: 'statistical'
+      source: 'statistical',
     });
   }
 
@@ -166,7 +175,10 @@ export async function generatePredictiveInsights(
   if (mlModelsInitialized && mlModelsInstance && trackingEntries.length > 0) {
     try {
       const modelStatus = await mlModelsInstance.getModelStatus();
-      if (modelStatus.get('sensory-response') && trackingEntries[trackingEntries.length - 1].environmentalData) {
+      if (
+        modelStatus.get('sensory-response') &&
+        trackingEntries[trackingEntries.length - 1].environmentalData
+      ) {
         // Use clean environment categorization utility (replaces deeply nested ternaries)
         const environmentConditions = getLatestEnvironmentConditions(trackingEntries);
 
@@ -176,12 +188,12 @@ export async function generatePredictiveInsights(
           temperature: environmentConditions.temperature,
           crowded: 'moderate' as const,
           smells: false,
-          textures: false
+          textures: false,
         };
 
         const mlSensoryPrediction = await mlModelsInstance.predictSensoryResponse(
           latestEnvironment,
-          new Date()
+          new Date(),
         );
 
         if (mlSensoryPrediction) {
@@ -192,10 +204,14 @@ export async function generatePredictiveInsights(
             confidence: mlSensoryPrediction.confidence,
             timeframe: 'Current environment',
             recommendations: getMLSensoryRecommendations(mlSensoryPrediction),
-            severity: mlSensoryPrediction.environmentalTriggers.length > 2 ? 'high' :
-                     mlSensoryPrediction.environmentalTriggers.length > 0 ? 'medium' : 'low',
+            severity:
+              mlSensoryPrediction.environmentalTriggers.length > 2
+                ? 'high'
+                : mlSensoryPrediction.environmentalTriggers.length > 0
+                  ? 'medium'
+                  : 'low',
             source: 'ml',
-            mlPrediction: mlSensoryPrediction
+            mlPrediction: mlSensoryPrediction,
           });
         }
       }
@@ -205,7 +221,7 @@ export async function generatePredictiveInsights(
   }
 
   // Goal achievement prediction
-  goals.forEach(goal => {
+  goals.forEach((goal) => {
     const goalPrediction = predictGoalAchievement(goal);
     if (goalPrediction) {
       collectedInsights.push(goalPrediction);
@@ -228,9 +244,9 @@ export async function generatePredictiveInsights(
 export function predictGoalAchievement(goal: Goal): PredictiveInsight | null {
   if (!goal.dataPoints || goal.dataPoints.length < 3) return null;
 
-  const progressData = goal.dataPoints.map(dp => ({
+  const progressData = goal.dataPoints.map((dp) => ({
     value: dp.value,
-    timestamp: dp.timestamp
+    timestamp: dp.timestamp,
   }));
 
   const trend = analyzeTrendsWithStatistics(progressData);
@@ -244,18 +260,19 @@ export function predictGoalAchievement(goal: Goal): PredictiveInsight | null {
   return {
     type: 'prediction',
     title: `Goal Achievement Forecast: ${goal.title}`,
-    description: estimatedDays > 0
-      ? `Estimated ${Math.ceil(estimatedDays)} days to achieve goal at current pace`
-      : 'Goal may require strategy adjustment based on current trend',
+    description:
+      estimatedDays > 0
+        ? `Estimated ${Math.ceil(estimatedDays)} days to achieve goal at current pace`
+        : 'Goal may require strategy adjustment based on current trend',
     confidence: trend.significance,
     timeframe: 'Goal completion forecast',
     prediction: {
       value: targetValue,
       trend: trend.direction,
-      accuracy: trend.significance
+      accuracy: trend.significance,
     },
     recommendations: getGoalRecommendations(goal, trend, estimatedDays),
-    severity: estimatedDays < 0 ? 'high' : estimatedDays > 60 ? 'medium' : 'low'
+    severity: estimatedDays < 0 ? 'high' : estimatedDays > 60 ? 'medium' : 'low',
   };
 }
 
@@ -270,31 +287,40 @@ export function predictGoalAchievement(goal: Goal): PredictiveInsight | null {
 export function assessRisks(
   emotions: EmotionEntry[],
   sensoryInputs: SensoryEntry[],
-  trackingEntries: TrackingEntry[]
+  trackingEntries: TrackingEntry[],
 ): PredictiveInsight[] {
   const cfg = analyticsConfig.getConfig();
   const { timeWindows, enhancedAnalysis } = cfg;
 
   const risks: PredictiveInsight[] = [];
   const recentData = {
-    emotions: emotions.filter(e => e.timestamp >= subDays(new Date(), timeWindows.shortTermDays)),
-    sensoryInputs: sensoryInputs.filter(s => s.timestamp >= subDays(new Date(), timeWindows.shortTermDays)),
-    trackingEntries: trackingEntries.filter(t => t.timestamp >= subDays(new Date(), timeWindows.shortTermDays))
+    emotions: emotions.filter((e) => e.timestamp >= subDays(new Date(), timeWindows.shortTermDays)),
+    sensoryInputs: sensoryInputs.filter(
+      (s) => s.timestamp >= subDays(new Date(), timeWindows.shortTermDays),
+    ),
+    trackingEntries: trackingEntries.filter(
+      (t) => t.timestamp >= subDays(new Date(), timeWindows.shortTermDays),
+    ),
   };
 
   // Apply sensitivity multiplier for risk assessment
   // Incidents threshold: prefer configured value if present; fallback to 3
-  const incidentsThreshold = Math.max(1, Math.floor((enhancedAnalysis as any)?.riskAssessmentThreshold ?? 3));
+  const incidentsThreshold = Math.max(
+    1,
+    Math.floor((enhancedAnalysis as any)?.riskAssessmentThreshold ?? 3),
+  );
 
   // High stress accumulation risk (use configured intensity and emotions)
   const stressIntensityT = cfg?.enhancedAnalysis?.riskAssessment?.stressIntensityThreshold;
   const stressEmotionsCfg = cfg?.enhancedAnalysis?.riskAssessment?.stressEmotions;
-  const stressEmotions = Array.isArray(stressEmotionsCfg) ? stressEmotionsCfg.map((e: string) => e.toLowerCase()) : [];
+  const stressEmotions = Array.isArray(stressEmotionsCfg)
+    ? stressEmotionsCfg.map((e: string) => e.toLowerCase())
+    : [];
 
   let highStressCount = 0;
   if (typeof stressIntensityT === 'number' && stressEmotions.length > 0) {
-    highStressCount = recentData.emotions.filter(e =>
-      e.intensity >= stressIntensityT && stressEmotions.includes(e.emotion.toLowerCase())
+    highStressCount = recentData.emotions.filter(
+      (e) => e.intensity >= stressIntensityT && stressEmotions.includes(e.emotion.toLowerCase()),
     ).length;
   }
 
@@ -309,9 +335,9 @@ export function assessRisks(
         'Implement immediate stress reduction strategies',
         'Review and adjust current interventions',
         'Consider environmental modifications',
-        'Schedule additional support sessions'
+        'Schedule additional support sessions',
       ],
-      severity: 'high'
+      severity: 'high',
     });
   }
 
@@ -329,28 +355,28 @@ export function assessRisks(
 export function getGoalRecommendations(
   goal: Goal,
   trend: TrendAnalysis,
-  estimatedDays: number
+  estimatedDays: number,
 ): string[] {
   if (estimatedDays < 0) {
     return [
       'Review and adjust goal strategies',
       'Break goal into smaller milestones',
       'Identify and address barriers',
-      'Consider modifying timeline or approach'
+      'Consider modifying timeline or approach',
     ];
   } else if (estimatedDays > 90) {
     return [
       'Increase intervention frequency',
       'Add additional support strategies',
       'Review goal expectations',
-      'Provide more immediate reinforcement'
+      'Provide more immediate reinforcement',
     ];
   }
   return [
     'Continue current approach',
     'Monitor progress regularly',
     'Celebrate milestones reached',
-    'Maintain consistent support'
+    'Maintain consistent support',
   ];
 }
 
@@ -363,10 +389,12 @@ export function getGoalRecommendations(
  */
 export function getMLEmotionRecommendations(
   predictions: EmotionPrediction[],
-  trend: string
+  trend: string,
 ): string[] {
-  const highAnxietyDays = predictions.filter(p => p.emotions.anxious > 7).length;
-  const lowPositiveDays = predictions.filter(p => p.emotions.happy < 3 && p.emotions.calm < 3).length;
+  const highAnxietyDays = predictions.filter((p) => p.emotions.anxious > 7).length;
+  const lowPositiveDays = predictions.filter(
+    (p) => p.emotions.happy < 3 && p.emotions.calm < 3,
+  ).length;
 
   const recommendations: string[] = [];
 
@@ -376,7 +404,9 @@ export function getMLEmotionRecommendations(
   }
 
   if (lowPositiveDays >= 4) {
-    recommendations.push('ML indicates low positive emotions upcoming - increase engagement activities');
+    recommendations.push(
+      'ML indicates low positive emotions upcoming - increase engagement activities',
+    );
     recommendations.push('Prepare mood-boosting interventions');
   }
 
@@ -408,14 +438,18 @@ export function getMLSensoryRecommendations(prediction: SensoryPrediction): stri
     if (response.avoiding > highBand) {
       recommendations.push(`High ${sense} avoidance predicted - minimize ${sense} stimuli`);
     } else if (response.seeking > highBand) {
-      recommendations.push(`High ${sense} seeking predicted - provide ${sense} input opportunities`);
+      recommendations.push(
+        `High ${sense} seeking predicted - provide ${sense} input opportunities`,
+      );
     }
   });
 
   // Environmental trigger recommendations
-  prediction.environmentalTriggers.forEach(trigger => {
+  prediction.environmentalTriggers.forEach((trigger) => {
     if (trigger.probability > highBand) {
-      recommendations.push(`High probability of reaction to ${trigger.trigger} - prepare alternatives`);
+      recommendations.push(
+        `High probability of reaction to ${trigger.trigger} - prepare alternatives`,
+      );
     }
   });
 

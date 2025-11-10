@@ -22,5 +22,3 @@ describe('adaptDifficulty', () => {
     expect(angry.threshold).toBeGreaterThanOrEqual(0.6);
   });
 });
-
-

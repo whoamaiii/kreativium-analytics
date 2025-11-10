@@ -5,7 +5,6 @@ import type { ExplorePreset } from '@/types/analytics';
 import { logger } from '@/lib/logger';
 import { useUrlSync } from './useUrlSync';
 
-
 const VALID_TABS: ReadonlyArray<TabKey> = ['overview', 'explore', 'alerts', 'monitoring'] as const;
 
 const LEGACY_TAB_MAP: Record<string, TabKey> = {
@@ -35,14 +34,25 @@ function isValidTab(value: string | null | undefined): value is TabKey {
   return (VALID_TABS as readonly string[]).includes(mapped);
 }
 
-function normalizeTab(value: string | null | undefined, defaultTab: TabKey): { tab: TabKey; legacyFrom?: string; suggestedPreset?: ExplorePreset } {
+function normalizeTab(
+  value: string | null | undefined,
+  defaultTab: TabKey,
+): { tab: TabKey; legacyFrom?: string; suggestedPreset?: ExplorePreset } {
   if (!value) return { tab: defaultTab };
   const lower = value.toLowerCase();
   const mapped = (LEGACY_TAB_MAP[lower] ?? lower) as string;
-  const finalTab = (VALID_TABS as readonly string[]).includes(mapped) ? (mapped as TabKey) : defaultTab;
+  const finalTab = (VALID_TABS as readonly string[]).includes(mapped)
+    ? (mapped as TabKey)
+    : defaultTab;
   if (lower !== mapped) {
     const suggestedPreset = LEGACY_TAB_TO_SUGGESTED_PRESET[lower];
-    try { logger.debug('[useSyncedTabParam] Back-compat mapping applied', { from: value, to: finalTab, suggestedPreset }); } catch {}
+    try {
+      logger.debug('[useSyncedTabParam] Back-compat mapping applied', {
+        from: value,
+        to: finalTab,
+        suggestedPreset,
+      });
+    } catch {}
     return { tab: finalTab, legacyFrom: lower, suggestedPreset };
   }
   return { tab: finalTab };
@@ -78,35 +88,54 @@ export function useSyncedTabParam(options: UseSyncedTabParamOptions = {}): UseSy
     defaultValue: defaultTab,
     debounceMs,
     loggerName: 'useSyncedTabParam',
-    read: useCallback((params: URLSearchParams): TabKey => {
-      const urlValue = params.get(paramKey);
-      const normalized = normalizeTab(urlValue, defaultTab);
-      const tab = normalized.tab || defaultTab;
+    read: useCallback(
+      (params: URLSearchParams): TabKey => {
+        const urlValue = params.get(paramKey);
+        const normalized = normalizeTab(urlValue, defaultTab);
+        const tab = normalized.tab || defaultTab;
 
-      // If we applied a legacy mapping (e.g., patterns -> explore), reflect it in the URL
-      if (normalized.legacyFrom) {
-        try {
-          const url = new URL(window.location.href);
-          url.searchParams.set(paramKey, tab);
-          if (tab === 'explore' && normalized.suggestedPreset) {
-            // Preserve intent: set preset unless it's already explicitly present
-            const existingPreset = url.searchParams.get('preset');
-            if (!existingPreset) {
-              url.searchParams.set('preset', normalized.suggestedPreset);
+        // If we applied a legacy mapping (e.g., patterns -> explore), reflect it in the URL
+        if (normalized.legacyFrom) {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set(paramKey, tab);
+            if (tab === 'explore' && normalized.suggestedPreset) {
+              // Preserve intent: set preset unless it's already explicitly present
+              const existingPreset = url.searchParams.get('preset');
+              if (!existingPreset) {
+                url.searchParams.set('preset', normalized.suggestedPreset);
+              }
             }
+            const nextState = {
+              ...(window.history.state || {}),
+              legacyRedirect: {
+                fromTab: normalized.legacyFrom,
+                toTab: tab,
+                suggestedPreset: normalized.suggestedPreset,
+              },
+            };
+            window.history.replaceState(nextState, '', url.toString());
+          } catch {}
+          if (typeof onLegacyRedirect === 'function') {
+            try {
+              onLegacyRedirect({
+                from: normalized.legacyFrom,
+                to: tab,
+                suggestedPreset: normalized.suggestedPreset,
+              });
+            } catch {}
           }
-          const nextState = { ...(window.history.state || {}), legacyRedirect: { fromTab: normalized.legacyFrom, toTab: tab, suggestedPreset: normalized.suggestedPreset } };
-          window.history.replaceState(nextState, '', url.toString());
-        } catch {}
-        if (typeof onLegacyRedirect === 'function') {
-          try { onLegacyRedirect({ from: normalized.legacyFrom, to: tab, suggestedPreset: normalized.suggestedPreset }); } catch {}
         }
-      }
 
-      return tab;
-    }, [defaultTab, paramKey, onLegacyRedirect]),
-    write: useCallback((tab: TabKey, params: URLSearchParams) => {
-      params.set(paramKey, tab);
-    }, [paramKey]),
+        return tab;
+      },
+      [defaultTab, paramKey, onLegacyRedirect],
+    ),
+    write: useCallback(
+      (tab: TabKey, params: URLSearchParams) => {
+        params.set(paramKey, tab);
+      },
+      [paramKey],
+    ),
   });
 }

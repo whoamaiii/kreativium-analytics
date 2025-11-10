@@ -27,9 +27,17 @@ export function WorldBanner({ visible, worldName, colors, onClose }: WorldBanner
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
         >
-          <ConfettiBurst active={true} durationMs={1200} particles={120} className="absolute -inset-6 pointer-events-none" colors={colors} />
+          <ConfettiBurst
+            active={true}
+            durationMs={1200}
+            particles={120}
+            className="absolute -inset-6 pointer-events-none"
+            colors={colors}
+          />
           <div className="relative rounded-2xl px-5 py-3 bg-white/10 border border-white/15 backdrop-blur text-white shadow-lg">
-            <div className="text-sm uppercase tracking-wide text-white/80">{String(tCommon('game.newWorld', { defaultValue: 'Ny verden' }))}</div>
+            <div className="text-sm uppercase tracking-wide text-white/80">
+              {String(tCommon('game.newWorld', { defaultValue: 'Ny verden' }))}
+            </div>
             <div className="text-lg font-bold">{worldName}</div>
           </div>
         </motion.div>
@@ -39,9 +47,3 @@ export function WorldBanner({ visible, worldName, colors, onClose }: WorldBanner
 }
 
 export default WorldBanner;
-
-
-
-
-
-

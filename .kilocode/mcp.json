@@ -2,27 +2,18 @@
   "mcpServers": {
     "context7": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp"
-      ],
+      "args": ["-y", "@upstash/context7-mcp"],
       "env": {
         "DEFAULT_MINIMUM_TOKENS": ""
       }
     },
     "sequentialthinking": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-sequential-thinking"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
     },
     "puppeteer": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-puppeteer"
-      ],
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
       "alwaysAllow": [
         "puppeteer_navigate",
         "puppeteer_screenshot",
@@ -35,11 +26,7 @@
     },
     "filesystem": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "/Users/quentinthiessen/Documents"
-      ]
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/quentinthiessen/Documents"]
     },
     "github": {
       "command": "docker",
@@ -60,9 +47,7 @@
         "GITHUB_TOOLSETS": "",
         "GITHUB_READ_ONLY": ""
       },
-      "alwaysAllow": [
-        "rest"
-      ]
+      "alwaysAllow": ["rest"]
     }
   }
 }

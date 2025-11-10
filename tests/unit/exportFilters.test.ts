@@ -5,7 +5,7 @@ describe('export filters helpers', () => {
   it('computes relative presets', () => {
     const r7 = computeDateRange('7d');
     expect(r7).toBeTruthy();
-    const diffDays = Math.round((r7!.end.getTime() - r7!.start.getTime()) / (1000*60*60*24));
+    const diffDays = Math.round((r7!.end.getTime() - r7!.start.getTime()) / (1000 * 60 * 60 * 24));
     expect(diffDays).toBeGreaterThanOrEqual(6);
   });
 

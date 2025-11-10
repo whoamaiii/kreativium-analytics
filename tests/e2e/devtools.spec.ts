@@ -23,4 +23,3 @@ test.describe('Developer Tools access', () => {
     }
   });
 });
-

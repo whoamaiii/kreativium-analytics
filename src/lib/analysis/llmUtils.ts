@@ -1,4 +1,8 @@
-import { analyticsConfig, ANALYTICS_CONFIG, type AnalyticsConfiguration } from '@/lib/analyticsConfig';
+import {
+  analyticsConfig,
+  ANALYTICS_CONFIG,
+  type AnalyticsConfiguration,
+} from '@/lib/analyticsConfig';
 import { canonicalSerialize } from '@/lib/canonicalSerialize';
 import { logger } from '@/lib/logger';
 import { ZAiReport, type AiReport, type AiDataLineageItem } from './aiSchema';
@@ -29,7 +33,10 @@ export function limitForPrompt<T extends { timestamp: Date }>(arr: T[], limit = 
   return arr.slice(0, Math.max(0, limit));
 }
 
-export function buildDataLineage(metrics: DataContextMetrics, timeframe?: TimeRange): AiDataLineageItem[] {
+export function buildDataLineage(
+  metrics: DataContextMetrics,
+  timeframe?: TimeRange,
+): AiDataLineageItem[] {
   const range = (() => {
     const s = toDate(timeframe?.start)?.toISOString();
     const e = toDate(timeframe?.end)?.toISOString();
@@ -38,14 +45,37 @@ export function buildDataLineage(metrics: DataContextMetrics, timeframe?: TimeRa
     return { start: s, end: e, timezone: tz };
   })();
   const lineage: AiDataLineageItem[] = [];
-  if (metrics.entries?.length) lineage.push({ source: 'local-storage', type: 'tracking', timeRange: range, fields: ['entries'] });
-  if (metrics.emotions?.length) lineage.push({ source: 'local-storage', type: 'emotion', timeRange: range, fields: ['emotions'] });
-  if (metrics.sensoryInputs?.length) lineage.push({ source: 'local-storage', type: 'sensor', timeRange: range, fields: ['sensoryInputs'] });
-  if (metrics.goals?.length) lineage.push({ source: 'local-storage', type: 'goal', timeRange: range, fields: ['goals'] });
+  if (metrics.entries?.length)
+    lineage.push({
+      source: 'local-storage',
+      type: 'tracking',
+      timeRange: range,
+      fields: ['entries'],
+    });
+  if (metrics.emotions?.length)
+    lineage.push({
+      source: 'local-storage',
+      type: 'emotion',
+      timeRange: range,
+      fields: ['emotions'],
+    });
+  if (metrics.sensoryInputs?.length)
+    lineage.push({
+      source: 'local-storage',
+      type: 'sensor',
+      timeRange: range,
+      fields: ['sensoryInputs'],
+    });
+  if (metrics.goals?.length)
+    lineage.push({ source: 'local-storage', type: 'goal', timeRange: range, fields: ['goals'] });
   return lineage;
 }
 
-export function createCacheKey(studentId: string, timeframe?: TimeRange, extra?: Record<string, unknown>): string {
+export function createCacheKey(
+  studentId: string,
+  timeframe?: TimeRange,
+  extra?: Record<string, unknown>,
+): string {
   const s = toDate(timeframe?.start)?.toISOString();
   const e = toDate(timeframe?.end)?.toISOString();
   const tz = timeframe?.timezone;
@@ -53,24 +83,45 @@ export function createCacheKey(studentId: string, timeframe?: TimeRange, extra?:
   return canonicalSerialize(keyObj);
 }
 
-export function computeAiConfidence(metrics: DataContextMetrics, repaired: boolean, usedFallback: boolean, cfg?: AnalyticsConfiguration): { overall: number; calibration: string } {
-  const config = cfg ?? (() => {
-    try { return analyticsConfig.getConfig(); } catch { return ANALYTICS_CONFIG as unknown as AnalyticsConfiguration; }
-  })();
+export function computeAiConfidence(
+  metrics: DataContextMetrics,
+  repaired: boolean,
+  usedFallback: boolean,
+  cfg?: AnalyticsConfiguration,
+): { overall: number; calibration: string } {
+  const config =
+    cfg ??
+    (() => {
+      try {
+        return analyticsConfig.getConfig();
+      } catch {
+        return ANALYTICS_CONFIG as unknown as AnalyticsConfiguration;
+      }
+    })();
   const TH = config.confidence.THRESHOLDS;
   const W = config.confidence.WEIGHTS;
 
   const now = new Date();
-  const last = metrics.entries[0]?.timestamp
-    || metrics.emotions[0]?.timestamp
-    || metrics.sensoryInputs[0]?.timestamp
-    || new Date(0);
-  const daysSince = Math.max(0, Math.round((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)));
+  const last =
+    metrics.entries[0]?.timestamp ||
+    metrics.emotions[0]?.timestamp ||
+    metrics.sensoryInputs[0]?.timestamp ||
+    new Date(0);
+  const daysSince = Math.max(
+    0,
+    Math.round((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24)),
+  );
 
-  const ePart = Math.min(1, (metrics.emotions.length || 0) / Math.max(1, TH.EMOTION_ENTRIES)) * W.EMOTION;
-  const sPart = Math.min(1, (metrics.sensoryInputs.length || 0) / Math.max(1, TH.SENSORY_ENTRIES)) * W.SENSORY;
-  const tPart = Math.min(1, (metrics.entries.length || 0) / Math.max(1, TH.TRACKING_ENTRIES)) * W.TRACKING;
-  const recBoost = daysSince <= TH.DAYS_SINCE_LAST_ENTRY ? (1 - (daysSince / Math.max(1, TH.DAYS_SINCE_LAST_ENTRY))) * W.RECENCY_BOOST : 0;
+  const ePart =
+    Math.min(1, (metrics.emotions.length || 0) / Math.max(1, TH.EMOTION_ENTRIES)) * W.EMOTION;
+  const sPart =
+    Math.min(1, (metrics.sensoryInputs.length || 0) / Math.max(1, TH.SENSORY_ENTRIES)) * W.SENSORY;
+  const tPart =
+    Math.min(1, (metrics.entries.length || 0) / Math.max(1, TH.TRACKING_ENTRIES)) * W.TRACKING;
+  const recBoost =
+    daysSince <= TH.DAYS_SINCE_LAST_ENTRY
+      ? (1 - daysSince / Math.max(1, TH.DAYS_SINCE_LAST_ENTRY)) * W.RECENCY_BOOST
+      : 0;
 
   let score = ePart + sPart + tPart + recBoost;
   if (repaired) score = Math.max(0, score - 0.1);
@@ -87,7 +138,11 @@ export function computeAiConfidence(metrics: DataContextMetrics, repaired: boole
   return { overall: score, calibration };
 }
 
-export function validateOrRepairAiReport(input: unknown): { ok: true; report: AiReport; repaired: boolean; caveats: string[] } | { ok: false; error: Error; caveats: string[] } {
+export function validateOrRepairAiReport(
+  input: unknown,
+):
+  | { ok: true; report: AiReport; repaired: boolean; caveats: string[] }
+  | { ok: false; error: Error; caveats: string[] } {
   const parsed = ZAiReport.safeParse(input);
   if (parsed.success) {
     return { ok: true, report: parsed.data, repaired: false, caveats: [] };
@@ -99,7 +154,9 @@ export function validateOrRepairAiReport(input: unknown): { ok: true; report: Ai
     const parsed2 = ZAiReport.parse(repaired);
     return { ok: true, report: parsed2, repaired: true, caveats };
   } catch (err) {
-    logger.error('[LLM] validateOrRepairAiReport failed', { error: err instanceof Error ? { message: err.message, name: err.name } : String(err) });
+    logger.error('[LLM] validateOrRepairAiReport failed', {
+      error: err instanceof Error ? { message: err.message, name: err.name } : String(err),
+    });
     return { ok: false, error: err as Error, caveats };
   }
 }
@@ -114,7 +171,17 @@ const SEVERITY_VALUES = ['low', 'medium', 'high'] as const;
 const TIME_HORIZON_VALUES = ['short', 'medium', 'long'] as const;
 const TIER_VALUES = ['Tier1', 'Tier2', 'Tier3'] as const;
 const SCOPE_VALUES = ['classroom', 'school'] as const;
-const SOURCE_TYPE_VALUES = ['emotion', 'behavior', 'sensor', 'environment', 'goal', 'tracking', 'system', 'external', 'other'] as const;
+const SOURCE_TYPE_VALUES = [
+  'emotion',
+  'behavior',
+  'sensor',
+  'environment',
+  'goal',
+  'tracking',
+  'system',
+  'external',
+  'other',
+] as const;
 
 function asObject(value: unknown): UnknownRecord | undefined {
   return value && typeof value === 'object' ? (value as UnknownRecord) : undefined;
@@ -137,11 +204,16 @@ function num(v: unknown, def = 0): number {
   return n;
 }
 
-function str(v: unknown, def = ''): string { return typeof v === 'string' ? v : def; }
+function str(v: unknown, def = ''): string {
+  return typeof v === 'string' ? v : def;
+}
 
 function coerceToAiReportShape(input: unknown): AiReport {
-  const o = (typeof input === 'object' && input) ? (input as Record<string, unknown>) : {};
-  const asStrArr = (v: unknown) => arr<unknown>(v).map((x) => String(x)).filter((s) => s.trim().length > 0);
+  const o = typeof input === 'object' && input ? (input as Record<string, unknown>) : {};
+  const asStrArr = (v: unknown) =>
+    arr<unknown>(v)
+      .map((x) => String(x))
+      .filter((s) => s.trim().length > 0);
   const asEnumArray = <T extends string>(value: unknown, allowed: readonly T[]): T[] =>
     asStrArr(value).filter((item): item is T => (allowed as readonly string[]).includes(item));
   const evidence = (value: unknown): AiReport['patterns'][number]['evidence'] =>
@@ -157,17 +229,20 @@ function coerceToAiReportShape(input: unknown): AiReport {
   const patterns = asRecordArray(o.patterns).map((item) => ({
     name: str(item.name, 'Pattern'),
     description: str(item.description),
-    strength: typeof item.strength === 'number' ? Math.max(0, Math.min(1, item.strength)) : undefined,
+    strength:
+      typeof item.strength === 'number' ? Math.max(0, Math.min(1, item.strength)) : undefined,
     impact: asEnumValue(item.impact, SEVERITY_VALUES),
     evidence: evidence(item.evidence),
   }));
   const correlations = asRecordArray(o.correlations).map((item) => {
-    const vars = Array.isArray(item.variables) && item.variables.length >= 2
-      ? [String(item.variables[0]), String(item.variables[1])] as [string, string]
-      : ['factorA', 'factorB'] as [string, string];
+    const vars =
+      Array.isArray(item.variables) && item.variables.length >= 2
+        ? ([String(item.variables[0]), String(item.variables[1])] as [string, string])
+        : (['factorA', 'factorB'] as [string, string]);
     return {
       variables: vars,
-      coefficient: typeof item.coefficient === 'number' ? Math.max(-1, Math.min(1, item.coefficient)) : 0,
+      coefficient:
+        typeof item.coefficient === 'number' ? Math.max(-1, Math.min(1, item.coefficient)) : 0,
       direction: asEnumValue(item.direction, ['positive', 'negative'] as const),
       pValue: typeof item.pValue === 'number' ? Math.max(0, Math.min(1, item.pValue)) : undefined,
       confounders: asStrArr(item.confounders),

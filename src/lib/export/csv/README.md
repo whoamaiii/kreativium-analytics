@@ -33,7 +33,7 @@ import {
 import { generateEmotionsCSV } from '@/lib/export/csv';
 
 const result = generateEmotionsCSV(emotions, students, {
-  includeFields: ['emotions']
+  includeFields: ['emotions'],
 });
 
 console.log(result.content); // CSV string
@@ -48,8 +48,8 @@ const result = generateCSVExport(students, data, {
   includeFields: ['emotions', 'sensoryInputs'],
   dateRange: {
     start: new Date('2024-01-01'),
-    end: new Date('2024-12-31')
-  }
+    end: new Date('2024-12-31'),
+  },
 });
 ```
 
@@ -58,7 +58,7 @@ const result = generateCSVExport(students, data, {
 ```typescript
 const result = generateCSVExport(students, data, {
   includeFields: ['emotions', 'sensoryInputs', 'goals'],
-  anonymize: true
+  anonymize: true,
 });
 ```
 
@@ -69,8 +69,8 @@ const result = generateEmotionsCSV(emotions, students, {
   includeFields: ['emotions'],
   formatting: {
     includeUtf8Bom: true,
-    dateFormat: 'MM/dd/yyyy HH:mm'
-  }
+    dateFormat: 'MM/dd/yyyy HH:mm',
+  },
 });
 ```
 
@@ -83,6 +83,7 @@ const result = generateEmotionsCSV(emotions, students, {
 Generate CSV export for multiple data types.
 
 **Parameters:**
+
 - `students: Student[]` - Array of student records
 - `data: Object` - Data collections object
   - `trackingEntries: TrackingEntry[]`
@@ -92,6 +93,7 @@ Generate CSV export for multiple data types.
 - `options: CSVExportOptions` - Export configuration
 
 **Returns:** `CSVGenerationResult`
+
 - `content: string` - CSV content
 - `rowCount: number` - Number of data rows
 - `byteSize: number` - Size in bytes
@@ -99,20 +101,32 @@ Generate CSV export for multiple data types.
 ### Specialized Export Functions
 
 #### `generateEmotionsCSV(emotions, students, options)`
+
 Export emotion entries with columns:
-- Date, Student, Emotion, Sub-Emotion, Intensity, Duration, Triggers, Escalation Pattern, Context, Notes
+
+- Date, Student, Emotion, Sub-Emotion, Intensity, Duration, Triggers, Escalation Pattern, Context,
+  Notes
 
 #### `generateSensoryCSV(sensoryInputs, students, options)`
+
 Export sensory entries with columns:
-- Date, Student, Sensory Type, Response, Intensity, Location, Context, Coping Strategies, Environment, Notes
+
+- Date, Student, Sensory Type, Response, Intensity, Location, Context, Coping Strategies,
+  Environment, Notes
 
 #### `generateGoalsCSV(goals, students, options)`
+
 Export goals with columns:
-- Student, Goal Title, Description, Category, Status, Target Value, Current Progress, Progress %, Measurable Objective, Baseline Value, Date Created, Target Date, Last Updated, Notes
+
+- Student, Goal Title, Description, Category, Status, Target Value, Current Progress, Progress %,
+  Measurable Objective, Baseline Value, Date Created, Target Date, Last Updated, Notes
 
 #### `generateTrackingCSV(trackingEntries, students, options)`
+
 Export tracking entries with columns:
-- Date, Student, Session Duration, Emotion Count, Sensory Count, Location, Social Context, Environmental Notes, General Notes
+
+- Date, Student, Session Duration, Emotion Count, Sensory Count, Location, Social Context,
+  Environmental Notes, General Notes
 
 ### Export Options
 
@@ -135,11 +149,11 @@ interface CSVExportOptions {
 
   // Optional: Formatting options
   formatting?: {
-    delimiter?: string;        // Default: ','
-    dateFormat?: string;       // Default: 'yyyy-MM-dd HH:mm'
+    delimiter?: string; // Default: ','
+    dateFormat?: string; // Default: 'yyyy-MM-dd HH:mm'
     includeUtf8Bom?: boolean; // Default: false
-    quoteAll?: boolean;       // Default: false
-    nullValue?: string;       // Default: ''
+    quoteAll?: boolean; // Default: false
+    nullValue?: string; // Default: ''
   };
 
   // Optional: Custom column names
@@ -150,12 +164,15 @@ interface CSVExportOptions {
 ### Formatting Options
 
 #### Date Formats
+
 Use [date-fns format tokens](https://date-fns.org/v2.29.3/docs/format):
+
 - `'yyyy-MM-dd HH:mm'` - ISO-like format (default)
 - `'MM/dd/yyyy HH:mm'` - US format
 - `"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"` - ISO 8601
 
 #### Delimiters
+
 - `','` - Comma (CSV) - default
 - `'\t'` - Tab (TSV)
 - `';'` - Semicolon
@@ -175,11 +192,13 @@ This module follows RFC 4180 standards:
 ### Automatic Quoting
 
 Values are automatically quoted if they contain:
+
 - Delimiter character (comma)
 - Quote character (`"`)
 - Line breaks (`\n`, `\r`)
 
 Example:
+
 ```
 "Student, John","Says ""hello"" to teacher","Line 1
 Line 2"
@@ -190,10 +209,10 @@ Line 2"
 ### Example 1: Single Student Report
 
 ```typescript
-const studentEmotions = emotions.filter(e => e.studentId === student.id);
+const studentEmotions = emotions.filter((e) => e.studentId === student.id);
 const result = generateEmotionsCSV(studentEmotions, [student], {
   includeFields: ['emotions'],
-  formatting: { includeUtf8Bom: true }
+  formatting: { includeUtf8Bom: true },
 });
 ```
 
@@ -202,13 +221,13 @@ const result = generateEmotionsCSV(studentEmotions, [student], {
 ```typescript
 const lastWeek = {
   start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-  end: new Date()
+  end: new Date(),
 };
 
 const result = generateCSVExport(students, data, {
   includeFields: ['emotions', 'sensoryInputs', 'trackingEntries'],
   dateRange: lastWeek,
-  formatting: { includeUtf8Bom: true }
+  formatting: { includeUtf8Bom: true },
 });
 ```
 
@@ -220,8 +239,8 @@ const result = generateCSVExport(students, data, {
   anonymize: true,
   formatting: {
     includeUtf8Bom: true,
-    dateFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-  }
+    dateFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+  },
 });
 ```
 
@@ -231,11 +250,11 @@ const result = generateCSVExport(students, data, {
 function downloadCSV(students, emotions) {
   const result = generateEmotionsCSV(emotions, students, {
     includeFields: ['emotions'],
-    formatting: { includeUtf8Bom: true }
+    formatting: { includeUtf8Bom: true },
   });
 
   const blob = new Blob([result.content], {
-    type: 'text/csv;charset=utf-8;'
+    type: 'text/csv;charset=utf-8;',
   });
 
   const link = document.createElement('a');
@@ -252,8 +271,8 @@ const result = generateEmotionsCSV(emotions, students, {
   includeFields: ['emotions'],
   formatting: {
     delimiter: '\t',
-    includeUtf8Bom: true
-  }
+    includeUtf8Bom: true,
+  },
 });
 ```
 
@@ -263,7 +282,7 @@ const result = generateEmotionsCSV(emotions, students, {
 const result = generateCSVExport(students, data, {
   includeFields: ['emotions', 'sensoryInputs', 'goals'],
   groupBy: 'student',
-  formatting: { includeUtf8Bom: true }
+  formatting: { includeUtf8Bom: true },
 });
 ```
 
@@ -283,8 +302,8 @@ class ExportSystem {
       anonymize: options.anonymize,
       formatting: {
         includeUtf8Bom: true,
-        dateFormat: 'yyyy-MM-dd HH:mm'
-      }
+        dateFormat: 'yyyy-MM-dd HH:mm',
+      },
     });
 
     return result.content;
@@ -330,7 +349,7 @@ import { generateEmotionsCSV } from '@/lib/export/csv';
 describe('CSV Export', () => {
   it('should generate valid CSV', () => {
     const result = generateEmotionsCSV(emotions, students, {
-      includeFields: ['emotions']
+      includeFields: ['emotions'],
     });
 
     expect(result.content).toContain('Date,Student,Emotion');
@@ -342,8 +361,8 @@ describe('CSV Export', () => {
       includeFields: ['emotions'],
       dateRange: {
         start: new Date('2024-01-01'),
-        end: new Date('2024-12-31')
-      }
+        end: new Date('2024-12-31'),
+      },
     });
 
     expect(result.rowCount).toBeLessThanOrEqual(emotions.length);
@@ -352,7 +371,7 @@ describe('CSV Export', () => {
   it('should anonymize data', () => {
     const result = generateEmotionsCSV(emotions, students, {
       includeFields: ['emotions'],
-      anonymize: true
+      anonymize: true,
     });
 
     expect(result.content).not.toContain(students[0].name);
@@ -387,6 +406,7 @@ Potential improvements:
 ## Support
 
 For issues or questions, refer to:
+
 - Main documentation: `/docs/export-system.md`
 - Type definitions: `/src/types/student.ts`
 - Examples: `./examples.ts`

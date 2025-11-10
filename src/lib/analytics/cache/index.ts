@@ -51,8 +51,4 @@ export {
 } from './localStorageCleaner';
 
 // TTL Cache - Deprecated API
-export {
-  isManagerTtlCacheDisabled,
-  getTtlMs,
-  isCacheValid,
-} from './ttlCache';
+export { isManagerTtlCacheDisabled, getTtlMs, isCacheValid } from './ttlCache';

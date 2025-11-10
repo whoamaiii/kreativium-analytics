@@ -1,22 +1,28 @@
 # ShadcN/UI Integration Analysis - Kreativium Analytics
 
 ## Executive Summary
-The project has good shadcn/ui integration overall, but there are several areas for improvement including incomplete exports, custom modal implementations that should use shadcn Dialog, and excessive customization of base components.
+
+The project has good shadcn/ui integration overall, but there are several areas for improvement
+including incomplete exports, custom modal implementations that should use shadcn Dialog, and
+excessive customization of base components.
 
 ---
 
 ## 1. INCOMPLETE COMPONENT EXPORTS (Critical)
 
 ### Issue: dropdown-menu.tsx
+
 **Location**: `/home/user/kreativium-analytics/src/components/ui/dropdown-menu.tsx:182-189`
 
 Components are defined but NOT exported:
+
 - `DropdownMenuCheckboxItem` (defined line 93)
 - `DropdownMenuRadioItem` (defined line 117)
 - `DropdownMenuLabel` (defined line 139)
 - `DropdownMenuShortcut` (defined line 169)
 
 Current export (lines 182-189):
+
 ```typescript
 export {
   DropdownMenu,
@@ -24,12 +30,12 @@ export {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  
-}
+};
 ```
 
-**Impact**: Components cannot be imported by consumers; partial API exposure
-**Recommendation**: Add missing exports:
+**Impact**: Components cannot be imported by consumers; partial API exposure **Recommendation**: Add
+missing exports:
+
 ```typescript
 export {
   DropdownMenu,
@@ -47,13 +53,15 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
   DropdownMenuRadioGroup,
-}
+};
 ```
 
 ### Issue: select.tsx
+
 **Location**: `/home/user/kreativium-analytics/src/components/ui/select.tsx:147-154`
 
 Components are defined but NOT exported:
+
 - `SelectGroup` (defined line 9)
 - `SelectLabel` (defined line 100)
 - `SelectSeparator` (defined line 135)
@@ -61,15 +69,9 @@ Components are defined but NOT exported:
 - `SelectScrollDownButton` (defined line 50)
 
 Current export (lines 147-154):
+
 ```typescript
-export {
-  Select,
-  SelectValue,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  
-}
+export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem };
 ```
 
 **Impact**: Advanced select patterns cannot be used; inconsistent with dropdown-menu
@@ -82,12 +84,14 @@ export {
 ### Issue: Custom Modal Components Instead of Dialog
 
 **Files**:
+
 - `/home/user/kreativium-analytics/src/components/game/LevelCompleteModal.tsx`
 - `/home/user/kreativium-analytics/src/components/game/LevelUpModal.tsx`
 
 These use custom Framer Motion implementations with raw HTML overlays instead of shadcn Dialog.
 
 **Current Pattern** (LevelCompleteModal):
+
 ```typescript
 <AnimatePresence>
   {visible && (
@@ -106,6 +110,7 @@ These use custom Framer Motion implementations with raw HTML overlays instead of
 ```
 
 **Issues**:
+
 1. Manual a11y attributes instead of using Radix Dialog primitives
 2. Duplicate overlay/backdrop logic (Dialog already handles this)
 3. Manual z-index management
@@ -114,6 +119,7 @@ These use custom Framer Motion implementations with raw HTML overlays instead of
 6. Inconsistent with project's shadcn pattern
 
 **Recommendation**: Refactor to use shadcn Dialog with Framer Motion animations:
+
 ```typescript
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
@@ -147,23 +153,27 @@ export function LevelCompleteModal({ visible, onClose, ...props }) {
 **File**: `/home/user/kreativium-analytics/src/components/ui/button-variants.ts`
 
 Uses custom Tailwind classes not in standard shadcn:
+
 - `gradient-primary` - custom gradient
 - `shadow-soft` / `shadow-glow` - custom shadows
 - `gradient-glass` - custom glass effect
 - `hover:-translate-y-[2px]` - custom hover transform
 
 **Impact**:
+
 - Makes buttons harder to maintain
 - Requires custom Tailwind config to define these classes
 - Diverges from shadcn standards
 - Makes component library harder to port or refactor
 
 **Current Code** (sample):
+
 ```typescript
 default: "bg-gradient-primary text-white shadow-soft hover:shadow-glow hover:scale-[1.05] hover:-translate-y-[2px] active:scale-[0.98]",
 ```
 
 **Recommendation**: Either:
+
 1. Keep minimal customizations and document them clearly
 2. Extract to a theme provider if app-wide styling
 3. Use CSS variables for theming instead of hardcoded classes
@@ -182,11 +192,13 @@ className={cn(
 ```
 
 **Issues**:
+
 - `glass-card` appears to be a custom class not in standard Tailwind/shadcn
 - `animate-fade-in` is custom animation
 - Makes Card component non-portable
 
-**Recommendation**: Keep base Card clean and apply custom styling at usage point, or create a styled variant if consistently used
+**Recommendation**: Keep base Card clean and apply custom styling at usage point, or create a styled
+variant if consistently used
 
 ---
 
@@ -196,7 +208,8 @@ className={cn(
 
 **File**: `/home/user/kreativium-analytics/src/components/ui/dialog.tsx:10-46, 86-90`
 
-The Dialog component implements a complex registry pattern to detect Title/Description components deep in the tree:
+The Dialog component implements a complex registry pattern to detect Title/Description components
+deep in the tree:
 
 ```typescript
 type DialogComponentRegistry = {
@@ -212,13 +225,16 @@ const hasDialogTitle = (children: React.ReactNode): boolean =>
 ```
 
 **Issues**:
+
 1. Very complex for solving a Radix UI warning about missing Title/Description
 2. Recursive tree walk on every render
 3. Hard to maintain and understand
 4. Fragile - depends on displayName matching
 
 **Alternative Approach** (simpler):
-- Just include `<DialogPrimitive.Title className="sr-only">Dialog</DialogPrimitive.Title>` by default (as done, but simpler without registry)
+
+- Just include `<DialogPrimitive.Title className="sr-only">Dialog</DialogPrimitive.Title>` by
+  default (as done, but simpler without registry)
 - Let developers opt-in to hiding if they provide their own
 - Or use Radix's built-in `asChild` pattern more aggressively
 
@@ -231,6 +247,7 @@ const hasDialogTitle = (children: React.ReactNode): boolean =>
 **File**: `/home/user/kreativium-analytics/src/components/ui/Breadcrumbs.tsx`
 
 Custom implementation of breadcrumbs. While shadcn doesn't have a breadcrumb component, consider:
+
 - This follows shadcn patterns ✓
 - Has proper a11y (aria-current, nav landmark) ✓
 - Clean implementation ✓
@@ -246,6 +263,7 @@ Custom implementation of breadcrumbs. While shadcn doesn't have a breadcrumb com
 **Pattern**: Some complex components miss sub-components in exports
 
 **Affected Files**:
+
 - `select.tsx` - Missing SelectGroup, SelectLabel, SelectSeparator exports
 - `dropdown-menu.tsx` - Missing checkbox/radio variants
 
@@ -270,19 +288,22 @@ Custom implementation of breadcrumbs. While shadcn doesn't have a breadcrumb com
 ## RECOMMENDATIONS SUMMARY
 
 ### Priority 1 (Critical - Do First):
+
 1. **Fix incomplete exports** in dropdown-menu.tsx and select.tsx
    - Estimated effort: 5 minutes
    - Impact: High - unblocks advanced component patterns
 
 ### Priority 2 (High - Do Soon):
+
 2. **Refactor LevelCompleteModal and LevelUpModal** to use shadcn Dialog
    - Estimated effort: 30-45 minutes per component
    - Impact: Better a11y, keyboard support, consistency
-   - Files to modify: 
+   - Files to modify:
      - `src/components/game/LevelCompleteModal.tsx`
      - `src/components/game/LevelUpModal.tsx`
 
 ### Priority 3 (Medium - Consider):
+
 3. **Simplify Dialog registry logic** or document why it's needed
    - Estimated effort: 15-30 minutes
    - Impact: Maintainability, performance
@@ -293,6 +314,7 @@ Custom implementation of breadcrumbs. While shadcn doesn't have a breadcrumb com
    - Impact: Easier to maintain and refactor
 
 ### Priority 4 (Low - Optional):
+
 5. **Reduce Card/Button customization** if possible
    - Consider application-wide theme instead of component-level
    - Create a theme provider for consistent styling
@@ -302,6 +324,7 @@ Custom implementation of breadcrumbs. While shadcn doesn't have a breadcrumb com
 ## TESTING CHECKLIST
 
 After making recommended changes:
+
 - [ ] All dropdown-menu component variations export correctly
 - [ ] All select component variations export correctly
 - [ ] Level complete/up modals work with Dialog
@@ -327,4 +350,3 @@ These need to be defined in `tailwind.config.js`:
 ```
 
 Ensure these are properly configured in your Tailwind setup!
-

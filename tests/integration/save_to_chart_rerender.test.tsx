@@ -11,7 +11,7 @@ import type { InsightsWorkerTask } from '@/lib/insights/task';
 import type { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
 
 vi.mock('@/hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: (k: string) => k, tAnalytics: (k: string) => k })
+  useTranslation: () => ({ t: (k: string) => k, tAnalytics: (k: string) => k }),
 }));
 
 const createEmotionEntry = (overrides: Partial<EmotionEntry> = {}): EmotionEntry => ({
@@ -45,7 +45,11 @@ const createSensoryEntry = (overrides: Partial<SensoryEntry> = {}): SensoryEntry
   copingStrategies: overrides.copingStrategies,
 });
 
-const createTrackingEntry = (id: string, studentId: string, overrides: Partial<TrackingEntry> = {}): TrackingEntry => ({
+const createTrackingEntry = (
+  id: string,
+  studentId: string,
+  overrides: Partial<TrackingEntry> = {},
+): TrackingEntry => ({
   id,
   studentId,
   timestamp: overrides.timestamp ?? new Date(),
@@ -75,7 +79,7 @@ vi.mock('@/components/charts/EChartContainer', () => ({
     const series = Array.isArray(option?.series) ? option.series : [];
     const seriesHash = JSON.stringify(series.map((s: any) => s?.data ?? []));
     return <div data-testid="echart-container" data-series-hash={seriesHash} />;
-  }
+  },
 }));
 
 // Mock worker to immediately complete
@@ -87,7 +91,13 @@ vi.mock('@/workers/analytics.worker?worker', () => {
       setTimeout(() => {
         if (!this.onmessage) return;
         const payloadInputs = msg?.payload?.inputs ?? {};
-        const message = { data: { type: 'complete', cacheKey: msg?.cacheKey, payload: { ...payloadInputs, cacheKey: msg?.cacheKey } } };
+        const message = {
+          data: {
+            type: 'complete',
+            cacheKey: msg?.cacheKey,
+            payload: { ...payloadInputs, cacheKey: msg?.cacheKey },
+          },
+        };
         this.onmessage(message as unknown as MessageEvent<AnalyticsWorkerMessage>);
       }, 0);
     });
@@ -97,23 +107,37 @@ vi.mock('@/workers/analytics.worker?worker', () => {
     constructor() {
       setTimeout(() => {
         if (!this.onmessage) return;
-        this.onmessage({ data: { type: 'progress' } } as unknown as MessageEvent<AnalyticsWorkerMessage>);
+        this.onmessage({
+          data: { type: 'progress' },
+        } as unknown as MessageEvent<AnalyticsWorkerMessage>);
       }, 0);
     }
   }
   return { default: TestWorker };
 });
 
-type TrackingEntry = { id: string; studentId: string; timestamp: Date; emotions: Array<{ intensity: number }>; sensoryInputs: unknown[] };
+type TrackingEntry = {
+  id: string;
+  studentId: string;
+  timestamp: Date;
+  emotions: Array<{ intensity: number }>;
+  sensoryInputs: unknown[];
+};
 
 function deriveChartData(entries: TrackingEntry[]) {
   // Very simple daily aggregation: average intensity per day, counts for others
   const byDate = new Map<string, { sum: number; count: number; sensory: number }>();
-  entries.forEach(e => {
-    const d = e.timestamp.toISOString().slice(0,10);
-    const avg = e.emotions.length ? e.emotions.reduce((s, x) => s + (x.intensity || 0), 0) / e.emotions.length : 0;
+  entries.forEach((e) => {
+    const d = e.timestamp.toISOString().slice(0, 10);
+    const avg = e.emotions.length
+      ? e.emotions.reduce((s, x) => s + (x.intensity || 0), 0) / e.emotions.length
+      : 0;
     const prev = byDate.get(d) || { sum: 0, count: 0, sensory: 0 };
-    byDate.set(d, { sum: prev.sum + avg, count: prev.count + 1, sensory: prev.sensory + (e.sensoryInputs?.length || 0) });
+    byDate.set(d, {
+      sum: prev.sum + avg,
+      count: prev.count + 1,
+      sensory: prev.sensory + (e.sensoryInputs?.length || 0),
+    });
   });
   return Array.from(byDate.entries()).map(([date, v]) => ({
     date,
@@ -128,14 +152,23 @@ function deriveChartData(entries: TrackingEntry[]) {
   }));
 }
 
-function Dashboard({ initialEntries, studentId }: { initialEntries: TrackingEntry[]; studentId: string }) {
+function Dashboard({
+  initialEntries,
+  studentId,
+}: {
+  initialEntries: TrackingEntry[];
+  studentId: string;
+}) {
   const [entries, setEntries] = useState<TrackingEntry[]>(initialEntries);
-  const data = useMemo<AnalyticsData>(() => ({ entries, emotions: [], sensoryInputs: [] }), [entries]);
+  const data = useMemo<AnalyticsData>(
+    () => ({ entries, emotions: [], sensoryInputs: [] }),
+    [entries],
+  );
   const { runAnalysis } = useAnalyticsWorker({ precomputeOnIdle: false });
 
   useEffect(() => {
     runAnalysis(data, { student: createStudent(studentId), useAI: false });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(entries), studentId]);
 
   useEffect(() => {
@@ -145,8 +178,13 @@ function Dashboard({ initialEntries, studentId }: { initialEntries: TrackingEntr
         try {
           const next = (dataStorage.getEntriesForStudent(studentId) || []) as TrackingEntry[];
           setEntries(next);
-          runAnalysis(createAnalyticsData(next), { student: createStudent(studentId), useAI: false });
-        } catch { /* noop */ }
+          runAnalysis(createAnalyticsData(next), {
+            student: createStudent(studentId),
+            useAI: false,
+          });
+        } catch {
+          /* noop */
+        }
       }
     };
     window.addEventListener('analytics:cache:clear', handler as EventListener);
@@ -162,15 +200,27 @@ function Dashboard({ initialEntries, studentId }: { initialEntries: TrackingEntr
 }
 
 describe('Integration: save → analytics → chart rerender', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { cleanup(); vi.useRealTimers(); });
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
 
   it('rerenders chart after save triggers invalidation', async () => {
     const studentId = 'stu-1';
     const initialEntries: TrackingEntry[] = [
       createTrackingEntry('t0', studentId, {
         timestamp: new Date('2025-01-01T00:00:00Z'),
-        emotions: [createEmotionEntry({ intensity: 4, timestamp: new Date('2025-01-01T00:00:00Z'), studentId, emotion: 'calm' })],
+        emotions: [
+          createEmotionEntry({
+            intensity: 4,
+            timestamp: new Date('2025-01-01T00:00:00Z'),
+            studentId,
+            emotion: 'calm',
+          }),
+        ],
         sensoryInputs: [],
       }),
     ];
@@ -184,16 +234,27 @@ describe('Integration: save → analytics → chart rerender', () => {
       await saveTrackingEntry(
         createTrackingEntry('t1', studentId, {
           timestamp: new Date('2025-01-02T00:00:00Z'),
-          emotions: [createEmotionEntry({ intensity: 6, timestamp: new Date('2025-01-02T00:00:00Z'), studentId, emotion: 'calm' })],
-          sensoryInputs: [createSensoryEntry({ id: 's', studentId, timestamp: new Date('2025-01-02T00:00:00Z') })],
-        })
+          emotions: [
+            createEmotionEntry({
+              intensity: 6,
+              timestamp: new Date('2025-01-02T00:00:00Z'),
+              studentId,
+              emotion: 'calm',
+            }),
+          ],
+          sensoryInputs: [
+            createSensoryEntry({ id: 's', studentId, timestamp: new Date('2025-01-02T00:00:00Z') }),
+          ],
+        }),
       );
       await Promise.resolve();
     });
     expect(spy).toHaveBeenCalledWith(studentId);
 
     // Allow the handler to refetch and re-run analysis
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     const elAfter = await screen.findByTestId('echart-container');
     const afterHash = String(elAfter.getAttribute('data-series-hash'));
     expect(afterHash).not.toEqual(beforeHash);

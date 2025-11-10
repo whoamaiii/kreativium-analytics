@@ -18,19 +18,45 @@ const TegnLayout = () => {
         </header>
 
         <nav aria-label="Tegn til Tale navigation" className="flex gap-2">
-          <NavLink to="." end className={({ isActive }) => `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+          <NavLink
+            to="."
+            end
+            className={({ isActive }) =>
+              `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`
+            }
+          >
             {String(tCommon('tegn.menu'))}
           </NavLink>
-          <NavLink to="learn" className={({ isActive }) => `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+          <NavLink
+            to="learn"
+            className={({ isActive }) =>
+              `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`
+            }
+          >
             {String(tCommon('tegn.learn'))}
           </NavLink>
-          <NavLink to="tegnbase" className={({ isActive }) => `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+          <NavLink
+            to="tegnbase"
+            className={({ isActive }) =>
+              `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`
+            }
+          >
             {String(tCommon('tegn.tegnbase'))}
           </NavLink>
-          <NavLink to="memory" className={({ isActive }) => `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+          <NavLink
+            to="memory"
+            className={({ isActive }) =>
+              `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`
+            }
+          >
             {String(tCommon('tegn.memory'))}
           </NavLink>
-          <NavLink to="progress" className={({ isActive }) => `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`}>
+          <NavLink
+            to="progress"
+            className={({ isActive }) =>
+              `px-3 py-2 rounded-full border ${isActive ? 'bg-primary/10 border-primary text-foreground' : 'border-border text-muted-foreground hover:text-foreground'}`
+            }
+          >
             {String(tCommon('tegn.progress'))}
           </NavLink>
         </nav>
@@ -42,5 +68,3 @@ const TegnLayout = () => {
 };
 
 export default TegnLayout;
-
-

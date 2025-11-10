@@ -91,8 +91,11 @@ export function buildEvidenceForPattern(args: {
   }
 
   // Include recent tracking entries that indicate social/structured activity
-  const socialRe = /(group|team|class|klasse|klasserom|student|peer|friminutt|pause|lunsj|kantine|transition|overgang|present|diskusjon|samarbeid|konflikt)/i;
-  const trackingSorted = [...args.entries].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  const socialRe =
+    /(group|team|class|klasse|klasserom|student|peer|friminutt|pause|lunsj|kantine|transition|overgang|present|diskusjon|samarbeid|konflikt)/i;
+  const trackingSorted = [...args.entries].sort(
+    (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+  );
   for (const t of trackingSorted) {
     if (items.length >= limit) break;
     const act = t.environmentalData?.classroom?.activity?.toString() || '';
@@ -127,7 +130,15 @@ export function buildEvidenceForPattern(args: {
 export function sanitizePlainNorwegian(text: string, allowed: AllowedContexts): string {
   const noMarkdown = text.replace(/[*`_#>]+/g, '');
   const forbiddenTokens = [
-    'klasserom', 'skolen', 'skole', 'hjemme', 'huset', 'ute', 'barnehage', 'SFO', 'AKS',
+    'klasserom',
+    'skolen',
+    'skole',
+    'hjemme',
+    'huset',
+    'ute',
+    'barnehage',
+    'SFO',
+    'AKS',
   ].filter((tok) => !allowed.places.includes(tok));
   let sanitized = noMarkdown;
   for (const tok of forbiddenTokens) {
@@ -135,7 +146,9 @@ export function sanitizePlainNorwegian(text: string, allowed: AllowedContexts): 
     sanitized = sanitized.replace(re, '$1ikke logget sted');
   }
   // Collapse multiple spaces/newlines and normalize bullets to hyphens
-  sanitized = sanitized.replace(/[•·]/g, '-').replace(/\s{2,}/g, ' ').replace(/\n{3,}/g, '\n\n');
+  sanitized = sanitized
+    .replace(/[•·]/g, '-')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n');
   return sanitized.trim();
 }
-

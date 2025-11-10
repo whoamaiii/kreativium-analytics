@@ -29,13 +29,20 @@ function getRegionsForTarget(target: TargetKey): { upper: boolean; lower: boolea
   }
 }
 
-export function HintHeatmapOverlay({ visible, box, target, mirror = false, sourceWidth, sourceHeight }: HintHeatmapOverlayProps) {
+export function HintHeatmapOverlay({
+  visible,
+  box,
+  target,
+  mirror = false,
+  sourceWidth,
+  sourceHeight,
+}: HintHeatmapOverlayProps) {
   if (!visible || !box) return null;
   const sw = sourceWidth ?? 0;
   const sh = sourceHeight ?? 0;
   if (sw === 0 || sh === 0) return null;
 
-  const normLeft = (mirror ? (sw - (box.x + box.width)) : box.x) / sw;
+  const normLeft = (mirror ? sw - (box.x + box.width) : box.x) / sw;
   const normTop = box.y / sh;
   const normW = box.width / sw;
   const normH = box.height / sh;
@@ -52,7 +59,8 @@ export function HintHeatmapOverlay({ visible, box, target, mirror = false, sourc
             top: `${normTop * 100}%`,
             width: `${normW * 100}%`,
             height: `${normH * 45}%`,
-            background: 'radial-gradient(ellipse at center, rgba(59,130,246,0.28) 0%, rgba(59,130,246,0.18) 40%, rgba(59,130,246,0.0) 70%)',
+            background:
+              'radial-gradient(ellipse at center, rgba(59,130,246,0.28) 0%, rgba(59,130,246,0.18) 40%, rgba(59,130,246,0.0) 70%)',
             boxShadow: '0 0 0 1px rgba(59,130,246,0.2) inset',
             borderRadius: '12px',
           }}
@@ -67,7 +75,8 @@ export function HintHeatmapOverlay({ visible, box, target, mirror = false, sourc
             top: `${(normTop + normH * 0.55) * 100}%`,
             width: `${normW * 100}%`,
             height: `${normH * 45}%`,
-            background: 'radial-gradient(ellipse at center, rgba(16,185,129,0.3) 0%, rgba(16,185,129,0.18) 40%, rgba(16,185,129,0.0) 70%)',
+            background:
+              'radial-gradient(ellipse at center, rgba(16,185,129,0.3) 0%, rgba(16,185,129,0.18) 40%, rgba(16,185,129,0.0) 70%)',
             boxShadow: '0 0 0 1px rgba(16,185,129,0.2) inset',
             borderRadius: '12px',
           }}
@@ -78,7 +87,3 @@ export function HintHeatmapOverlay({ visible, box, target, mirror = false, sourc
 }
 
 export default HintHeatmapOverlay;
-
-
-
-

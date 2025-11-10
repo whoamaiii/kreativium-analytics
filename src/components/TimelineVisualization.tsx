@@ -7,11 +7,11 @@ import { Toggle } from '@/components/ui/toggle';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import { format, subDays, addDays, differenceInMinutes, isWithinInterval } from 'date-fns';
 import { STREAM_COLORS, SEVERITY_COLORS, UI_COLORS } from '@/lib/chartColors';
-import { 
-  Clock, 
-  ZoomIn, 
-  ZoomOut, 
-  RotateCcw, 
+import {
+  Clock,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
   Maximize2,
   Play,
   Pause,
@@ -20,7 +20,7 @@ import {
   Activity,
   Brain,
   Eye,
-  AlertCircle
+  AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
@@ -63,12 +63,12 @@ export const TimelineVisualization = ({
   trackingEntries,
   anomalies = [],
   onTimeRangeChange,
-  realtime = false
+  realtime = false,
 }: TimelineVisualizationProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });
-  
+
   // Timeline state
   const [timeRange, setTimeRange] = useState<[Date, Date]>(() => {
     const now = new Date();
@@ -82,25 +82,25 @@ export const TimelineVisualization = ({
   const [hoveredEvent, setHoveredEvent] = useState<TimelineEvent | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartDateRef = useRef<Date | null>(null);
-  
+
   // Data stream visibility
   const [streamVisibility, setStreamVisibility] = useState({
     emotions: true,
     sensory: true,
-    anomalies: true
+    anomalies: true,
   });
 
   // Calculate dimensions on mount and resize with throttling
   useEffect(() => {
     let resizeTimeoutId: ReturnType<typeof setTimeout> | null = null;
-    
+
     const updateDimensions = () => {
       if (containerRef.current) {
         const { width, height } = containerRef.current.getBoundingClientRect();
         setDimensions({ width: width - 40, height: height - 200 });
       }
     };
-    
+
     // Throttled resize handler to prevent excessive re-renders
     const throttledUpdateDimensions = () => {
       if (resizeTimeoutId) {
@@ -111,7 +111,7 @@ export const TimelineVisualization = ({
 
     updateDimensions();
     window.addEventListener('resize', throttledUpdateDimensions, { passive: true });
-    
+
     return () => {
       window.removeEventListener('resize', throttledUpdateDimensions);
       if (resizeTimeoutId) {
@@ -136,8 +136,8 @@ export const TimelineVisualization = ({
           color: STREAM_COLORS.emotion,
           metadata: {
             intensity: emotion.intensity,
-            triggers: emotion.triggers?.join(', ') || 'None'
-          }
+            triggers: emotion.triggers?.join(', ') || 'None',
+          },
         });
       });
     }
@@ -153,8 +153,8 @@ export const TimelineVisualization = ({
           color: STREAM_COLORS.sensory,
           metadata: {
             type: input.sensoryType,
-            response: input.response
-          }
+            response: input.response,
+          },
         });
       });
     }
@@ -167,14 +167,18 @@ export const TimelineVisualization = ({
           timestamp: anomaly.timestamp,
           type: 'anomaly',
           label: anomaly.type,
-          color: anomaly.severity === 'high' ? SEVERITY_COLORS.high :
-                 anomaly.severity === 'medium' ? SEVERITY_COLORS.medium : SEVERITY_COLORS.info
+          color:
+            anomaly.severity === 'high'
+              ? SEVERITY_COLORS.high
+              : anomaly.severity === 'medium'
+                ? SEVERITY_COLORS.medium
+                : SEVERITY_COLORS.info,
         });
       });
     }
 
-    return events.filter(event => 
-      isWithinInterval(event.timestamp, { start: timeRange[0], end: timeRange[1] })
+    return events.filter((event) =>
+      isWithinInterval(event.timestamp, { start: timeRange[0], end: timeRange[1] }),
     );
   }, [emotions, sensoryInputs, anomalies, timeRange, streamVisibility]);
 
@@ -184,8 +188,8 @@ export const TimelineVisualization = ({
 
     // Emotion intensity stream
     const emotionData = emotions
-      .filter(e => isWithinInterval(e.timestamp, { start: timeRange[0], end: timeRange[1] }))
-      .map(e => ({ timestamp: e.timestamp, value: e.intensity }))
+      .filter((e) => isWithinInterval(e.timestamp, { start: timeRange[0], end: timeRange[1] }))
+      .map((e) => ({ timestamp: e.timestamp, value: e.intensity }))
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     if (emotionData.length > 0) {
@@ -195,15 +199,15 @@ export const TimelineVisualization = ({
         color: STREAM_COLORS.emotion,
         data: emotionData,
         visible: streamVisibility.emotions,
-        yScale: [0, 10]
+        yScale: [0, 10],
       });
     }
 
     // Sensory response stream (aggregated by hour)
     const sensoryByHour = new Map<string, { seeking: number; avoiding: number; neutral: number }>();
     sensoryInputs
-      .filter(s => isWithinInterval(s.timestamp, { start: timeRange[0], end: timeRange[1] }))
-      .forEach(input => {
+      .filter((s) => isWithinInterval(s.timestamp, { start: timeRange[0], end: timeRange[1] }))
+      .forEach((input) => {
         const hourKey = format(input.timestamp, 'yyyy-MM-dd HH:00');
         if (!sensoryByHour.has(hourKey)) {
           sensoryByHour.set(hourKey, { seeking: 0, avoiding: 0, neutral: 0 });
@@ -222,20 +226,20 @@ export const TimelineVisualization = ({
     const sensoryData = Array.from(sensoryByHour.entries())
       .map(([hourKey, data]) => ({
         timestamp: new Date(hourKey),
-        value: data.seeking - data.avoiding // Net sensory response
+        value: data.seeking - data.avoiding, // Net sensory response
       }))
       .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     if (sensoryData.length > 0) {
-      const minValue = Math.min(...sensoryData.map(d => d.value));
-      const maxValue = Math.max(...sensoryData.map(d => d.value));
+      const minValue = Math.min(...sensoryData.map((d) => d.value));
+      const maxValue = Math.max(...sensoryData.map((d) => d.value));
       streams.push({
         id: 'sensory-response',
         label: 'Sensory Response (Seeking - Avoiding)',
         color: STREAM_COLORS.sensory,
         data: sensoryData,
         visible: streamVisibility.sensory,
-        yScale: [minValue - 1, maxValue + 1]
+        yScale: [minValue - 1, maxValue + 1],
       });
     }
 
@@ -243,18 +247,24 @@ export const TimelineVisualization = ({
   }, [emotions, sensoryInputs, timeRange, streamVisibility]);
 
   // Timeline calculations
-  const timeScale = useCallback((date: Date): number => {
-    const totalDuration = timeRange[1].getTime() - timeRange[0].getTime();
-    const offset = date.getTime() - timeRange[0].getTime();
-    return (offset / totalDuration) * dimensions.width * zoomLevel + panOffset;
-  }, [timeRange, dimensions.width, zoomLevel, panOffset]);
+  const timeScale = useCallback(
+    (date: Date): number => {
+      const totalDuration = timeRange[1].getTime() - timeRange[0].getTime();
+      const offset = date.getTime() - timeRange[0].getTime();
+      return (offset / totalDuration) * dimensions.width * zoomLevel + panOffset;
+    },
+    [timeRange, dimensions.width, zoomLevel, panOffset],
+  );
 
-  const inverseTimeScale = useCallback((x: number): Date => {
-    const adjustedX = (x - panOffset) / zoomLevel;
-    const totalDuration = timeRange[1].getTime() - timeRange[0].getTime();
-    const offset = (adjustedX / dimensions.width) * totalDuration;
-    return new Date(timeRange[0].getTime() + offset);
-  }, [timeRange, dimensions.width, zoomLevel, panOffset]);
+  const inverseTimeScale = useCallback(
+    (x: number): Date => {
+      const adjustedX = (x - panOffset) / zoomLevel;
+      const totalDuration = timeRange[1].getTime() - timeRange[0].getTime();
+      const offset = (adjustedX / dimensions.width) * totalDuration;
+      return new Date(timeRange[0].getTime() + offset);
+    },
+    [timeRange, dimensions.width, zoomLevel, panOffset],
+  );
 
   // Handle zoom
   const handleZoom = (delta: number) => {
@@ -264,19 +274,22 @@ export const TimelineVisualization = ({
 
   // Handle pan
   const handlePan = (delta: number) => {
-    setPanOffset(prev => prev + delta);
+    setPanOffset((prev) => prev + delta);
   };
 
   // Handle brush selection
-  const handleMouseDown = useCallback((e: React.MouseEvent<SVGElement>) => {
-    if (!svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const startDate = inverseTimeScale(x);
-    
-    dragStartDateRef.current = startDate;
-    setIsDragging(true);
-  }, [inverseTimeScale]);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<SVGElement>) => {
+      if (!svgRef.current) return;
+      const rect = svgRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const startDate = inverseTimeScale(x);
+
+      dragStartDateRef.current = startDate;
+      setIsDragging(true);
+    },
+    [inverseTimeScale],
+  );
 
   // Handle mouse events for brush selection with proper cleanup
   useEffect(() => {
@@ -290,7 +303,7 @@ export const TimelineVisualization = ({
       const currentDate = inverseTimeScale(currentX);
       setBrushSelection([
         startDate < currentDate ? startDate : currentDate,
-        startDate < currentDate ? currentDate : startDate
+        startDate < currentDate ? currentDate : startDate,
       ]);
     };
 
@@ -317,13 +330,10 @@ export const TimelineVisualization = ({
     if (!isPlaying) return;
 
     const interval = setInterval(() => {
-      setTimeRange(prev => {
+      setTimeRange((prev) => {
         const duration = prev[1].getTime() - prev[0].getTime();
         const step = (duration / 100) * playbackSpeed;
-        return [
-          new Date(prev[0].getTime() + step),
-          new Date(prev[1].getTime() + step)
-        ];
+        return [new Date(prev[0].getTime() + step), new Date(prev[1].getTime() + step)];
       });
     }, 100);
 
@@ -336,12 +346,9 @@ export const TimelineVisualization = ({
 
     const interval = setInterval(() => {
       const now = new Date();
-      setTimeRange(prev => {
+      setTimeRange((prev) => {
         const duration = prev[1].getTime() - prev[0].getTime();
-        return [
-          new Date(now.getTime() - duration),
-          now
-        ];
+        return [new Date(now.getTime() - duration), now];
       });
     }, 5000); // Update every 5 seconds
 
@@ -355,17 +362,20 @@ export const TimelineVisualization = ({
     const startTime = timeRange[0].getTime();
     const endTime = timeRange[1].getTime();
     const duration = endTime - startTime;
-    
+
     // Determine appropriate time interval based on zoom
     let interval: number;
     let formatStr: string;
-    if (duration < 3600000) { // Less than 1 hour
+    if (duration < 3600000) {
+      // Less than 1 hour
       interval = 300000; // 5 minutes
       formatStr = 'HH:mm';
-    } else if (duration < 86400000) { // Less than 1 day
+    } else if (duration < 86400000) {
+      // Less than 1 day
       interval = 3600000; // 1 hour
       formatStr = 'HH:mm';
-    } else if (duration < 604800000) { // Less than 1 week
+    } else if (duration < 604800000) {
+      // Less than 1 week
       interval = 86400000; // 1 day
       formatStr = 'MMM dd';
     } else {
@@ -385,7 +395,7 @@ export const TimelineVisualization = ({
             y2={dimensions.height}
             stroke={UI_COLORS.grid}
             strokeDasharray="2,2"
-          />
+          />,
         );
         labels.push(
           <text
@@ -397,7 +407,7 @@ export const TimelineVisualization = ({
             fill={UI_COLORS.text}
           >
             {format(new Date(time), formatStr)}
-          </text>
+          </text>,
         );
       }
     }
@@ -407,73 +417,75 @@ export const TimelineVisualization = ({
 
   // Render data streams
   const renderDataStreams = () => {
-    return dataStreams.filter(stream => stream.visible).map(stream => {
-      const yScale = (value: number) => {
-        const [min, max] = stream.yScale;
-        const normalized = (value - min) / (max - min);
-        return dimensions.height * 0.8 - normalized * (dimensions.height * 0.6);
-      };
+    return dataStreams
+      .filter((stream) => stream.visible)
+      .map((stream) => {
+        const yScale = (value: number) => {
+          const [min, max] = stream.yScale;
+          const normalized = (value - min) / (max - min);
+          return dimensions.height * 0.8 - normalized * (dimensions.height * 0.6);
+        };
 
-      const pathData = stream.data
-        .map((point, i) => {
-          const x = timeScale(point.timestamp);
-          const y = yScale(point.value);
-          return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-        })
-        .join(' ');
-
-      return (
-        <g key={stream.id}>
-          <path
-            d={pathData}
-            fill="none"
-            stroke={stream.color}
-            strokeWidth="2"
-            opacity="0.8"
-          />
-          {stream.data.map((point, i) => {
+        const pathData = stream.data
+          .map((point, i) => {
             const x = timeScale(point.timestamp);
             const y = yScale(point.value);
-            if (x >= 0 && x <= dimensions.width) {
-              return (
-                <circle
-                  key={`${stream.id}-${i}`}
-                  cx={x}
-                  cy={y}
-                  r="3"
-                  fill={stream.color}
-                  className="cursor-pointer hover:r-5"
-                  onMouseEnter={() => setHoveredEvent({
-                    id: `${stream.id}-${i}`,
-                    timestamp: point.timestamp,
-                    type: 'tracking',
-                    label: `${stream.label}: ${point.value.toFixed(1)}`,
-                    value: point.value,
-                    color: stream.color
-                  })}
-                  onMouseLeave={() => setHoveredEvent(null)}
-                />
-              );
-            }
-            return null;
-          })}
-        </g>
-      );
-    });
+            return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+          })
+          .join(' ');
+
+        return (
+          <g key={stream.id}>
+            <path d={pathData} fill="none" stroke={stream.color} strokeWidth="2" opacity="0.8" />
+            {stream.data.map((point, i) => {
+              const x = timeScale(point.timestamp);
+              const y = yScale(point.value);
+              if (x >= 0 && x <= dimensions.width) {
+                return (
+                  <circle
+                    key={`${stream.id}-${i}`}
+                    cx={x}
+                    cy={y}
+                    r="3"
+                    fill={stream.color}
+                    className="cursor-pointer hover:r-5"
+                    onMouseEnter={() =>
+                      setHoveredEvent({
+                        id: `${stream.id}-${i}`,
+                        timestamp: point.timestamp,
+                        type: 'tracking',
+                        label: `${stream.label}: ${point.value.toFixed(1)}`,
+                        value: point.value,
+                        color: stream.color,
+                      })
+                    }
+                    onMouseLeave={() => setHoveredEvent(null)}
+                  />
+                );
+              }
+              return null;
+            })}
+          </g>
+        );
+      });
   };
 
   // Render events
   const renderEvents = () => {
-    return timelineEvents.map(event => {
+    return timelineEvents.map((event) => {
       const x = timeScale(event.timestamp);
       if (x < 0 || x > dimensions.width) return null;
 
       const getIcon = () => {
         switch (event.type) {
-          case 'emotion': return <Brain className="h-4 w-4" />;
-          case 'sensory': return <Eye className="h-4 w-4" />;
-          case 'anomaly': return <AlertCircle className="h-4 w-4" />;
-          default: return <Activity className="h-4 w-4" />;
+          case 'emotion':
+            return <Brain className="h-4 w-4" />;
+          case 'sensory':
+            return <Eye className="h-4 w-4" />;
+          case 'anomaly':
+            return <AlertCircle className="h-4 w-4" />;
+          default:
+            return <Activity className="h-4 w-4" />;
         }
       };
 
@@ -524,9 +536,17 @@ export const TimelineVisualization = ({
     );
   };
 
-  const { gridLines, labels } = useMemo(renderGrid, [timeScale, dimensions.width, dimensions.height]);
+  const { gridLines, labels } = useMemo(renderGrid, [
+    timeScale,
+    dimensions.width,
+    dimensions.height,
+  ]);
 
-  const renderedDataStreams = useMemo(renderDataStreams, [dataStreams, timeScale, dimensions.height]);
+  const renderedDataStreams = useMemo(renderDataStreams, [
+    dataStreams,
+    timeScale,
+    dimensions.height,
+  ]);
 
   return (
     <Card className="w-full">
@@ -630,9 +650,7 @@ export const TimelineVisualization = ({
                 step={0.25}
                 className="w-24"
               />
-              <span className="text-sm text-muted-foreground">
-                {playbackSpeed}x
-              </span>
+              <span className="text-sm text-muted-foreground">{playbackSpeed}x</span>
             </div>
 
             {/* Stream visibility toggles */}
@@ -640,8 +658,8 @@ export const TimelineVisualization = ({
               <Toggle
                 size="sm"
                 pressed={streamVisibility.emotions}
-                onPressedChange={(pressed) => 
-                  setStreamVisibility(prev => ({ ...prev, emotions: pressed }))
+                onPressedChange={(pressed) =>
+                  setStreamVisibility((prev) => ({ ...prev, emotions: pressed }))
                 }
               >
                 <Brain className="h-4 w-4 mr-1" />
@@ -650,8 +668,8 @@ export const TimelineVisualization = ({
               <Toggle
                 size="sm"
                 pressed={streamVisibility.sensory}
-                onPressedChange={(pressed) => 
-                  setStreamVisibility(prev => ({ ...prev, sensory: pressed }))
+                onPressedChange={(pressed) =>
+                  setStreamVisibility((prev) => ({ ...prev, sensory: pressed }))
                 }
               >
                 <Eye className="h-4 w-4 mr-1" />
@@ -660,8 +678,8 @@ export const TimelineVisualization = ({
               <Toggle
                 size="sm"
                 pressed={streamVisibility.anomalies}
-                onPressedChange={(pressed) => 
-                  setStreamVisibility(prev => ({ ...prev, anomalies: pressed }))
+                onPressedChange={(pressed) =>
+                  setStreamVisibility((prev) => ({ ...prev, anomalies: pressed }))
                 }
               >
                 <AlertCircle className="h-4 w-4 mr-1" />
@@ -722,16 +740,16 @@ export const TimelineVisualization = ({
           {hoveredEvent && (
             <div
               className={cn(
-                "absolute bg-background border rounded-lg shadow-lg p-3 pointer-events-none",
-                "top-5"
+                'absolute bg-background border rounded-lg shadow-lg p-3 pointer-events-none',
+                'top-5',
               )}
               style={{
-                left: `${Math.min(timeScale(hoveredEvent.timestamp), dimensions.width - 200)}px`
+                left: `${Math.min(timeScale(hoveredEvent.timestamp), dimensions.width - 200)}px`,
               }}
             >
               <div className="flex items-center gap-2 mb-1">
-                <div 
-                  className={cn("w-3 h-3 rounded-full")}
+                <div
+                  className={cn('w-3 h-3 rounded-full')}
                   style={{ backgroundColor: hoveredEvent.color }}
                 />
                 <span className="font-medium capitalize">{hoveredEvent.type}</span>
@@ -756,15 +774,17 @@ export const TimelineVisualization = ({
           <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
             <h4 className="font-medium text-sm mb-2">Data Streams</h4>
             <div className="space-y-1">
-              {dataStreams.filter(s => s.visible).map(stream => (
-                <div key={stream.id} className="flex items-center gap-2">
-                  <div 
-                    className={cn("w-3 h-3 rounded-full")}
-                    style={{ backgroundColor: stream.color }}
-                  />
-                  <span className="text-xs">{stream.label}</span>
-                </div>
-              ))}
+              {dataStreams
+                .filter((s) => s.visible)
+                .map((stream) => (
+                  <div key={stream.id} className="flex items-center gap-2">
+                    <div
+                      className={cn('w-3 h-3 rounded-full')}
+                      style={{ backgroundColor: stream.color }}
+                    />
+                    <span className="text-xs">{stream.label}</span>
+                  </div>
+                ))}
             </div>
           </div>
 

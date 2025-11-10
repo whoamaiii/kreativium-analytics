@@ -3,26 +3,23 @@
  * Demonstrates common use cases for CSV export functionality
  */
 
-import type { Student, EmotionEntry, SensoryEntry, Goal, TrackingEntry } from "@/types/student";
+import type { Student, EmotionEntry, SensoryEntry, Goal, TrackingEntry } from '@/types/student';
 import {
   generateCSVExport,
   generateEmotionsCSV,
   generateSensoryCSV,
   generateGoalsCSV,
   generateTrackingCSV,
-  type CSVExportOptions
+  type CSVExportOptions,
 } from './index';
 
 /**
  * Example 1: Basic CSV Export
  * Export all emotions for all students
  */
-export function exampleBasicExport(
-  students: Student[],
-  emotions: EmotionEntry[]
-): string {
+export function exampleBasicExport(students: Student[], emotions: EmotionEntry[]): string {
   const options: CSVExportOptions = {
-    includeFields: ['emotions']
+    includeFields: ['emotions'],
   };
 
   const result = generateEmotionsCSV(emotions, students, options);
@@ -39,14 +36,14 @@ export function exampleDateRangeExport(
   students: Student[],
   emotions: EmotionEntry[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ): string {
   const options: CSVExportOptions = {
     includeFields: ['emotions'],
     dateRange: {
       start: startDate,
-      end: endDate
-    }
+      end: endDate,
+    },
   };
 
   const result = generateEmotionsCSV(emotions, students, options);
@@ -62,19 +59,23 @@ export function exampleAnonymizedExport(
   emotions: EmotionEntry[],
   sensoryInputs: SensoryEntry[],
   goals: Goal[],
-  trackingEntries: TrackingEntry[]
+  trackingEntries: TrackingEntry[],
 ): string {
   const options: CSVExportOptions = {
     includeFields: ['emotions', 'sensoryInputs', 'goals', 'trackingEntries'],
-    anonymize: true
+    anonymize: true,
   };
 
-  const result = generateCSVExport(students, {
-    emotions,
-    sensoryInputs,
-    goals,
-    trackingEntries
-  }, options);
+  const result = generateCSVExport(
+    students,
+    {
+      emotions,
+      sensoryInputs,
+      goals,
+      trackingEntries,
+    },
+    options,
+  );
 
   return result.content;
 }
@@ -83,16 +84,13 @@ export function exampleAnonymizedExport(
  * Example 4: Excel-Compatible Export with UTF-8 BOM
  * Add Byte Order Mark for Excel to properly recognize UTF-8 encoding
  */
-export function exampleExcelExport(
-  students: Student[],
-  emotions: EmotionEntry[]
-): string {
+export function exampleExcelExport(students: Student[], emotions: EmotionEntry[]): string {
   const options: CSVExportOptions = {
     includeFields: ['emotions'],
     formatting: {
       includeUtf8Bom: true,
-      dateFormat: 'MM/dd/yyyy HH:mm' // US date format for Excel
-    }
+      dateFormat: 'MM/dd/yyyy HH:mm', // US date format for Excel
+    },
   };
 
   const result = generateEmotionsCSV(emotions, students, options);
@@ -105,14 +103,14 @@ export function exampleExcelExport(
  */
 export function exampleTabSeparatedExport(
   students: Student[],
-  sensoryInputs: SensoryEntry[]
+  sensoryInputs: SensoryEntry[],
 ): string {
   const options: CSVExportOptions = {
     includeFields: ['sensoryInputs'],
     formatting: {
       delimiter: '\t',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss'
-    }
+      dateFormat: 'yyyy-MM-dd HH:mm:ss',
+    },
   };
 
   const result = generateSensoryCSV(sensoryInputs, students, options);
@@ -128,19 +126,23 @@ export function exampleGroupedByStudentExport(
   emotions: EmotionEntry[],
   sensoryInputs: SensoryEntry[],
   goals: Goal[],
-  trackingEntries: TrackingEntry[]
+  trackingEntries: TrackingEntry[],
 ): string {
   const options: CSVExportOptions = {
     includeFields: ['emotions', 'sensoryInputs', 'goals'],
-    groupBy: 'student'
+    groupBy: 'student',
   };
 
-  const result = generateCSVExport(students, {
-    emotions,
-    sensoryInputs,
-    goals,
-    trackingEntries
-  }, options);
+  const result = generateCSVExport(
+    students,
+    {
+      emotions,
+      sensoryInputs,
+      goals,
+      trackingEntries,
+    },
+    options,
+  );
 
   return result.content;
 }
@@ -149,16 +151,13 @@ export function exampleGroupedByStudentExport(
  * Example 7: Filtered Field Export
  * Export only emotions data
  */
-export function exampleEmotionsOnlyExport(
-  students: Student[],
-  emotions: EmotionEntry[]
-): string {
+export function exampleEmotionsOnlyExport(students: Student[], emotions: EmotionEntry[]): string {
   const options: CSVExportOptions = {
     includeFields: ['emotions'],
     formatting: {
       includeUtf8Bom: true,
-      dateFormat: 'yyyy-MM-dd HH:mm'
-    }
+      dateFormat: 'yyyy-MM-dd HH:mm',
+    },
   };
 
   const result = generateEmotionsCSV(emotions, students, options);
@@ -169,15 +168,12 @@ export function exampleEmotionsOnlyExport(
  * Example 8: Goals Progress Report Export
  * Export all goals with progress metrics
  */
-export function exampleGoalsProgressExport(
-  students: Student[],
-  goals: Goal[]
-): string {
+export function exampleGoalsProgressExport(students: Student[], goals: Goal[]): string {
   const options: CSVExportOptions = {
     includeFields: ['goals'],
     formatting: {
-      includeUtf8Bom: true
-    }
+      includeUtf8Bom: true,
+    },
   };
 
   const result = generateGoalsCSV(goals, students, options);
@@ -193,21 +189,25 @@ export function exampleMultiSectionExport(
   emotions: EmotionEntry[],
   sensoryInputs: SensoryEntry[],
   goals: Goal[],
-  trackingEntries: TrackingEntry[]
+  trackingEntries: TrackingEntry[],
 ): string {
   const options: CSVExportOptions = {
     includeFields: ['emotions', 'sensoryInputs', 'goals', 'trackingEntries'],
     formatting: {
-      includeUtf8Bom: true
-    }
+      includeUtf8Bom: true,
+    },
   };
 
-  const result = generateCSVExport(students, {
-    emotions,
-    sensoryInputs,
-    goals,
-    trackingEntries
-  }, options);
+  const result = generateCSVExport(
+    students,
+    {
+      emotions,
+      sensoryInputs,
+      goals,
+      trackingEntries,
+    },
+    options,
+  );
 
   return result.content;
 }
@@ -219,13 +219,13 @@ export function exampleMultiSectionExport(
 export function exampleDownloadCSV(
   students: Student[],
   emotions: EmotionEntry[],
-  filename = 'emotions-export.csv'
+  filename = 'emotions-export.csv',
 ): void {
   const options: CSVExportOptions = {
     includeFields: ['emotions'],
     formatting: {
-      includeUtf8Bom: true
-    }
+      includeUtf8Bom: true,
+    },
   };
 
   const result = generateEmotionsCSV(emotions, students, options);
@@ -252,14 +252,14 @@ export function exampleDownloadCSV(
 export function exampleStreamingExport(
   students: Student[],
   emotions: EmotionEntry[],
-  chunkSize = 1000
+  chunkSize = 1000,
 ): string[] {
   const chunks: string[] = [];
   const options: CSVExportOptions = {
     includeFields: ['emotions'],
     formatting: {
-      includeUtf8Bom: true
-    }
+      includeUtf8Bom: true,
+    },
   };
 
   // Process in chunks
@@ -279,13 +279,13 @@ export function exampleStreamingExport(
  */
 export function exampleCustomDateFormatExport(
   students: Student[],
-  trackingEntries: TrackingEntry[]
+  trackingEntries: TrackingEntry[],
 ): string {
   const options: CSVExportOptions = {
     includeFields: ['trackingEntries'],
     formatting: {
-      dateFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" // ISO 8601
-    }
+      dateFormat: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", // ISO 8601
+    },
   };
 
   const result = generateTrackingCSV(trackingEntries, students, options);
@@ -296,15 +296,12 @@ export function exampleCustomDateFormatExport(
  * Example 13: Quote All Values Export
  * Force all values to be quoted (some systems require this)
  */
-export function exampleQuoteAllExport(
-  students: Student[],
-  emotions: EmotionEntry[]
-): string {
+export function exampleQuoteAllExport(students: Student[], emotions: EmotionEntry[]): string {
   const options: CSVExportOptions = {
     includeFields: ['emotions'],
     formatting: {
-      quoteAll: true
-    }
+      quoteAll: true,
+    },
   };
 
   const result = generateEmotionsCSV(emotions, students, options);
@@ -327,7 +324,7 @@ export function exampleIntegrationWithExportSystem(
     includeFields: string[];
     dateRange?: { start: Date; end: Date };
     anonymize?: boolean;
-  }
+  },
 ): string {
   // Convert legacy options to new format
   const options: CSVExportOptions = {
@@ -336,8 +333,8 @@ export function exampleIntegrationWithExportSystem(
     anonymize: legacyOptions.anonymize,
     formatting: {
       includeUtf8Bom: true,
-      dateFormat: 'yyyy-MM-dd HH:mm'
-    }
+      dateFormat: 'yyyy-MM-dd HH:mm',
+    },
   };
 
   const result = generateCSVExport(students, data, options);

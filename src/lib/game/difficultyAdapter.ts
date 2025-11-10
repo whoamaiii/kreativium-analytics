@@ -28,14 +28,24 @@ export function adaptDifficulty(state: DifficultyState, ev: DifficultyEvent): Di
   return { threshold, holdMs, streak };
 }
 
-export type EmotionKey = 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised';
+export type EmotionKey =
+  | 'neutral'
+  | 'happy'
+  | 'sad'
+  | 'angry'
+  | 'fearful'
+  | 'disgusted'
+  | 'surprised';
 
 /**
  * Applies small, opinionated per‑emotion adjustments on top of current difficulty
  * to reflect relative ease/hardness of expressions for typical players.
  * Adjustments are intentionally subtle to avoid oscillations.
  */
-export function refineDifficultyForEmotion(state: DifficultyState, emotion: EmotionKey): DifficultyState {
+export function refineDifficultyForEmotion(
+  state: DifficultyState,
+  emotion: EmotionKey,
+): DifficultyState {
   const { streak } = state;
   let { threshold, holdMs } = state;
   switch (emotion) {
@@ -69,5 +79,3 @@ export function refineDifficultyForEmotion(state: DifficultyState, emotion: Emot
   }
   return { threshold, holdMs, streak };
 }
-
-

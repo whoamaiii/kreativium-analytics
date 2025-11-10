@@ -100,10 +100,7 @@ describe('useAnalyticsData', () => {
 
     it('generates data signature', () => {
       const filteredData: FilteredData = {
-        entries: [
-          createMockEntry('2024-01-01T10:00:00Z'),
-          createMockEntry('2024-01-31T10:00:00Z'),
-        ],
+        entries: [createMockEntry('2024-01-01T10:00:00Z'), createMockEntry('2024-01-31T10:00:00Z')],
         emotions: [createMockEmotion('2024-01-15T10:00:00Z')],
         sensoryInputs: [],
       };
@@ -111,7 +108,7 @@ describe('useAnalyticsData', () => {
       const { result } = renderHook(() => useAnalyticsData({ filteredData }));
 
       expect(result.current.dataSignature).toBe(
-        `2|1|0|${new Date('2024-01-01T10:00:00Z').getTime()}|${new Date('2024-01-31T10:00:00Z').getTime()}`
+        `2|1|0|${new Date('2024-01-01T10:00:00Z').getTime()}|${new Date('2024-01-31T10:00:00Z').getTime()}`,
       );
     });
   });
@@ -212,16 +209,13 @@ describe('useAnalyticsData', () => {
 
       const { result, rerender } = renderHook(
         ({ filteredData }) => useAnalyticsData({ filteredData }),
-        { initialProps: { filteredData: initialData } }
+        { initialProps: { filteredData: initialData } },
       );
 
       const signature1 = result.current.dataSignature;
 
       const updatedData: FilteredData = {
-        entries: [
-          createMockEntry('2024-01-01T10:00:00Z'),
-          createMockEntry('2024-01-02T10:00:00Z'),
-        ],
+        entries: [createMockEntry('2024-01-01T10:00:00Z'), createMockEntry('2024-01-02T10:00:00Z')],
         emotions: [],
         sensoryInputs: [],
       };
@@ -241,7 +235,7 @@ describe('useAnalyticsData', () => {
 
       const { result, rerender } = renderHook(
         ({ filteredData }) => useAnalyticsData({ filteredData }),
-        { initialProps: { filteredData: initialData } }
+        { initialProps: { filteredData: initialData } },
       );
 
       const signature1 = result.current.dataSignature;
@@ -268,7 +262,7 @@ describe('useAnalyticsData', () => {
 
       const { result, rerender } = renderHook(
         ({ filteredData }) => useAnalyticsData({ filteredData }),
-        { initialProps: { filteredData: initialData } }
+        { initialProps: { filteredData: initialData } },
       );
 
       const signature1 = result.current.dataSignature;
@@ -289,8 +283,15 @@ describe('useAnalyticsData', () => {
     it('includes counts from all data types', () => {
       const filteredData: FilteredData = {
         entries: [createMockEntry('2024-01-01T10:00:00Z')],
-        emotions: [createMockEmotion('2024-01-02T10:00:00Z'), createMockEmotion('2024-01-03T10:00:00Z')],
-        sensoryInputs: [createMockSensory('2024-01-04T10:00:00Z'), createMockSensory('2024-01-05T10:00:00Z'), createMockSensory('2024-01-06T10:00:00Z')],
+        emotions: [
+          createMockEmotion('2024-01-02T10:00:00Z'),
+          createMockEmotion('2024-01-03T10:00:00Z'),
+        ],
+        sensoryInputs: [
+          createMockSensory('2024-01-04T10:00:00Z'),
+          createMockSensory('2024-01-05T10:00:00Z'),
+          createMockSensory('2024-01-06T10:00:00Z'),
+        ],
       };
 
       const { result } = renderHook(() => useAnalyticsData({ filteredData }));
@@ -323,7 +324,7 @@ describe('useAnalyticsData', () => {
 
       const { result, rerender } = renderHook(
         ({ filteredData }) => useAnalyticsData({ filteredData }),
-        { initialProps: { filteredData: initialData } }
+        { initialProps: { filteredData: initialData } },
       );
 
       const normalized1 = result.current.normalizedData;
@@ -346,17 +347,14 @@ describe('useAnalyticsData', () => {
 
       const { result, rerender } = renderHook(
         ({ filteredData }) => useAnalyticsData({ filteredData }),
-        { initialProps: { filteredData: initialData } }
+        { initialProps: { filteredData: initialData } },
       );
 
       const normalized1 = result.current.normalizedData;
 
       // Rerender with different data
       const updatedData: FilteredData = {
-        entries: [
-          createMockEntry('2024-01-01T10:00:00Z'),
-          createMockEntry('2024-01-02T10:00:00Z'),
-        ],
+        entries: [createMockEntry('2024-01-01T10:00:00Z'), createMockEntry('2024-01-02T10:00:00Z')],
         emotions: [],
         sensoryInputs: [],
       };
@@ -495,10 +493,7 @@ describe('normalizeAnalyticsData', () => {
 describe('generateDataSignature', () => {
   it('generates consistent signatures', () => {
     const data: FilteredData = {
-      entries: [
-        createMockEntry('2024-01-01T10:00:00Z'),
-        createMockEntry('2024-01-31T10:00:00Z'),
-      ],
+      entries: [createMockEntry('2024-01-01T10:00:00Z'), createMockEntry('2024-01-31T10:00:00Z')],
       emotions: [createMockEmotion('2024-01-15T10:00:00Z')],
       sensoryInputs: [],
     };
@@ -517,10 +512,7 @@ describe('generateDataSignature', () => {
     };
 
     const data2: FilteredData = {
-      entries: [
-        createMockEntry('2024-01-01T10:00:00Z'),
-        createMockEntry('2024-01-02T10:00:00Z'),
-      ],
+      entries: [createMockEntry('2024-01-01T10:00:00Z'), createMockEntry('2024-01-02T10:00:00Z')],
       emotions: [],
       sensoryInputs: [],
     };

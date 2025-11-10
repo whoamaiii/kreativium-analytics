@@ -12,10 +12,7 @@
  * each component.
  */
 
-export {
-  DetectionOrchestrator,
-  type DetectionInput,
-} from './detectionOrchestrator';
+export { DetectionOrchestrator, type DetectionInput } from './detectionOrchestrator';
 
 export {
   CandidateGenerator,
@@ -35,10 +32,7 @@ export {
   computeDetectionQuality,
 } from './resultAggregator';
 
-export type {
-  AggregatedResult,
-  AggregationWeights,
-} from './resultAggregator';
+export type { AggregatedResult, AggregationWeights } from './resultAggregator';
 
 // Alert Finalization
 export {
@@ -50,7 +44,4 @@ export {
   computeSeriesStats,
 } from './alertFinalizer';
 
-export type {
-  FinalizationConfig,
-  SeriesStats,
-} from './alertFinalizer';
+export type { FinalizationConfig, SeriesStats } from './alertFinalizer';

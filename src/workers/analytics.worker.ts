@@ -1,6 +1,6 @@
 /**
  * @file src/workers/analytics.worker.ts
- * 
+ *
  * This is a web worker dedicated to performing heavy analytics computations
  * in a background thread, ensuring the main UI thread remains responsive.
  * It listens for messages containing student data, runs a series of analyses,
@@ -9,7 +9,13 @@
 import { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 import { PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalysis';
 import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
-import { AnalyticsData, AnalyticsResults, AnalyticsConfiguration, WorkerCacheEntry, AnalyticsWorkerMessage } from '@/types/analytics';
+import {
+  AnalyticsData,
+  AnalyticsResults,
+  AnalyticsConfiguration,
+  WorkerCacheEntry,
+  AnalyticsWorkerMessage,
+} from '@/types/analytics';
 import { createCachedPatternAnalysis } from '@/lib/cachedPatternAnalysis';
 import { logger } from '@/lib/logger';
 import { generateInsightsFromWorkerInputs } from '@/lib/insights';
@@ -36,15 +42,15 @@ import { safeGetGoals, safeConvertConfig } from '@/lib/utils/config-accessors';
 // Type is now imported from @/types/analytics
 
 // Worker cache TTL source: cache.ttl from central analytics config (ms). Safe fallback applied.
-let workerCacheTTL = (ANALYTICS_CONFIG.cache.ttl ?? 300_000); // default from config, safe fallback 300s
+let workerCacheTTL = ANALYTICS_CONFIG.cache.ttl ?? 300_000; // default from config, safe fallback 300s
 // Worker cache max size source: cache.maxSize from central analytics config. Safe fallback applied.
-let workerCacheMaxSize = (ANALYTICS_CONFIG.cache.maxSize ?? 200); // soft cap, overridden by config if provided
+let workerCacheMaxSize = ANALYTICS_CONFIG.cache.maxSize ?? 200; // soft cap, overridden by config if provided
 const insertionOrder: string[] = []; // FIFO order for eviction
 
 // Create a simple cache implementation for the worker
 const workerCache = {
   storage: new Map<string, WorkerCacheEntry>(),
-  
+
   get(key: string): unknown | undefined {
     const entry = this.storage.get(key);
     if (entry && entry.expires > Date.now()) {
@@ -54,7 +60,7 @@ const workerCache = {
     this.storage.delete(key);
     return undefined;
   },
-  
+
   set(key: string, value: unknown, tags: string[] = []): void {
     // Insert/update
     if (!this.storage.has(key)) {
@@ -63,7 +69,7 @@ const workerCache = {
     this.storage.set(key, {
       data: value,
       expires: Date.now() + workerCacheTTL,
-      tags
+      tags,
     });
     // Evict oldest until under max size
     while (insertionOrder.length > workerCacheMaxSize) {
@@ -73,11 +79,11 @@ const workerCache = {
       }
     }
   },
-  
+
   has(key: string): boolean {
     return this.get(key) !== undefined;
   },
-  
+
   invalidateByTag(tag: string): number {
     let count = 0;
     for (const [key, entry] of this.storage.entries()) {
@@ -88,7 +94,7 @@ const workerCache = {
     }
     if (count > 0) {
       // Rebuild insertion order without deleted keys
-      const remaining = insertionOrder.filter(k => this.storage.has(k));
+      const remaining = insertionOrder.filter((k) => this.storage.has(k));
       insertionOrder.length = 0;
       insertionOrder.push(...remaining);
     }
@@ -114,7 +120,7 @@ const workerCache = {
         count++;
       }
     }
-    const remaining = insertionOrder.filter(k => this.storage.has(k));
+    const remaining = insertionOrder.filter((k) => this.storage.has(k));
     insertionOrder.length = 0;
     insertionOrder.push(...remaining);
     return count;
@@ -132,23 +138,25 @@ const workerCache = {
       if (Array.isArray(obj)) return `[${obj.map(stringify).join(',')}]`;
       const rec = obj as Record<string, unknown>;
       const keys = Object.keys(rec).sort();
-      return `{${keys.map(k => `${k}:${stringify(rec[k])}`).join(',')}}`;
+      return `{${keys.map((k) => `${k}:${stringify(rec[k])}`).join(',')}}`;
     };
     const str = stringify(data);
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const ch = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + ch;
+      hash = (hash << 5) - hash + ch;
       hash = hash & hash;
     }
     return Math.abs(hash).toString(36);
   },
 
   createKey(prefix: string, params: Record<string, unknown>): string {
-    const sorted = Object.keys(params).sort().map(k => `${k}:${JSON.stringify((params as any)[k])}`).join(':');
+    const sorted = Object.keys(params)
+      .sort()
+      .map((k) => `${k}:${JSON.stringify((params as any)[k])}`)
+      .join(':');
     return `${prefix}:${sorted}`;
   },
-  
 };
 
 // Create cached pattern analysis instance
@@ -177,20 +185,22 @@ function runAlertDetection(data: AnalyticsData, opts?: { prewarm?: boolean }): A
       sensory: data.sensoryInputs,
       tracking: data.entries,
     });
-    return alertDetectionEngine.runDetection({
-      studentId,
-      emotions: data.emotions,
-      sensory: data.sensoryInputs,
-      tracking: data.entries,
-      baseline,
-      now: new Date(),
-    }).map((alert) => ({
-      ...alert,
-      metadata: {
-        ...(alert.metadata ?? {}),
-        prewarm: opts?.prewarm ?? false,
-      },
-    }));
+    return alertDetectionEngine
+      .runDetection({
+        studentId,
+        emotions: data.emotions,
+        sensory: data.sensoryInputs,
+        tracking: data.entries,
+        baseline,
+        now: new Date(),
+      })
+      .map((alert) => ({
+        ...alert,
+        metadata: {
+          ...(alert.metadata ?? {}),
+          prewarm: opts?.prewarm ?? false,
+        },
+      }));
   } catch (error) {
     try {
       logger.warn('[analytics.worker] Alert detection failed', error as Error);
@@ -210,7 +220,7 @@ const getConfigHash = (cfg: AnalyticsConfiguration | null): string => {
     patternAnalysis: cfg.patternAnalysis,
     enhancedAnalysis: cfg.enhancedAnalysis,
     timeWindows: cfg.timeWindows,
-    alertSensitivity: cfg.alertSensitivity
+    alertSensitivity: cfg.alertSensitivity,
   };
   // Reuse workerCache fingerprint utility by temporary object
   const stringify = (obj: unknown): string => {
@@ -218,13 +228,13 @@ const getConfigHash = (cfg: AnalyticsConfiguration | null): string => {
     if (typeof obj !== 'object') return String(obj);
     if (Array.isArray(obj)) return `[${obj.map(stringify).join(',')}]`;
     const keys = Object.keys(obj as Record<string, unknown>).sort();
-    return `{${keys.map(k => `${k}:${stringify((obj as Record<string, unknown>)[k])}`).join(',')}}`;
+    return `{${keys.map((k) => `${k}:${stringify((obj as Record<string, unknown>)[k])}`).join(',')}}`;
   };
   const str = stringify(subset);
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash;
   }
   return Math.abs(hash).toString(36);
@@ -256,7 +266,6 @@ let currentConfig: AnalyticsConfiguration | null = null;
 // Types are now imported from @/types/analytics
 export type { AnalyticsData, AnalyticsResults } from '@/types/analytics';
 
-
 /**
  * Main message handler for the worker.
  * This function is triggered when the main thread calls `worker.postMessage()`.
@@ -270,7 +279,9 @@ export async function handleMessage(e: MessageEvent<unknown>) {
     // Invalid message structure - log and ignore
     try {
       logger.warn('[analytics.worker] Received invalid message', { data: e.data });
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     return;
   }
 
@@ -281,7 +292,9 @@ export async function handleMessage(e: MessageEvent<unknown>) {
       const key = `game:event:count:${msg.payload.kind}`;
       const prev = (workerCache.get(key) as number | undefined) ?? 0;
       workerCache.set(key, prev + 1, ['game-events'], 300000);
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     return;
   }
 
@@ -291,52 +304,93 @@ export async function handleMessage(e: MessageEvent<unknown>) {
       const key = 'game:session:last';
       workerCache.set(key, msg.payload, ['game-session'], 600000);
       // Optionally surface via alerts channel for UI hooks wanting summaries quickly
-      enqueueMessage({ type: 'alerts', payload: { alerts: [], prewarm: true } } as unknown as AnalyticsWorkerMessage);
-    } catch { /* noop */ }
+      enqueueMessage({
+        type: 'alerts',
+        payload: { alerts: [], prewarm: true },
+      } as unknown as AnalyticsWorkerMessage);
+    } catch {
+      /* noop */
+    }
     return;
   }
 
   // Handle cache control messages
   if (isCacheClearAllRequest(msg)) {
     try {
-      const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
+      const patternsCleared = (() => {
+        try {
+          return cachedAnalysis.invalidateAllCache();
+        } catch {
+          return 0;
+        }
+      })();
       const cacheCleared = workerCache.clearAll();
       const response: CacheClearDoneResponse = {
         type: 'CACHE/CLEAR_DONE',
-        payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() }
+        payload: { scope: 'all', patternsCleared, cacheCleared, stats: workerCache.getStats() },
       };
       enqueueMessage(response as unknown as AnalyticsWorkerMessage);
     } catch (err) {
-      try { logger.error('[analytics.worker] Cache clear all failed', err as Error); } catch { /* noop */ }
+      try {
+        logger.error('[analytics.worker] Cache clear all failed', err as Error);
+      } catch {
+        /* noop */
+      }
     }
     return;
   }
 
   if (isCacheClearStudentRequest(msg)) {
     try {
-      const patternsCleared = (() => { try { return cachedAnalysis.invalidateStudentCache(msg.studentId); } catch { return 0; } })();
+      const patternsCleared = (() => {
+        try {
+          return cachedAnalysis.invalidateStudentCache(msg.studentId);
+        } catch {
+          return 0;
+        }
+      })();
       const cacheCleared = workerCache.clearByStudentId(msg.studentId);
       const response: CacheClearDoneResponse = {
         type: 'CACHE/CLEAR_DONE',
-        payload: { scope: 'student', studentId: msg.studentId, patternsCleared, cacheCleared, stats: workerCache.getStats() }
+        payload: {
+          scope: 'student',
+          studentId: msg.studentId,
+          patternsCleared,
+          cacheCleared,
+          stats: workerCache.getStats(),
+        },
       };
       enqueueMessage(response as unknown as AnalyticsWorkerMessage);
     } catch (err) {
-      try { logger.error('[analytics.worker] Cache clear student failed', err as Error); } catch { /* noop */ }
+      try {
+        logger.error('[analytics.worker] Cache clear student failed', err as Error);
+      } catch {
+        /* noop */
+      }
     }
     return;
   }
 
   if (isCacheClearPatternsRequest(msg)) {
     try {
-      const patternsCleared = (() => { try { return cachedAnalysis.invalidateAllCache(); } catch { return 0; } })();
+      const patternsCleared = (() => {
+        try {
+          return cachedAnalysis.invalidateAllCache();
+        } catch {
+          return 0;
+        }
+      })();
       const response: CacheClearDoneResponse = {
         type: 'CACHE/CLEAR_DONE',
-        payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() }
+        payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() },
       };
       enqueueMessage(response as unknown as AnalyticsWorkerMessage);
     } catch (err) {
-      try { logger.error('[analytics.worker] Cache clear patterns failed', err as Error); } catch { /* noop */ }
+      try {
+        logger.error('[analytics.worker] Cache clear patterns failed', err as Error);
+      } catch {
+        /* noop */
+      }
     }
     return;
   }
@@ -368,7 +422,9 @@ export async function handleMessage(e: MessageEvent<unknown>) {
     // Unknown message type after validation - should not happen
     try {
       logger.warn('[analytics.worker] Unknown validated message type', { msg });
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     return;
   }
 
@@ -387,7 +443,9 @@ export async function handleMessage(e: MessageEvent<unknown>) {
       workerCache.set(logKey, true, ['logging']);
     }
   } catch (e) {
-    try { logger.warn('[analytics.worker] Diagnostic logging failed', e as Error); } catch {}
+    try {
+      logger.warn('[analytics.worker] Diagnostic logging failed', e as Error);
+    } catch {}
   }
 
   // Update configuration if provided
@@ -408,10 +466,10 @@ export async function handleMessage(e: MessageEvent<unknown>) {
     }
   }
 
-// Early exit only when absolutely no data is present.
-// Previously, we exited when emotions and sensoryInputs were empty, which
-// incorrectly skipped correlation analysis based solely on tracking entries.
-// Now we require that all sources are empty before returning.
+  // Early exit only when absolutely no data is present.
+  // Previously, we exited when emotions and sensoryInputs were empty, which
+  // incorrectly skipped correlation analysis based solely on tracking entries.
+  // Now we require that all sources are empty before returning.
   if (
     (filteredData.emotions?.length ?? 0) === 0 &&
     (filteredData.sensoryInputs?.length ?? 0) === 0 &&
@@ -427,29 +485,37 @@ export async function handleMessage(e: MessageEvent<unknown>) {
         anomalies: [],
         insights: [],
         cacheKey: filteredData.cacheKey ?? undefined,
-        updatedCharts: ['insightList']
+        updatedCharts: ['insightList'],
       },
-      chartsUpdated: ['insightList']
+      chartsUpdated: ['insightList'],
     });
     return;
   }
 
-try {
-// Use configured time window or default from central config
+  try {
+    // Use configured time window or default from central config
     // Analysis window source: timeWindows.defaultAnalysisDays from runtime config; fallback to defaults.
     // This avoids hardcoding and keeps behavior environment-tunable (Task 8, rule j9uS...).
-    const timeWindow = currentConfig?.timeWindows?.defaultAnalysisDays ?? ANALYTICS_CONFIG.timeWindows.defaultAnalysisDays;
+    const timeWindow =
+      currentConfig?.timeWindows?.defaultAnalysisDays ??
+      ANALYTICS_CONFIG.timeWindows.defaultAnalysisDays;
 
     // Progress heartbeat: start
-    enqueueMessage({ type: 'progress', cacheKey: filteredData.cacheKey, progress: { stage: 'start', percent: 5 } });
+    enqueueMessage({
+      type: 'progress',
+      cacheKey: filteredData.cacheKey,
+      progress: { stage: 'start', percent: 5 },
+    });
 
-    const emotionPatterns = filteredData.emotions.length > 0
-      ? cachedAnalysis.analyzeEmotionPatterns(filteredData.emotions, timeWindow)
-      : [];
-    const sensoryPatterns = filteredData.sensoryInputs.length > 0
-      ? cachedAnalysis.analyzeSensoryPatterns(filteredData.sensoryInputs, timeWindow)
-      : [];
-    
+    const emotionPatterns =
+      filteredData.emotions.length > 0
+        ? cachedAnalysis.analyzeEmotionPatterns(filteredData.emotions, timeWindow)
+        : [];
+    const sensoryPatterns =
+      filteredData.sensoryInputs.length > 0
+        ? cachedAnalysis.analyzeSensoryPatterns(filteredData.sensoryInputs, timeWindow)
+        : [];
+
     const patterns = [...emotionPatterns, ...sensoryPatterns];
 
     // Send partial update for patterns
@@ -459,15 +525,17 @@ try {
       payload: {
         patterns,
         cacheKey: filteredData.cacheKey,
-        updatedCharts: ['patternHighlights']
+        updatedCharts: ['patternHighlights'],
       },
       chartsUpdated: ['patternHighlights'],
-      progress: { stage: 'patterns', percent: 30 }
+      progress: { stage: 'patterns', percent: 30 },
     });
 
     let correlations: CorrelationResult[] = [];
     // Correlation threshold source: analytics.MIN_TRACKING_FOR_CORRELATION from runtime config.
-    const minForCorrelation = currentConfig?.analytics?.MIN_TRACKING_FOR_CORRELATION ?? ANALYTICS_CONFIG.analytics.MIN_TRACKING_FOR_CORRELATION;
+    const minForCorrelation =
+      currentConfig?.analytics?.MIN_TRACKING_FOR_CORRELATION ??
+      ANALYTICS_CONFIG.analytics.MIN_TRACKING_FOR_CORRELATION;
     if (filteredData.entries.length >= minForCorrelation) {
       correlations = cachedAnalysis.analyzeEnvironmentalCorrelations(filteredData.entries);
     }
@@ -480,22 +548,24 @@ try {
         correlations,
         environmentalCorrelations: correlations,
         cacheKey: filteredData.cacheKey,
-        updatedCharts: ['correlationMatrix']
+        updatedCharts: ['correlationMatrix'],
       },
       chartsUpdated: ['correlationMatrix'],
-      progress: { stage: 'correlations', percent: 55 }
+      progress: { stage: 'correlations', percent: 55 },
     });
 
     let predictiveInsights: PredictiveInsight[] = [];
     let anomalies: AnomalyDetection[] = [];
     // Enhanced analysis threshold source: analytics.MIN_TRACKING_FOR_ENHANCED from runtime config.
-    const minForEnhanced = currentConfig?.analytics?.MIN_TRACKING_FOR_ENHANCED ?? ANALYTICS_CONFIG.analytics.MIN_TRACKING_FOR_ENHANCED;
+    const minForEnhanced =
+      currentConfig?.analytics?.MIN_TRACKING_FOR_ENHANCED ??
+      ANALYTICS_CONFIG.analytics.MIN_TRACKING_FOR_ENHANCED;
     if (filteredData.entries.length >= minForEnhanced) {
       predictiveInsights = await cachedAnalysis.generatePredictiveInsights(
         filteredData.emotions,
         filteredData.sensoryInputs,
         filteredData.entries,
-        (filteredData as any).goals ?? []
+        (filteredData as any).goals ?? [],
       );
 
       // Send partial update for predictive insights
@@ -505,16 +575,16 @@ try {
         payload: {
           predictiveInsights,
           cacheKey: filteredData.cacheKey,
-          updatedCharts: ['predictiveTimeline']
+          updatedCharts: ['predictiveTimeline'],
         },
         chartsUpdated: ['predictiveTimeline'],
-        progress: { stage: 'predictiveInsights', percent: 75 }
+        progress: { stage: 'predictiveInsights', percent: 75 },
       });
 
       anomalies = cachedAnalysis.detectAnomalies(
         filteredData.emotions,
         filteredData.sensoryInputs,
-        filteredData.entries
+        filteredData.entries,
       );
 
       // Send partial update for anomalies
@@ -524,26 +594,29 @@ try {
         payload: {
           anomalies,
           cacheKey: filteredData.cacheKey,
-          updatedCharts: ['anomalyTimeline']
+          updatedCharts: ['anomalyTimeline'],
         },
         chartsUpdated: ['anomalyTimeline'],
-        progress: { stage: 'anomalies', percent: 85 }
+        progress: { stage: 'anomalies', percent: 85 },
       });
     }
 
     // Final compute via unified pipeline (ensures consistent goal handling)
-    const unified = await computeInsights({
-      entries: filteredData.entries,
-      emotions: filteredData.emotions,
-      sensoryInputs: filteredData.sensoryInputs,
-      goals: (filteredData as any).goals ?? [],
-    }, { config: currentConfig as any });
+    const unified = await computeInsights(
+      {
+        entries: filteredData.entries,
+        emotions: filteredData.emotions,
+        sensoryInputs: filteredData.sensoryInputs,
+        goals: (filteredData as any).goals ?? [],
+      },
+      { config: currentConfig as any },
+    );
 
     const results: AnalyticsResults = {
       ...unified,
       suggestedInterventions: (unified as any).suggestedInterventions ?? [],
       cacheKey: filteredData.cacheKey,
-      updatedCharts: ['insightList']
+      updatedCharts: ['insightList'],
     };
 
     const detectionAlerts = runAlertDetection(filteredData, { prewarm: isPrewarm });
@@ -561,7 +634,10 @@ try {
     }
 
     // Post the final results back to the main thread.
-    const completePayload: AnalyticsResults & { prewarm?: boolean } = { ...results, prewarm: isPrewarm };
+    const completePayload: AnalyticsResults & { prewarm?: boolean } = {
+      ...results,
+      prewarm: isPrewarm,
+    };
     enqueueMessage({
       type: 'complete',
       cacheKey: filteredData.cacheKey,
@@ -569,10 +645,9 @@ try {
       chartsUpdated: ['insightList'],
       progress: { stage: 'complete', percent: 100 },
     });
-
   } catch (error) {
     try {
-    logger.error('[analytics.worker] error', error);
+      logger.error('[analytics.worker] error', error);
     } catch (e) {
       /* ignore logging failure */
     }
@@ -590,9 +665,9 @@ try {
         anomalies: [],
         insights: ['An error occurred during analysis. Please try again.'],
         cacheKey: filteredData.cacheKey,
-        updatedCharts: ['insightList']
+        updatedCharts: ['insightList'],
       },
-      chartsUpdated: ['insightList']
+      chartsUpdated: ['insightList'],
     });
   }
 }
@@ -604,28 +679,67 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
     self.addEventListener('error', (e: ErrorEvent) => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: e.message, cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker runtime error encountered.'], updatedCharts: ['insightList']
-        }});
-      } catch (err) { try { logger.warn('[analytics.worker] Failed to post error message', err as Error); } catch {} }
+        (postMessage as any)({
+          type: 'error',
+          error: e.message,
+          cacheKey: undefined,
+          payload: {
+            patterns: [],
+            correlations: [],
+            predictiveInsights: [],
+            anomalies: [],
+            insights: ['Worker runtime error encountered.'],
+            updatedCharts: ['insightList'],
+          },
+        });
+      } catch (err) {
+        try {
+          logger.warn('[analytics.worker] Failed to post error message', err as Error);
+        } catch {}
+      }
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     self.addEventListener('unhandledrejection', (e: any) => {
-      const msg = typeof e?.reason === 'string' ? e.reason : (e?.reason?.message ?? 'Unhandled rejection in worker');
+      const msg =
+        typeof e?.reason === 'string'
+          ? e.reason
+          : (e?.reason?.message ?? 'Unhandled rejection in worker');
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({ type: 'error', error: String(msg), cacheKey: undefined, payload: {
-          patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: ['Worker unhandled rejection.'], updatedCharts: ['insightList']
-        }});
-      } catch (err) { try { logger.warn('[analytics.worker] Failed to post rejection message', err as Error); } catch {} }
+        (postMessage as any)({
+          type: 'error',
+          error: String(msg),
+          cacheKey: undefined,
+          payload: {
+            patterns: [],
+            correlations: [],
+            predictiveInsights: [],
+            anomalies: [],
+            insights: ['Worker unhandled rejection.'],
+            updatedCharts: ['insightList'],
+          },
+        });
+      } catch (err) {
+        try {
+          logger.warn('[analytics.worker] Failed to post rejection message', err as Error);
+        } catch {}
+      }
     });
-  } catch (e) { try { logger.warn('[analytics.worker] Failed to setup error handlers', e as Error); } catch {} }
+  } catch (e) {
+    try {
+      logger.warn('[analytics.worker] Failed to setup error handlers', e as Error);
+    } catch {}
+  }
 
   // Signal readiness so main thread can flush any queued tasks
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (postMessage as any)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
-  } catch (e) { try { logger.warn('[analytics.worker] Failed to post ready signal', e as Error); } catch {} }
+  } catch (e) {
+    try {
+      logger.warn('[analytics.worker] Failed to post ready signal', e as Error);
+    } catch {}
+  }
 
   self.onmessage = handleMessage;
 }

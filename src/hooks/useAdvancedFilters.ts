@@ -76,27 +76,49 @@ function mergeWithDefaults(partial: Partial<FilterCriteria> | null | undefined):
 }
 
 function countActive(criteria: FilterCriteria): {
-  emotions: number; sensory: number; environmental: number; patterns: number; advanced: number; total: number;
+  emotions: number;
+  sensory: number;
+  environmental: number;
+  patterns: number;
+  advanced: number;
+  total: number;
 } {
   let emotions = 0;
   if (criteria.emotions.types.length > 0) emotions++;
   const [emin, emax] = criteria.emotions.intensityRange;
-  if (emin !== defaultCriteria.emotions.intensityRange[0] || emax !== defaultCriteria.emotions.intensityRange[1]) emotions++;
-  if (criteria.emotions.includeTriggers.length > 0 || criteria.emotions.excludeTriggers.length > 0) emotions++;
+  if (
+    emin !== defaultCriteria.emotions.intensityRange[0] ||
+    emax !== defaultCriteria.emotions.intensityRange[1]
+  )
+    emotions++;
+  if (criteria.emotions.includeTriggers.length > 0 || criteria.emotions.excludeTriggers.length > 0)
+    emotions++;
 
   let sensory = 0;
   if (criteria.sensory.types.length > 0) sensory++;
   const [smin, smax] = criteria.sensory.intensityRange;
-  if (smin !== defaultCriteria.sensory.intensityRange[0] || smax !== defaultCriteria.sensory.intensityRange[1]) sensory++;
+  if (
+    smin !== defaultCriteria.sensory.intensityRange[0] ||
+    smax !== defaultCriteria.sensory.intensityRange[1]
+  )
+    sensory++;
   if (criteria.sensory.responses.length > 0) sensory++;
 
   let environmental = 0;
   if (criteria.environmental.locations.length > 0) environmental++;
   if (criteria.environmental.activities.length > 0) environmental++;
   const [nmin, nmax] = criteria.environmental.conditions.noiseLevel;
-  if (nmin !== defaultCriteria.environmental.conditions.noiseLevel[0] || nmax !== defaultCriteria.environmental.conditions.noiseLevel[1]) environmental++;
+  if (
+    nmin !== defaultCriteria.environmental.conditions.noiseLevel[0] ||
+    nmax !== defaultCriteria.environmental.conditions.noiseLevel[1]
+  )
+    environmental++;
   const [tmin, tmax] = criteria.environmental.conditions.temperature;
-  if (tmin !== defaultCriteria.environmental.conditions.temperature[0] || tmax !== defaultCriteria.environmental.conditions.temperature[1]) environmental++;
+  if (
+    tmin !== defaultCriteria.environmental.conditions.temperature[0] ||
+    tmax !== defaultCriteria.environmental.conditions.temperature[1]
+  )
+    environmental++;
   if (criteria.environmental.conditions.lighting.length > 0) environmental++;
   if (criteria.environmental.weather.length > 0) environmental++;
   if (criteria.environmental.timeOfDay.length > 0) environmental++;
@@ -129,7 +151,7 @@ export function useAdvancedFilters(initial?: Partial<FilterCriteria>): UseAdvanc
           return mergeWithDefaults(null);
         }
       },
-    }
+    },
   );
 
   const [draft, setDraftState] = useState<FilterCriteria>(() => applied);
@@ -146,7 +168,7 @@ export function useAdvancedFilters(initial?: Partial<FilterCriteria>): UseAdvanc
   }, [initial, applied, setApplied]);
 
   const setDraft = useCallback((updater: (prev: FilterCriteria) => FilterCriteria) => {
-    setDraftState(prev => updater(prev));
+    setDraftState((prev) => updater(prev));
   }, []);
 
   const applyFilters = useCallback(() => {
@@ -176,5 +198,3 @@ export function useAdvancedFilters(initial?: Partial<FilterCriteria>): UseAdvanc
     modifiedSinceApply,
   };
 }
-
-

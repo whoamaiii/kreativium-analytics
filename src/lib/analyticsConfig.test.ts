@@ -38,18 +38,22 @@ describe('AnalyticsConfiguration', () => {
   it('should unsubscribe from configuration changes', () => {
     const subscriber = vi.fn();
     const unsubscribe = analyticsConfig.subscribe(subscriber);
-    
+
     unsubscribe();
-    
+
     const config = analyticsConfig.getConfig();
-    analyticsConfig.updateConfig({ timeWindows: { ...config.timeWindows, defaultAnalysisDays: 90 } });
-    
+    analyticsConfig.updateConfig({
+      timeWindows: { ...config.timeWindows, defaultAnalysisDays: 90 },
+    });
+
     expect(subscriber).not.toHaveBeenCalled();
   });
 
   it('should reset to default configuration', () => {
     const config = analyticsConfig.getConfig();
-    analyticsConfig.updateConfig({ timeWindows: { ...config.timeWindows, defaultAnalysisDays: 100 } });
+    analyticsConfig.updateConfig({
+      timeWindows: { ...config.timeWindows, defaultAnalysisDays: 100 },
+    });
     analyticsConfig.resetToDefaults();
     const newConfig = analyticsConfig.getConfig();
     expect(newConfig.timeWindows.defaultAnalysisDays).toBe(30);

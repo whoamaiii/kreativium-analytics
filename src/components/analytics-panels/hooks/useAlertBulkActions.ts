@@ -29,41 +29,72 @@ export const useAlertBulkActions = ({
   resolve,
   snooze,
 }: UseAlertBulkActionsArgs): AlertBulkActions => {
-  const acknowledgeByConfidence = useCallback((threshold: number) => {
-    const targets = activeAlerts.filter((alert) => (alert.confidence ?? 0) >= threshold);
-    if (!targets.length) {
-      toast.info(`No alerts at or above ${Math.round(threshold * 100)}% confidence`);
-      return;
-    }
-    targets.forEach((alert) => {
-      try { acknowledge(alert.id); } catch { /* noop */ }
-    });
-    toast.success(`Acknowledged ${targets.length} alert${targets.length === 1 ? '' : 's'} ≥ ${Math.round(threshold * 100)}% confidence`);
-  }, [activeAlerts, acknowledge]);
+  const acknowledgeByConfidence = useCallback(
+    (threshold: number) => {
+      const targets = activeAlerts.filter((alert) => (alert.confidence ?? 0) >= threshold);
+      if (!targets.length) {
+        toast.info(`No alerts at or above ${Math.round(threshold * 100)}% confidence`);
+        return;
+      }
+      targets.forEach((alert) => {
+        try {
+          acknowledge(alert.id);
+        } catch {
+          /* noop */
+        }
+      });
+      toast.success(
+        `Acknowledged ${targets.length} alert${targets.length === 1 ? '' : 's'} ≥ ${Math.round(threshold * 100)}% confidence`,
+      );
+    },
+    [activeAlerts, acknowledge],
+  );
 
-  const acknowledgeBySource = useCallback((type: string) => {
-    const targets = alerts.filter((alert) => (alert.sources ?? []).some((source) => source.type === type));
-    if (!targets.length) {
-      toast.info(`No alerts for source ${type}`);
-      return;
-    }
-    targets.forEach((alert) => {
-      try { acknowledge(alert.id); } catch { /* noop */ }
-    });
-    toast.success(`Acknowledged ${targets.length} alert${targets.length === 1 ? '' : 's'} from ${type}`);
-  }, [alerts, acknowledge]);
+  const acknowledgeBySource = useCallback(
+    (type: string) => {
+      const targets = alerts.filter((alert) =>
+        (alert.sources ?? []).some((source) => source.type === type),
+      );
+      if (!targets.length) {
+        toast.info(`No alerts for source ${type}`);
+        return;
+      }
+      targets.forEach((alert) => {
+        try {
+          acknowledge(alert.id);
+        } catch {
+          /* noop */
+        }
+      });
+      toast.success(
+        `Acknowledged ${targets.length} alert${targets.length === 1 ? '' : 's'} from ${type}`,
+      );
+    },
+    [alerts, acknowledge],
+  );
 
-  const resolveBySourceType = useCallback((type: string) => {
-    const targets = alerts.filter((alert) => (alert.sources ?? []).some((source) => source.type === type));
-    if (!targets.length) {
-      toast.info(`No alerts for source ${type}`);
-      return;
-    }
-    targets.forEach((alert) => {
-      try { resolve(alert.id); } catch { /* noop */ }
-    });
-    toast.success(`Resolved ${targets.length} alert${targets.length === 1 ? '' : 's'} from ${type}`);
-  }, [alerts, resolve]);
+  const resolveBySourceType = useCallback(
+    (type: string) => {
+      const targets = alerts.filter((alert) =>
+        (alert.sources ?? []).some((source) => source.type === type),
+      );
+      if (!targets.length) {
+        toast.info(`No alerts for source ${type}`);
+        return;
+      }
+      targets.forEach((alert) => {
+        try {
+          resolve(alert.id);
+        } catch {
+          /* noop */
+        }
+      });
+      toast.success(
+        `Resolved ${targets.length} alert${targets.length === 1 ? '' : 's'} from ${type}`,
+      );
+    },
+    [alerts, resolve],
+  );
 
   const snoozeSimilar = useCallback(() => {
     const label = sourceLabelFilters[0];
@@ -78,21 +109,38 @@ export const useAlertBulkActions = ({
       toast.info('No similar alerts to snooze');
       return;
     }
-    targets.forEach((alert) => { try { snooze(alert.id); } catch { /* noop */ } });
+    targets.forEach((alert) => {
+      try {
+        snooze(alert.id);
+      } catch {
+        /* noop */
+      }
+    });
     toast.success(`Snoozed ${targets.length} alerts`);
   }, [alerts, sourceFilters, sourceLabelFilters, snooze]);
 
-  const acknowledgeByLabel = useCallback((label: string) => {
-    const targets = alerts.filter((alert) => (alert.sources ?? []).some((source) => (source.label ?? source.type) === label));
-    if (!targets.length) {
-      toast.info(`No alerts for ${label}`);
-      return;
-    }
-    targets.forEach((alert) => {
-      try { acknowledge(alert.id); } catch { /* noop */ }
-    });
-    toast.success(`Acknowledged ${targets.length} alert${targets.length === 1 ? '' : 's'} for ${label}`);
-  }, [alerts, acknowledge]);
+  const acknowledgeByLabel = useCallback(
+    (label: string) => {
+      const targets = alerts.filter((alert) =>
+        (alert.sources ?? []).some((source) => (source.label ?? source.type) === label),
+      );
+      if (!targets.length) {
+        toast.info(`No alerts for ${label}`);
+        return;
+      }
+      targets.forEach((alert) => {
+        try {
+          acknowledge(alert.id);
+        } catch {
+          /* noop */
+        }
+      });
+      toast.success(
+        `Acknowledged ${targets.length} alert${targets.length === 1 ? '' : 's'} for ${label}`,
+      );
+    },
+    [alerts, acknowledge],
+  );
 
   return {
     acknowledgeByConfidence,

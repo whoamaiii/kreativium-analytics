@@ -24,50 +24,64 @@ function hashString(s: string): string {
   return Math.abs(h).toString(36);
 }
 
-function readCache(): Record<string, { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }> {
+function readCache(): Record<
+  string,
+  { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }
+> {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.AI_CONNECTIVITY_CACHE);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     if (typeof parsed !== 'object' || !parsed) return {};
-    
+
     // Prune stale entries (older than 1 hour)
     const now = Date.now();
-    const pruned: Record<string, { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }> = {};
+    const pruned: Record<
+      string,
+      { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }
+    > = {};
     let prunedCount = 0;
-    
+
     for (const [key, entry] of Object.entries(parsed)) {
       if (typeof entry === 'object' && entry && typeof entry.ts === 'number') {
-        if ((now - entry.ts) < ONE_HOUR_MS) {
+        if (now - entry.ts < ONE_HOUR_MS) {
           pruned[key] = entry;
         } else {
           prunedCount++;
         }
       }
     }
-    
+
     // Cap to most recent 50 entries
     const entries = Object.entries(pruned);
     if (entries.length > 50) {
       entries.sort(([, a], [, b]) => b.ts - a.ts);
       const capped = Object.fromEntries(entries.slice(0, 50));
       if (entries.length > 50) {
-        logger.debug('[apiConnectivityValidator] Cache capped', { kept: 50, removed: entries.length - 50 });
+        logger.debug('[apiConnectivityValidator] Cache capped', {
+          kept: 50,
+          removed: entries.length - 50,
+        });
       }
       return capped;
     }
-    
+
     if (prunedCount > 0) {
-      logger.debug('[apiConnectivityValidator] Cache pruned', { removed: prunedCount, kept: entries.length });
+      logger.debug('[apiConnectivityValidator] Cache pruned', {
+        removed: prunedCount,
+        kept: entries.length,
+      });
     }
-    
+
     return pruned;
   } catch {
     return {};
   }
 }
 
-function writeCache(map: Record<string, { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }>) {
+function writeCache(
+  map: Record<string, { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }>,
+) {
   try {
     storageUtils.safeSetItem(STORAGE_KEYS.AI_CONNECTIVITY_CACHE, JSON.stringify(map));
   } catch {
@@ -75,24 +89,37 @@ function writeCache(map: Record<string, { ok: boolean; ts: number; warnings?: st
   }
 }
 
-export async function testModelAvailability(modelName: string, apiKey: string): Promise<ValidationResult> {
+export async function testModelAvailability(
+  modelName: string,
+  apiKey: string,
+): Promise<ValidationResult> {
   const keyHash = hashString(apiKey || '');
   const cacheId = `${modelName}::${keyHash}`;
   const cache = readCache();
   const now = Date.now();
   const entry = cache[cacheId];
-  if (entry && (now - entry.ts) < ONE_HOUR_MS) {
+  if (entry && now - entry.ts < ONE_HOUR_MS) {
     if (entry.ok) {
       logger.debug('[apiConnectivityValidator] Cache hit: OK');
       return { isValid: true, errors: [], warnings: entry.warnings ?? [] };
     } else {
       logger.debug('[apiConnectivityValidator] Cache hit: ERR');
-      return { isValid: false, errors: entry.errors ?? ['Cached connectivity error'], warnings: entry.warnings ?? [] };
+      return {
+        isValid: false,
+        errors: entry.errors ?? ['Cached connectivity error'],
+        warnings: entry.warnings ?? [],
+      };
     }
   }
 
   // Minimal ping; do not use global facade to keep overrides predictable
-  const client = new OpenRouterClient({ modelName, apiKey, timeoutMs: 7000, maxTokens: 8, temperature: 0 });
+  const client = new OpenRouterClient({
+    modelName,
+    apiKey,
+    timeoutMs: 7000,
+    maxTokens: 8,
+    temperature: 0,
+  });
 
   try {
     // A harmless prompt that should produce a tiny response

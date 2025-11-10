@@ -12,11 +12,7 @@ const shownWarnings = new Set<string>();
  * @param replacement - Suggested replacement
  * @param additionalInfo - Additional migration guidance
  */
-export function deprecate(
-  methodName: string,
-  replacement?: string,
-  additionalInfo?: string
-): void {
+export function deprecate(methodName: string, replacement?: string, additionalInfo?: string): void {
   const warningKey = methodName;
   if (shownWarnings.has(warningKey)) {
     return;
@@ -25,10 +21,8 @@ export function deprecate(
 
   const replacementMsg = replacement ? ` Use ${replacement} instead.` : '';
   const additionalMsg = additionalInfo ? ` ${additionalInfo}` : '';
-  
-  logger.warn(
-    `DEPRECATION WARNING: ${methodName} is deprecated.${replacementMsg}${additionalMsg}`
-  );
+
+  logger.warn(`DEPRECATION WARNING: ${methodName} is deprecated.${replacementMsg}${additionalMsg}`);
 }
 
 /**

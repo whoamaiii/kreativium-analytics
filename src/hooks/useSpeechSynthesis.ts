@@ -11,7 +11,9 @@ interface UseSpeechSynthesisReturn {
   cancel: () => void;
 }
 
-export const useSpeechSynthesis = (options: UseSpeechSynthesisOptions = {}): UseSpeechSynthesisReturn => {
+export const useSpeechSynthesis = (
+  options: UseSpeechSynthesisOptions = {},
+): UseSpeechSynthesisReturn => {
   const { preferredLang } = options;
   const [supported, setSupported] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -40,39 +42,44 @@ export const useSpeechSynthesis = (options: UseSpeechSynthesisOptions = {}): Use
     };
   }, []);
 
-  const speak = useCallback((input: string) => {
-    if (!supported || typeof window === 'undefined') return false;
-    const synth = window.speechSynthesis;
-    if (!synth) return false;
+  const speak = useCallback(
+    (input: string) => {
+      if (!supported || typeof window === 'undefined') return false;
+      const synth = window.speechSynthesis;
+      if (!synth) return false;
 
-    const text = input.trim();
-    if (!text) return false;
+      const text = input.trim();
+      if (!text) return false;
 
-    synth.cancel();
+      synth.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    const normalizedLang = preferredLang?.toLowerCase();
-    if (normalizedLang) {
-      const chosen = voicesRef.current.find(voice => voice.lang.toLowerCase().startsWith(normalizedLang));
-      if (chosen) {
-        utterance.voice = chosen;
+      const utterance = new SpeechSynthesisUtterance(text);
+      const normalizedLang = preferredLang?.toLowerCase();
+      if (normalizedLang) {
+        const chosen = voicesRef.current.find((voice) =>
+          voice.lang.toLowerCase().startsWith(normalizedLang),
+        );
+        if (chosen) {
+          utterance.voice = chosen;
+        }
       }
-    }
 
-    utterance.onstart = () => {
-      if (mountedRef.current) setSpeaking(true);
-    };
+      utterance.onstart = () => {
+        if (mountedRef.current) setSpeaking(true);
+      };
 
-    const reset = () => {
-      if (mountedRef.current) setSpeaking(false);
-    };
+      const reset = () => {
+        if (mountedRef.current) setSpeaking(false);
+      };
 
-    utterance.onend = reset;
-    utterance.onerror = reset;
+      utterance.onend = reset;
+      utterance.onerror = reset;
 
-    synth.speak(utterance);
-    return true;
-  }, [preferredLang, supported]);
+      synth.speak(utterance);
+      return true;
+    },
+    [preferredLang, supported],
+  );
 
   const cancel = useCallback(() => {
     if (!supported || typeof window === 'undefined') return;

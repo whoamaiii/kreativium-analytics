@@ -40,21 +40,21 @@ import { ChartErrorBoundary } from '@/components/error-boundaries';
 
 <ChartErrorBoundary chartName="RevenueChart">
   <RevenueChart data={data} />
-</ChartErrorBoundary>
+</ChartErrorBoundary>;
 
 // Data operations
 import { DataErrorBoundary } from '@/components/error-boundaries';
 
 <DataErrorBoundary operationName="UserFetch">
   <UserList />
-</DataErrorBoundary>
+</DataErrorBoundary>;
 
 // Games
 import { GameErrorBoundary } from '@/components/error-boundaries';
 
 <GameErrorBoundary gameName="SensoryGame">
   <GameEngine />
-</GameErrorBoundary>
+</GameErrorBoundary>;
 ```
 
 ## Common Patterns
@@ -86,7 +86,7 @@ import { GameErrorBoundary } from '@/components/error-boundaries';
 ```tsx
 <ErrorBoundary
   name="CriticalSection"
-  maxRetries={5}  // Allow more retries
+  maxRetries={5} // Allow more retries
   allowAutoRecovery={true}
 >
   <CriticalComponent />
@@ -101,9 +101,7 @@ import { GameErrorBoundary } from '@/components/error-boundaries';
   fallback={
     <div className="p-4 text-center">
       <p>Dashboard failed to load</p>
-      <button onClick={() => window.location.reload()}>
-        Reload Page
-      </button>
+      <button onClick={() => window.location.reload()}>Reload Page</button>
     </div>
   }
 >
@@ -130,10 +128,7 @@ import { GameErrorBoundary } from '@/components/error-boundaries';
 
 ```tsx
 <ChartErrorBoundary chartName="Analytics">
-  <EChartContainer
-    data={analyticsData}
-    options={chartOptions}
-  />
+  <EChartContainer data={analyticsData} options={chartOptions} />
 </ChartErrorBoundary>
 ```
 
@@ -180,15 +175,15 @@ Place boundaries strategically for optimal error isolation:
 
 The system automatically handles these error scenarios:
 
-| Error Type | Auto-Retry | Suggestion | Boundary |
-|-----------|-----------|-----------|----------|
-| Network | Yes | Check internet | DataErrorBoundary |
-| Storage Full | Yes | Clear cache | DataErrorBoundary |
-| Rendering | Yes | Refresh | ChartErrorBoundary |
-| Data Invalid | Yes | Check format | DataErrorBoundary |
-| Timeout | Yes | Try again | All |
-| Memory | Yes | Close apps | DataErrorBoundary |
-| Type Error | No | Contact support | All |
+| Error Type   | Auto-Retry | Suggestion      | Boundary           |
+| ------------ | ---------- | --------------- | ------------------ |
+| Network      | Yes        | Check internet  | DataErrorBoundary  |
+| Storage Full | Yes        | Clear cache     | DataErrorBoundary  |
+| Rendering    | Yes        | Refresh         | ChartErrorBoundary |
+| Data Invalid | Yes        | Check format    | DataErrorBoundary  |
+| Timeout      | Yes        | Try again       | All                |
+| Memory       | Yes        | Close apps      | DataErrorBoundary  |
+| Type Error   | No         | Contact support | All                |
 
 ## Getting Error Suggestions Programmatically
 
@@ -215,7 +210,7 @@ try {
   logErrorForReporting(error, {
     component: 'Dashboard',
     action: 'fetchData',
-    userId: user.id
+    userId: user.id,
   });
 }
 ```
@@ -258,7 +253,7 @@ errorHandler.registerRecoveryStrategy({
   async recover(error) {
     // Custom recovery logic
     await myCustomRecovery();
-  }
+  },
 });
 ```
 
@@ -290,17 +285,13 @@ function TestErrorComponent() {
     throw new Error('Test error');
   }
 
-  return (
-    <button onClick={() => setShouldThrow(true)}>
-      Throw Error
-    </button>
-  );
+  return <button onClick={() => setShouldThrow(true)}>Throw Error</button>;
 }
 
 // Usage in development
 <ErrorBoundary name="Test">
   <TestErrorComponent />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 ## Development Tips
@@ -317,6 +308,7 @@ logger.setLogLevel(LogLevel.DEBUG);
 ### View Error in Console
 
 Check browser console for detailed error logs prefixed with:
+
 - `[ErrorBoundary]` - Main boundary
 - `[ChartErrorBoundary]` - Chart boundary
 - `[DataErrorBoundary]` - Data boundary
@@ -325,6 +317,7 @@ Check browser console for detailed error logs prefixed with:
 ### Check Retry Behavior
 
 The UI shows:
+
 - `Retry attempts: 1` - Current retry count
 - `Maximum retries reached` - When limit exceeded
 - `Attempting to recover...` - During recovery
@@ -334,11 +327,13 @@ The UI shows:
 ### Errors Not Being Caught
 
 Error boundaries only catch:
+
 - Render-time errors
 - Constructor errors
 - Lifecycle method errors
 
 They DON'T catch:
+
 - Event handler errors → use try/catch
 - Async errors → use try/catch or .catch()
 - Promise rejections → use window.unhandledrejection event
@@ -409,6 +404,7 @@ const isDev = false; // Override for testing
 ## Questions?
 
 Check the full guide or error logs for:
+
 - Detailed error type information
 - Recovery strategy details
 - Logging context
@@ -416,4 +412,5 @@ Check the full guide or error logs for:
 
 ---
 
-**Remember:** Error boundaries are your safety net. Use them strategically for a robust, user-friendly application.
+**Remember:** Error boundaries are your safety net. Use them strategically for a robust,
+user-friendly application.

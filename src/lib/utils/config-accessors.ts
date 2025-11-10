@@ -79,7 +79,7 @@ export function safeGetGoals(inputs: ComputeInsightsInputs): Goal[] {
  * ```
  */
 export function safeConvertConfig(
-  configSubset: InsightsConfigSubset | undefined | null
+  configSubset: InsightsConfigSubset | undefined | null,
 ): AnalyticsConfiguration | null {
   if (!configSubset) return null;
 
@@ -97,7 +97,7 @@ export function safeConvertConfig(
  */
 export function safeGetConfig(
   config: AnalyticsConfiguration | InsightsConfigSubset | undefined | null,
-  fallback: AnalyticsConfiguration
+  fallback: AnalyticsConfiguration,
 ): AnalyticsConfiguration {
   if (!config) return fallback;
   return config as AnalyticsConfiguration;
@@ -163,10 +163,7 @@ export function getEnhancedAnalysisConfig(config: AnalyticsConfiguration | null 
 /**
  * Safely access string property from unknown metadata
  */
-export function safeGetStringMetadata(
-  metadata: unknown,
-  key: string
-): string | undefined {
+export function safeGetStringMetadata(metadata: unknown, key: string): string | undefined {
   if (!metadata || typeof metadata !== 'object') return undefined;
   const obj = metadata as Record<string, unknown>;
   const value = obj[key];
@@ -176,10 +173,7 @@ export function safeGetStringMetadata(
 /**
  * Safely access array property from unknown metadata
  */
-export function safeGetArrayMetadata<T = unknown>(
-  metadata: unknown,
-  key: string
-): T[] | undefined {
+export function safeGetArrayMetadata<T = unknown>(metadata: unknown, key: string): T[] | undefined {
   if (!metadata || typeof metadata !== 'object') return undefined;
   const obj = metadata as Record<string, unknown>;
   const value = obj[key];
@@ -191,7 +185,7 @@ export function safeGetArrayMetadata<T = unknown>(
  */
 export function safeGetObjectMetadata<T = Record<string, unknown>>(
   metadata: unknown,
-  key: string
+  key: string,
 ): T | undefined {
   if (!metadata || typeof metadata !== 'object') return undefined;
   const obj = metadata as Record<string, unknown>;

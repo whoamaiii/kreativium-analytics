@@ -10,17 +10,31 @@
  */
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
-import { loadAiConfig, type AiConfig, isValidModelName, getModelValidationErrors, isValidApiKey, getApiKeyValidationErrors, CANONICAL_ALLOWED_MODELS, MIN_OPENROUTER_API_KEY_LENGTH } from '@/lib/aiConfig';
+import {
+  loadAiConfig,
+  type AiConfig,
+  isValidModelName,
+  getModelValidationErrors,
+  isValidApiKey,
+  getApiKeyValidationErrors,
+  CANONICAL_ALLOWED_MODELS,
+  MIN_OPENROUTER_API_KEY_LENGTH,
+} from '@/lib/aiConfig';
 import { OPENROUTER_API_KEY, AI_MODEL_NAME } from '@/lib/env';
 import { testModelAvailability } from '@/lib/apiConnectivityValidator';
 import { ValidationResult } from '@/lib/validationTypes';
 
 // Zod schemas (follow existing pattern of Zod-based validation)
-const apiKeySchema = z.string().min(MIN_OPENROUTER_API_KEY_LENGTH, `API key must be at least ${MIN_OPENROUTER_API_KEY_LENGTH} characters long`);
+const apiKeySchema = z
+  .string()
+  .min(
+    MIN_OPENROUTER_API_KEY_LENGTH,
+    `API key must be at least ${MIN_OPENROUTER_API_KEY_LENGTH} characters long`,
+  );
 const modelNameSchema = z.string().min(1, 'Model name must be a non-empty string');
 
 export function validateApiKeyPresence(config?: Partial<AiConfig>): ValidationResult {
-  const ai = (config ? { ...(loadAiConfig()), ...config } : loadAiConfig());
+  const ai = config ? { ...loadAiConfig(), ...config } : loadAiConfig();
   const key = ai.apiKey ?? OPENROUTER_API_KEY ?? '';
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -34,7 +48,7 @@ export function validateApiKeyPresence(config?: Partial<AiConfig>): ValidationRe
     const keyForZod = (typeof key === 'string' ? key : '').trim();
     const zres = apiKeySchema.safeParse(keyForZod);
     if (!zres.success) {
-      errors.push(...zres.error.issues.map(i => i.message));
+      errors.push(...zres.error.issues.map((i) => i.message));
     }
     if (!isValidApiKey(keyForZod)) {
       errors.push(...getApiKeyValidationErrors(keyForZod));
@@ -55,23 +69,26 @@ export function validateApiKeyPresence(config?: Partial<AiConfig>): ValidationRe
 export function validateModelName(config?: Partial<AiConfig>): ValidationResult {
   // Read raw env value directly to avoid masking by runtime fallbacks
   const env: Record<string, unknown> = (import.meta as any)?.env ?? {};
-  const rawModel = (typeof env.VITE_AI_MODEL_NAME === 'string' && env.VITE_AI_MODEL_NAME.trim().length > 0)
-    ? env.VITE_AI_MODEL_NAME.trim()
-    : (AI_MODEL_NAME || '').trim();
-  
+  const rawModel =
+    typeof env.VITE_AI_MODEL_NAME === 'string' && env.VITE_AI_MODEL_NAME.trim().length > 0
+      ? env.VITE_AI_MODEL_NAME.trim()
+      : (AI_MODEL_NAME || '').trim();
+
   const errors: string[] = [];
   const warnings: string[] = [];
 
   const zres = modelNameSchema.safeParse(rawModel);
   if (!zres.success) {
-    errors.push(...zres.error.issues.map(i => i.message));
+    errors.push(...zres.error.issues.map((i) => i.message));
   }
-  
+
   // Validate against canonical allowed models (not dynamic allowedModels)
-  const canonicalModelsLc = CANONICAL_ALLOWED_MODELS.map(m => m.toLowerCase());
+  const canonicalModelsLc = CANONICAL_ALLOWED_MODELS.map((m) => m.toLowerCase());
   const rawModelLc = rawModel.toLowerCase();
   if (rawModel.length > 0 && !canonicalModelsLc.includes(rawModelLc)) {
-    errors.push(`Model "${rawModel}" is not in the canonical allowed models list: ${CANONICAL_ALLOWED_MODELS.join(', ')}`);
+    errors.push(
+      `Model "${rawModel}" is not in the canonical allowed models list: ${CANONICAL_ALLOWED_MODELS.join(', ')}`,
+    );
   }
 
   return { isValid: errors.length === 0, errors, warnings };
@@ -82,13 +99,18 @@ export function validateModelName(config?: Partial<AiConfig>): ValidationResult 
  * block the main validation result. Returns the async result for callers that
  * want to await, but startup should not block on this.
  */
-export async function validateModelAvailability(config?: Partial<AiConfig>): Promise<ValidationResult> {
-  const ai = (config ? { ...(loadAiConfig()), ...config } : loadAiConfig());
+export async function validateModelAvailability(
+  config?: Partial<AiConfig>,
+): Promise<ValidationResult> {
+  const ai = config ? { ...loadAiConfig(), ...config } : loadAiConfig();
   try {
     const result = await testModelAvailability(ai.modelName, ai.apiKey || '');
     return result;
   } catch (e) {
-    logger.warn('[startupValidation] Connectivity validation threw; treating as warning', e as Error);
+    logger.warn(
+      '[startupValidation] Connectivity validation threw; treating as warning',
+      e as Error,
+    );
     return { isValid: true, errors: [], warnings: ['Connectivity validation failed to run'] };
   }
 }
@@ -112,17 +134,23 @@ export async function validateStartupConfiguration(): Promise<ValidationResult> 
   // Fire-and-forget connectivity test; log outcome when ready
   try {
     // Do not await; background diagnostics only
-    void validateModelAvailability().then((conn) => {
-      if (!conn.isValid && conn.errors.length > 0) {
-        logger.error('[startupValidation] Model connectivity test failed', { errors: conn.errors });
-      } else if (conn.warnings.length > 0) {
-        logger.warn('[startupValidation] Model connectivity warnings', { warnings: conn.warnings });
-      } else {
-        logger.info('[startupValidation] Model connectivity OK');
-      }
-    }).catch((e) => {
-      logger.warn('[startupValidation] Connectivity test promise rejected', e as Error);
-    });
+    void validateModelAvailability()
+      .then((conn) => {
+        if (!conn.isValid && conn.errors.length > 0) {
+          logger.error('[startupValidation] Model connectivity test failed', {
+            errors: conn.errors,
+          });
+        } else if (conn.warnings.length > 0) {
+          logger.warn('[startupValidation] Model connectivity warnings', {
+            warnings: conn.warnings,
+          });
+        } else {
+          logger.info('[startupValidation] Model connectivity OK');
+        }
+      })
+      .catch((e) => {
+        logger.warn('[startupValidation] Connectivity test promise rejected', e as Error);
+      });
   } catch (e) {
     logger.warn('[startupValidation] Failed to start connectivity test', e as Error);
   }

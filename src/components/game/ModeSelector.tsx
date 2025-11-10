@@ -12,7 +12,11 @@ interface ModeSelectorProps {
 export function ModeSelector({ value, onChange }: ModeSelectorProps) {
   const { tCommon } = useTranslation();
   return (
-    <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-card p-1" role="tablist" aria-label={String(tCommon('game.modes.label', { defaultValue: 'Modes' }))}>
+    <div
+      className="inline-flex items-center gap-2 rounded-xl border border-border bg-card p-1"
+      role="tablist"
+      aria-label={String(tCommon('game.modes.label', { defaultValue: 'Modes' }))}
+    >
       {MODES.map((m) => (
         <Button
           key={m.id}
@@ -31,6 +35,3 @@ export function ModeSelector({ value, onChange }: ModeSelectorProps) {
 }
 
 export default ModeSelector;
-
-
-

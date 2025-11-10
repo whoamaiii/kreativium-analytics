@@ -5,7 +5,7 @@ export enum LogLevel {
   INFO = 1,
   WARN = 2,
   ERROR = 3,
-  NONE = 4
+  NONE = 4,
 }
 
 interface LoggerConfig {
@@ -39,18 +39,31 @@ class Logger {
     const isProd = !!(env && env.PROD);
     const mappedLevel: LogLevel | null = (() => {
       switch (LOG_LEVEL_NAME) {
-        case 'debug': return LogLevel.DEBUG;
-        case 'info': return LogLevel.INFO;
-        case 'warn': return LogLevel.WARN;
-        case 'error': return LogLevel.ERROR;
-        case 'none': return LogLevel.NONE;
-        default: return null;
+        case 'debug':
+          return LogLevel.DEBUG;
+        case 'info':
+          return LogLevel.INFO;
+        case 'warn':
+          return LogLevel.WARN;
+        case 'error':
+          return LogLevel.ERROR;
+        case 'none':
+          return LogLevel.NONE;
+        default:
+          return null;
       }
     })();
     this.config = {
-      level: mappedLevel !== null ? mappedLevel : (isProd ? LogLevel.ERROR : (DEBUG_MODE ? LogLevel.DEBUG : LogLevel.INFO)),
+      level:
+        mappedLevel !== null
+          ? mappedLevel
+          : isProd
+            ? LogLevel.ERROR
+            : DEBUG_MODE
+              ? LogLevel.DEBUG
+              : LogLevel.INFO,
       enableConsole: mappedLevel !== LogLevel.NONE,
-      enableRemote: false
+      enableRemote: false,
     };
   }
 
@@ -102,13 +115,13 @@ class Logger {
         console.error(this.formatMessage('ERROR'), message, ...data);
       }
 
-      const errorData = data.map(d => {
+      const errorData = data.map((d) => {
         if (d instanceof Error) {
           return { message: d.message, stack: d.stack, name: d.name };
         }
         return d;
       });
-      
+
       // Send to remote logging service if enabled
       if (this.config.enableRemote && this.config.remoteEndpoint) {
         this.sendToRemote(message, errorData);
@@ -127,8 +140,8 @@ class Logger {
           message,
           data,
           userAgent: navigator.userAgent,
-          url: window.location.href
-        })
+          url: window.location.href,
+        }),
       });
     } catch (error) {
       // Silently fail to avoid infinite loop

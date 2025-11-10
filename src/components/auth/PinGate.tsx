@@ -17,7 +17,11 @@ interface PinGateProps {
  * - Stores a hashed-ish PIN in localStorage (not secure, but sufficient as a soft guard)
  * - Maintains an ephemeral verified session for a limited time (default 15 minutes)
  */
-export function PinGate({ children, storageKey = STORAGE_KEYS.ADULT_PIN, sessionMinutes = 15 }: PinGateProps): JSX.Element {
+export function PinGate({
+  children,
+  storageKey = STORAGE_KEYS.ADULT_PIN,
+  sessionMinutes = 15,
+}: PinGateProps): JSX.Element {
   const [entered, setEntered] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [verified, setVerified] = useState<boolean>(false);
@@ -64,17 +68,30 @@ export function PinGate({ children, storageKey = STORAGE_KEYS.ADULT_PIN, session
             pattern="[0-9]*"
             maxLength={6}
             value={entered}
-            onChange={(e) => { setEntered(e.target.value.replace(/\D+/g, '').slice(0, 6)); setError(''); }}
+            onChange={(e) => {
+              setEntered(e.target.value.replace(/\D+/g, '').slice(0, 6));
+              setError('');
+            }}
             className="w-full rounded-md border px-3 py-2"
             placeholder="••••"
             aria-label="PIN"
           />
-          {error && <div className="text-sm text-destructive" role="alert">{error}</div>}
+          {error && (
+            <div className="text-sm text-destructive" role="alert">
+              {error}
+            </div>
+          )}
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={verify}>Lås opp</Button>
-            <Button variant="outline" className="flex-1" onClick={() => setEntered('')}>Tøm</Button>
+            <Button className="flex-1" onClick={verify}>
+              Lås opp
+            </Button>
+            <Button variant="outline" className="flex-1" onClick={() => setEntered('')}>
+              Tøm
+            </Button>
           </div>
-          <div className="text-xs text-muted-foreground">Tips: Standard PIN er 1234 (kan endres).</div>
+          <div className="text-xs text-muted-foreground">
+            Tips: Standard PIN er 1234 (kan endres).
+          </div>
         </div>
       </Card>
     </div>
@@ -82,6 +99,3 @@ export function PinGate({ children, storageKey = STORAGE_KEYS.ADULT_PIN, session
 }
 
 export default PinGate;
-
-
-

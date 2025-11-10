@@ -2,7 +2,12 @@ import { describe, it, expect } from 'vitest';
 import { detectBetaRateShift } from '@/lib/alerts/detectors/betaRate';
 import { detectAssociation } from '@/lib/alerts/detectors/association';
 import { detectBurst } from '@/lib/alerts/detectors/burst';
-import { generateBetaRateData, generateContingencyTable, generateBurstEvents, createRng } from './syntheticData';
+import {
+  generateBetaRateData,
+  generateContingencyTable,
+  generateBurstEvents,
+  createRng,
+} from './syntheticData';
 
 describe('Detector validation (statistical properties)', () => {
   it('Association (Fisher exact): Type I error near nominal at OR~1', () => {
@@ -25,8 +30,20 @@ describe('Detector validation (statistical properties)', () => {
     let total = 0;
     for (const seed of seeds) {
       for (const shift of [0.05, 0.1, 0.15]) {
-        const sample = generateBetaRateData({ trials: 250, baselineRate: 0.2, shift, priorWeight: 60, seed });
-        const res = detectBetaRateShift({ successes: sample.successes, trials: sample.trials, baselinePrior: sample.baselinePrior, delta: 0.1, minSupport: 5 });
+        const sample = generateBetaRateData({
+          trials: 250,
+          baselineRate: 0.2,
+          shift,
+          priorWeight: 60,
+          seed,
+        });
+        const res = detectBetaRateShift({
+          successes: sample.successes,
+          trials: sample.trials,
+          baselinePrior: sample.baselinePrior,
+          delta: 0.1,
+          minSupport: 5,
+        });
         total += 1;
         if (res && res.confidence >= cutoff) triggered += 1;
       }
@@ -43,14 +60,16 @@ describe('Detector validation (statistical properties)', () => {
     let detections = 0;
     for (let t = 0; t < trials; t++) {
       // Emulate background-only by disabling cluster and spreading timestamps
-      const events = generateBurstEvents({ n: 60, cluster: false, windowMinutes: 15, seed: Math.floor(rng() * 1e6), backgroundCount: 60 });
+      const events = generateBurstEvents({
+        n: 60,
+        cluster: false,
+        windowMinutes: 15,
+        seed: Math.floor(rng() * 1e6),
+        backgroundCount: 60,
+      });
       const res = detectBurst(events, { windowMinutes: 15, minEvents: 6 });
       if (res) detections += 1;
     }
     expect(detections).toBeLessThanOrEqual(15);
   });
 });
-
-
-
-

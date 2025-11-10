@@ -9,38 +9,40 @@ Your shadcn/ui integration is **7/10** - good overall, but with some gaps to fix
 ## Critical Issues (2) - Fix ASAP
 
 ### 1. Dropdown Menu Missing Exports (5 min fix)
+
 ```typescript
 // File: src/components/ui/dropdown-menu.tsx
 // Lines 182-189
 // ADD to exports:
 export {
   // ... existing exports ...
-  DropdownMenuCheckboxItem,  // MISSING
-  DropdownMenuRadioItem,     // MISSING
-  DropdownMenuLabel,         // MISSING
-  DropdownMenuShortcut,      // MISSING
-  DropdownMenuGroup,         // MISSING
-  DropdownMenuSub,           // MISSING
-  DropdownMenuSubContent,    // MISSING
-  DropdownMenuSubTrigger,    // MISSING
-  DropdownMenuPortal,        // MISSING
-  DropdownMenuRadioGroup,    // MISSING
-}
+  DropdownMenuCheckboxItem, // MISSING
+  DropdownMenuRadioItem, // MISSING
+  DropdownMenuLabel, // MISSING
+  DropdownMenuShortcut, // MISSING
+  DropdownMenuGroup, // MISSING
+  DropdownMenuSub, // MISSING
+  DropdownMenuSubContent, // MISSING
+  DropdownMenuSubTrigger, // MISSING
+  DropdownMenuPortal, // MISSING
+  DropdownMenuRadioGroup, // MISSING
+};
 ```
 
 ### 2. Select Menu Missing Exports (5 min fix)
+
 ```typescript
 // File: src/components/ui/select.tsx
 // Lines 147-154
 // ADD to exports:
 export {
   // ... existing exports ...
-  SelectGroup,           // MISSING
-  SelectLabel,           // MISSING
-  SelectSeparator,       // MISSING
-  SelectScrollUpButton,  // MISSING
-  SelectScrollDownButton,// MISSING
-}
+  SelectGroup, // MISSING
+  SelectLabel, // MISSING
+  SelectSeparator, // MISSING
+  SelectScrollUpButton, // MISSING
+  SelectScrollDownButton, // MISSING
+};
 ```
 
 ---
@@ -48,6 +50,7 @@ export {
 ## High Priority Issues (2) - Fix This Week
 
 ### 3. LevelCompleteModal - Use Dialog Instead (30-45 min)
+
 ```typescript
 // File: src/components/game/LevelCompleteModal.tsx
 // Current: Custom modal with manual a11y
@@ -56,6 +59,7 @@ export {
 ```
 
 ### 4. LevelUpModal - Use Dialog Instead (30-45 min)
+
 ```typescript
 // File: src/components/game/LevelUpModal.tsx
 // Current: Custom modal with manual a11y
@@ -68,7 +72,9 @@ export {
 ## Medium Priority Issues (3) - Improve Quality
 
 ### 5. Document Custom Tailwind Classes (15 min)
+
 These custom classes need to be in `tailwind.config.js`:
+
 - `gradient-primary` - custom gradient
 - `shadow-soft`, `shadow-glow` - custom shadows
 - `shadow-medium` - medium shadow
@@ -77,20 +83,23 @@ These custom classes need to be in `tailwind.config.js`:
 - `glass-card` - card glass effect
 
 ### 6. Clean Button Variant Customization (15 min)
-**File**: `src/components/ui/button-variants.ts`
-Decide: Keep customizations but document them, or simplify?
+
+**File**: `src/components/ui/button-variants.ts` Decide: Keep customizations but document them, or
+simplify?
 
 ### 7. Clean Card Component Customization (15 min)
-**File**: `src/components/ui/card.tsx` line 12
-Remove `glass-card` and `animate-fade-in` from base component, apply at usage sites instead.
+
+**File**: `src/components/ui/card.tsx` line 12 Remove `glass-card` and `animate-fade-in` from base
+component, apply at usage sites instead.
 
 ---
 
 ## Optional Improvements (1)
 
 ### 8. Simplify Dialog Registry (20-30 min) - Optional
-**File**: `src/components/ui/dialog.tsx` lines 10-46
-Current complex registry can be simplified to just include fallback title.
+
+**File**: `src/components/ui/dialog.tsx` lines 10-46 Current complex registry can be simplified to
+just include fallback title.
 
 ---
 
@@ -128,16 +137,16 @@ WEEK 2:
 
 ## File Locations
 
-| File | Issue | Type |
-|------|-------|------|
-| `src/components/ui/dropdown-menu.tsx` | Incomplete exports | Critical |
-| `src/components/ui/select.tsx` | Incomplete exports | Critical |
-| `src/components/game/LevelCompleteModal.tsx` | Custom modal | High |
-| `src/components/game/LevelUpModal.tsx` | Custom modal | High |
-| `src/components/ui/button-variants.ts` | Custom classes | Medium |
-| `src/components/ui/card.tsx` | Custom classes | Medium |
-| `src/components/ui/dialog.tsx` | Complex code | Medium |
-| `tailwind.config.js` | Missing definitions | Medium |
+| File                                         | Issue               | Type     |
+| -------------------------------------------- | ------------------- | -------- |
+| `src/components/ui/dropdown-menu.tsx`        | Incomplete exports  | Critical |
+| `src/components/ui/select.tsx`               | Incomplete exports  | Critical |
+| `src/components/game/LevelCompleteModal.tsx` | Custom modal        | High     |
+| `src/components/game/LevelUpModal.tsx`       | Custom modal        | High     |
+| `src/components/ui/button-variants.ts`       | Custom classes      | Medium   |
+| `src/components/ui/card.tsx`                 | Custom classes      | Medium   |
+| `src/components/ui/dialog.tsx`               | Complex code        | Medium   |
+| `tailwind.config.js`                         | Missing definitions | Medium   |
 
 ---
 

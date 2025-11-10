@@ -58,13 +58,13 @@ type StoredAlertHistoryEntry = Omit<AlertHistoryEntry, 'alert' | 'resolvedAt'> &
 class AlertSystemManager {
   private readonly STORAGE_KEY = 'sensoryTracker_alerts';
   private readonly SETTINGS_KEY = 'sensoryTracker_alertSettings';
-  
+
   private defaultSettings: AlertSettings = {
     enableHighIntensityAlerts: true,
     highIntensityThreshold: 7,
     enablePatternAlerts: true,
     minimumDataPoints: 5,
-    alertFrequencyDays: 1
+    alertFrequencyDays: 1,
   };
 
   /**
@@ -85,24 +85,24 @@ class AlertSystemManager {
     student: Student,
     emotions: EmotionEntry[],
     sensoryInputs: SensoryEntry[],
-    trackingEntries: TrackingEntry[]
+    trackingEntries: TrackingEntry[],
   ): TriggerAlert[] {
     const settings = this.getSettings();
-    
+
     if (!settings.enableHighIntensityAlerts && !settings.enablePatternAlerts) {
       return [];
     }
 
     // Check if we should generate alerts (frequency limit)
     const recentAlerts = this.getStudentAlerts(student.id);
-    const cutoffTime = Date.now() - (settings.alertFrequencyDays * 24 * 60 * 60 * 1000);
-    const recentAlertsInWindow = recentAlerts.filter(a => 
-      a.alert.timestamp.getTime() > cutoffTime
+    const cutoffTime = Date.now() - settings.alertFrequencyDays * 24 * 60 * 60 * 1000;
+    const recentAlertsInWindow = recentAlerts.filter(
+      (a) => a.alert.timestamp.getTime() > cutoffTime,
     );
 
     // Don't generate new alerts if we have recent ones (unless high severity)
-    const hasRecentHighSeverity = recentAlertsInWindow.some(a => 
-      a.alert.severity === 'high' && !a.resolved
+    const hasRecentHighSeverity = recentAlertsInWindow.some(
+      (a) => a.alert.severity === 'high' && !a.resolved,
     );
 
     if (recentAlertsInWindow.length > 0 && !hasRecentHighSeverity) {
@@ -113,11 +113,11 @@ class AlertSystemManager {
       emotions,
       sensoryInputs,
       trackingEntries,
-      student.id
+      student.id,
     );
 
     // Filter alerts based on settings
-    const filteredAlerts = alerts.filter(alert => {
+    const filteredAlerts = alerts.filter((alert) => {
       if (alert.type === 'concern' && alert.severity === 'high') {
         return settings.enableHighIntensityAlerts;
       }
@@ -140,11 +140,11 @@ class AlertSystemManager {
   saveAlerts(alerts: TriggerAlert[]): void {
     try {
       const existingHistory = this.getAllAlerts();
-      
-      const newHistoryEntries: AlertHistoryEntry[] = alerts.map(alert => ({
+
+      const newHistoryEntries: AlertHistoryEntry[] = alerts.map((alert) => ({
         alert,
         viewed: false,
-        resolved: false
+        resolved: false,
       }));
 
       const updatedHistory = [...existingHistory, ...newHistoryEntries];
@@ -154,15 +154,20 @@ class AlertSystemManager {
 
       if (updatedHistory.length > ALERT_LIMITS.MAX_DISPLAY) {
         // First try to remove old resolved alerts
-        const unresolvedAlerts = updatedHistory.filter(entry => !entry.resolved);
-        const resolvedAlerts = updatedHistory.filter(entry => entry.resolved)
-          .sort((a, b) => new Date(b.alert.timestamp).getTime() - new Date(a.alert.timestamp).getTime())
+        const unresolvedAlerts = updatedHistory.filter((entry) => !entry.resolved);
+        const resolvedAlerts = updatedHistory
+          .filter((entry) => entry.resolved)
+          .sort(
+            (a, b) => new Date(b.alert.timestamp).getTime() - new Date(a.alert.timestamp).getTime(),
+          )
           .slice(0, ALERT_LIMITS.MAX_DISPLAY - unresolvedAlerts.length);
 
         historyToSave = [...unresolvedAlerts, ...resolvedAlerts].slice(-ALERT_LIMITS.MAX_DISPLAY);
-        logger.info(`Alert storage limit reached. Cleaned up ${updatedHistory.length - historyToSave.length} old alerts.`);
+        logger.info(
+          `Alert storage limit reached. Cleaned up ${updatedHistory.length - historyToSave.length} old alerts.`,
+        );
       }
-      
+
       // Use safe storage to handle quota issues
       persistOrThrow(this.STORAGE_KEY, JSON.stringify(historyToSave));
     } catch (error) {
@@ -172,17 +177,17 @@ class AlertSystemManager {
       // Suggest reducing frequency or clearing older alerts
       // If we still can't save, try aggressive cleanup
       this.cleanupOldAlerts(7); // Keep only last 7 days
-      
+
       // Try one more time with just the new alerts
       try {
         const minimalHistory = this.getAllAlerts().slice(-ALERT_LIMITS.HISTORY_LIMIT);
-        const newHistoryEntries: AlertHistoryEntry[] = alerts.map(alert => ({
+        const newHistoryEntries: AlertHistoryEntry[] = alerts.map((alert) => ({
           alert,
           viewed: false,
-          resolved: false
+          resolved: false,
         }));
         persistOrThrow(this.STORAGE_KEY, JSON.stringify([...minimalHistory, ...newHistoryEntries]));
-       } catch (retryError) {
+      } catch (retryError) {
         const err2 = retryError instanceof Error ? retryError : new Error(String(retryError));
         logger.error('Failed to save alerts even after cleanup:', err2);
         // In demo mode, we avoid spamming errors and fail silently after attempt
@@ -199,16 +204,16 @@ class AlertSystemManager {
     try {
       const stored = safeGet(this.STORAGE_KEY);
       if (!stored) return [];
-      
+
       const alerts = JSON.parse(stored) as StoredAlertHistoryEntry[];
       // Convert timestamp strings back to Date objects
       return alerts.map((entry) => ({
         ...entry,
         alert: {
           ...entry.alert,
-          timestamp: new Date(entry.alert.timestamp)
+          timestamp: new Date(entry.alert.timestamp),
         },
-        resolvedAt: entry.resolvedAt ? new Date(entry.resolvedAt) : undefined
+        resolvedAt: entry.resolvedAt ? new Date(entry.resolvedAt) : undefined,
       }));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -224,7 +229,7 @@ class AlertSystemManager {
    * @returns An array of alert history entries for the specified student.
    */
   getStudentAlerts(studentId: string): AlertHistoryEntry[] {
-    return this.getAllAlerts().filter(entry => entry.alert.studentId === studentId);
+    return this.getAllAlerts().filter((entry) => entry.alert.studentId === studentId);
   }
 
   /**
@@ -233,7 +238,7 @@ class AlertSystemManager {
    * @returns An array of unviewed alert history entries.
    */
   getUnviewedAlerts(): AlertHistoryEntry[] {
-    return this.getAllAlerts().filter(entry => !entry.viewed);
+    return this.getAllAlerts().filter((entry) => !entry.viewed);
   }
 
   /**
@@ -242,7 +247,7 @@ class AlertSystemManager {
    * @returns An array of unresolved alert history entries.
    */
   getUnresolvedAlerts(): AlertHistoryEntry[] {
-    return this.getAllAlerts().filter(entry => !entry.resolved);
+    return this.getAllAlerts().filter((entry) => !entry.resolved);
   }
 
   /**
@@ -253,10 +258,8 @@ class AlertSystemManager {
   markAlertAsViewed(alertId: string): void {
     try {
       const alerts = this.getAllAlerts();
-      const updatedAlerts = alerts.map(entry => 
-        entry.alert.id === alertId 
-          ? { ...entry, viewed: true }
-          : entry
+      const updatedAlerts = alerts.map((entry) =>
+        entry.alert.id === alertId ? { ...entry, viewed: true } : entry,
       );
       persistOrThrow(this.STORAGE_KEY, JSON.stringify(updatedAlerts));
     } catch (error) {
@@ -275,16 +278,16 @@ class AlertSystemManager {
   resolveAlert(alertId: string, resolvedBy: string, notes?: string): void {
     try {
       const alerts = this.getAllAlerts();
-      const updatedAlerts = alerts.map(entry => 
-        entry.alert.id === alertId 
-          ? { 
-              ...entry, 
-              resolved: true, 
+      const updatedAlerts = alerts.map((entry) =>
+        entry.alert.id === alertId
+          ? {
+              ...entry,
+              resolved: true,
               resolvedAt: new Date(),
               resolvedBy,
-              resolvedNotes: notes
+              resolvedNotes: notes,
             }
-          : entry
+          : entry,
       );
       persistOrThrow(this.STORAGE_KEY, JSON.stringify(updatedAlerts));
     } catch (error) {
@@ -301,7 +304,7 @@ class AlertSystemManager {
   deleteAlert(alertId: string): void {
     try {
       const alerts = this.getAllAlerts();
-      const filteredAlerts = alerts.filter(entry => entry.alert.id !== alertId);
+      const filteredAlerts = alerts.filter((entry) => entry.alert.id !== alertId);
       persistOrThrow(this.STORAGE_KEY, JSON.stringify(filteredAlerts));
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -318,7 +321,7 @@ class AlertSystemManager {
     try {
       const stored = safeGet(this.SETTINGS_KEY);
       if (!stored) return this.defaultSettings;
-      
+
       return { ...this.defaultSettings, ...JSON.parse(stored) };
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
@@ -362,22 +365,28 @@ class AlertSystemManager {
     const unviewed = this.getUnviewedAlerts();
     const unresolved = this.getUnresolvedAlerts();
 
-    const bySeverity = allAlerts.reduce((acc, entry) => {
-      acc[entry.alert.severity] = (acc[entry.alert.severity] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const bySeverity = allAlerts.reduce(
+      (acc, entry) => {
+        acc[entry.alert.severity] = (acc[entry.alert.severity] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
-    const byType = allAlerts.reduce((acc, entry) => {
-      acc[entry.alert.type] = (acc[entry.alert.type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const byType = allAlerts.reduce(
+      (acc, entry) => {
+        acc[entry.alert.type] = (acc[entry.alert.type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return {
       total: allAlerts.length,
       unviewed: unviewed.length,
       unresolved: unresolved.length,
       bySeverity,
-      byType
+      byType,
     };
   }
 
@@ -392,8 +401,8 @@ class AlertSystemManager {
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
       const alerts = this.getAllAlerts();
-      const filteredAlerts = alerts.filter(entry => 
-        entry.alert.timestamp >= cutoffDate || !entry.resolved
+      const filteredAlerts = alerts.filter(
+        (entry) => entry.alert.timestamp >= cutoffDate || !entry.resolved,
       );
 
       persistOrThrow(this.STORAGE_KEY, JSON.stringify(filteredAlerts));
@@ -411,15 +420,17 @@ class AlertSystemManager {
    * @returns A JSON string representing the exported alerts.
    */
   exportAlerts(studentId?: string): string {
-    const alerts = studentId 
-      ? this.getStudentAlerts(studentId)
-      : this.getAllAlerts();
+    const alerts = studentId ? this.getStudentAlerts(studentId) : this.getAllAlerts();
 
-    return JSON.stringify({
-      exportDate: new Date().toISOString(),
-      studentId: studentId || 'all',
-      alerts: alerts
-    }, null, 2);
+    return JSON.stringify(
+      {
+        exportDate: new Date().toISOString(),
+        studentId: studentId || 'all',
+        alerts: alerts,
+      },
+      null,
+      2,
+    );
   }
 }
 

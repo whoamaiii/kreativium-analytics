@@ -3,7 +3,14 @@ import type { DetectorOptions, DetectorSnapshot, DetectionBox } from '@/detector
 
 export class FaceApiDetector {
   private video: HTMLVideoElement | null = null;
-  private snapshot: DetectorSnapshot = { topLabel: 'neutral', topProbability: 0, probabilities: {}, box: null, fps: 0, ready: false };
+  private snapshot: DetectorSnapshot = {
+    topLabel: 'neutral',
+    topProbability: 0,
+    probabilities: {},
+    box: null,
+    fps: 0,
+    ready: false,
+  };
   private scoreThreshold: number;
   private modelBaseUrl: string;
   private lastTs = performance.now();
@@ -33,7 +40,10 @@ export class FaceApiDetector {
     if ((video.readyState ?? 0) < 2 || video.videoWidth === 0 || video.videoHeight === 0) return;
     const t0 = performance.now();
     const results = await faceapi
-      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ scoreThreshold: this.scoreThreshold }))
+      .detectAllFaces(
+        video,
+        new faceapi.TinyFaceDetectorOptions({ scoreThreshold: this.scoreThreshold }),
+      )
       .withFaceExpressions();
 
     let box: DetectionBox | null = null;
@@ -41,7 +51,8 @@ export class FaceApiDetector {
     let topLabel = 'neutral';
     let topProbability = 0;
 
-    let largest: { area: number; box: faceapi.Box; expressions: faceapi.FaceExpressions } | null = null;
+    let largest: { area: number; box: faceapi.Box; expressions: faceapi.FaceExpressions } | null =
+      null;
     for (const r of results ?? []) {
       const a = r.detection.box.width * r.detection.box.height;
       if (!largest || a > largest.area) {
@@ -52,7 +63,12 @@ export class FaceApiDetector {
       const b = largest.box;
       box = { x: b.x, y: b.y, width: b.width, height: b.height };
       probabilities = largest.expressions as unknown as Record<string, number>;
-      for (const [k, v] of Object.entries(probabilities)) { if (v > topProbability) { topProbability = v; topLabel = k; } }
+      for (const [k, v] of Object.entries(probabilities)) {
+        if (v > topProbability) {
+          topProbability = v;
+          topLabel = k;
+        }
+      }
     }
 
     const dt = performance.now() - t0;
@@ -61,9 +77,7 @@ export class FaceApiDetector {
     this.lastTs = t0;
   }
 
-  getSnapshot(): DetectorSnapshot { return this.snapshot; }
+  getSnapshot(): DetectorSnapshot {
+    return this.snapshot;
+  }
 }
-
-
-
-

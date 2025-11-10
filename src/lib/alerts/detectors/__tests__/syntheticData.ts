@@ -4,7 +4,7 @@ import type { TrendPoint } from '@/lib/alerts/detectors/ewma';
 export function createRng(seed: number = 123456789): () => number {
   let t = seed >>> 0;
   return () => {
-    t += 0x6D2B79F5;
+    t += 0x6d2b79f5;
     let x = Math.imul(t ^ (t >>> 15), 1 | t);
     x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
     return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
@@ -59,7 +59,7 @@ export function generateGradualTrend(
   const rng = createRng(seed);
   const out: number[] = new Array(n);
   for (let i = 0; i < n; i++) {
-    out[i] = (start + slope * i) + sigma * normalSample(rng);
+    out[i] = start + slope * i + sigma * normalSample(rng);
   }
   return out;
 }
@@ -75,12 +75,19 @@ export function generateSeasonal(
   const rng = createRng(seed);
   const out: number[] = new Array(n);
   for (let i = 0; i < n; i++) {
-    out[i] = mean + amplitude * Math.sin((2 * Math.PI * i) / Math.max(1, period)) + sigma * normalSample(rng);
+    out[i] =
+      mean +
+      amplitude * Math.sin((2 * Math.PI * i) / Math.max(1, period)) +
+      sigma * normalSample(rng);
   }
   return out;
 }
 
-export function injectOutliers(values: number[], fraction: number = 0.01, magnitude: number = 6): number[] {
+export function injectOutliers(
+  values: number[],
+  fraction: number = 0.01,
+  magnitude: number = 6,
+): number[] {
   const n = values.length;
   const rng = createRng(1234);
   const out = values.slice();
@@ -105,7 +112,11 @@ export function addMissing(values: number[], fraction: number = 0.02): number[] 
   return out;
 }
 
-export function toTrendSeries(values: number[], startMs: number = Date.UTC(2024, 0, 1), stepMs: number = 60_000): TrendPoint[] {
+export function toTrendSeries(
+  values: number[],
+  startMs: number = Date.UTC(2024, 0, 1),
+  stepMs: number = 60_000,
+): TrendPoint[] {
   const n = values.length;
   const series: TrendPoint[] = new Array(n);
   for (let i = 0; i < n; i++) {
@@ -146,8 +157,6 @@ export function autocorrelation(values: number[], lag: number): number {
   return den > 0 ? num / den : 0;
 }
 
-
-
 // ---------------------------------------------
 // New utilities for rate, association, and burst testing
 // ---------------------------------------------
@@ -179,7 +188,13 @@ export function generateBetaRateData(params: {
   priorWeight?: number; // pseudo-counts to construct prior around baselineRate
   seed?: number;
   jeffreys?: boolean; // if true, use Jeffreys(0.5,0.5) regardless of baselineRate
-}): { successes: number; trials: number; baselinePrior: { alpha: number; beta: number }; delta: number; trueRate: number } {
+}): {
+  successes: number;
+  trials: number;
+  baselinePrior: { alpha: number; beta: number };
+  delta: number;
+  trueRate: number;
+} {
   const seed = params.seed ?? 13579;
   const rng = createRng(seed);
   const baselineRate = clamp(params.baselineRate, 0, 1);
@@ -201,14 +216,24 @@ export function generateBetaRateData(params: {
   const w = Math.max(0, Math.floor(params.priorWeight ?? 50));
   const alpha = 0.5 + baselineRate * w;
   const beta = 0.5 + (1 - baselineRate) * w;
-  return { successes, trials: params.trials, baselinePrior: { alpha, beta }, delta: Math.abs(shift), trueRate };
+  return {
+    successes,
+    trials: params.trials,
+    baselinePrior: { alpha, beta },
+    delta: Math.abs(shift),
+    trueRate,
+  };
 }
 
 /**
  * Generate a 2x2 contingency table with a target odds ratio (balanced margins).
  * Defaults to total=200 and OR=4 for a clear association.
  */
-export function generateContingencyTable(params?: { total?: number; oddsRatio?: number; zeroCells?: boolean }): { a: number; b: number; c: number; d: number } {
+export function generateContingencyTable(params?: {
+  total?: number;
+  oddsRatio?: number;
+  zeroCells?: boolean;
+}): { a: number; b: number; c: number; d: number } {
   const total = Math.max(4, Math.floor(params?.total ?? 200));
   const half = Math.floor(total / 2);
   const or = Math.max(0.01, params?.oddsRatio ?? 4);
@@ -255,8 +280,14 @@ export function generateBurstEvents(params?: {
   const startMs = params?.startMs ?? Date.UTC(2024, 0, 1, 9, 0, 0);
   const stepMs = 60_000; // 1 minute grid
   const rng = createRng(params?.seed ?? 424242);
-  const clusterCount = Math.min(n, Math.max(0, Math.floor(params?.clusterCount ?? Math.floor(n / 3))));
-  const backgroundCount = Math.max(0, Math.min(n - clusterCount, Math.floor(params?.backgroundCount ?? (n - clusterCount))));
+  const clusterCount = Math.min(
+    n,
+    Math.max(0, Math.floor(params?.clusterCount ?? Math.floor(n / 3))),
+  );
+  const backgroundCount = Math.max(
+    0,
+    Math.min(n - clusterCount, Math.floor(params?.backgroundCount ?? n - clusterCount)),
+  );
 
   const out: Array<{ timestamp: number; value: number; pairedValue?: number }> = [];
 
@@ -298,7 +329,11 @@ export function generateBurstEvents(params?: {
 /**
  * Generate two correlated series with target Pearson correlation rho.
  */
-export function generateCorrelatedSeries(n: number, rho: number, seed: number = 2468): { x: number[]; y: number[] } {
+export function generateCorrelatedSeries(
+  n: number,
+  rho: number,
+  seed: number = 2468,
+): { x: number[]; y: number[] } {
   const rng = createRng(seed);
   const r = clamp(rho, -0.99, 0.99);
   const x: number[] = new Array(n);
@@ -314,11 +349,18 @@ export function generateCorrelatedSeries(n: number, rho: number, seed: number = 
 }
 
 // Edge-case helpers
-export function zeroRateCase(): { successes: number; trials: number; baselinePrior: { alpha: number; beta: number } } {
+export function zeroRateCase(): {
+  successes: number;
+  trials: number;
+  baselinePrior: { alpha: number; beta: number };
+} {
   return { successes: 0, trials: 10, baselinePrior: { alpha: 0.5, beta: 0.5 } };
 }
 
-export function perfectRateCase(): { successes: number; trials: number; baselinePrior: { alpha: number; beta: number } } {
+export function perfectRateCase(): {
+  successes: number;
+  trials: number;
+  baselinePrior: { alpha: number; beta: number };
+} {
   return { successes: 10, trials: 10, baselinePrior: { alpha: 0.5, beta: 0.5 } };
 }
-

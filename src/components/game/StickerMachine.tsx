@@ -12,7 +12,9 @@ export function StickerMachine({ visible, onPayout }: StickerMachineProps) {
   const [result, setResult] = useState<string | null>(null);
   const stickers = useMemo(() => CATALOG, []);
   const payoutRef = useRef<typeof onPayout>();
-  useEffect(() => { payoutRef.current = onPayout; }, [onPayout]);
+  useEffect(() => {
+    payoutRef.current = onPayout;
+  }, [onPayout]);
 
   useEffect(() => {
     if (!visible) return;
@@ -22,7 +24,9 @@ export function StickerMachine({ visible, onPayout }: StickerMachineProps) {
       const pick = stickers[Math.floor(Math.random() * stickers.length)];
       setResult(pick);
       setSpinning(false);
-      try { payoutRef.current?.(pick); } catch {}
+      try {
+        payoutRef.current?.(pick);
+      } catch {}
     }, 1200);
     return () => window.clearTimeout(id);
   }, [visible, stickers]);
@@ -42,5 +46,3 @@ export function StickerMachine({ visible, onPayout }: StickerMachineProps) {
 }
 
 export default StickerMachine;
-
-

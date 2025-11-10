@@ -31,7 +31,7 @@ describe('ExplanationChat citations and drawer', () => {
         systemPrompt={''}
         initialMessages={[]}
         sourcesRich={sourcesRich}
-      />
+      />,
     );
 
     // Kilder list is visible
@@ -52,7 +52,7 @@ describe('ExplanationChat citations and drawer', () => {
         systemPrompt={''}
         initialMessages={[{ role: 'assistant', content: 'Eksempel viser klar sammenheng [S2].' }]}
         sourcesRich={sourcesRich}
-      />
+      />,
     );
 
     // Henvisninger section shows S1 and S2
@@ -74,8 +74,13 @@ import { ExplanationChat } from '@/components/analytics-panels/ExplanationChat';
 
 vi.mock('@/lib/ai/openrouterClient', () => ({
   openRouterClient: {
-    chat: vi.fn(async () => ({ content: '**Dette** er et test-svar', raw: { model: 'mock' }, usage: {}, metrics: { durationMs: 1, attempts: 1 } }))
-  }
+    chat: vi.fn(async () => ({
+      content: '**Dette** er et test-svar',
+      raw: { model: 'mock' },
+      usage: {},
+      metrics: { durationMs: 1, attempts: 1 },
+    })),
+  },
 }));
 
 describe('ExplanationChat', () => {
@@ -93,5 +98,3 @@ describe('ExplanationChat', () => {
     expect(await screen.findByText(/^Dette er et test-svar$/i)).toBeInTheDocument();
   });
 });
-
-

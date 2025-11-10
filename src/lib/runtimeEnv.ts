@@ -6,7 +6,6 @@ export type ViteEnv = Record<string, unknown> & {
 };
 
 declare global {
-   
   var __RUNTIME_ENV__: ViteEnv | undefined;
 }
 
@@ -31,4 +30,3 @@ export function setRuntimeEnvFromVite(): void {
     // noop
   }
 }
-

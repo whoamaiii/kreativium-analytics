@@ -6,9 +6,3 @@ export function resolveParams(rtMs: number, stability: number, intensity: number
   const hint: TaskDifficulty['hint'] = intensity < 0.3 ? 'gentle' : 'none';
   return { timeWindowMs, holdDurationMs, hint };
 }
-
-
-
-
-
-

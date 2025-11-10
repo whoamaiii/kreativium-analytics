@@ -22,7 +22,7 @@ export function usePinnedAlerts(): UsePinnedAlertsReturn {
         if (!Array.isArray(parsed)) return [];
         return parsed.filter((v) => typeof v === 'string' && v.length > 0);
       },
-    }
+    },
   );
 
   // Convert array to Set for efficient lookups
@@ -38,7 +38,7 @@ export function usePinnedAlerts(): UsePinnedAlertsReturn {
         return [...prev, alertId];
       });
     },
-    [setPinnedIdsArray]
+    [setPinnedIdsArray],
   );
 
   const unpinAlert = useCallback(
@@ -49,7 +49,7 @@ export function usePinnedAlerts(): UsePinnedAlertsReturn {
         return prev.filter((id) => id !== alertId);
       });
     },
-    [setPinnedIdsArray]
+    [setPinnedIdsArray],
   );
 
   const togglePin = useCallback(
@@ -63,7 +63,7 @@ export function usePinnedAlerts(): UsePinnedAlertsReturn {
         }
       });
     },
-    [setPinnedIdsArray]
+    [setPinnedIdsArray],
   );
 
   const clearPinnedAlerts = useCallback(() => {
@@ -83,6 +83,3 @@ export function usePinnedAlerts(): UsePinnedAlertsReturn {
 }
 
 export default usePinnedAlerts;
-
-
-

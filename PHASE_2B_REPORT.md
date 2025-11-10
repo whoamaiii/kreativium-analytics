@@ -2,7 +2,9 @@
 
 ## Executive Summary
 
-Successfully extracted student analytics orchestration logic from `analyticsManager.ts` into a focused, cache-agnostic orchestration module. This refactoring achieves clean separation between cache management and business logic while maintaining full backward compatibility.
+Successfully extracted student analytics orchestration logic from `analyticsManager.ts` into a
+focused, cache-agnostic orchestration module. This refactoring achieves clean separation between
+cache management and business logic while maintaining full backward compatibility.
 
 ## Files Created
 
@@ -13,34 +15,35 @@ Successfully extracted student analytics orchestration logic from `analyticsMana
 **Key Components**:
 
 #### Class: `StudentAnalyticsOrchestrator`
+
 Core orchestration class with dependency injection pattern.
 
 **Public Methods**:
+
 ```typescript
 class StudentAnalyticsOrchestrator {
   // Initialize student profile (idempotent)
-  public initializeProfile(studentId: string): void
-  
+  public initializeProfile(studentId: string): void;
+
   // Get fresh analytics (cache-agnostic)
   public async getAnalytics(
-    student: Student, 
-    options?: StudentAnalyticsOptions
-  ): Promise<AnalyticsResults>
-  
-  // Trigger forced re-analysis
-  public async triggerAnalysis(
     student: Student,
-    options?: StudentAnalyticsOptions
-  ): Promise<void>
+    options?: StudentAnalyticsOptions,
+  ): Promise<AnalyticsResults>;
+
+  // Trigger forced re-analysis
+  public async triggerAnalysis(student: Student, options?: StudentAnalyticsOptions): Promise<void>;
 }
 ```
 
 **Dependencies (Injected)**:
+
 - `AnalyticsRunner`: Executes analytics computations
 - `ProfileManager`: Manages student profile storage
 - `HealthCalculator`: Computes analytics quality scores
 
 #### Factory Functions:
+
 ```typescript
 // Create orchestrator instance
 createStudentAnalyticsOrchestrator(
@@ -56,6 +59,7 @@ createProfileManagerAdapter(deps: {
 ```
 
 #### Interfaces:
+
 ```typescript
 interface ProfileManager {
   initialize(studentId: string): void;
@@ -101,6 +105,7 @@ interface StudentAnalyticsOrchestratorDeps {
 **Purpose**: Unified exports for orchestration modules
 
 **Exports**:
+
 ```typescript
 // Student Analytics
 export {
@@ -129,6 +134,7 @@ export {
 **Purpose**: Comprehensive integration guide for manager refactoring
 
 **Contents**:
+
 - Before/after architecture comparison
 - Step-by-step integration instructions
 - Code examples for thin wrapper pattern
@@ -143,11 +149,12 @@ export {
 #### 1. `getStudentAnalytics()` (Originally ~72 lines)
 
 **Before** (Lines 322-394 in manager):
+
 ```typescript
 async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
   // 1. Initialize profile
   this.initializeStudentAnalytics(student.id);
-  
+
   // 2. Check TTL cache (complex logic with AI preferences)
   const ttlDisabled = this.isManagerTtlCacheDisabled();
   if (!ttlDisabled) {
@@ -159,15 +166,15 @@ async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
       return cached.results;
     }
   }
-  
+
   // 3. Run analytics
   const results = await this.analyticsRunner.run(student, options?.useAI);
-  
+
   // 4. Update cache
   if (!this.isManagerTtlCacheDisabled()) {
     this.analyticsCache.set(student.id, { results, timestamp: new Date() });
   }
-  
+
   // 5. Update profile
   const profile = this.analyticsProfiles.get(student.id);
   if (profile) {
@@ -179,7 +186,7 @@ async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
     this.analyticsProfiles.set(student.id, updatedProfile);
     saveProfiles();
   }
-  
+
   return results;
 }
 ```
@@ -187,6 +194,7 @@ async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
 **After** - Split into two components:
 
 **Manager (Thin Wrapper - Cache Layer)**:
+
 ```typescript
 async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
   // Check TTL cache (deprecated)
@@ -194,43 +202,44 @@ async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
     const cached = this.checkTtlCache(student.id, options);
     if (cached) return cached.results;
   }
-  
+
   // Delegate to orchestrator
   const results = await this.orchestrator.getAnalytics(student, options);
-  
+
   // Update TTL cache
   if (!ttlDisabled) {
     this.analyticsCache.set(student.id, { results, timestamp: new Date() });
   }
-  
+
   return results;
 }
 ```
 
 **Orchestrator (Core Logic - Business Layer)**:
+
 ```typescript
 async getAnalytics(student: Student, options?: StudentAnalyticsOptions) {
   // 1. Initialize profile
   this.initializeProfile(student.id);
-  
+
   // 2. Run analytics
   const results = await this.runner.run(student, options?.useAI);
-  
+
   // 3. Update profile
   const profile = this.profileManager.get(student.id);
   if (profile) {
     const liveCfg = options?.config ?? this.getLiveConfig();
     const healthScore = this.healthCalculator(results, liveCfg);
-    
+
     const updatedProfile: StudentAnalyticsProfile = {
       ...profile,
       lastAnalyzedAt: new Date(),
       analyticsHealthScore: healthScore,
     };
-    
+
     this.profileManager.set(student.id, updatedProfile);
   }
-  
+
   return results;
 }
 ```
@@ -238,6 +247,7 @@ async getAnalytics(student: Student, options?: StudentAnalyticsOptions) {
 #### 2. `triggerAnalyticsForStudent()` (Originally ~13 lines)
 
 **Before** (Lines 413-425 in manager):
+
 ```typescript
 async triggerAnalyticsForStudent(student: Student): Promise<void> {
   try {
@@ -256,6 +266,7 @@ async triggerAnalyticsForStudent(student: Student): Promise<void> {
 **After** - Split into two components:
 
 **Manager (Cache Invalidation)**:
+
 ```typescript
 async triggerAnalyticsForStudent(student: Student): Promise<void> {
   try {
@@ -274,6 +285,7 @@ async triggerAnalyticsForStudent(student: Student): Promise<void> {
 ```
 
 **Orchestrator (Re-analysis Logic)**:
+
 ```typescript
 async triggerAnalysis(student: Student, options?: StudentAnalyticsOptions): Promise<void> {
   try {
@@ -292,6 +304,7 @@ async triggerAnalysis(student: Student, options?: StudentAnalyticsOptions): Prom
 #### 3. `initializeStudentAnalytics()` (Originally ~37 lines)
 
 **Before** (Lines 249-285 in manager):
+
 ```typescript
 initializeStudentAnalytics(studentId: string): void {
   try {
@@ -299,11 +312,11 @@ initializeStudentAnalytics(studentId: string): void {
       logger.warn('[analyticsManager] initializeStudentAnalytics: invalid studentId', { studentId });
       return;
     }
-    
+
     if (this.analyticsProfiles.has(studentId)) {
       return;
     }
-    
+
     const profile: StudentAnalyticsProfile = {
       studentId,
       isInitialized: true,
@@ -322,7 +335,7 @@ initializeStudentAnalytics(studentId: string): void {
       },
       analyticsHealthScore: 0,
     };
-    
+
     this.analyticsProfiles.set(studentId, profile);
     saveProfiles();
   } catch (error) {
@@ -334,6 +347,7 @@ initializeStudentAnalytics(studentId: string): void {
 **After** - Delegates to existing `analyticsProfiles` module:
 
 **Manager (Thin Delegation)**:
+
 ```typescript
 initializeStudentAnalytics(studentId: string): void {
   this.orchestrator.initializeProfile(studentId);
@@ -341,6 +355,7 @@ initializeStudentAnalytics(studentId: string): void {
 ```
 
 **Orchestrator (Delegates to ProfileManager)**:
+
 ```typescript
 initializeProfile(studentId: string): void {
   try {
@@ -357,12 +372,13 @@ initializeProfile(studentId: string): void {
 ```
 
 **ProfileManager Adapter (Wraps existing module)**:
+
 ```typescript
 // Wraps analyticsProfiles.initializeStudentProfile()
 const profileManager = createProfileManagerAdapter({
-  initialize: initializeStudentProfile,  // From analyticsProfiles
-  getMap: getProfileMap,                 // From analyticsProfiles
-  save: saveProfiles                     // From analyticsProfiles
+  initialize: initializeStudentProfile, // From analyticsProfiles
+  getMap: getProfileMap, // From analyticsProfiles
+  save: saveProfiles, // From analyticsProfiles
 });
 ```
 
@@ -373,43 +389,43 @@ The manager will transition to a thin wrapper pattern:
 ```typescript
 class AnalyticsManagerService {
   private orchestrator: StudentAnalyticsOrchestrator;
-  
+
   constructor(storage: IDataStorage, profiles: AnalyticsProfileMap) {
     // ... existing initialization ...
-    
+
     // Initialize orchestrator
     this.orchestrator = createStudentAnalyticsOrchestrator({
       runner: this.analyticsRunner,
       profileManager: createProfileManagerAdapter({
         initialize: initializeStudentProfile,
         getMap: getProfileMap,
-        save: saveProfiles
+        save: saveProfiles,
       }),
-      healthCalculator: calculateHealthScore
+      healthCalculator: calculateHealthScore,
     });
   }
-  
+
   // Thin wrapper: Cache check → Delegate → Cache update
   async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
     // 1. Check TTL cache (deprecated)
     const cached = this.checkTtlCache(student.id, options);
     if (cached) return cached.results;
-    
+
     // 2. Delegate to orchestrator
     const results = await this.orchestrator.getAnalytics(student, options);
-    
+
     // 3. Update TTL cache if enabled
     this.updateTtlCache(student.id, results);
-    
+
     return results;
   }
-  
+
   // Thin wrapper: Clear cache → Delegate
   async triggerAnalyticsForStudent(student: Student) {
     this.analyticsCache.delete(student.id);
     await this.orchestrator.triggerAnalysis(student);
   }
-  
+
   // Direct delegation
   initializeStudentAnalytics(studentId: string) {
     this.orchestrator.initializeProfile(studentId);
@@ -428,7 +444,7 @@ import {
   getProfileMap,
   initializeStudentProfile,
   saveProfiles,
-  type StudentAnalyticsProfile
+  type StudentAnalyticsProfile,
 } from '@/lib/analyticsProfiles';
 import { logger } from '@/lib/logger';
 import { analyticsConfig } from '@/lib/analyticsConfig';
@@ -484,7 +500,10 @@ Request → Manager.getStudentAnalytics()
 ### 1. Direct Orchestrator Usage (New Code)
 
 ```typescript
-import { createStudentAnalyticsOrchestrator, createProfileManagerAdapter } from '@/lib/analytics/orchestration';
+import {
+  createStudentAnalyticsOrchestrator,
+  createProfileManagerAdapter,
+} from '@/lib/analytics/orchestration';
 import { AnalyticsRunner } from '@/lib/analytics/runner';
 import { createAnalysisEngine } from '@/lib/analytics/engine';
 import { calculateHealthScore } from '@/lib/analytics/health';
@@ -495,14 +514,14 @@ import { dataStorage } from '@/lib/dataStorage';
 const orchestrator = createStudentAnalyticsOrchestrator({
   runner: new AnalyticsRunner({
     storage: dataStorage,
-    createAnalysisEngine
+    createAnalysisEngine,
   }),
   profileManager: createProfileManagerAdapter({
     initialize: initializeStudentProfile,
     getMap: getProfileMap,
-    save: saveProfiles
+    save: saveProfiles,
   }),
-  healthCalculator: calculateHealthScore
+  healthCalculator: calculateHealthScore,
 });
 
 // Get analytics
@@ -543,7 +562,7 @@ const defaultResults = await orchestrator.getAnalytics(student);
 function useStudentAnalytics(student: Student) {
   const orchestrator = useOrchestratorInstance();
   const cache = usePerformanceCache();
-  
+
   return useQuery({
     queryKey: ['analytics', student.id],
     queryFn: async () => {
@@ -552,12 +571,12 @@ function useStudentAnalytics(student: Student) {
       if (cached && cache.isValid(cached)) {
         return cached.results;
       }
-      
+
       // Orchestrator for fresh data
       const results = await orchestrator.getAnalytics(student);
       cache.set(student.id, results);
       return results;
-    }
+    },
   });
 }
 ```
@@ -566,34 +585,34 @@ function useStudentAnalytics(student: Student) {
 
 ### Lines of Code
 
-| Component | Lines | Description |
-|-----------|-------|-------------|
-| **Created** |
-| studentAnalytics.ts | 567 | Core orchestration module |
-| orchestration/index.ts | 80 | Module exports |
-| INTEGRATION_EXAMPLE.md | N/A | Integration guide |
-| **Total New** | **647** | Lines added |
+| Component              | Lines   | Description               |
+| ---------------------- | ------- | ------------------------- |
+| **Created**            |
+| studentAnalytics.ts    | 567     | Core orchestration module |
+| orchestration/index.ts | 80      | Module exports            |
+| INTEGRATION_EXAMPLE.md | N/A     | Integration guide         |
+| **Total New**          | **647** | Lines added               |
 
 ### Method Breakdown
 
-| Method | Original (Manager) | New (Orchestrator) | Manager (After) |
-|--------|-------------------|-------------------|----------------|
-| getStudentAnalytics() | ~72 lines | N/A | ~25 lines (thin wrapper) |
-| getAnalytics() | N/A | ~50 lines | N/A |
-| triggerAnalyticsForStudent() | ~13 lines | N/A | ~10 lines |
-| triggerAnalysis() | N/A | ~25 lines | N/A |
-| initializeStudentAnalytics() | ~37 lines | N/A | 1 line (delegate) |
-| initializeProfile() | N/A | ~20 lines | N/A |
+| Method                       | Original (Manager) | New (Orchestrator) | Manager (After)          |
+| ---------------------------- | ------------------ | ------------------ | ------------------------ |
+| getStudentAnalytics()        | ~72 lines          | N/A                | ~25 lines (thin wrapper) |
+| getAnalytics()               | N/A                | ~50 lines          | N/A                      |
+| triggerAnalyticsForStudent() | ~13 lines          | N/A                | ~10 lines                |
+| triggerAnalysis()            | N/A                | ~25 lines          | N/A                      |
+| initializeStudentAnalytics() | ~37 lines          | N/A                | 1 line (delegate)        |
+| initializeProfile()          | N/A                | ~20 lines          | N/A                      |
 
 ### Complexity Reduction
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| **Manager Size** | 641 lines | ~600 lines (estimated after refactor) |
-| **Concerns in Manager** | 4 (cache + orchestration + profiles + health) | 2 (cache + delegation) |
-| **Testability** | Difficult (coupled) | Easy (injected) |
-| **Cache Coupling** | Tight | Loose |
-| **Reusability** | Low (singleton) | High (injectable) |
+| Aspect                  | Before                                        | After                                 |
+| ----------------------- | --------------------------------------------- | ------------------------------------- |
+| **Manager Size**        | 641 lines                                     | ~600 lines (estimated after refactor) |
+| **Concerns in Manager** | 4 (cache + orchestration + profiles + health) | 2 (cache + delegation)                |
+| **Testability**         | Difficult (coupled)                           | Easy (injected)                       |
+| **Cache Coupling**      | Tight                                         | Loose                                 |
+| **Reusability**         | Low (singleton)                               | High (injectable)                     |
 
 ## TypeScript Compilation
 
@@ -625,23 +644,23 @@ describe('StudentAnalyticsOrchestrator', () => {
     const orchestrator = createStudentAnalyticsOrchestrator({
       runner: mockRunner,
       profileManager: mockProfileManager,
-      healthCalculator: () => 85
+      healthCalculator: () => 85,
     });
-    
+
     await orchestrator.getAnalytics(mockStudent);
-    
+
     expect(mockProfileManager.initialize).toHaveBeenCalledWith(mockStudent.id);
     expect(mockRunner.run).toHaveBeenCalledWith(mockStudent, undefined);
   });
-  
+
   it('updates profile with health score after analytics', async () => {
     // ... test profile updates ...
   });
-  
+
   it('handles runner failures gracefully', async () => {
     // ... test error handling ...
   });
-  
+
   it('supports AI options', async () => {
     // ... test useAI flag ...
   });
@@ -657,11 +676,11 @@ describe('AnalyticsManagerService with Orchestrator', () => {
     const results = await manager.getStudentAnalytics(student);
     expect(results).toBeDefined();
   });
-  
+
   it('respects TTL cache when enabled', async () => {
     // ... test cache behavior ...
   });
-  
+
   it('bypasses TTL cache when disabled via flag', async () => {
     // ... test with VITE_DISABLE_MANAGER_TTL_CACHE=true ...
   });
@@ -672,13 +691,13 @@ describe('AnalyticsManagerService with Orchestrator', () => {
 
 ### 1. Separation of Concerns
 
-| Layer | Responsibility |
-|-------|---------------|
-| **Manager** | TTL cache management (deprecated) |
-| **Orchestrator** | Analytics workflow coordination |
-| **Runner** | Analytics computation |
-| **Profile Manager** | Profile storage |
-| **Health Calculator** | Quality scoring |
+| Layer                 | Responsibility                    |
+| --------------------- | --------------------------------- |
+| **Manager**           | TTL cache management (deprecated) |
+| **Orchestrator**      | Analytics workflow coordination   |
+| **Runner**            | Analytics computation             |
+| **Profile Manager**   | Profile storage                   |
+| **Health Calculator** | Quality scoring                   |
 
 ### 2. Improved Testability
 
@@ -688,6 +707,7 @@ describe('AnalyticsManagerService with Orchestrator', () => {
 ### 3. Reusability
 
 Orchestrator can be used in multiple contexts:
+
 - Manager (with TTL cache)
 - Hooks (with usePerformanceCache)
 - Workers (internal caching)
@@ -696,6 +716,7 @@ Orchestrator can be used in multiple contexts:
 ### 4. Flexibility
 
 Different cache strategies possible:
+
 - TTL cache (deprecated, manager)
 - Performance cache (hooks)
 - Worker cache (internal)
@@ -705,6 +726,7 @@ Different cache strategies possible:
 ### 5. Clear Migration Path
 
 Gradual deprecation strategy:
+
 1. ✅ Phase 2b: Extract orchestrator
 2. Phase 3: Migrate hooks to orchestrator
 3. Phase 4: Remove manager TTL cache
@@ -717,6 +739,7 @@ Gradual deprecation strategy:
 **Risk**: Subtle differences in orchestrator behavior vs original manager logic
 
 **Mitigation**:
+
 - Comprehensive integration tests
 - Side-by-side comparison during migration
 - Feature flag to disable and rollback
@@ -727,6 +750,7 @@ Gradual deprecation strategy:
 **Risk**: Additional layer might add overhead
 
 **Mitigation**:
+
 - Minimal abstraction (direct delegation)
 - No redundant operations
 - Same underlying runner
@@ -737,6 +761,7 @@ Gradual deprecation strategy:
 **Risk**: Developers might continue using manager API
 
 **Mitigation**:
+
 - Clear documentation and examples
 - Gradual migration path
 - Deprecation warnings for TTL cache
@@ -773,18 +798,19 @@ const results = await orchestrator.getAnalytics(student, { signal: controller.si
 
 ## Conclusion
 
-Successfully extracted student analytics orchestration into a focused, cache-agnostic module (`studentAnalytics.ts`, 567 lines). The new orchestrator:
+Successfully extracted student analytics orchestration into a focused, cache-agnostic module
+(`studentAnalytics.ts`, 567 lines). The new orchestrator:
 
-✅ Separates cache management from business logic
-✅ Uses dependency injection for testability
-✅ Maintains full backward compatibility
-✅ Provides clear migration path for deprecating manager TTL cache
-✅ Compiles without TypeScript errors
-✅ Documented with comprehensive JSDoc and integration guide
+✅ Separates cache management from business logic ✅ Uses dependency injection for testability ✅
+Maintains full backward compatibility ✅ Provides clear migration path for deprecating manager TTL
+cache ✅ Compiles without TypeScript errors ✅ Documented with comprehensive JSDoc and integration
+guide
 
-The manager will transition to a thin wrapper (~50 lines reduced) that handles deprecated TTL cache and delegates to orchestrator for all business logic.
+The manager will transition to a thin wrapper (~50 lines reduced) that handles deprecated TTL cache
+and delegates to orchestrator for all business logic.
 
 **Next Steps**:
+
 1. Update manager to instantiate and use orchestrator
 2. Add unit tests for orchestrator
 3. Update integration tests for manager
@@ -796,11 +822,11 @@ The manager will transition to a thin wrapper (~50 lines reduced) that handles d
 **Phase 2b Status**: ✅ **COMPLETE**
 
 **Files Affected**:
+
 - Created: `/src/lib/analytics/orchestration/studentAnalytics.ts` (567 lines)
 - Created: `/src/lib/analytics/orchestration/index.ts` (80 lines)
 - Created: `/src/lib/analytics/orchestration/INTEGRATION_EXAMPLE.md`
 - To Update: `/src/lib/analyticsManager.ts` (manager refactoring)
 
-**TypeScript**: ✅ All files compile
-**Backward Compatibility**: ✅ Maintained
-**Documentation**: ✅ Comprehensive
+**TypeScript**: ✅ All files compile **Backward Compatibility**: ✅ Maintained **Documentation**: ✅
+Comprehensive

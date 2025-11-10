@@ -92,7 +92,9 @@ const interpolate = (template: string, values: Record<string, unknown>): string 
 const createTranslator = (defaultNamespace: string | undefined) => {
   const translate = (key: string, options: Record<string, unknown> = {}): string => {
     const { ns, defaultValue, ...replacements } = options;
-    const namespacesToTry = [ns as string | undefined, defaultNamespace, 'common'].filter(Boolean) as string[];
+    const namespacesToTry = [ns as string | undefined, defaultNamespace, 'common'].filter(
+      Boolean,
+    ) as string[];
 
     for (const namespace of namespacesToTry) {
       const dictionary = translationsByNamespace[namespace];

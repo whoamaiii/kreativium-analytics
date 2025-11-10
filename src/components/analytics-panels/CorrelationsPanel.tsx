@@ -9,7 +9,9 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { hashOfString } from '@/lib/key';
 
 // Keep charting dependencies inside this chunk to align with manualChunks strategy
-const EChartContainer = React.lazy(() => import('@/components/charts/EChartContainer').then(m => ({ default: m.EChartContainer })));
+const EChartContainer = React.lazy(() =>
+  import('@/components/charts/EChartContainer').then((m) => ({ default: m.EChartContainer })),
+);
 import type { EChartsOption } from 'echarts';
 import { buildCorrelationHeatmapOption } from '@/components/charts/ChartKit';
 import { enhancedPatternAnalysis } from '@/lib/enhancedPatternAnalysis';
@@ -22,7 +24,9 @@ export interface CorrelationsPanelProps {
   };
 }
 
-export const CorrelationsPanel = memo(function CorrelationsPanel({ filteredData }: CorrelationsPanelProps): React.ReactElement {
+export const CorrelationsPanel = memo(function CorrelationsPanel({
+  filteredData,
+}: CorrelationsPanelProps): React.ReactElement {
   const { tAnalytics } = useTranslation();
   const environmentalCorrelations: CorrelationResult[] = [];
   const hasEnoughData = (filteredData.entries?.length ?? 0) >= 10;
@@ -41,12 +45,19 @@ export const CorrelationsPanel = memo(function CorrelationsPanel({ filteredData 
     <Card className="bg-gradient-card border-0 shadow-soft">
       <CardHeader className="flex items-start justify-between gap-3">
         <div>
-          <CardTitle data-testid="environmental-correlations-title">{String(tAnalytics('correlations.title'))}</CardTitle>
-          <p className="text-sm text-muted-foreground">{String(tAnalytics('correlations.subtitle'))}</p>
+          <CardTitle data-testid="environmental-correlations-title">
+            {String(tAnalytics('correlations.title'))}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {String(tAnalytics('correlations.subtitle'))}
+          </p>
         </div>
         <HoverCard openDelay={150} closeDelay={100}>
           <HoverCardTrigger asChild>
-            <button aria-label={String(tAnalytics('correlations.helpTrigger'))} className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs hover:bg-accent/30">
+            <button
+              aria-label={String(tAnalytics('correlations.helpTrigger'))}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs hover:bg-accent/30"
+            >
               <Info className="h-4 w-4" />
               {String(tAnalytics('correlations.helpTrigger'))}
             </button>
@@ -68,7 +79,14 @@ export const CorrelationsPanel = memo(function CorrelationsPanel({ filteredData 
         {hasEnoughData && option && (
           <>
             <div className="rounded-xl border bg-card">
-              <React.Suspense fallback={<div className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label="Loading correlations" />}> 
+              <React.Suspense
+                fallback={
+                  <div
+                    className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse"
+                    aria-label="Loading correlations"
+                  />
+                }
+              >
                 <EChartContainer option={option} height={420} />
               </React.Suspense>
             </div>
@@ -88,25 +106,48 @@ export const CorrelationsPanel = memo(function CorrelationsPanel({ filteredData 
             <p>{String(tAnalytics('correlations.fallback.title'))}</p>
             <div className="space-y-4 mt-4">
               {environmentalCorrelations.map((correlation: CorrelationResult) => (
-                <Card key={hashOfString(`${correlation.factor1}-${correlation.factor2}-${correlation.significance}`)} className="border-l-4 border-l-blue-500">
+                <Card
+                  key={hashOfString(
+                    `${correlation.factor1}-${correlation.factor2}-${correlation.significance}`,
+                  )}
+                  className="border-l-4 border-l-blue-500"
+                >
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="font-medium text-foreground flex items-center gap-2">
                           <span>{correlation.factor1}</span>
-                          <ArrowLeftRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                          <span className="sr-only">{String(tAnalytics('correlations.labels.correlatesWith', { defaultValue: 'correlates with' }))}</span>
+                          <ArrowLeftRight
+                            className="h-4 w-4 text-muted-foreground"
+                            aria-hidden="true"
+                          />
+                          <span className="sr-only">
+                            {String(
+                              tAnalytics('correlations.labels.correlatesWith', {
+                                defaultValue: 'correlates with',
+                              }),
+                            )}
+                          </span>
                           <span>{correlation.factor2}</span>
                         </h4>
-                        <p className="text-sm text-muted-foreground mt-1">{correlation.description}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {correlation.description}
+                        </p>
                       </div>
                       <div className="text-right">
-                        <Badge variant={correlation.significance === 'high' ? 'default' : 'outline'}>
-                          {correlation.significance} {String(tAnalytics('correlations.labels.significance'))}
+                        <Badge
+                          variant={correlation.significance === 'high' ? 'default' : 'outline'}
+                        >
+                          {correlation.significance}{' '}
+                          {String(tAnalytics('correlations.labels.significance'))}
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {String(tAnalytics('correlations.labels.rPrefix'))}{typeof (correlation as CorrelationResult & { correlation?: number }).correlation === 'number'
-                            ? (correlation as CorrelationResult & { correlation?: number }).correlation.toFixed(3)
+                          {String(tAnalytics('correlations.labels.rPrefix'))}
+                          {typeof (correlation as CorrelationResult & { correlation?: number })
+                            .correlation === 'number'
+                            ? (
+                                correlation as CorrelationResult & { correlation?: number }
+                              ).correlation.toFixed(3)
                             : '0.000'}
                         </p>
                       </div>
@@ -121,4 +162,3 @@ export const CorrelationsPanel = memo(function CorrelationsPanel({ filteredData 
     </Card>
   );
 });
-

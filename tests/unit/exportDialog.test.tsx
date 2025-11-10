@@ -12,7 +12,14 @@ describe('ExportDialog', () => {
   it('allows selecting options and confirms', async () => {
     const onConfirm = vi.fn();
     const user = userEvent.setup();
-    render(<ExportDialog open={true} onOpenChange={() => {}} onConfirm={onConfirm} defaultFormat="pdf" />);
+    render(
+      <ExportDialog
+        open={true}
+        onOpenChange={() => {}}
+        onConfirm={onConfirm}
+        defaultFormat="pdf"
+      />,
+    );
 
     const copy = analyticsEn['export'];
 

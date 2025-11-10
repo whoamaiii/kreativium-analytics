@@ -13,4 +13,3 @@ export interface GenerateAnalyticsCacheKeyOptions {
   // Used for future algorithm changes. Defaults to 1
   version?: number;
 }
-

@@ -42,24 +42,21 @@ export function ResizableSplitLayout({
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
   // Use storage hooks for automatic persistence
-  const [ratio, setRatio] = useStorageState<number>(
-    `${storageKey}:ratio`,
-    defaultRatio,
-    {
-      deserialize: (v) => {
-        const parsed = parseFloat(JSON.parse(v));
-        return Math.min(0.9, Math.max(0.1, parsed));
-      },
-    }
-  );
+  const [ratio, setRatio] = useStorageState<number>(`${storageKey}:ratio`, defaultRatio, {
+    deserialize: (v) => {
+      const parsed = parseFloat(JSON.parse(v));
+      return Math.min(0.9, Math.max(0.1, parsed));
+    },
+  });
 
   const [collapsedRight, setCollapsedRightInternal] = useStorageFlag(
     `${storageKey}:collapsedRight`,
-    false
+    false,
   );
 
   // Allow prop to override stored value
-  const effectiveCollapsedRight = typeof collapsedRightProp === 'boolean' ? collapsedRightProp : collapsedRight;
+  const effectiveCollapsedRight =
+    typeof collapsedRightProp === 'boolean' ? collapsedRightProp : collapsedRight;
 
   React.useEffect(() => {
     if (typeof collapsedRightProp === 'boolean' && collapsedRightProp !== collapsedRight) {
@@ -69,7 +66,10 @@ export function ResizableSplitLayout({
 
   const setCollapsed = (v: boolean) => {
     setCollapsedRightInternal(v);
-    try { onCollapsedChange?.(v); logger.info('[UI] split.collapse.change', { collapsed: v }); } catch {}
+    try {
+      onCollapsedChange?.(v);
+      logger.info('[UI] split.collapse.change', { collapsed: v });
+    } catch {}
   };
 
   const clampRatio = (r: number, containerWidth: number) => {
@@ -85,7 +85,10 @@ export function ResizableSplitLayout({
     const startX = e.clientX;
     const startRatio = ratio;
     let frame = 0;
-    try { onResizeStart?.(); logger.info('[UI] split.drag.start'); } catch {}
+    try {
+      onResizeStart?.();
+      logger.info('[UI] split.drag.start');
+    } catch {}
 
     const move = (clientX: number) => {
       const containerWidth = bounds.width;
@@ -102,7 +105,10 @@ export function ResizableSplitLayout({
       });
     };
     const onPointerUp = () => {
-      try { onResizeEnd?.(ratio); logger.info('[UI] split.drag.end', { ratio }); } catch {}
+      try {
+        onResizeEnd?.(ratio);
+        logger.info('[UI] split.drag.end', { ratio });
+      } catch {}
       // No need to persist - storage hook handles it automatically
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
@@ -114,7 +120,7 @@ export function ResizableSplitLayout({
   const onKeyDown: React.KeyboardEventHandler<HTMLDivElement> = (e) => {
     if (!containerRef.current) return;
     const containerWidth = containerRef.current.getBoundingClientRect().width;
-    const step = (e.shiftKey ? 0.08 : 0.02);
+    const step = e.shiftKey ? 0.08 : 0.02;
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
       const next = clampRatio(ratio - step, containerWidth);
@@ -165,12 +171,12 @@ export function ResizableSplitLayout({
           className="m-auto h-16 w-1.5 rounded-full bg-border group-hover:bg-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Dra for å endre størrelse"
           title="Dra for å endre størrelse • Dobbeltklikk for å nullstille • Enter for å skjule/vis"
-          onClick={(e) => { e.preventDefault(); }}
+          onClick={(e) => {
+            e.preventDefault();
+          }}
         />
       </div>
       <div className={cn('min-w-0 overflow-hidden', collapsedRight ? 'hidden' : '')}>{right}</div>
     </div>
   );
 }
-
-

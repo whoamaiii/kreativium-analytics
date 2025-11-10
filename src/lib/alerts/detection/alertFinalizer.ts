@@ -12,11 +12,7 @@
  * @module alertFinalizer
  */
 
-import {
-  AlertEvent,
-  AlertMetadata,
-  AlertStatus,
-} from '@/lib/alerts/types';
+import { AlertEvent, AlertMetadata, AlertStatus } from '@/lib/alerts/types';
 import { severityFromScore } from '@/lib/alerts/scoring';
 import { buildAlertId, truncateSeries } from '@/lib/alerts/utils';
 import { generateSparklineData } from '@/lib/chartUtils';

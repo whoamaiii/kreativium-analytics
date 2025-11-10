@@ -33,7 +33,7 @@ import { generatePDFReport } from '@/lib/export/pdf';
 
 // Generate a simple report
 const blob = await generatePDFReport(student, data, {
-  includeCharts: true
+  includeCharts: true,
 });
 
 // Download the report
@@ -54,8 +54,8 @@ const blob = await generatePDFReport(student, data, {
   includeCharts: true,
   dateRange: {
     start: new Date('2024-01-01'),
-    end: new Date('2024-12-31')
-  }
+    end: new Date('2024-12-31'),
+  },
 });
 ```
 
@@ -69,7 +69,7 @@ const blob = await generatePDFReport(student, data, {
   onProgress: (stage, percent) => {
     console.log(`${stage}: ${percent}%`);
     updateProgressBar(percent);
-  }
+  },
 });
 ```
 
@@ -79,7 +79,7 @@ const blob = await generatePDFReport(student, data, {
 import { generatePDFReportWithMetadata } from '@/lib/export/pdf';
 
 const result = await generatePDFReportWithMetadata(student, data, {
-  includeCharts: true
+  includeCharts: true,
 });
 
 console.log('Generated report for:', result.metadata.student);
@@ -111,11 +111,7 @@ const blob = await generatePDFReport(student, data, options);
 ### Using Individual Builder Functions
 
 ```typescript
-import {
-  buildReportContent,
-  generateHTMLReport,
-  analyzeEmotionsForReport
-} from '@/lib/export/pdf';
+import { buildReportContent, generateHTMLReport, analyzeEmotionsForReport } from '@/lib/export/pdf';
 
 // Build report content manually
 const content = buildReportContent(student, data, options);
@@ -135,7 +131,7 @@ The ExportSystem class has been updated to delegate to this module:
 
 ```typescript
 // In exportSystem.ts
-import { generatePDFReport as generatePDF } from "./export/pdf";
+import { generatePDFReport as generatePDF } from './export/pdf';
 
 class ExportSystem {
   async generatePDFReport(
@@ -146,12 +142,12 @@ class ExportSystem {
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
     },
-    options: ExportOptions
+    options: ExportOptions,
   ): Promise<Blob> {
     // Delegate to the focused PDF module
     return generatePDF(student, data, {
       includeCharts: options.includeCharts,
-      dateRange: options.dateRange
+      dateRange: options.dateRange,
     });
   }
 }
@@ -224,7 +220,7 @@ import type {
   ReportContent,
   ReportDataCollection,
   PDFReportOptions,
-  ProgressCallback
+  ProgressCallback,
 } from '@/lib/export/pdf';
 
 // Full autocomplete and type checking
@@ -232,8 +228,8 @@ const options: PDFReportOptions = {
   includeCharts: true,
   dateRange: {
     start: new Date(),
-    end: new Date()
-  }
+    end: new Date(),
+  },
 };
 
 const onProgress: ProgressCallback = (stage, percent) => {
@@ -259,7 +255,7 @@ describe('analyzeEmotionsForReport', () => {
     const emotions = [
       { emotion: 'happy', intensity: 8 },
       { emotion: 'calm', intensity: 6 },
-      { emotion: 'happy', intensity: 9 }
+      { emotion: 'happy', intensity: 9 },
     ];
 
     const result = analyzeEmotionsForReport(emotions);
@@ -282,6 +278,7 @@ No other external dependencies required.
 If you were using ExportSystem directly:
 
 **Before:**
+
 ```typescript
 import { exportSystem } from '@/lib/exportSystem';
 
@@ -289,6 +286,7 @@ const blob = await exportSystem.generatePDFReport(student, data, options);
 ```
 
 **After (direct usage):**
+
 ```typescript
 import { generatePDFReport } from '@/lib/export/pdf';
 
@@ -296,6 +294,7 @@ const blob = await generatePDFReport(student, data, options);
 ```
 
 **Or (continue using ExportSystem):**
+
 ```typescript
 import { exportSystem } from '@/lib/exportSystem';
 

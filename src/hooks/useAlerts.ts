@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AlertEvent, AlertSettings, AlertStatus, AlertWithGovernance } from '@/lib/alerts/types';
+import type {
+  AlertEvent,
+  AlertSettings,
+  AlertStatus,
+  AlertWithGovernance,
+} from '@/lib/alerts/types';
 import { AlertPolicies } from '@/lib/alerts/policies';
 import { BaselineService } from '@/lib/alerts/baseline';
 import { AlertTelemetryService } from '@/lib/alerts/telemetry';
@@ -51,13 +56,16 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
   const bridgeRef = useRef<AlertSystemBridge | null>(null);
   const stopPollingRef = useRef<null | (() => void)>(null);
 
-  const applyGovernance = useCallback((list: AlertEvent[]): AlertWithGovernance[] => {
-    const deduped = policiesRef.current.deduplicateAlerts(list);
-    const withQuiet = policiesRef.current.applyQuietHours(deduped, settings);
-    // Cap enforcement requires counts; approximate with current list order
-    const withCaps = policiesRef.current.enforceCapLimits(withQuiet, settings);
-    return withCaps.map((a) => ({ ...a, governance: { ...a.governance } }));
-  }, [settings]);
+  const applyGovernance = useCallback(
+    (list: AlertEvent[]): AlertWithGovernance[] => {
+      const deduped = policiesRef.current.deduplicateAlerts(list);
+      const withQuiet = policiesRef.current.applyQuietHours(deduped, settings);
+      // Cap enforcement requires counts; approximate with current list order
+      const withCaps = policiesRef.current.enforceCapLimits(withQuiet, settings);
+      return withCaps.map((a) => ({ ...a, governance: { ...a.governance } }));
+    },
+    [settings],
+  );
 
   const load = useCallback(() => {
     setLoading(true);
@@ -95,7 +103,11 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
             // Persist migrated alerts to new storage format
             writeStorage(alertsKey(studentId), migrated);
             if (typeof window !== 'undefined') {
-              window.dispatchEvent(new CustomEvent('alerts:migration', { detail: { studentId, migrated: migrated.length } }));
+              window.dispatchEvent(
+                new CustomEvent('alerts:migration', {
+                  detail: { studentId, migrated: migrated.length },
+                }),
+              );
               window.dispatchEvent(new CustomEvent('alerts:updated', { detail: { studentId } }));
             }
             raw = migrated;
@@ -106,7 +118,11 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
       }
       const now = Date.now();
       const filteredTime = filters?.timeWindowHours
-        ? raw.filter((a) => now - new Date(a.createdAt).getTime() <= (filters.timeWindowHours as number) * 3600_000)
+        ? raw.filter(
+            (a) =>
+              now - new Date(a.createdAt).getTime() <=
+              (filters.timeWindowHours as number) * 3600_000,
+          )
         : raw;
       const filteredSeverity = filters?.severity?.length
         ? filteredTime.filter((a) => (filters.severity as string[]).includes(a.severity))
@@ -139,7 +155,9 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
     try {
       const res = bridge.migrateStorageFormat(aggregate ? undefined : studentId);
       if (res.ok && res.added > 0 && typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('alerts:migration', { detail: { studentId, migrated: res.added } }));
+        window.dispatchEvent(
+          new CustomEvent('alerts:migration', { detail: { studentId, migrated: res.added } }),
+        );
         window.dispatchEvent(new CustomEvent('alerts:updated', { detail: { studentId } }));
       }
     } catch {
@@ -160,7 +178,11 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
     }
 
     return () => {
-      try { stopPollingRef.current?.(); } catch { /* noop */ }
+      try {
+        stopPollingRef.current?.();
+      } catch {
+        /* noop */
+      }
       stopPollingRef.current = null;
     };
   }, [studentId, aggregate]);
@@ -179,124 +201,177 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
     };
   }, [studentId, aggregate, load]);
 
-  const persist = useCallback((next: AlertEvent[]) => {
-    if (!aggregate) {
-      writeStorage(alertsKey(studentId), next);
-    }
-  }, [studentId, aggregate]);
-
-  const acknowledge = useCallback((id: string) => {
-    if (!aggregate) {
-      setAlerts(() => {
-        const raw = readStorage<AlertEvent[]>(alertsKey(studentId)) ?? [];
-        const nextRaw = raw.map((a) => (a.id === id ? { ...a, status: 'acknowledged' as AlertStatus } : a));
-        persist(nextRaw);
-        telemetryRef.current.logAlertAcknowledged(id);
-        const governed = applyGovernance(nextRaw);
-        return governed;
-      });
-      return;
-    }
-    // Aggregate mode: update in whichever student list contains the alert
-    try {
-      if (typeof window !== 'undefined') {
-        const keys = Object.keys(localStorage).filter((k) => k.startsWith('alerts:list:'));
-        for (const k of keys) {
-          const raw = readStorage<AlertEvent[]>(k) ?? [];
-          if (raw.some((a) => a.id === id)) {
-            const nextRaw = raw.map((a) => (a.id === id ? { ...a, status: 'acknowledged' as AlertStatus } : a));
-            writeStorage(k, nextRaw);
-            telemetryRef.current.logAlertAcknowledged(id);
-            break;
-          }
-        }
-        load();
+  const persist = useCallback(
+    (next: AlertEvent[]) => {
+      if (!aggregate) {
+        writeStorage(alertsKey(studentId), next);
       }
-    } catch {
-      // soft-fail
-    }
-  }, [studentId, aggregate, persist, applyGovernance, load]);
+    },
+    [studentId, aggregate],
+  );
 
-  const snooze = useCallback((id: string, hours = settings?.snoozePreferences?.defaultHours ?? 24) => {
-    if (!aggregate) {
-      setAlerts(() => {
-        const key = alertsKey(studentId);
-        const raw = readStorage<AlertEvent[]>(key) ?? [];
-        const alert = raw.find((a) => a.id === id);
-        if (alert) {
-          const dedupeKey = policiesRef.current.calculateDedupeKey(alert);
-          policiesRef.current.snooze(studentId, dedupeKey, hours);
+  const acknowledge = useCallback(
+    (id: string) => {
+      if (!aggregate) {
+        setAlerts(() => {
+          const raw = readStorage<AlertEvent[]>(alertsKey(studentId)) ?? [];
+          const nextRaw = raw.map((a) =>
+            a.id === id ? { ...a, status: 'acknowledged' as AlertStatus } : a,
+          );
+          persist(nextRaw);
+          telemetryRef.current.logAlertAcknowledged(id);
+          const governed = applyGovernance(nextRaw);
+          return governed;
+        });
+        return;
+      }
+      // Aggregate mode: update in whichever student list contains the alert
+      try {
+        if (typeof window !== 'undefined') {
+          const keys = Object.keys(localStorage).filter((k) => k.startsWith('alerts:list:'));
+          for (const k of keys) {
+            const raw = readStorage<AlertEvent[]>(k) ?? [];
+            if (raw.some((a) => a.id === id)) {
+              const nextRaw = raw.map((a) =>
+                a.id === id ? { ...a, status: 'acknowledged' as AlertStatus } : a,
+              );
+              writeStorage(k, nextRaw);
+              telemetryRef.current.logAlertAcknowledged(id);
+              break;
+            }
+          }
+          load();
         }
-        // Persist status update and snooze metadata
-        const until = new Date(Date.now() + hours * 3600_000).toISOString();
-        const nextRaw = raw.map((a) => (a.id === id ? { ...a, status: 'snoozed' as AlertStatus, metadata: { ...(a.metadata || {}), snoozeUntil: until } } : a));
-        writeStorage(key, nextRaw);
-        const governed = applyGovernance(nextRaw);
-        return governed;
-      });
-      return;
-    }
-    try {
-      if (typeof window !== 'undefined') {
-        const keys = Object.keys(localStorage).filter((k) => k.startsWith('alerts:list:'));
-        for (const k of keys) {
-          const raw = readStorage<AlertEvent[]>(k) ?? [];
-          if (raw.some((a) => a.id === id)) {
-            const alert = raw.find((a) => a.id === id)!;
+      } catch {
+        // soft-fail
+      }
+    },
+    [studentId, aggregate, persist, applyGovernance, load],
+  );
+
+  const snooze = useCallback(
+    (id: string, hours = settings?.snoozePreferences?.defaultHours ?? 24) => {
+      if (!aggregate) {
+        setAlerts(() => {
+          const key = alertsKey(studentId);
+          const raw = readStorage<AlertEvent[]>(key) ?? [];
+          const alert = raw.find((a) => a.id === id);
+          if (alert) {
             const dedupeKey = policiesRef.current.calculateDedupeKey(alert);
-            policiesRef.current.snooze(alert.studentId, dedupeKey, hours);
-            const until = new Date(Date.now() + hours * 3600_000).toISOString();
-            const nextRaw = raw.map((a) => (a.id === id ? { ...a, status: 'snoozed' as AlertStatus, metadata: { ...(a.metadata || {}), snoozeUntil: until } } : a));
-            writeStorage(k, nextRaw);
-            break;
+            policiesRef.current.snooze(studentId, dedupeKey, hours);
           }
-        }
-        load();
+          // Persist status update and snooze metadata
+          const until = new Date(Date.now() + hours * 3600_000).toISOString();
+          const nextRaw = raw.map((a) =>
+            a.id === id
+              ? {
+                  ...a,
+                  status: 'snoozed' as AlertStatus,
+                  metadata: { ...(a.metadata || {}), snoozeUntil: until },
+                }
+              : a,
+          );
+          writeStorage(key, nextRaw);
+          const governed = applyGovernance(nextRaw);
+          return governed;
+        });
+        return;
       }
-    } catch {
-      // soft-fail
-    }
-  }, [studentId, aggregate, applyGovernance, settings?.snoozePreferences?.defaultHours, load]);
-
-  const resolve = useCallback((id: string, notes?: string, actionId?: string) => {
-    if (!aggregate) {
-      setAlerts(() => {
-        const raw = readStorage<AlertEvent[]>(alertsKey(studentId)) ?? [];
-        const nextRaw = raw.map((a) => (a.id === id ? { ...a, status: 'resolved' as AlertStatus, metadata: { ...(a.metadata || {}), resolutionNotes: notes } } : a));
-        persist(nextRaw);
-        telemetryRef.current.logAlertResolved(id, { notes, actionId });
-        const governed = applyGovernance(nextRaw);
-        return governed;
-      });
-      return;
-    }
-    try {
-      if (typeof window !== 'undefined') {
-        const keys = Object.keys(localStorage).filter((k) => k.startsWith('alerts:list:'));
-        for (const k of keys) {
-          const raw = readStorage<AlertEvent[]>(k) ?? [];
-          if (raw.some((a) => a.id === id)) {
-            const nextRaw = raw.map((a) => (a.id === id ? { ...a, status: 'resolved' as AlertStatus, metadata: { ...(a.metadata || {}), resolutionNotes: notes } } : a));
-            writeStorage(k, nextRaw);
-            telemetryRef.current.logAlertResolved(id, { notes, actionId });
-            break;
+      try {
+        if (typeof window !== 'undefined') {
+          const keys = Object.keys(localStorage).filter((k) => k.startsWith('alerts:list:'));
+          for (const k of keys) {
+            const raw = readStorage<AlertEvent[]>(k) ?? [];
+            if (raw.some((a) => a.id === id)) {
+              const alert = raw.find((a) => a.id === id)!;
+              const dedupeKey = policiesRef.current.calculateDedupeKey(alert);
+              policiesRef.current.snooze(alert.studentId, dedupeKey, hours);
+              const until = new Date(Date.now() + hours * 3600_000).toISOString();
+              const nextRaw = raw.map((a) =>
+                a.id === id
+                  ? {
+                      ...a,
+                      status: 'snoozed' as AlertStatus,
+                      metadata: { ...(a.metadata || {}), snoozeUntil: until },
+                    }
+                  : a,
+              );
+              writeStorage(k, nextRaw);
+              break;
+            }
           }
+          load();
         }
-        load();
+      } catch {
+        // soft-fail
       }
-    } catch {
-      // soft-fail
-    }
-  }, [studentId, aggregate, persist, applyGovernance, load]);
+    },
+    [studentId, aggregate, applyGovernance, settings?.snoozePreferences?.defaultHours, load],
+  );
 
-  const feedback = useCallback((id: string, data: { relevant?: boolean; comment?: string; rating?: number }) => {
-    telemetryRef.current.logFeedback(id, data);
-  }, []);
+  const resolve = useCallback(
+    (id: string, notes?: string, actionId?: string) => {
+      if (!aggregate) {
+        setAlerts(() => {
+          const raw = readStorage<AlertEvent[]>(alertsKey(studentId)) ?? [];
+          const nextRaw = raw.map((a) =>
+            a.id === id
+              ? {
+                  ...a,
+                  status: 'resolved' as AlertStatus,
+                  metadata: { ...(a.metadata || {}), resolutionNotes: notes },
+                }
+              : a,
+          );
+          persist(nextRaw);
+          telemetryRef.current.logAlertResolved(id, { notes, actionId });
+          const governed = applyGovernance(nextRaw);
+          return governed;
+        });
+        return;
+      }
+      try {
+        if (typeof window !== 'undefined') {
+          const keys = Object.keys(localStorage).filter((k) => k.startsWith('alerts:list:'));
+          for (const k of keys) {
+            const raw = readStorage<AlertEvent[]>(k) ?? [];
+            if (raw.some((a) => a.id === id)) {
+              const nextRaw = raw.map((a) =>
+                a.id === id
+                  ? {
+                      ...a,
+                      status: 'resolved' as AlertStatus,
+                      metadata: { ...(a.metadata || {}), resolutionNotes: notes },
+                    }
+                  : a,
+              );
+              writeStorage(k, nextRaw);
+              telemetryRef.current.logAlertResolved(id, { notes, actionId });
+              break;
+            }
+          }
+          load();
+        }
+      } catch {
+        // soft-fail
+      }
+    },
+    [studentId, aggregate, persist, applyGovernance, load],
+  );
+
+  const feedback = useCallback(
+    (id: string, data: { relevant?: boolean; comment?: string; rating?: number }) => {
+      telemetryRef.current.logFeedback(id, data);
+    },
+    [],
+  );
 
   const refresh = useCallback(() => load(), [load]);
 
   const filteredSorted = useMemo(() => {
-    return [...alerts].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return [...alerts].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   }, [alerts]);
 
   return {

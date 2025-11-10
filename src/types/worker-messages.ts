@@ -11,7 +11,12 @@
  * - Worker → Main Thread: WorkerResponseMessage (progress, partial, complete, error, alerts, cache status)
  */
 
-import type { AnalyticsData, AnalyticsResults, AnalyticsResultsPartial, AnalyticsChartKey } from './analytics';
+import type {
+  AnalyticsData,
+  AnalyticsResults,
+  AnalyticsResultsPartial,
+  AnalyticsChartKey,
+} from './analytics';
 import type { AlertEvent } from '@/lib/alerts/types';
 import type { AnalyticsInputs, AnalyticsRuntimeConfig } from './insights';
 
@@ -236,7 +241,7 @@ export function isInsightsComputeRequest(msg: WorkerRequestMessage): msg is Insi
  * Type guard: Check if message is any cache control request
  */
 export function isCacheControlRequest(
-  msg: WorkerRequestMessage
+  msg: WorkerRequestMessage,
 ): msg is CacheClearAllRequest | CacheClearStudentRequest | CacheClearPatternsRequest {
   return 'type' in msg && typeof msg.type === 'string' && msg.type.startsWith('CACHE/');
 }
@@ -251,7 +256,9 @@ export function isCacheClearAllRequest(msg: WorkerRequestMessage): msg is CacheC
 /**
  * Type guard: Check if message is CacheClearStudentRequest
  */
-export function isCacheClearStudentRequest(msg: WorkerRequestMessage): msg is CacheClearStudentRequest {
+export function isCacheClearStudentRequest(
+  msg: WorkerRequestMessage,
+): msg is CacheClearStudentRequest {
   return (
     'type' in msg &&
     msg.type === 'CACHE/CLEAR_STUDENT' &&
@@ -263,7 +270,9 @@ export function isCacheClearStudentRequest(msg: WorkerRequestMessage): msg is Ca
 /**
  * Type guard: Check if message is CacheClearPatternsRequest
  */
-export function isCacheClearPatternsRequest(msg: WorkerRequestMessage): msg is CacheClearPatternsRequest {
+export function isCacheClearPatternsRequest(
+  msg: WorkerRequestMessage,
+): msg is CacheClearPatternsRequest {
   return 'type' in msg && msg.type === 'CACHE/CLEAR_PATTERNS';
 }
 
@@ -277,14 +286,18 @@ export function isGameEventRequest(msg: WorkerRequestMessage): msg is GameEventR
 /**
  * Type guard: Check if message is GameSessionSummaryRequest
  */
-export function isGameSessionSummaryRequest(msg: WorkerRequestMessage): msg is GameSessionSummaryRequest {
+export function isGameSessionSummaryRequest(
+  msg: WorkerRequestMessage,
+): msg is GameSessionSummaryRequest {
   return 'type' in msg && msg.type === 'game:session_summary' && 'payload' in msg;
 }
 
 /**
  * Type guard: Check if message is LegacyAnalyticsDataRequest
  */
-export function isLegacyAnalyticsDataRequest(msg: WorkerRequestMessage): msg is LegacyAnalyticsDataRequest {
+export function isLegacyAnalyticsDataRequest(
+  msg: WorkerRequestMessage,
+): msg is LegacyAnalyticsDataRequest {
   return (
     !('type' in msg) &&
     'entries' in msg &&
@@ -353,7 +366,9 @@ export function isAlertsResponse(msg: WorkerResponseMessage): msg is AlertsRespo
 /**
  * Type guard: Check if response is CacheClearDoneResponse
  */
-export function isCacheClearDoneResponse(msg: WorkerResponseMessage): msg is CacheClearDoneResponse {
+export function isCacheClearDoneResponse(
+  msg: WorkerResponseMessage,
+): msg is CacheClearDoneResponse {
   return msg.type === 'CACHE/CLEAR_DONE';
 }
 

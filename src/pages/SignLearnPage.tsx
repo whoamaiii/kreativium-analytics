@@ -1,13 +1,13 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { useTranslation } from "@/hooks/useTranslation";
-import { SIGN_ITEMS } from "@/lib/tegn/signData";
-import { Button } from "@/components/ui/button";
-import { useCallback, useMemo, useState } from "react";
-import { TegnXPBar } from "@/components/tegn/TegnXPBar";
-import { useTegnXP } from "@/contexts/TegnXPContext";
-import { Camera, Hand, Volume2 } from "lucide-react";
-import { WebcamPreview } from "@/components/tegn/WebcamPreview";
-import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import { Card, CardContent } from '@/components/ui/card';
+import { useTranslation } from '@/hooks/useTranslation';
+import { SIGN_ITEMS } from '@/lib/tegn/signData';
+import { Button } from '@/components/ui/button';
+import { useCallback, useMemo, useState } from 'react';
+import { TegnXPBar } from '@/components/tegn/TegnXPBar';
+import { useTegnXP } from '@/contexts/TegnXPContext';
+import { Camera, Hand, Volume2 } from 'lucide-react';
+import { WebcamPreview } from '@/components/tegn/WebcamPreview';
+import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 
 const SignLearnPage = () => {
   const { tCommon, currentLanguage } = useTranslation();
@@ -18,15 +18,21 @@ const SignLearnPage = () => {
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
 
-  const cameraSupported = typeof window !== 'undefined' && Boolean(window.navigator?.mediaDevices?.getUserMedia);
-  const { speak, supported: speechSupported, speaking, cancel } = useSpeechSynthesis({ preferredLang: currentLanguage });
+  const cameraSupported =
+    typeof window !== 'undefined' && Boolean(window.navigator?.mediaDevices?.getUserMedia);
+  const {
+    speak,
+    supported: speechSupported,
+    speaking,
+    cancel,
+  } = useSpeechSynthesis({ preferredLang: currentLanguage });
 
   const current = sample[index % sample.length];
 
   const handleNext = () => {
     cancel();
     addXP(5);
-    setIndex(prev => prev + 1);
+    setIndex((prev) => prev + 1);
     setShowAnswer(false);
     setCameraError(null);
   };
@@ -34,20 +40,23 @@ const SignLearnPage = () => {
   const toggleCamera = () => {
     if (!cameraSupported) return;
     setCameraError(null);
-    setCameraEnabled(prev => !prev);
+    setCameraEnabled((prev) => !prev);
   };
 
-  const handleCameraError = useCallback((error: Error) => {
-    const domError = error as DOMException;
-    let message = String(tCommon('tegn.cameraError'));
-    if (domError?.name === 'NotAllowedError') {
-      message = String(tCommon('tegn.cameraPermissionDenied'));
-    } else if (domError?.name === 'NotFoundError' || domError?.name === 'OverconstrainedError') {
-      message = String(tCommon('tegn.cameraNotFound'));
-    }
-    setCameraError(message);
-    setCameraEnabled(false);
-  }, [tCommon]);
+  const handleCameraError = useCallback(
+    (error: Error) => {
+      const domError = error as DOMException;
+      let message = String(tCommon('tegn.cameraError'));
+      if (domError?.name === 'NotAllowedError') {
+        message = String(tCommon('tegn.cameraPermissionDenied'));
+      } else if (domError?.name === 'NotFoundError' || domError?.name === 'OverconstrainedError') {
+        message = String(tCommon('tegn.cameraNotFound'));
+      }
+      setCameraError(message);
+      setCameraEnabled(false);
+    },
+    [tCommon],
+  );
 
   const toggleAnswer = () => {
     if (!showAnswer && speechSupported) {
@@ -56,7 +65,7 @@ const SignLearnPage = () => {
     if (showAnswer && speaking) {
       cancel();
     }
-    setShowAnswer(prev => !prev);
+    setShowAnswer((prev) => !prev);
   };
 
   const handleSpeak = () => {
@@ -77,15 +86,16 @@ const SignLearnPage = () => {
 
       <Card className="glass-card border border-primary/10">
         <CardContent className="p-6 space-y-4">
-          <div className="text-sm text-muted-foreground">{index + 1}/{sample.length}</div>
+          <div className="text-sm text-muted-foreground">
+            {index + 1}/{sample.length}
+          </div>
           <h3 className="text-2xl font-semibold text-foreground flex items-center gap-2">
-            <Hand className="h-5 w-5" /> Vis dette tegnet: <span className="text-primary">{current.word}</span>
+            <Hand className="h-5 w-5" /> Vis dette tegnet:{' '}
+            <span className="text-primary">{current.word}</span>
           </h3>
           <div className="flex flex-col items-center gap-4">
             <img src={current.imageUrl} alt={current.alt} className="w-64 h-64 object-contain" />
-            {showAnswer && (
-              <div className="text-lg text-foreground">{current.word}</div>
-            )}
+            {showAnswer && <div className="text-lg text-foreground">{current.word}</div>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -106,7 +116,11 @@ const SignLearnPage = () => {
             >
               {String(tCommon(showAnswer ? 'tegn.hideAnswer' : 'tegn.showAnswer'))}
             </Button>
-            <Button type="button" onClick={handleNext} aria-label={String(tCommon('tegn.nextPrompt'))}>
+            <Button
+              type="button"
+              onClick={handleNext}
+              aria-label={String(tCommon('tegn.nextPrompt'))}
+            >
               👍 {String(tCommon('tegn.didIt'))}
             </Button>
             {!speechSupported && (
@@ -126,7 +140,9 @@ const SignLearnPage = () => {
                 variant="secondary"
                 onClick={toggleCamera}
                 disabled={!cameraSupported}
-                aria-label={String(tCommon(cameraEnabled ? 'tegn.cameraDisable' : 'tegn.cameraEnable'))}
+                aria-label={String(
+                  tCommon(cameraEnabled ? 'tegn.cameraDisable' : 'tegn.cameraEnable'),
+                )}
               >
                 {String(tCommon(cameraEnabled ? 'tegn.cameraDisable' : 'tegn.cameraEnable'))}
               </Button>
@@ -142,9 +158,16 @@ const SignLearnPage = () => {
               </p>
             )}
             <div className="relative max-w-md">
-              <WebcamPreview active={cameraEnabled} className="max-w-md" onError={handleCameraError} />
+              <WebcamPreview
+                active={cameraEnabled}
+                className="max-w-md"
+                onError={handleCameraError}
+              />
               {!cameraEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/80 text-xs text-muted-foreground pointer-events-none" aria-hidden="true">
+                <div
+                  className="absolute inset-0 flex items-center justify-center rounded-xl border border-dashed border-border/70 bg-muted/80 text-xs text-muted-foreground pointer-events-none"
+                  aria-hidden="true"
+                >
                   {String(tCommon('tegn.cameraInactiveOverlay'))}
                 </div>
               )}

@@ -12,15 +12,29 @@ interface StatsCardProps {
   animationDelay?: string;
 }
 
-export const StatsCard = ({ title, value, trendPercent, trendLabel, icon, className, animationDelay }: StatsCardProps) => {
+export const StatsCard = ({
+  title,
+  value,
+  trendPercent,
+  trendLabel,
+  icon,
+  className,
+  animationDelay,
+}: StatsCardProps) => {
   const isUp = (trendPercent ?? 0) >= 0;
   return (
-    <Card className={cn('motion-safe:animate-fade-in', className)} data-animation-delay={animationDelay}>
+    <Card
+      className={cn('motion-safe:animate-fade-in', className)}
+      data-animation-delay={animationDelay}
+    >
       <div className="flex justify-between items-start">
         <h3 className="text-lg font-medium text-muted-foreground">{title}</h3>
         <div className="icon-bg p-2 rounded-lg">{icon}</div>
       </div>
-      <p className="text-5xl font-bold mt-6 text-foreground motion-safe:animate-number-pop" aria-live="polite">
+      <p
+        className="text-5xl font-bold mt-6 text-foreground motion-safe:animate-number-pop"
+        aria-live="polite"
+      >
         {value}
       </p>
       {typeof trendPercent === 'number' && trendLabel && (
@@ -39,6 +53,3 @@ export const StatsCard = ({ title, value, trendPercent, trendLabel, icon, classN
     </Card>
   );
 };
-
-
-

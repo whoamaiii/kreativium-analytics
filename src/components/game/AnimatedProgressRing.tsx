@@ -39,11 +39,28 @@ export function AnimatedProgressRing({
   const dashArray = useTransform(dashSpring, (d) => `${d} ${Math.max(0, circumference - d)}`);
 
   // Animate color across the progress range using an inline transition; we keep it simple
-  const strokeColor = useMemo(() => (clamped >= 0.85 ? progressColorTo : progressColorFrom), [clamped, progressColorFrom, progressColorTo]);
+  const strokeColor = useMemo(
+    () => (clamped >= 0.85 ? progressColorTo : progressColorFrom),
+    [clamped, progressColorFrom, progressColorTo],
+  );
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`progress ${(clamped * 100).toFixed(0)}%`} className={className}>
-      <circle cx={size / 2} cy={size / 2} r={radius} stroke={trackColor} strokeWidth={stroke} fill="none" />
+    <svg
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
+      role="img"
+      aria-label={`progress ${(clamped * 100).toFixed(0)}%`}
+      className={className}
+    >
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        stroke={trackColor}
+        strokeWidth={stroke}
+        fill="none"
+      />
       <motion.circle
         cx={size / 2}
         cy={size / 2}
@@ -83,7 +100,3 @@ function buildCheckPath(size: number): string {
 }
 
 export default AnimatedProgressRing;
-
-
-
-

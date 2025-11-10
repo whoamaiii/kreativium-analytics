@@ -25,10 +25,7 @@ interface ImportMeta {
 
 const env = (import.meta as ImportMeta).env;
 
-export const POC_MODE: boolean = (
-  env.MODE === 'poc' ||
-  env.VITE_POC_MODE === 'true'
-);
+export const POC_MODE: boolean = env.MODE === 'poc' || env.VITE_POC_MODE === 'true';
 
 export const IS_PROD: boolean = env.PROD === true;
 
@@ -36,7 +33,7 @@ export const IS_PROD: boolean = env.PROD === true;
  * Unified flag to enable development/POC visualizations in non-production builds
  * without requiring VITE_POC_MODE. True if not production or POC mode is enabled.
  */
-export const DEV_VIZ_ENABLED: boolean = (!IS_PROD || POC_MODE);
+export const DEV_VIZ_ENABLED: boolean = !IS_PROD || POC_MODE;
 
 /**
  * Debug flag to force-disable the analytics worker and use the fallback path.
@@ -161,7 +158,8 @@ export const LOG_LEVEL_NAME: 'debug' | 'info' | 'warn' | 'error' | 'none' | null
   try {
     const raw = (env.VITE_LOG_LEVEL ?? '').toString().toLowerCase().trim();
     if (!raw) return null;
-    if (raw === 'debug' || raw === 'info' || raw === 'warn' || raw === 'error' || raw === 'none') return raw;
+    if (raw === 'debug' || raw === 'info' || raw === 'warn' || raw === 'error' || raw === 'none')
+      return raw;
     return null;
   } catch {
     return null;

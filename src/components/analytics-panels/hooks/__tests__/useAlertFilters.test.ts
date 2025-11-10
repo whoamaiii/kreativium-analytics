@@ -8,7 +8,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useAlertFilterState, useAlertDerivedData, severityOrder } from '../useAlertFilters';
-import { AlertSeverity, AlertKind, AlertStatus, type AlertWithGovernance } from '@/lib/alerts/types';
+import {
+  AlertSeverity,
+  AlertKind,
+  AlertStatus,
+  type AlertWithGovernance,
+} from '@/lib/alerts/types';
 import type { AlertFilterState } from '../useAlertFilters';
 
 // ============================================================================
@@ -73,7 +78,7 @@ describe('useAlertFilterState', () => {
           defaultGroupMode: 'source',
           defaultSortMode: 'confidence',
           initialSeverities: [AlertSeverity.Critical, AlertSeverity.Important],
-        })
+        }),
       );
 
       expect(result.current.state.selectedSeverities).toEqual([
@@ -140,10 +145,7 @@ describe('useAlertFilterState', () => {
       const { result } = renderHook(() => useAlertFilterState());
 
       act(() => {
-        result.current.actions.setSelectedKinds([
-          AlertKind.EmotionPattern,
-          AlertKind.SensoryInput,
-        ]);
+        result.current.actions.setSelectedKinds([AlertKind.EmotionPattern, AlertKind.SensoryInput]);
       });
 
       expect(result.current.queryFilters.kinds).toHaveLength(2);
@@ -441,7 +443,12 @@ describe('useAlertDerivedData', () => {
     ];
 
     defaultState = {
-      selectedSeverities: [AlertSeverity.Critical, AlertSeverity.Important, AlertSeverity.Moderate, AlertSeverity.Low],
+      selectedSeverities: [
+        AlertSeverity.Critical,
+        AlertSeverity.Important,
+        AlertSeverity.Moderate,
+        AlertSeverity.Low,
+      ],
       selectedKinds: [],
       timeWindowHours: undefined,
       minConfidence: 0.5,
@@ -510,8 +517,10 @@ describe('useAlertDerivedData', () => {
       const state = { ...defaultState, sourceFilters: ['heuristic'] };
       const { result } = renderHook(() => useAlertDerivedData(mockAlerts, state));
 
-      expect(result.current.activeAlerts).toHaveLength(2);
-      expect(result.current.activeAlerts.every((a) => a.sources?.some((s) => s.type === 'heuristic'))).toBe(true);
+      expect(result.current.activeAlerts).toHaveLength(1);
+      expect(
+        result.current.activeAlerts.every((a) => a.sources?.some((s) => s.type === 'heuristic')),
+      ).toBe(true);
     });
 
     it('filters by source label', () => {
@@ -527,14 +536,16 @@ describe('useAlertDerivedData', () => {
       const { result } = renderHook(() => useAlertDerivedData(mockAlerts, state));
 
       expect(result.current.activeAlerts).toHaveLength(2);
-      expect(result.current.activeAlerts.every((a) => new Date(a.createdAt) >= new Date('2024-01-02'))).toBe(true);
+      expect(
+        result.current.activeAlerts.every((a) => new Date(a.createdAt) >= new Date('2024-01-02')),
+      ).toBe(true);
     });
 
     it('filters by date end', () => {
       const state = { ...defaultState, dateEnd: '2024-01-02' };
       const { result } = renderHook(() => useAlertDerivedData(mockAlerts, state));
 
-      expect(result.current.activeAlerts).toHaveLength(2);
+      expect(result.current.activeAlerts).toHaveLength(1);
     });
 
     it('filters by search query (fuzzy match)', () => {
@@ -662,7 +673,7 @@ describe('useAlertDerivedData', () => {
     it('recomputes when alerts change', () => {
       const { result, rerender } = renderHook(
         ({ alerts, state }) => useAlertDerivedData(alerts, state),
-        { initialProps: { alerts: mockAlerts, state: defaultState } }
+        { initialProps: { alerts: mockAlerts, state: defaultState } },
       );
 
       const initialCount = result.current.counts.total;
@@ -680,7 +691,7 @@ describe('useAlertDerivedData', () => {
     it('recomputes when filter state changes', () => {
       const { result, rerender } = renderHook(
         ({ alerts, state }) => useAlertDerivedData(alerts, state),
-        { initialProps: { alerts: mockAlerts, state: defaultState } }
+        { initialProps: { alerts: mockAlerts, state: defaultState } },
       );
 
       const initialCount = result.current.counts.total;

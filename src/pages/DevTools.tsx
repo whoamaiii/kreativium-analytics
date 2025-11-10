@@ -1,16 +1,30 @@
 import React, { lazy, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { TestingToolsSection } from '@/components/TestingToolsSection';
 import { IS_PROD, POC_MODE } from '@/lib/env';
 import { Database, Wrench, Stethoscope } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
 
-const StorageManager = lazy(() => import('@/components/StorageManager').then(m => ({ default: m.StorageManager })));
-const ModelDiagnosticsPanel = lazy(() => import('@/components/dev/ModelDiagnosticsPanel').then(m => ({ default: m.ModelDiagnosticsPanel })));
-const EnvDebug = lazy(() => import('@/components/dev/EnvDebug').then(m => ({ default: m.EnvDebug })));
+const StorageManager = lazy(() =>
+  import('@/components/StorageManager').then((m) => ({ default: m.StorageManager })),
+);
+const ModelDiagnosticsPanel = lazy(() =>
+  import('@/components/dev/ModelDiagnosticsPanel').then((m) => ({
+    default: m.ModelDiagnosticsPanel,
+  })),
+);
+const EnvDebug = lazy(() =>
+  import('@/components/dev/EnvDebug').then((m) => ({ default: m.EnvDebug })),
+);
 
 /**
  * Developer Tools page - centralizes non user-facing utilities
@@ -27,7 +41,9 @@ const DevTools = (): JSX.Element => {
             <CardTitle>{String(tCommon('devTools.title'))}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">{String(tCommon('devTools.unavailable'))}</p>
+            <p className="text-sm text-muted-foreground">
+              {String(tCommon('devTools.unavailable'))}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -76,7 +92,13 @@ const DevTools = (): JSX.Element => {
                 <DialogHeader>
                   <DialogTitle>{String(tCommon('devTools.storage.title'))}</DialogTitle>
                 </DialogHeader>
-                <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">{String(tCommon('devTools.storage.loading'))}</div>}>
+                <Suspense
+                  fallback={
+                    <div className="p-4 text-sm text-muted-foreground">
+                      {String(tCommon('devTools.storage.loading'))}
+                    </div>
+                  }
+                >
                   <StorageManager />
                 </Suspense>
               </DialogContent>
@@ -107,7 +129,13 @@ const DevTools = (): JSX.Element => {
                 <DialogHeader>
                   <DialogTitle>{String(tCommon('devTools.diagnostics.title'))}</DialogTitle>
                 </DialogHeader>
-                <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">{String(tCommon('devTools.diagnostics.loading'))}</div>}>
+                <Suspense
+                  fallback={
+                    <div className="p-4 text-sm text-muted-foreground">
+                      {String(tCommon('devTools.diagnostics.loading'))}
+                    </div>
+                  }
+                >
                   <ModelDiagnosticsPanel />
                 </Suspense>
               </DialogContent>
@@ -116,7 +144,13 @@ const DevTools = (): JSX.Element => {
         </Card>
 
         {/* Env / AI Debug */}
-        <Suspense fallback={<div className="p-4 text-sm text-muted-foreground">{String(tCommon('devTools.env.loading'))}</div>}>
+        <Suspense
+          fallback={
+            <div className="p-4 text-sm text-muted-foreground">
+              {String(tCommon('devTools.env.loading'))}
+            </div>
+          }
+        >
           <EnvDebug />
         </Suspense>
       </div>

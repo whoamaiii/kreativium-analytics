@@ -33,7 +33,10 @@ export class AnalyticsWorkerFallback {
     this.telemetry = opts?.telemetry ?? new AlertTelemetryService();
   }
 
-  async processAnalytics(data: AnalyticsData, options?: { useAI?: boolean; student?: Student }): Promise<AnalyticsResults> {
+  async processAnalytics(
+    data: AnalyticsData,
+    options?: { useAI?: boolean; student?: Student },
+  ): Promise<AnalyticsResults> {
     return new Promise((resolve, reject) => {
       this.queue.push({ data, options, resolve, reject });
       this.processQueue();
@@ -48,7 +51,7 @@ export class AnalyticsWorkerFallback {
 
     try {
       // Process in chunks to avoid blocking UI
-      await new Promise(resolve => setTimeout(resolve, 0));
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
       // If explicit AI preference provided, route through analyticsManager to respect runtime override
       if (options && typeof options.useAI === 'boolean') {
@@ -58,19 +61,27 @@ export class AnalyticsWorkerFallback {
             throw new Error('Missing student context for manager-based analytics');
           }
           try {
-            logger.debug('[analyticsWorkerFallback] Routing to analyticsManager with runtime useAI', { useAI: options.useAI, studentId: student.id });
+            logger.debug(
+              '[analyticsWorkerFallback] Routing to analyticsManager with runtime useAI',
+              { useAI: options.useAI, studentId: student.id },
+            );
           } catch {
             /* ignore logging errors */
           }
-          const managerResults = await analyticsManager.getStudentAnalytics(student, { useAI: options.useAI });
+          const managerResults = await analyticsManager.getStudentAnalytics(student, {
+            useAI: options.useAI,
+          });
           resolve(managerResults as AnalyticsResults);
           return;
         } catch (e) {
-          logger.error('Fallback: Manager-based analytics failed; continuing with local processing', e);
+          logger.error(
+            'Fallback: Manager-based analytics failed; continuing with local processing',
+            e,
+          );
           // fall through to local processing as a safe fallback
         }
       }
-      
+
       const results: AnalyticsResults = {
         patterns: [],
         correlations: [],
@@ -80,7 +91,7 @@ export class AnalyticsWorkerFallback {
         insights: [],
         // Required by AnalyticsResults: always present, defaults to empty array
         // Ensures consistent result shape across all analytics paths
-        suggestedInterventions: []
+        suggestedInterventions: [],
       };
 
       // Basic pattern analysis (simplified version)
@@ -93,7 +104,7 @@ export class AnalyticsWorkerFallback {
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 0)); // Yield to UI
+      await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to UI
 
       if (data.sensoryInputs.length > 0) {
         try {
@@ -104,7 +115,7 @@ export class AnalyticsWorkerFallback {
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 0)); // Yield to UI
+      await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to UI
 
       if (data.entries.length > 2) {
         try {
@@ -116,7 +127,7 @@ export class AnalyticsWorkerFallback {
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 0)); // Yield to UI
+      await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to UI
 
       // Enhanced analysis - predictive insights and anomaly detection
       if (data.entries.length > 1) {
@@ -125,20 +136,20 @@ export class AnalyticsWorkerFallback {
             data.emotions,
             data.sensoryInputs,
             data.entries,
-            data.goals ?? []
+            data.goals ?? [],
           );
           results.predictiveInsights = predictiveInsights;
         } catch (e) {
           logger.error('Fallback: Error generating predictive insights', e);
         }
 
-        await new Promise(resolve => setTimeout(resolve, 0)); // Yield to UI
+        await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to UI
 
         try {
           const anomalies = enhancedPatternAnalysis.detectAnomalies(
             data.emotions,
             data.sensoryInputs,
-            data.entries
+            data.entries,
           );
           results.anomalies = anomalies;
         } catch (e) {
@@ -146,7 +157,7 @@ export class AnalyticsWorkerFallback {
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, 0)); // Yield to UI before detection
+      await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to UI before detection
 
       try {
         const detectionAlerts = this.runAlertDetection(data);
@@ -163,11 +174,11 @@ export class AnalyticsWorkerFallback {
       // Generate basic insights
       if (data.entries.length < 5) {
         results.insights.push(
-          `Limited data available (${data.entries.length} sessions). Continue collecting data for better insights.`
+          `Limited data available (${data.entries.length} sessions). Continue collecting data for better insights.`,
         );
       } else {
         results.insights.push(
-          'Analytics processed successfully. Continue collecting data for more detailed patterns.'
+          'Analytics processed successfully. Continue collecting data for more detailed patterns.',
         );
       }
 
@@ -232,12 +243,18 @@ export class AnalyticsWorkerFallback {
       newAlerts.forEach((alert) => {
         try {
           const metadata = (alert.metadata ?? {}) as Record<string, unknown>;
-          const thresholdAdjustments = metadata.thresholdTrace as Record<string, ThresholdAdjustmentTrace> | undefined;
+          const thresholdAdjustments = metadata.thresholdTrace as
+            | Record<string, ThresholdAdjustmentTrace>
+            | undefined;
           this.telemetry.logAlertCreated(alert, {
             predictedRelevance: alert.confidence,
             detectorTypes: (metadata.detectorTypes as string[]) ?? undefined,
-            experimentKey: typeof metadata.experimentKey === 'string' ? metadata.experimentKey : undefined,
-            experimentVariant: typeof metadata.experimentVariant === 'string' ? metadata.experimentVariant : undefined,
+            experimentKey:
+              typeof metadata.experimentKey === 'string' ? metadata.experimentKey : undefined,
+            experimentVariant:
+              typeof metadata.experimentVariant === 'string'
+                ? metadata.experimentVariant
+                : undefined,
             thresholdAdjustments,
             metadataSnapshot: alert.metadata,
           });

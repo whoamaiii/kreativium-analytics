@@ -26,19 +26,15 @@ let profiles: Map<string, StudentAnalyticsProfile> | null = null;
 function loadProfilesFromStorage(): Map<string, StudentAnalyticsProfile> {
   const map = new Map<string, StudentAnalyticsProfile>();
   try {
-    const obj = storageGet<Record<string, any> | null>(
-      STORAGE_KEYS.analyticsProfiles,
-      null,
-      {
-        deserialize: (value) => {
-          try {
-            return JSON.parse(value) as Record<string, any>;
-          } catch {
-            return null;
-          }
+    const obj = storageGet<Record<string, any> | null>(STORAGE_KEYS.analyticsProfiles, null, {
+      deserialize: (value) => {
+        try {
+          return JSON.parse(value) as Record<string, any>;
+        } catch {
+          return null;
         }
-      }
-    );
+      },
+    });
 
     if (!obj) return map;
 
@@ -149,4 +145,3 @@ export function getProfileCacheStats(): { count: number } {
   ensureProfilesLoaded();
   return { count: (profiles as Map<string, StudentAnalyticsProfile>).size };
 }
-

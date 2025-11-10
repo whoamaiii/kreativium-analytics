@@ -1,4 +1,13 @@
-import { Student, TrackingEntry, Goal, Intervention, Alert, CorrelationData, DataVersion, StorageIndex } from "@/types/student";
+import {
+  Student,
+  TrackingEntry,
+  Goal,
+  Intervention,
+  Alert,
+  CorrelationData,
+  DataVersion,
+  StorageIndex,
+} from '@/types/student';
 import { logger } from './logger';
 import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 import { storageUtils } from './storageUtils';
@@ -28,8 +37,14 @@ const validateStudent = (data: unknown): data is Student => {
 
 const validateTrackingEntry = (data: unknown): data is TrackingEntry => {
   const entry = data as TrackingEntry;
-  return !!(entry && typeof entry.id === 'string' && typeof entry.studentId === 'string' &&
-         entry.timestamp && Array.isArray(entry.emotions) && Array.isArray(entry.sensoryInputs));
+  return !!(
+    entry &&
+    typeof entry.id === 'string' &&
+    typeof entry.studentId === 'string' &&
+    entry.timestamp &&
+    Array.isArray(entry.emotions) &&
+    Array.isArray(entry.sensoryInputs)
+  );
 };
 
 /**
@@ -93,7 +108,7 @@ export class DataStorageManager implements IDataStorage {
       1: () => {
         // Migration to version 1: Add version field to existing data
         this.addVersionToExistingData();
-      }
+      },
       // Future migrations can be added here:
       // 2: () => { this.addTrackingFeatures(); },
       // 3: () => { this.updateDataStructure(); }
@@ -116,7 +131,7 @@ export class DataStorageManager implements IDataStorage {
     const versionData: DataVersion = {
       version: toVersion,
       timestamp: new Date(),
-      changes: [`Migrated from version ${fromVersion} to ${toVersion}`]
+      changes: [`Migrated from version ${fromVersion} to ${toVersion}`],
     };
     localStorage.setItem(STORAGE_KEYS.DATA_VERSION, JSON.stringify(versionData));
   }
@@ -125,7 +140,7 @@ export class DataStorageManager implements IDataStorage {
   private addVersionToExistingData(): void {
     // Update students
     const students = this.getAll<Student>(STORAGE_KEYS.STUDENTS);
-    students.forEach(student => {
+    students.forEach((student) => {
       if (!student.version) {
         student.version = 1;
         student.lastUpdated = new Date();
@@ -135,7 +150,7 @@ export class DataStorageManager implements IDataStorage {
 
     // Update tracking entries
     const entries = this.getAll<TrackingEntry>(STORAGE_KEYS.ENTRIES);
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       if (!entry.version) {
         entry.version = 1;
       }
@@ -150,13 +165,13 @@ export class DataStorageManager implements IDataStorage {
    * enabling quick lookups and efficient data synchronization. This index acts as a metadata
    * layer that tracks when each piece of data was last modified without needing to load
    * and parse all data from localStorage.
-   * 
+   *
    * Performance benefits:
    * - O(1) lookup time for checking if an entity exists
    * - Efficient dirty checking for sync operations
    * - Reduced parsing overhead for large datasets
    * - Quick identification of recently modified data
-   * 
+   *
    * @example
    * // Index structure:
    * {
@@ -172,22 +187,31 @@ export class DataStorageManager implements IDataStorage {
     const indexData = localStorage.getItem(STORAGE_KEYS.STORAGE_INDEX);
     if (indexData) {
       const parsed = JSON.parse(indexData);
-      
+
       // Convert date strings back to Date objects for accurate timestamp comparison
       // Optimized: Use a single loop to process all index categories
-      const indexCategories = ['students', 'trackingEntries', 'goals', 'interventions', 'alerts'] as const;
-      
+      const indexCategories = [
+        'students',
+        'trackingEntries',
+        'goals',
+        'interventions',
+        'alerts',
+      ] as const;
+
       for (const category of indexCategories) {
         if (parsed[category]) {
           // Process all entries in this category at once
           const entries = Object.entries(parsed[category]);
-          parsed[category] = entries.reduce((acc, [key, value]) => {
-            acc[key] = new Date(value as string);
-            return acc;
-          }, {} as Record<string, Date>);
+          parsed[category] = entries.reduce(
+            (acc, [key, value]) => {
+              acc[key] = new Date(value as string);
+              return acc;
+            },
+            {} as Record<string, Date>,
+          );
         }
       }
-      
+
       // Convert the lastUpdated timestamp
       parsed.lastUpdated = new Date(parsed.lastUpdated);
       return parsed;
@@ -200,7 +224,7 @@ export class DataStorageManager implements IDataStorage {
       goals: {},
       interventions: {},
       alerts: {},
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     };
   }
 
@@ -210,13 +234,13 @@ export class DataStorageManager implements IDataStorage {
    * @description Persists the in-memory index to localStorage, updating the lastUpdated timestamp.
    * This method is called after any data modification to keep the index synchronized with
    * the actual data. The index enables efficient data operations without loading full datasets.
-   * 
+   *
    * Relationship to data:
    * - Each save operation updates both the data and the corresponding index entry
    * - Index timestamps match the actual data modification times
    * - Index can be used to implement incremental sync or backup strategies
    * - Missing index entries indicate data corruption or manual localStorage manipulation
-   * 
+   *
    * @example
    * // When saving a student:
    * this.saveStudent(student); // Saves student data
@@ -233,18 +257,18 @@ export class DataStorageManager implements IDataStorage {
     try {
       const data = localStorage.getItem(key);
       if (!data) return [];
-      
+
       const parsed = JSON.parse(data);
       const items = Array.isArray(parsed) ? parsed : [];
-      
+
       // Convert date strings back to Date objects
-      const convertedItems = items.map(item => this.convertDates(item));
-      
+      const convertedItems = items.map((item) => this.convertDates(item));
+
       // Validate if validator is provided
       if (validator) {
         return convertedItems.filter(validator);
       }
-      
+
       return convertedItems;
     } catch (error) {
       logger.error(`Error loading ${key}:`, error);
@@ -285,7 +309,7 @@ export class DataStorageManager implements IDataStorage {
    * @example
    * // Single date string
    * convertDates("2024-01-15T14:30:00") // Returns: Date Mon Jan 15 2024 14:30:00
-   * 
+   *
    * // Nested object with dates
    * convertDates({
    *   created: "2024-01-15T14:30:00",
@@ -297,17 +321,17 @@ export class DataStorageManager implements IDataStorage {
    */
   private convertDates(obj: unknown): unknown {
     if (!obj) return obj;
-    
+
     // Check if string matches ISO 8601 date format
     if (typeof obj === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(obj)) {
       return new Date(obj);
     }
-    
+
     // Recursively process arrays
     if (Array.isArray(obj)) {
-      return obj.map(item => this.convertDates(item));
+      return obj.map((item) => this.convertDates(item));
     }
-    
+
     // Recursively process objects
     if (typeof obj === 'object' && obj !== null) {
       const converted: Record<string, unknown> = {};
@@ -316,7 +340,7 @@ export class DataStorageManager implements IDataStorage {
       }
       return converted;
     }
-    
+
     return obj;
   }
 
@@ -359,17 +383,17 @@ export class DataStorageManager implements IDataStorage {
    */
   public saveStudent(student: Student): void {
     const students = this.getStudents();
-    const existingIndex = students.findIndex(s => s.id === student.id);
-    
+    const existingIndex = students.findIndex((s) => s.id === student.id);
+
     student.lastUpdated = new Date();
     student.version = (student.version || 0) + 1;
-    
+
     if (existingIndex >= 0) {
       students[existingIndex] = student;
     } else {
       students.push(student);
     }
-    
+
     this.saveAll(STORAGE_KEYS.STUDENTS, students);
     this.storageIndex.students[student.id] = new Date();
     this.saveStorageIndex();
@@ -389,7 +413,7 @@ export class DataStorageManager implements IDataStorage {
    * @returns {TrackingEntry[]} An array of tracking entries for the specified student.
    */
   public getTrackingEntriesForStudent(studentId: string): TrackingEntry[] {
-    return this.getTrackingEntries().filter(entry => entry.studentId === studentId);
+    return this.getTrackingEntries().filter((entry) => entry.studentId === studentId);
   }
 
   /**
@@ -416,10 +440,7 @@ export class DataStorageManager implements IDataStorage {
         }))
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
     } catch (error) {
-      logger.error(
-        'Failed to parse tracking entries from localStorage',
-        error
-      );
+      logger.error('Failed to parse tracking entries from localStorage', error);
       return [];
     }
   }
@@ -430,10 +451,10 @@ export class DataStorageManager implements IDataStorage {
    */
   public saveTrackingEntry(entry: TrackingEntry): void {
     const entries = this.getTrackingEntries();
-    const existingIndex = entries.findIndex(e => e.id === entry.id);
-    
+    const existingIndex = entries.findIndex((e) => e.id === entry.id);
+
     entry.version = (entry.version || 0) + 1;
-    
+
     if (existingIndex >= 0) {
       entries[existingIndex] = entry;
     } else {
@@ -466,7 +487,7 @@ export class DataStorageManager implements IDataStorage {
    * @returns {Goal[]} An array of goals for the specified student.
    */
   public getGoalsForStudent(studentId: string): Goal[] {
-    return this.getGoals().filter(goal => goal.studentId === studentId);
+    return this.getGoals().filter((goal) => goal.studentId === studentId);
   }
 
   /**
@@ -475,22 +496,25 @@ export class DataStorageManager implements IDataStorage {
    */
   public saveGoal(goal: Goal): void {
     const goals = this.getGoals();
-    const existingIndex = goals.findIndex(g => g.id === goal.id);
-    
+    const existingIndex = goals.findIndex((g) => g.id === goal.id);
+
     if (existingIndex >= 0) {
       goals[existingIndex] = goal;
     } else {
       goals.push(goal);
     }
-    
+
     this.saveAll(STORAGE_KEYS.GOALS, goals);
     this.storageIndex.goals[goal.id] = new Date();
     this.saveStorageIndex();
 
     // Analytics may depend on goals; broadcast cache invalidation for affected student
     try {
-      if ((goal as any)?.studentId) analyticsCoordinator.broadcastCacheClear((goal as any).studentId as string);
-    } catch { /* noop */ }
+      if ((goal as any)?.studentId)
+        analyticsCoordinator.broadcastCacheClear((goal as any).studentId as string);
+    } catch {
+      /* noop */
+    }
   }
 
   /**
@@ -507,7 +531,7 @@ export class DataStorageManager implements IDataStorage {
    * @returns {Intervention[]} An array of interventions for the specified student.
    */
   public getInterventionsForStudent(studentId: string): Intervention[] {
-    return this.getInterventions().filter(intervention => intervention.studentId === studentId);
+    return this.getInterventions().filter((intervention) => intervention.studentId === studentId);
   }
 
   /**
@@ -516,22 +540,25 @@ export class DataStorageManager implements IDataStorage {
    */
   public saveIntervention(intervention: Intervention): void {
     const interventions = this.getInterventions();
-    const existingIndex = interventions.findIndex(i => i.id === intervention.id);
-    
+    const existingIndex = interventions.findIndex((i) => i.id === intervention.id);
+
     if (existingIndex >= 0) {
       interventions[existingIndex] = intervention;
     } else {
       interventions.push(intervention);
     }
-    
+
     this.saveAll(STORAGE_KEYS.INTERVENTIONS, interventions);
     this.storageIndex.interventions[intervention.id] = new Date();
     this.saveStorageIndex();
 
     // Interventions impact analytics; invalidate caches for the student
     try {
-      if ((intervention as any)?.studentId) analyticsCoordinator.broadcastCacheClear((intervention as any).studentId as string);
-    } catch { /* noop */ }
+      if ((intervention as any)?.studentId)
+        analyticsCoordinator.broadcastCacheClear((intervention as any).studentId as string);
+    } catch {
+      /* noop */
+    }
   }
 
   /**
@@ -548,7 +575,7 @@ export class DataStorageManager implements IDataStorage {
    * @returns {Alert[]} An array of alerts for the specified student.
    */
   public getAlertsForStudent(studentId: string): Alert[] {
-    return this.getAlerts().filter(alert => alert.studentId === studentId);
+    return this.getAlerts().filter((alert) => alert.studentId === studentId);
   }
 
   /**
@@ -557,22 +584,25 @@ export class DataStorageManager implements IDataStorage {
    */
   public saveAlert(alert: Alert): void {
     const alerts = this.getAlerts();
-    const existingIndex = alerts.findIndex(a => a.id === alert.id);
-    
+    const existingIndex = alerts.findIndex((a) => a.id === alert.id);
+
     if (existingIndex >= 0) {
       alerts[existingIndex] = alert;
     } else {
       alerts.push(alert);
     }
-    
+
     this.saveAll(STORAGE_KEYS.ALERTS, alerts);
     this.storageIndex.alerts[alert.id] = alert.timestamp;
     this.saveStorageIndex();
 
     // Alerts may be surfaced in analytics; invalidate per student
     try {
-      if ((alert as any)?.studentId) analyticsCoordinator.broadcastCacheClear((alert as any).studentId as string);
-    } catch { /* noop */ }
+      if ((alert as any)?.studentId)
+        analyticsCoordinator.broadcastCacheClear((alert as any).studentId as string);
+    } catch {
+      /* noop */
+    }
   }
 
   /**
@@ -589,7 +619,7 @@ export class DataStorageManager implements IDataStorage {
    * @returns {CorrelationData[]} An array of correlations for the specified student.
    */
   public getCorrelationsForStudent(studentId: string): CorrelationData[] {
-    return this.getCorrelations().filter(correlation => correlation.studentId === studentId);
+    return this.getCorrelations().filter((correlation) => correlation.studentId === studentId);
   }
 
   /**
@@ -598,20 +628,23 @@ export class DataStorageManager implements IDataStorage {
    */
   public saveCorrelation(correlation: CorrelationData): void {
     const correlations = this.getCorrelations();
-    const existingIndex = correlations.findIndex(c => c.id === correlation.id);
-    
+    const existingIndex = correlations.findIndex((c) => c.id === correlation.id);
+
     if (existingIndex >= 0) {
       correlations[existingIndex] = correlation;
     } else {
       correlations.push(correlation);
     }
-    
+
     this.saveAll(STORAGE_KEYS.CORRELATIONS, correlations);
 
     // Correlations directly tie into analytics views; invalidate for the student
     try {
-      if ((correlation as any)?.studentId) analyticsCoordinator.broadcastCacheClear((correlation as any).studentId as string);
-    } catch { /* noop */ }
+      if ((correlation as any)?.studentId)
+        analyticsCoordinator.broadcastCacheClear((correlation as any).studentId as string);
+    } catch {
+      /* noop */
+    }
   }
 
   /**
@@ -628,9 +661,9 @@ export class DataStorageManager implements IDataStorage {
       interventions: this.getInterventions(),
       alerts: this.getAlerts(),
       correlations: this.getCorrelations(),
-      index: this.storageIndex
+      index: this.storageIndex,
     };
-    
+
     return JSON.stringify(data, null, 2);
   }
 
@@ -641,12 +674,12 @@ export class DataStorageManager implements IDataStorage {
   public importAllData(jsonData: string): void {
     try {
       const data = JSON.parse(jsonData);
-      
+
       // Validate data structure
       if (!data.version || !data.students || !Array.isArray(data.students)) {
         throw new Error('Invalid data format');
       }
-      
+
       // Import each data type
       this.saveAll(STORAGE_KEYS.STUDENTS, data.students || []);
       this.saveAll(STORAGE_KEYS.ENTRIES, data.trackingEntries || []);
@@ -654,13 +687,13 @@ export class DataStorageManager implements IDataStorage {
       this.saveAll(STORAGE_KEYS.INTERVENTIONS, data.interventions || []);
       this.saveAll(STORAGE_KEYS.ALERTS, data.alerts || []);
       this.saveAll(STORAGE_KEYS.CORRELATIONS, data.correlations || []);
-      
+
       // Update index
       if (data.index) {
         this.storageIndex = this.convertDates(data.index) as StorageIndex;
         this.saveStorageIndex();
       }
-      
+
       // Data import completed successfully
     } catch (error) {
       // Import failed, throw error with context
@@ -672,19 +705,19 @@ export class DataStorageManager implements IDataStorage {
    * Clears all application data from localStorage. This is a destructive operation.
    */
   public clearAllData(): void {
-    Object.values(STORAGE_KEYS).forEach(key => {
+    Object.values(STORAGE_KEYS).forEach((key) => {
       localStorage.removeItem(key);
     });
-    
+
     this.storageIndex = {
       students: {},
       trackingEntries: {},
       goals: {},
       interventions: {},
       alerts: {},
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
     };
-    
+
     // All data has been cleared successfully
   }
 
@@ -705,21 +738,21 @@ export class DataStorageManager implements IDataStorage {
     const goals = this.getGoals();
     const interventions = this.getInterventions();
     const alerts = this.getAlerts();
-    
+
     // Calculate approximate storage size
     let totalSize = 0;
-    Object.values(STORAGE_KEYS).forEach(key => {
+    Object.values(STORAGE_KEYS).forEach((key) => {
       const data = localStorage.getItem(key);
       totalSize += data ? data.length : 0;
     });
-    
+
     return {
       studentsCount: students.length,
       entriesCount: entries.length,
       goalsCount: goals.length,
       interventionsCount: interventions.length,
       alertsCount: alerts.length,
-      totalSize
+      totalSize,
     };
   }
 
@@ -728,40 +761,42 @@ export class DataStorageManager implements IDataStorage {
    */
   public deleteStudent(studentId: string): void {
     try {
-      
-      
       // Remove student from students list
-      const students = this.getStudents().filter(s => s.id !== studentId);
+      const students = this.getStudents().filter((s) => s.id !== studentId);
       this.saveAll(STORAGE_KEYS.STUDENTS, students);
-      
+
       // Remove all tracking entries for this student
-      const entries = this.getTrackingEntries().filter(e => e.studentId !== studentId);
+      const entries = this.getTrackingEntries().filter((e) => e.studentId !== studentId);
       this.saveAll(STORAGE_KEYS.ENTRIES, entries);
-      
+
       // Remove goals for this student
-      const goals = this.getGoals().filter(g => g.studentId !== studentId);
+      const goals = this.getGoals().filter((g) => g.studentId !== studentId);
       this.saveAll(STORAGE_KEYS.GOALS, goals);
-      
-      // Remove interventions for this student  
-      const interventions = this.getInterventions().filter(i => i.studentId !== studentId);
+
+      // Remove interventions for this student
+      const interventions = this.getInterventions().filter((i) => i.studentId !== studentId);
       this.saveAll(STORAGE_KEYS.INTERVENTIONS, interventions);
-      
+
       // Remove alerts for this student
-      const alerts = this.getAlerts().filter(a => a.studentId !== studentId);
+      const alerts = this.getAlerts().filter((a) => a.studentId !== studentId);
       this.saveAll(STORAGE_KEYS.ALERTS, alerts);
-      
+
       // Remove correlations for this student
-      const correlations = this.getCorrelations().filter(c => c.studentId !== studentId);
+      const correlations = this.getCorrelations().filter((c) => c.studentId !== studentId);
       this.saveAll(STORAGE_KEYS.CORRELATIONS, correlations);
-      
+
       // Update storage index - remove the student entry
       if (this.storageIndex.students) {
         delete this.storageIndex.students[studentId];
       }
       this.saveStorageIndex();
-      
+
       // Broadcast cache clear for the deleted student to refresh analytics across the app
-      try { analyticsCoordinator.broadcastCacheClear(studentId); } catch { /* noop */ }
+      try {
+        analyticsCoordinator.broadcastCacheClear(studentId);
+      } catch {
+        /* noop */
+      }
     } catch (error) {
       logger.error('Error deleting student:', error);
       throw error;

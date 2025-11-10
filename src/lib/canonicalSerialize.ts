@@ -96,7 +96,10 @@ export function canonicalSerialize(value: unknown): string {
         // Functions typically have no enumerable own props; include name for stability
         const fn = v as (...args: unknown[]) => unknown;
         const name = fn.name || 'anonymous';
-        return `x:[object Function]${serializeMaybeProps(fn)}`.replace('[object Function]', `[object Function ${name}]`);
+        return `x:[object Function]${serializeMaybeProps(fn)}`.replace(
+          '[object Function]',
+          `[object Function ${name}]`,
+        );
       }
       case 'object':
         break; // handled below
@@ -148,7 +151,9 @@ export function canonicalSerialize(value: unknown): string {
     // Map -> entries sorted by canonical key
     if (obj instanceof Map) {
       seen.add(obj);
-      const entries = Array.from(obj.entries()).map(([k, val]) => [serialize(k), serialize(val)] as const);
+      const entries = Array.from(obj.entries()).map(
+        ([k, val]) => [serialize(k), serialize(val)] as const,
+      );
       entries.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
       const body = entries.map(([k, val]) => `${k}:${val}`).join(',');
       seen.delete(obj);

@@ -5,21 +5,22 @@
  * To: export const Component = ({ prop1 }: Props) => ...
  */
 
-import fs from "fs";
-import path from "path";
+import fs from 'fs';
+import path from 'path';
 
 const DEFAULT_OPTIONS = {
   dryRun: false,
   verbose: true,
 };
 
-function removeReactFC(content, filePath = "") {
+function removeReactFC(content, filePath = '') {
   let modified = false;
   let result = content;
 
   // Pattern 1: React.FC with generic type in arrow function
   // Matches: export const Name: React.FC<TypeName> = ({ prop1, prop2 }) => ...
-  const pattern1 = /(\s*(?:export\s+)?const\s+\w+):\s*React\.FC<([^>]+)>\s*=\s*(\(\s*\{[^}]*\}[^)]*)\)/g;
+  const pattern1 =
+    /(\s*(?:export\s+)?const\s+\w+):\s*React\.FC<([^>]+)>\s*=\s*(\(\s*\{[^}]*\}[^)]*)\)/g;
   result = result.replace(pattern1, (match, nameDecl, typeArg, params) => {
     modified = true;
     if (filePath && DEFAULT_OPTIONS.verbose) {
@@ -42,7 +43,8 @@ function removeReactFC(content, filePath = "") {
 
   // Pattern 3: React.FC in type position with memo wrapper
   // Matches: export const Name: React.FC<Props> = React.memo(({ prop1 }) => ...
-  const pattern3 = /(\s*(?:export\s+)?const\s+\w+):\s*React\.FC<([^>]+)>\s*=\s*((?:React\.)?memo\s*\(\s*\(\s*\{[^}]*\}[^)]*)\)/g;
+  const pattern3 =
+    /(\s*(?:export\s+)?const\s+\w+):\s*React\.FC<([^>]+)>\s*=\s*((?:React\.)?memo\s*\(\s*\(\s*\{[^}]*\}[^)]*)\)/g;
   result = result.replace(pattern3, (match, nameDecl, typeArg, memoStart) => {
     modified = true;
     if (filePath && DEFAULT_OPTIONS.verbose) {
@@ -53,7 +55,8 @@ function removeReactFC(content, filePath = "") {
 
   // Pattern 4: Inline type definitions
   // Matches: export const Name: React.FC<{ data: string }> = ({ data }) => ...
-  const pattern4 = /(\s*(?:export\s+)?const\s+\w+):\s*React\.FC<(\{[^}]+\})>\s*=\s*(\(\s*\{[^}]*\}[^)]*)\)/g;
+  const pattern4 =
+    /(\s*(?:export\s+)?const\s+\w+):\s*React\.FC<(\{[^}]+\})>\s*=\s*(\(\s*\{[^}]*\}[^)]*)\)/g;
   result = result.replace(pattern4, (match, nameDecl, typeArg, params) => {
     modified = true;
     if (filePath && DEFAULT_OPTIONS.verbose) {
@@ -71,23 +74,23 @@ function processFiles(tsxFiles, options = {}) {
 
   tsxFiles.forEach((filePath) => {
     try {
-      const content = fs.readFileSync(filePath, "utf-8");
+      const content = fs.readFileSync(filePath, 'utf-8');
       const { result, modified } = removeReactFC(content, filePath);
 
       if (modified) {
         results.files.push({
           path: filePath,
-          status: "modified",
+          status: 'modified',
         });
 
         if (!opts.dryRun) {
-          fs.writeFileSync(filePath, result, "utf-8");
+          fs.writeFileSync(filePath, result, 'utf-8');
         }
         results.modified++;
       } else {
         results.files.push({
           path: filePath,
-          status: "no-changes",
+          status: 'no-changes',
         });
       }
       results.processed++;
@@ -100,9 +103,9 @@ function processFiles(tsxFiles, options = {}) {
   return results;
 }
 
-function findTsxFiles(baseDir = ".") {
+function findTsxFiles(baseDir = '.') {
   const files = [];
-  const ignore = ["node_modules", ".git", "dist", ".vite", "build"];
+  const ignore = ['node_modules', '.git', 'dist', '.vite', 'build'];
 
   function traverse(dir) {
     try {
@@ -113,7 +116,7 @@ function findTsxFiles(baseDir = ".") {
         const fullPath = path.join(dir, entry.name);
         if (entry.isDirectory()) {
           traverse(fullPath);
-        } else if (entry.name.endsWith(".tsx")) {
+        } else if (entry.name.endsWith('.tsx')) {
           files.push(fullPath);
         }
       }
@@ -128,19 +131,19 @@ function findTsxFiles(baseDir = ".") {
 
 // Main execution
 function main() {
-  const isDryRun = process.argv.includes("--dry-run");
+  const isDryRun = process.argv.includes('--dry-run');
   // Find non-flag arguments (skip node and script name, which are argv[0] and argv[1])
-  const nonFlagArgs = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
-  const baseDir = nonFlagArgs.length > 0 ? nonFlagArgs[0] : ".";
+  const nonFlagArgs = process.argv.slice(2).filter((arg) => !arg.startsWith('--'));
+  const baseDir = nonFlagArgs.length > 0 ? nonFlagArgs[0] : '.';
 
   console.log(`\nRemoving React.FC type annotations...`);
-  console.log(`Mode: ${isDryRun ? "DRY RUN" : "WRITE MODE"}\n`);
+  console.log(`Mode: ${isDryRun ? 'DRY RUN' : 'WRITE MODE'}\n`);
 
   try {
     const tsxFiles = findTsxFiles(baseDir);
 
     if (tsxFiles.length === 0) {
-      console.log("No TSX files found.");
+      console.log('No TSX files found.');
       return;
     }
 
@@ -148,18 +151,18 @@ function main() {
 
     const results = processFiles(tsxFiles, { dryRun: isDryRun });
 
-    console.log("\n=== Summary ===");
+    console.log('\n=== Summary ===');
     console.log(`Total files processed: ${results.processed}`);
     console.log(`Files modified: ${results.modified}`);
     console.log(`Errors: ${results.errors}`);
 
     if (isDryRun) {
-      console.log("\nDry run complete. No files were modified.");
+      console.log('\nDry run complete. No files were modified.');
     } else {
-      console.log("\nChanges written to disk.");
+      console.log('\nChanges written to disk.');
     }
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error('Error:', error.message);
     process.exit(1);
   }
 }

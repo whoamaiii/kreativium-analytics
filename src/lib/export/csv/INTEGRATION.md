@@ -4,7 +4,8 @@ This guide shows how to integrate the new CSV module with the existing `exportSy
 
 ## Overview
 
-The CSV module has been extracted from `exportSystem.ts` into a focused, production-ready module at `/src/lib/export/csv/`.
+The CSV module has been extracted from `exportSystem.ts` into a focused, production-ready module at
+`/src/lib/export/csv/`.
 
 ## Migration Path
 
@@ -20,7 +21,7 @@ import {
   generateSensoryCSV,
   generateGoalsCSV,
   generateTrackingCSV,
-  type CSVExportOptions
+  type CSVExportOptions,
 } from './export/csv';
 
 class ExportSystem {
@@ -33,7 +34,7 @@ class ExportSystem {
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
     },
-    options: ExportOptions
+    options: ExportOptions,
   ): string {
     // Convert legacy options to new format
     const csvOptions: CSVExportOptions = {
@@ -43,8 +44,8 @@ class ExportSystem {
       groupBy: options.groupBy,
       formatting: {
         includeUtf8Bom: true,
-        dateFormat: 'yyyy-MM-dd HH:mm'
-      }
+        dateFormat: 'yyyy-MM-dd HH:mm',
+      },
     };
 
     const result = generateCSVExport(students, allData, csvOptions);
@@ -74,7 +75,7 @@ class ExportSystem {
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
     },
-    options: ExportOptions
+    options: ExportOptions,
   ): { content: string; rowCount: number; byteSize: number } {
     const csvOptions: CSVExportOptions = {
       includeFields: options.includeFields,
@@ -83,8 +84,8 @@ class ExportSystem {
       groupBy: options.groupBy,
       formatting: {
         includeUtf8Bom: true,
-        dateFormat: 'yyyy-MM-dd HH:mm'
-      }
+        dateFormat: 'yyyy-MM-dd HH:mm',
+      },
     };
 
     return generateCSVExport(students, allData, csvOptions);
@@ -149,7 +150,7 @@ function handleExport() {
   const csv = exportSystem.generateCSVExport(students, data, {
     includeFields: ['emotions'],
     dateRange: { start, end },
-    anonymize: true
+    anonymize: true,
   });
 
   // Download CSV
@@ -169,8 +170,8 @@ function handleExport() {
     dateRange: { start, end },
     anonymize: true,
     formatting: {
-      includeUtf8Bom: true
-    }
+      includeUtf8Bom: true,
+    },
   });
 
   console.log(`Generated ${result.rowCount} rows, ${result.byteSize} bytes`);
@@ -194,7 +195,7 @@ describe('CSV Export Migration', () => {
     const legacyOutput = exportSystem.generateCSVExport(students, data, options);
     const newOutput = generateCSVExport(students, data, {
       ...options,
-      formatting: { includeUtf8Bom: false } // Match legacy behavior
+      formatting: { includeUtf8Bom: false }, // Match legacy behavior
     });
 
     // Both should have same number of rows
@@ -206,7 +207,7 @@ describe('CSV Export Migration', () => {
   it('should handle anonymization', () => {
     const result = generateCSVExport(students, data, {
       includeFields: ['emotions'],
-      anonymize: true
+      anonymize: true,
     });
 
     expect(result.content).not.toContain(students[0].name);
@@ -218,8 +219,8 @@ describe('CSV Export Migration', () => {
       includeFields: ['emotions'],
       dateRange: {
         start: new Date('2024-01-01'),
-        end: new Date('2024-12-31')
-      }
+        end: new Date('2024-12-31'),
+      },
     });
 
     expect(result.rowCount).toBeGreaterThan(0);
@@ -250,7 +251,7 @@ class ExportSystem {
 ## Performance Comparison
 
 | Operation | Legacy | New Module | Improvement |
-|-----------|--------|------------|-------------|
+| --------- | ------ | ---------- | ----------- |
 | 1K rows   | ~15ms  | ~10ms      | 33% faster  |
 | 10K rows  | ~150ms | ~80ms      | 47% faster  |
 | 100K rows | ~2s    | ~900ms     | 55% faster  |

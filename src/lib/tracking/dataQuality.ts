@@ -1,4 +1,9 @@
-import type { TrackingEntry, EmotionEntry, SensoryEntry, EnvironmentalEntry } from '@/types/student';
+import type {
+  TrackingEntry,
+  EmotionEntry,
+  SensoryEntry,
+  EnvironmentalEntry,
+} from '@/types/student';
 import type { SessionRecoveryData } from '@/lib/sessionManager';
 
 export interface DataQualityMetrics {
@@ -43,7 +48,7 @@ const FIVE_MINUTES = 5 * 60 * 1000;
 
 export function assessSessionQuality(
   session: SessionRecoveryData,
-  options: QualityAssessmentOptions = {}
+  options: QualityAssessmentOptions = {},
 ): QualityAssessmentResult {
   const source: QualitySource = {
     emotions: session.data.emotions ?? [],
@@ -59,7 +64,7 @@ export function assessSessionQuality(
 
 export function assessEntryQuality(
   entry: TrackingEntry,
-  options: QualityAssessmentOptions = {}
+  options: QualityAssessmentOptions = {},
 ): QualityAssessmentResult {
   const source: QualitySource = {
     emotions: entry.emotions ?? [],
@@ -95,20 +100,18 @@ export function calculateCompleteness(metrics: {
 
 export function calculateConsistency(source: QualitySource): number {
   const emotionIntensities = source.emotions
-    .map(emotion => emotion?.intensity)
+    .map((emotion) => emotion?.intensity)
     .filter((value): value is number => typeof value === 'number');
   const uniqueIntensityCount = new Set(emotionIntensities).size;
-  const emotionConsistency = emotionIntensities.length > 1
-    ? (uniqueIntensityCount / emotionIntensities.length) * 100
-    : 0;
+  const emotionConsistency =
+    emotionIntensities.length > 1 ? (uniqueIntensityCount / emotionIntensities.length) * 100 : 0;
 
   const sensoryResponses = source.sensoryInputs
-    .map(sensory => sensory?.response)
+    .map((sensory) => sensory?.response)
     .filter((value): value is string => Boolean(value && value.trim().length > 0));
   const uniqueResponseCount = new Set(sensoryResponses).size;
-  const sensoryConsistency = sensoryResponses.length > 1
-    ? (uniqueResponseCount / sensoryResponses.length) * 100
-    : 0;
+  const sensoryConsistency =
+    sensoryResponses.length > 1 ? (uniqueResponseCount / sensoryResponses.length) * 100 : 0;
 
   return clamp((emotionConsistency + sensoryConsistency) / 2, 0, 100);
 }
@@ -118,15 +121,15 @@ export function calculateRichness(source: QualitySource): number {
 
   const emotionTypes = new Set(
     source.emotions
-      .map(emotion => emotion?.emotion?.trim())
-      .filter((value): value is string => Boolean(value))
+      .map((emotion) => emotion?.emotion?.trim())
+      .filter((value): value is string => Boolean(value)),
   ).size;
   richness += Math.min(emotionTypes * 10, 30);
 
   const sensoryTypes = new Set(
     source.sensoryInputs
-      .map(sensory => sensory.sensoryType || sensory.type || null)
-      .filter((value): value is string => Boolean(value))
+      .map((sensory) => sensory.sensoryType || sensory.type || null)
+      .filter((value): value is string => Boolean(value)),
   ).size;
   richness += Math.min(sensoryTypes * 10, 30);
 
@@ -144,7 +147,7 @@ export function calculateRichness(source: QualitySource): number {
 
 function assessQualityFromSource(
   source: QualitySource,
-  options: QualityAssessmentOptions
+  options: QualityAssessmentOptions,
 ): QualityAssessmentResult {
   const now = options.now ?? new Date();
   const sessionDuration = computeDuration(source, now);
@@ -254,16 +257,18 @@ function hasMeaningfulEnvironmentalData(environmental?: EnvironmentalLike): bool
 function computeDuration(source: QualitySource, now: Date): number {
   if (!source.startTime) return 0;
 
-  const start = source.startTime instanceof Date
-    ? source.startTime.getTime()
-    : new Date(source.startTime).getTime();
+  const start =
+    source.startTime instanceof Date
+      ? source.startTime.getTime()
+      : new Date(source.startTime).getTime();
 
   const endTime = source.endTime ?? null;
-  const end = endTime instanceof Date
-    ? endTime.getTime()
-    : endTime
-      ? new Date(endTime).getTime()
-      : now.getTime();
+  const end =
+    endTime instanceof Date
+      ? endTime.getTime()
+      : endTime
+        ? new Date(endTime).getTime()
+        : now.getTime();
 
   return Math.max(0, end - start);
 }
@@ -271,4 +276,3 @@ function computeDuration(source: QualitySource, now: Date): number {
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
-

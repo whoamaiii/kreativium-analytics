@@ -14,12 +14,12 @@ const mockStudentData = {
       id: 'goal-1',
       title: 'Improve Focus',
       description: 'Improve attention span through sensory strategies',
-      progress: 65
-    }
+      progress: 65,
+    },
   ],
   createdAt: new Date('2024-01-01'),
   lastUpdated: new Date('2024-01-15'),
-  version: 1
+  version: 1,
 };
 
 const mockEmotionData = [
@@ -30,7 +30,7 @@ const mockEmotionData = [
     emotion: 'happy',
     intensity: 4,
     triggers: ['positive feedback'],
-    notes: 'Student responded well to praise'
+    notes: 'Student responded well to praise',
   },
   {
     id: 'emotion-2',
@@ -39,8 +39,8 @@ const mockEmotionData = [
     emotion: 'anxious',
     intensity: 3,
     triggers: ['loud noise'],
-    notes: 'Fire alarm caused distress'
-  }
+    notes: 'Fire alarm caused distress',
+  },
 ];
 
 const mockSensoryData = [
@@ -52,7 +52,7 @@ const mockSensoryData = [
     sensoryType: 'auditory',
     response: 'avoiding',
     intensity: 4,
-    notes: 'Covered ears during music class'
+    notes: 'Covered ears during music class',
   },
   {
     id: 'sensory-2',
@@ -62,8 +62,8 @@ const mockSensoryData = [
     sensoryType: 'tactile',
     response: 'seeking',
     intensity: 3,
-    notes: 'Requested fidget toy'
-  }
+    notes: 'Requested fidget toy',
+  },
 ];
 
 // Mock components for snapshot testing
@@ -75,11 +75,13 @@ const StudentCard = ({ student }: { student: typeof mockStudentData }) => (
     <p>Notes: {student.notes}</p>
     <div className="goals">
       <h3>IEP Goals:</h3>
-      {student.iepGoals.map(goal => (
+      {student.iepGoals.map((goal) => (
         <div key={goal.id} className="goal">
           <h4>{goal.title}</h4>
           <p>{goal.description}</p>
-          <progress value={goal.progress} max={100}>{goal.progress}%</progress>
+          <progress value={goal.progress} max={100}>
+            {goal.progress}%
+          </progress>
         </div>
       ))}
     </div>
@@ -99,7 +101,7 @@ const EmotionChart = ({ emotions }: { emotions: typeof mockEmotionData }) => (
         </tr>
       </thead>
       <tbody>
-        {emotions.map(emotion => (
+        {emotions.map((emotion) => (
           <tr key={emotion.id}>
             <td>{emotion.timestamp.toLocaleTimeString()}</td>
             <td>{emotion.emotion}</td>
@@ -116,7 +118,7 @@ const SensoryProfile = ({ sensoryData }: { sensoryData: typeof mockSensoryData }
   <div className="sensory-profile">
     <h3>Sensory Profile</h3>
     <div className="sensory-items">
-      {sensoryData.map(item => (
+      {sensoryData.map((item) => (
         <div key={item.id} className="sensory-item">
           <span className="type">{item.sensoryType}</span>
           <span className="response">{item.response}</span>
@@ -128,10 +130,14 @@ const SensoryProfile = ({ sensoryData }: { sensoryData: typeof mockSensoryData }
   </div>
 );
 
-const Dashboard = ({ student, emotions, sensory }: { 
-  student: typeof mockStudentData,
-  emotions: typeof mockEmotionData,
-  sensory: typeof mockSensoryData
+const Dashboard = ({
+  student,
+  emotions,
+  sensory,
+}: {
+  student: typeof mockStudentData;
+  emotions: typeof mockEmotionData;
+  sensory: typeof mockSensoryData;
 }) => (
   <div className="dashboard">
     <h1>Student Dashboard</h1>
@@ -161,11 +167,7 @@ describe('Visual Snapshot Tests', () => {
 
   test('Dashboard component renders consistently', () => {
     const { container } = render(
-      <Dashboard 
-        student={mockStudentData} 
-        emotions={mockEmotionData} 
-        sensory={mockSensoryData} 
-      />
+      <Dashboard student={mockStudentData} emotions={mockEmotionData} sensory={mockSensoryData} />,
     );
     expect(container.firstChild).toMatchSnapshot();
   });
@@ -179,12 +181,14 @@ describe('Visual Snapshot Tests', () => {
   });
 
   test('Components with different data render differently', () => {
-    const altEmotionData = [{
-      ...mockEmotionData[0],
-      id: 'emotion-alt',
-      emotion: 'frustrated',
-      intensity: 5
-    }];
+    const altEmotionData = [
+      {
+        ...mockEmotionData[0],
+        id: 'emotion-alt',
+        emotion: 'frustrated',
+        intensity: 5,
+      },
+    ];
 
     const { container: original } = render(<EmotionChart emotions={mockEmotionData} />);
     const { container: altered } = render(<EmotionChart emotions={altEmotionData} />);

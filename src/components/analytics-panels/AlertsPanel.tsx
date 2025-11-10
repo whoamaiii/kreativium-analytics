@@ -25,7 +25,10 @@ import { logger } from '@/lib/logger';
 import { useAlerts } from '@/hooks/useAlerts';
 import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
 import CreateGoalFromAlertDialog from '@/components/goals/CreateGoalFromAlertDialog';
-import { useAlertFilterState, useAlertDerivedData } from '@/components/analytics-panels/hooks/useAlertFilters';
+import {
+  useAlertFilterState,
+  useAlertDerivedData,
+} from '@/components/analytics-panels/hooks/useAlertFilters';
 import { useAlertBulkActions } from '@/components/analytics-panels/hooks/useAlertBulkActions';
 import { useAlertUIState } from '@/components/analytics-panels/hooks/useAlertUIState';
 import { useAlertKeyboardShortcuts } from '@/components/analytics-panels/hooks/useAlertKeyboardShortcuts';
@@ -37,279 +40,295 @@ import { PinnedAlertsRail } from '@/components/analytics-panels/alerts/PinnedAle
 import { AlertDetailsDialog } from '@/components/analytics-panels/alerts/AlertDetailsDialog';
 
 export interface AlertsPanelProps {
-  filteredData: { entries: TrackingEntry[]; emotions: EmotionEntry[]; sensoryInputs: SensoryEntry[] };
+  filteredData: {
+    entries: TrackingEntry[];
+    emotions: EmotionEntry[];
+    sensoryInputs: SensoryEntry[];
+  };
   studentId?: string;
 }
 
-export const AlertsPanel = React.memo(({ filteredData: _filteredData, studentId }: AlertsPanelProps) => {
-  const { tAnalytics } = useTranslation();
-  const { pinnedIds, isPinned, togglePin, unpinAlert, clearPinnedAlerts } = usePinnedAlerts();
+export const AlertsPanel = React.memo(
+  ({ filteredData: _filteredData, studentId }: AlertsPanelProps) => {
+    const { tAnalytics } = useTranslation();
+    const { pinnedIds, isPinned, togglePin, unpinAlert, clearPinnedAlerts } = usePinnedAlerts();
 
-  // Search input ref for keyboard shortcuts
-  const searchRef = useRef<HTMLInputElement | null>(null);
+    // Search input ref for keyboard shortcuts
+    const searchRef = useRef<HTMLInputElement | null>(null);
 
-  // Filter state management
-  const {
-    state: filterState,
-    actions: filterActions,
-    queryFilters,
-  } = useAlertFilterState();
+    // Filter state management
+    const { state: filterState, actions: filterActions, queryFilters } = useAlertFilterState();
 
-  const {
-    selectedSeverities,
-    selectedKinds,
-    timeWindowHours,
-    minConfidence,
-    sourceFilters,
-    sourceLabelFilters,
-    dateStart,
-    dateEnd,
-    searchQuery,
-    groupMode,
-    hasInterventionOnly,
-    sortMode,
-  } = filterState;
+    const {
+      selectedSeverities,
+      selectedKinds,
+      timeWindowHours,
+      minConfidence,
+      sourceFilters,
+      sourceLabelFilters,
+      dateStart,
+      dateEnd,
+      searchQuery,
+      groupMode,
+      hasInterventionOnly,
+      sortMode,
+    } = filterState;
 
-  const {
-    setSelectedSeverities,
-    setSelectedKinds,
-    setTimeWindowHours,
-    setMinConfidence,
-    setDateStart,
-    setDateEnd,
-    setSearchQuery,
-    setGroupMode,
-    setHasInterventionOnly,
-    setSortMode,
-    toggleSourceFilter,
-    toggleSourceLabelFilter,
-    resetSourceFilters,
-    resetSourceLabelFilters,
-  } = filterActions;
+    const {
+      setSelectedSeverities,
+      setSelectedKinds,
+      setTimeWindowHours,
+      setMinConfidence,
+      setDateStart,
+      setDateEnd,
+      setSearchQuery,
+      setGroupMode,
+      setHasInterventionOnly,
+      setSortMode,
+      toggleSourceFilter,
+      toggleSourceLabelFilter,
+      resetSourceFilters,
+      resetSourceLabelFilters,
+    } = filterActions;
 
-  // Fetch alerts with filters
-  const { alerts, acknowledge, snooze, resolve, refresh, feedback } = useAlerts({
-    studentId: studentId && studentId !== 'all' ? studentId : 'all',
-    aggregate: !studentId || studentId === 'all',
-    filters: queryFilters,
-  });
+    // Fetch alerts with filters
+    const { alerts, acknowledge, snooze, resolve, refresh, feedback } = useAlerts({
+      studentId: studentId && studentId !== 'all' ? studentId : 'all',
+      aggregate: !studentId || studentId === 'all',
+      filters: queryFilters,
+    });
 
-  // Derived data (grouped alerts, counts, available filters)
-  const derived = useAlertDerivedData(alerts, filterState);
-  const { availableSourceTypes, availableSourceLabels, activeAlerts, counts, grouped } = derived;
+    // Derived data (grouped alerts, counts, available filters)
+    const derived = useAlertDerivedData(alerts, filterState);
+    const { availableSourceTypes, availableSourceLabels, activeAlerts, counts, grouped } = derived;
 
-  // Bulk actions
-  const bulkActions = useAlertBulkActions({
-    alerts,
-    activeAlerts,
-    sourceFilters,
-    sourceLabelFilters,
-    acknowledge,
-    resolve,
-    snooze,
-  });
-  const { acknowledgeByConfidence, acknowledgeBySource, resolveBySourceType, snoozeSimilar, acknowledgeByLabel } =
-    bulkActions;
+    // Bulk actions
+    const bulkActions = useAlertBulkActions({
+      alerts,
+      activeAlerts,
+      sourceFilters,
+      sourceLabelFilters,
+      acknowledge,
+      resolve,
+      snooze,
+    });
+    const {
+      acknowledgeByConfidence,
+      acknowledgeBySource,
+      resolveBySourceType,
+      snoozeSimilar,
+      acknowledgeByLabel,
+    } = bulkActions;
 
-  // UI state management (collapsed sections, dialogs, selection, viewed tracking)
-  const uiState = useAlertUIState(activeAlerts);
+    // UI state management (collapsed sections, dialogs, selection, viewed tracking)
+    const uiState = useAlertUIState(activeAlerts);
 
-  // Pinned alerts derived from main alerts list
-  const pinnedAlerts = useMemo(() => alerts.filter((a) => pinnedIds.has(a.id)), [alerts, pinnedIds]);
+    // Pinned alerts derived from main alerts list
+    const pinnedAlerts = useMemo(
+      () => alerts.filter((a) => pinnedIds.has(a.id)),
+      [alerts, pinnedIds],
+    );
 
-  // Bulk acknowledge selected alerts
-  const handleAcknowledgeSelected = useCallback(() => {
-    let successCount = 0;
-    let failCount = 0;
+    // Bulk acknowledge selected alerts
+    const handleAcknowledgeSelected = useCallback(() => {
+      let successCount = 0;
+      let failCount = 0;
 
-    for (const id of Array.from(uiState.selectedIds)) {
-      try {
-        acknowledge(id);
-        successCount++;
-      } catch (error) {
-        failCount++;
-        logger.error('Failed to acknowledge alert', { error, alertId: id });
+      for (const id of Array.from(uiState.selectedIds)) {
+        try {
+          acknowledge(id);
+          successCount++;
+        } catch (error) {
+          failCount++;
+          logger.error('Failed to acknowledge alert', { error, alertId: id });
+        }
       }
-    }
 
-    uiState.clearSelection();
+      uiState.clearSelection();
 
-    if (failCount === 0) {
-      toast.success('Acknowledged selected alerts');
-    } else if (successCount > 0) {
-      toast.warning(`Acknowledged ${successCount} alerts, but ${failCount} failed`);
-    } else {
-      toast.error('Failed to acknowledge alerts');
-    }
-  }, [uiState.selectedIds, acknowledge, uiState.clearSelection]);
+      if (failCount === 0) {
+        toast.success('Acknowledged selected alerts');
+      } else if (successCount > 0) {
+        toast.warning(`Acknowledged ${successCount} alerts, but ${failCount} failed`);
+      } else {
+        toast.error('Failed to acknowledge alerts');
+      }
+    }, [uiState.selectedIds, acknowledge, uiState.clearSelection]);
 
-  // Resolve pinned alert with notes
-  const handleResolve = useCallback(() => {
-    if (!uiState.selectedForResolve) return;
-    uiState.setIsResolving(true);
-    try {
-      resolve(uiState.selectedForResolve.id, uiState.resolveNotes.trim() || undefined);
-      uiState.setSelectedForResolve(null);
-      uiState.setResolveNotes('');
-      toast.success(String(tAnalytics('alerts.resolveSuccess')));
-    } catch (error) {
-      logger.error('Failed to resolve alert in pinned rail', error);
-      toast.error(String(tAnalytics('alerts.resolveFailure')));
-    } finally {
-      uiState.setIsResolving(false);
-    }
-  }, [uiState.resolveNotes, uiState.selectedForResolve, resolve, tAnalytics, uiState.setIsResolving]);
+    // Resolve pinned alert with notes
+    const handleResolve = useCallback(() => {
+      if (!uiState.selectedForResolve) return;
+      uiState.setIsResolving(true);
+      try {
+        resolve(uiState.selectedForResolve.id, uiState.resolveNotes.trim() || undefined);
+        uiState.setSelectedForResolve(null);
+        uiState.setResolveNotes('');
+        toast.success(String(tAnalytics('alerts.resolveSuccess')));
+      } catch (error) {
+        logger.error('Failed to resolve alert in pinned rail', error);
+        toast.error(String(tAnalytics('alerts.resolveFailure')));
+      } finally {
+        uiState.setIsResolving(false);
+      }
+    }, [
+      uiState.resolveNotes,
+      uiState.selectedForResolve,
+      resolve,
+      tAnalytics,
+      uiState.setIsResolving,
+    ]);
 
-  // Open alert details dialog
-  const handleOpenDetails = useCallback(
-    (id: string) => {
-      const alert = alerts.find((a) => a.id === id) ?? null;
-      uiState.setSelectedForDetails(alert);
-      uiState.setDetailsOpen(!!alert);
-    },
-    [alerts, uiState.setSelectedForDetails, uiState.setDetailsOpen]
-  );
+    // Open alert details dialog
+    const handleOpenDetails = useCallback(
+      (id: string) => {
+        const alert = alerts.find((a) => a.id === id) ?? null;
+        uiState.setSelectedForDetails(alert);
+        uiState.setDetailsOpen(!!alert);
+      },
+      [alerts, uiState.setSelectedForDetails, uiState.setDetailsOpen],
+    );
 
-  // Action handlers for alert operations
-  const actionHandlers = useAlertActionHandlers((alert) => {
-    uiState.setGoalDialogAlert(alert);
-    uiState.setGoalDialogOpen(true);
-  });
+    // Action handlers for alert operations
+    const actionHandlers = useAlertActionHandlers((alert) => {
+      uiState.setGoalDialogAlert(alert);
+      uiState.setGoalDialogOpen(true);
+    });
 
-  // Keyboard shortcuts (/, Cmd+A, Cmd+R, Cmd+S, Escape)
-  useAlertKeyboardShortcuts({
-    onAcknowledgeSelected: handleAcknowledgeSelected,
-    onResolve: handleResolve,
-    onSnoozeSimilar: snoozeSimilar,
-    onClearSelection: uiState.clearSelection,
-    searchInputRef: searchRef,
-  });
+    // Keyboard shortcuts (/, Cmd+A, Cmd+R, Cmd+S, Escape)
+    useAlertKeyboardShortcuts({
+      onAcknowledgeSelected: handleAcknowledgeSelected,
+      onResolve: handleResolve,
+      onSnoozeSimilar: snoozeSimilar,
+      onClearSelection: uiState.clearSelection,
+      searchInputRef: searchRef,
+    });
 
-  // Real-time sync via custom events
-  useAlertRealtimeSync({
-    onRefresh: refresh,
-    studentId,
-  });
+    // Real-time sync via custom events
+    useAlertRealtimeSync({
+      onRefresh: refresh,
+      studentId,
+    });
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-      {/* Main content area */}
-      <div className="space-y-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{String(tAnalytics('tabs.alerts'))}</CardTitle>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" aria-live="polite">{`Total: ${counts.total}`}</Badge>
-                <Badge variant="secondary">Live</Badge>
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+        {/* Main content area */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{String(tAnalytics('tabs.alerts'))}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" aria-live="polite">{`Total: ${counts.total}`}</Badge>
+                  <Badge variant="secondary">Live</Badge>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {/* Filter panel (search, filters, bulk actions) */}
-            <AlertsFilterPanel
-              searchQuery={searchQuery}
-              onSearchQueryChange={setSearchQuery}
-              searchInputRef={searchRef}
-              selectedSeverities={selectedSeverities}
-              onSelectedSeveritiesChange={setSelectedSeverities}
-              selectedKinds={selectedKinds}
-              onSelectedKindsChange={setSelectedKinds}
-              dateStart={dateStart}
-              dateEnd={dateEnd}
-              onDateStartChange={setDateStart}
-              onDateEndChange={setDateEnd}
-              timeWindowHours={timeWindowHours}
-              onTimeWindowChange={setTimeWindowHours}
-              minConfidence={minConfidence}
-              onMinConfidenceChange={setMinConfidence}
-              availableSourceTypes={availableSourceTypes}
-              sourceFilters={sourceFilters}
-              onToggleSourceFilter={toggleSourceFilter}
-              onResetSourceFilters={resetSourceFilters}
-              availableSourceLabels={availableSourceLabels}
-              sourceLabelFilters={sourceLabelFilters}
-              onToggleSourceLabelFilter={toggleSourceLabelFilter}
-              onResetSourceLabelFilters={resetSourceLabelFilters}
-              groupMode={groupMode}
-              onGroupModeChange={setGroupMode}
-              sortMode={sortMode}
-              onSortModeChange={setSortMode}
-              hasInterventionOnly={hasInterventionOnly}
-              onHasInterventionOnlyChange={setHasInterventionOnly}
-              activeAlerts={activeAlerts}
-              onAcknowledgeByConfidence={acknowledgeByConfidence}
-              onAcknowledgeBySource={acknowledgeBySource}
-              onResolveBySourceType={resolveBySourceType}
-              onSnoozeSimilar={snoozeSimilar}
-              onAcknowledgeByLabel={acknowledgeByLabel}
-            />
+            </CardHeader>
+            <CardContent>
+              {/* Filter panel (search, filters, bulk actions) */}
+              <AlertsFilterPanel
+                searchQuery={searchQuery}
+                onSearchQueryChange={setSearchQuery}
+                searchInputRef={searchRef}
+                selectedSeverities={selectedSeverities}
+                onSelectedSeveritiesChange={setSelectedSeverities}
+                selectedKinds={selectedKinds}
+                onSelectedKindsChange={setSelectedKinds}
+                dateStart={dateStart}
+                dateEnd={dateEnd}
+                onDateStartChange={setDateStart}
+                onDateEndChange={setDateEnd}
+                timeWindowHours={timeWindowHours}
+                onTimeWindowChange={setTimeWindowHours}
+                minConfidence={minConfidence}
+                onMinConfidenceChange={setMinConfidence}
+                availableSourceTypes={availableSourceTypes}
+                sourceFilters={sourceFilters}
+                onToggleSourceFilter={toggleSourceFilter}
+                onResetSourceFilters={resetSourceFilters}
+                availableSourceLabels={availableSourceLabels}
+                sourceLabelFilters={sourceLabelFilters}
+                onToggleSourceLabelFilter={toggleSourceLabelFilter}
+                onResetSourceLabelFilters={resetSourceLabelFilters}
+                groupMode={groupMode}
+                onGroupModeChange={setGroupMode}
+                sortMode={sortMode}
+                onSortModeChange={setSortMode}
+                hasInterventionOnly={hasInterventionOnly}
+                onHasInterventionOnlyChange={setHasInterventionOnly}
+                activeAlerts={activeAlerts}
+                onAcknowledgeByConfidence={acknowledgeByConfidence}
+                onAcknowledgeBySource={acknowledgeBySource}
+                onResolveBySourceType={resolveBySourceType}
+                onSnoozeSimilar={snoozeSimilar}
+                onAcknowledgeByLabel={acknowledgeByLabel}
+              />
 
-            {/* Grouped alerts view */}
-            <AlertsByGroupView
-              groupMode={groupMode}
-              grouped={grouped}
-              collapsed={uiState.collapsed}
-              onToggleCollapse={uiState.toggleCollapsed}
-              selectedIds={uiState.selectedIds}
-              pinnedIds={pinnedIds}
-              onToggleSelection={uiState.toggleSelection}
-              onTogglePin={togglePin}
-              onAcknowledge={acknowledge}
-              onSnooze={snooze}
-              onResolve={resolve}
-              onOpenDetails={handleOpenDetails}
-            />
-          </CardContent>
-        </Card>
+              {/* Grouped alerts view */}
+              <AlertsByGroupView
+                groupMode={groupMode}
+                grouped={grouped}
+                collapsed={uiState.collapsed}
+                onToggleCollapse={uiState.toggleCollapsed}
+                selectedIds={uiState.selectedIds}
+                pinnedIds={pinnedIds}
+                onToggleSelection={uiState.toggleSelection}
+                onTogglePin={togglePin}
+                onAcknowledge={acknowledge}
+                onSnooze={snooze}
+                onResolve={resolve}
+                onOpenDetails={handleOpenDetails}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right rail: Pinned alerts */}
+        <PinnedAlertsRail
+          pinnedAlerts={pinnedAlerts}
+          isOpen={uiState.pinnedOpen}
+          onOpenChange={uiState.setPinnedOpen}
+          clearDialogOpen={uiState.clearDialogOpen}
+          onClearDialogChange={uiState.setClearDialogOpen}
+          onClearAll={clearPinnedAlerts}
+          onUnpin={unpinAlert}
+          viewedPinned={uiState.viewedPinned}
+          onMarkViewed={uiState.markAsViewed}
+          selectedForResolve={uiState.selectedForResolve}
+          onResolveDialogChange={(alert, open) => {
+            uiState.setSelectedForResolve(open ? alert : null);
+            if (!open) uiState.setResolveNotes('');
+          }}
+          resolveNotes={uiState.resolveNotes}
+          onResolveNotesChange={uiState.setResolveNotes}
+          isResolving={uiState.isResolving}
+          onResolve={handleResolve}
+        />
+
+        {/* Alert details dialog */}
+        <AlertDetailsDialog
+          open={uiState.detailsOpen}
+          onOpenChange={(open) => {
+            uiState.setDetailsOpen(open);
+            if (!open) uiState.setSelectedForDetails(null);
+          }}
+          alert={uiState.selectedForDetails}
+          actionHandlers={actionHandlers}
+          onSubmitFeedback={feedback}
+        />
+
+        {/* Create goal from alert dialog */}
+        <CreateGoalFromAlertDialog
+          open={uiState.goalDialogOpen}
+          alert={uiState.goalDialogAlert as any}
+          onOpenChange={(open) => {
+            uiState.setGoalDialogOpen(open);
+            if (!open) uiState.setGoalDialogAlert(null);
+          }}
+        />
       </div>
-
-      {/* Right rail: Pinned alerts */}
-      <PinnedAlertsRail
-        pinnedAlerts={pinnedAlerts}
-        isOpen={uiState.pinnedOpen}
-        onOpenChange={uiState.setPinnedOpen}
-        clearDialogOpen={uiState.clearDialogOpen}
-        onClearDialogChange={uiState.setClearDialogOpen}
-        onClearAll={clearPinnedAlerts}
-        onUnpin={unpinAlert}
-        viewedPinned={uiState.viewedPinned}
-        onMarkViewed={uiState.markAsViewed}
-        selectedForResolve={uiState.selectedForResolve}
-        onResolveDialogChange={(alert, open) => {
-          uiState.setSelectedForResolve(open ? alert : null);
-          if (!open) uiState.setResolveNotes('');
-        }}
-        resolveNotes={uiState.resolveNotes}
-        onResolveNotesChange={uiState.setResolveNotes}
-        isResolving={uiState.isResolving}
-        onResolve={handleResolve}
-      />
-
-      {/* Alert details dialog */}
-      <AlertDetailsDialog
-        open={uiState.detailsOpen}
-        onOpenChange={(open) => {
-          uiState.setDetailsOpen(open);
-          if (!open) uiState.setSelectedForDetails(null);
-        }}
-        alert={uiState.selectedForDetails}
-        actionHandlers={actionHandlers}
-        onSubmitFeedback={feedback}
-      />
-
-      {/* Create goal from alert dialog */}
-      <CreateGoalFromAlertDialog
-        open={uiState.goalDialogOpen}
-        alert={uiState.goalDialogAlert as any}
-        onOpenChange={(open) => {
-          uiState.setGoalDialogOpen(open);
-          if (!open) uiState.setGoalDialogAlert(null);
-        }}
-      />
-    </div>
-  );
-});
+    );
+  },
+);
 
 AlertsPanel.displayName = 'AlertsPanel';
 

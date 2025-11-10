@@ -4,13 +4,7 @@
  * Supports emotions, sensory inputs, goals, and tracking entries
  */
 
-import type {
-  Student,
-  EmotionEntry,
-  SensoryEntry,
-  Goal,
-  TrackingEntry
-} from "@/types/student";
+import type { Student, EmotionEntry, SensoryEntry, Goal, TrackingEntry } from '@/types/student';
 
 import {
   escapeCSVValue,
@@ -27,8 +21,8 @@ import {
   getGoalCurrentProgress,
   calculateGoalProgress,
   type CSVFormattingOptions,
-  type AnonymizationOptions
-} from "./csvFormatter";
+  type AnonymizationOptions,
+} from './csvFormatter';
 
 /**
  * Export options for CSV generation
@@ -57,31 +51,23 @@ export interface CSVGenerationResult {
 /**
  * Generate CSV header row from column names
  */
-export function generateCSVHeader(
-  columns: string[],
-  options?: CSVFormattingOptions
-): string {
+export function generateCSVHeader(columns: string[], options?: CSVFormattingOptions): string {
   const delimiter = options?.delimiter || ',';
   const quoteAll = options?.quoteAll || false;
 
-  return columns
-    .map(col => escapeCSVValue(col, delimiter, quoteAll))
-    .join(delimiter);
+  return columns.map((col) => escapeCSVValue(col, delimiter, quoteAll)).join(delimiter);
 }
 
 /**
  * Generate CSV row from values
  */
-export function generateCSVRow(
-  values: unknown[],
-  options?: CSVFormattingOptions
-): string {
+export function generateCSVRow(values: unknown[], options?: CSVFormattingOptions): string {
   const delimiter = options?.delimiter || ',';
   const quoteAll = options?.quoteAll || false;
   const nullValue = options?.nullValue || '';
 
   return values
-    .map(val => {
+    .map((val) => {
       if (val === null || val === undefined) {
         return nullValue;
       }
@@ -96,7 +82,7 @@ export function generateCSVRow(
 export function generateEmotionsCSV(
   emotions: EmotionEntry[],
   students: Student[],
-  options: CSVExportOptions
+  options: CSVExportOptions,
 ): CSVGenerationResult {
   const { anonymize, formatting, dateRange } = options;
   const delimiter = formatting?.delimiter || ',';
@@ -108,7 +94,7 @@ export function generateEmotionsCSV(
   const anonOptions: AnonymizationOptions = {
     anonymizeNames: anonymize,
     anonymizeIds: anonymize,
-    anonymizeDates: anonymize
+    anonymizeDates: anonymize,
   };
 
   // Define columns
@@ -122,7 +108,7 @@ export function generateEmotionsCSV(
     'Triggers',
     'Escalation Pattern',
     'Context',
-    'Notes'
+    'Notes',
   ];
 
   let csv = '';
@@ -137,12 +123,12 @@ export function generateEmotionsCSV(
 
   // Generate rows
   let rowCount = 0;
-  filteredEmotions.forEach(emotion => {
+  filteredEmotions.forEach((emotion) => {
     const processedEmotion = anonymize ? anonymizeEmotion(emotion, anonOptions) : emotion;
-    const student = students.find(s => s.id === emotion.studentId);
+    const student = students.find((s) => s.id === emotion.studentId);
     const studentName = anonymize
       ? anonymizeStudentName(emotion.studentId || '')
-      : (student?.name || 'Unknown');
+      : student?.name || 'Unknown';
 
     const values = [
       formatDate(processedEmotion.timestamp, formatting?.dateFormat),
@@ -154,7 +140,7 @@ export function generateEmotionsCSV(
       formatArray(processedEmotion.triggers),
       processedEmotion.escalationPattern || '',
       processedEmotion.context || '',
-      processedEmotion.notes || ''
+      processedEmotion.notes || '',
     ];
 
     csv += generateCSVRow(values, formatting) + '\n';
@@ -164,7 +150,7 @@ export function generateEmotionsCSV(
   return {
     content: csv,
     rowCount,
-    byteSize: new Blob([csv]).size
+    byteSize: new Blob([csv]).size,
   };
 }
 
@@ -174,7 +160,7 @@ export function generateEmotionsCSV(
 export function generateSensoryCSV(
   sensoryInputs: SensoryEntry[],
   students: Student[],
-  options: CSVExportOptions
+  options: CSVExportOptions,
 ): CSVGenerationResult {
   const { anonymize, formatting, dateRange } = options;
 
@@ -185,7 +171,7 @@ export function generateSensoryCSV(
   const anonOptions: AnonymizationOptions = {
     anonymizeNames: anonymize,
     anonymizeIds: anonymize,
-    anonymizeDates: anonymize
+    anonymizeDates: anonymize,
   };
 
   // Define columns
@@ -199,7 +185,7 @@ export function generateSensoryCSV(
     'Context',
     'Coping Strategies',
     'Environment',
-    'Notes'
+    'Notes',
   ];
 
   let csv = '';
@@ -214,12 +200,12 @@ export function generateSensoryCSV(
 
   // Generate rows
   let rowCount = 0;
-  filteredSensory.forEach(sensory => {
+  filteredSensory.forEach((sensory) => {
     const processedSensory = anonymize ? anonymizeSensory(sensory, anonOptions) : sensory;
-    const student = students.find(s => s.id === sensory.studentId);
+    const student = students.find((s) => s.id === sensory.studentId);
     const studentName = anonymize
       ? anonymizeStudentName(sensory.studentId || '')
-      : (student?.name || 'Unknown');
+      : student?.name || 'Unknown';
 
     const values = [
       formatDate(processedSensory.timestamp, formatting?.dateFormat),
@@ -231,7 +217,7 @@ export function generateSensoryCSV(
       processedSensory.context || '',
       formatArray(processedSensory.copingStrategies),
       processedSensory.environment || '',
-      processedSensory.notes || ''
+      processedSensory.notes || '',
     ];
 
     csv += generateCSVRow(values, formatting) + '\n';
@@ -241,7 +227,7 @@ export function generateSensoryCSV(
   return {
     content: csv,
     rowCount,
-    byteSize: new Blob([csv]).size
+    byteSize: new Blob([csv]).size,
   };
 }
 
@@ -251,7 +237,7 @@ export function generateSensoryCSV(
 export function generateGoalsCSV(
   goals: Goal[],
   students: Student[],
-  options: CSVExportOptions
+  options: CSVExportOptions,
 ): CSVGenerationResult {
   const { anonymize, formatting } = options;
 
@@ -259,7 +245,7 @@ export function generateGoalsCSV(
   const anonOptions: AnonymizationOptions = {
     anonymizeNames: anonymize,
     anonymizeIds: anonymize,
-    anonymizeDates: anonymize
+    anonymizeDates: anonymize,
   };
 
   // Define columns
@@ -277,7 +263,7 @@ export function generateGoalsCSV(
     'Date Created',
     'Target Date',
     'Last Updated',
-    'Notes'
+    'Notes',
   ];
 
   let csv = '';
@@ -292,12 +278,12 @@ export function generateGoalsCSV(
 
   // Generate rows
   let rowCount = 0;
-  goals.forEach(goal => {
+  goals.forEach((goal) => {
     const processedGoal = anonymize ? anonymizeGoal(goal, anonOptions) : goal;
-    const student = students.find(s => s.id === goal.studentId);
+    const student = students.find((s) => s.id === goal.studentId);
     const studentName = anonymize
       ? anonymizeStudentName(goal.studentId)
-      : (student?.name || 'Unknown');
+      : student?.name || 'Unknown';
 
     const currentProgress = getGoalCurrentProgress(processedGoal);
     const progressPercentage = calculateGoalProgress(processedGoal);
@@ -316,7 +302,7 @@ export function generateGoalsCSV(
       formatDate(processedGoal.createdDate, formatting?.dateFormat),
       formatDate(processedGoal.targetDate, formatting?.dateFormat),
       formatDate(processedGoal.updatedAt, formatting?.dateFormat),
-      processedGoal.notes || ''
+      processedGoal.notes || '',
     ];
 
     csv += generateCSVRow(values, formatting) + '\n';
@@ -326,7 +312,7 @@ export function generateGoalsCSV(
   return {
     content: csv,
     rowCount,
-    byteSize: new Blob([csv]).size
+    byteSize: new Blob([csv]).size,
   };
 }
 
@@ -336,7 +322,7 @@ export function generateGoalsCSV(
 export function generateTrackingCSV(
   trackingEntries: TrackingEntry[],
   students: Student[],
-  options: CSVExportOptions
+  options: CSVExportOptions,
 ): CSVGenerationResult {
   const { anonymize, formatting, dateRange } = options;
 
@@ -347,7 +333,7 @@ export function generateTrackingCSV(
   const anonOptions: AnonymizationOptions = {
     anonymizeNames: anonymize,
     anonymizeIds: anonymize,
-    anonymizeDates: anonymize
+    anonymizeDates: anonymize,
   };
 
   // Define columns
@@ -360,7 +346,7 @@ export function generateTrackingCSV(
     'Location',
     'Social Context',
     'Environmental Notes',
-    'General Notes'
+    'General Notes',
   ];
 
   let csv = '';
@@ -375,12 +361,12 @@ export function generateTrackingCSV(
 
   // Generate rows
   let rowCount = 0;
-  filteredTracking.forEach(entry => {
+  filteredTracking.forEach((entry) => {
     const processedEntry = anonymize ? anonymizeTracking(entry, anonOptions) : entry;
-    const student = students.find(s => s.id === entry.studentId);
+    const student = students.find((s) => s.id === entry.studentId);
     const studentName = anonymize
       ? anonymizeStudentName(entry.studentId)
-      : (student?.name || 'Unknown');
+      : student?.name || 'Unknown';
 
     const values = [
       formatDate(processedEntry.timestamp, formatting?.dateFormat),
@@ -391,7 +377,7 @@ export function generateTrackingCSV(
       processedEntry.environmentalData?.location || '',
       processedEntry.environmentalData?.socialContext || '',
       processedEntry.environmentalData?.notes || '',
-      processedEntry.generalNotes || processedEntry.notes || ''
+      processedEntry.generalNotes || processedEntry.notes || '',
     ];
 
     csv += generateCSVRow(values, formatting) + '\n';
@@ -401,7 +387,7 @@ export function generateTrackingCSV(
   return {
     content: csv,
     rowCount,
-    byteSize: new Blob([csv]).size
+    byteSize: new Blob([csv]).size,
   };
 }
 
@@ -417,7 +403,7 @@ export function generateMultiSectionCSV(
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
   },
-  options: CSVExportOptions
+  options: CSVExportOptions,
 ): CSVGenerationResult {
   let fullContent = '';
   let totalRows = 0;
@@ -434,8 +420,8 @@ export function generateMultiSectionCSV(
       ...options,
       formatting: {
         ...options.formatting,
-        includeUtf8Bom: false // BOM already added
-      }
+        includeUtf8Bom: false, // BOM already added
+      },
     });
     fullContent += result.content + '\n\n';
     totalRows += result.rowCount;
@@ -447,8 +433,8 @@ export function generateMultiSectionCSV(
       ...options,
       formatting: {
         ...options.formatting,
-        includeUtf8Bom: false
-      }
+        includeUtf8Bom: false,
+      },
     });
     fullContent += result.content + '\n\n';
     totalRows += result.rowCount;
@@ -460,8 +446,8 @@ export function generateMultiSectionCSV(
       ...options,
       formatting: {
         ...options.formatting,
-        includeUtf8Bom: false
-      }
+        includeUtf8Bom: false,
+      },
     });
     fullContent += result.content + '\n\n';
     totalRows += result.rowCount;
@@ -473,8 +459,8 @@ export function generateMultiSectionCSV(
       ...options,
       formatting: {
         ...options.formatting,
-        includeUtf8Bom: false
-      }
+        includeUtf8Bom: false,
+      },
     });
     fullContent += result.content + '\n\n';
     totalRows += result.rowCount;
@@ -483,7 +469,7 @@ export function generateMultiSectionCSV(
   return {
     content: fullContent,
     rowCount: totalRows,
-    byteSize: new Blob([fullContent]).size
+    byteSize: new Blob([fullContent]).size,
   };
 }
 
@@ -499,7 +485,7 @@ export function generateGroupedCSV(
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
   },
-  options: CSVExportOptions
+  options: CSVExportOptions,
 ): CSVGenerationResult {
   const groupByField = options.groupBy || 'student';
 
@@ -513,23 +499,23 @@ export function generateGroupedCSV(
 
   switch (groupByField) {
     case 'student': {
-      students.forEach(student => {
+      students.forEach((student) => {
         fullContent += `\n=== ${student.name} ===\n`;
 
         // Filter data for this student
         const studentData = {
-          emotions: data.emotions.filter(e => e.studentId === student.id),
-          sensoryInputs: data.sensoryInputs.filter(s => s.studentId === student.id),
-          goals: data.goals.filter(g => g.studentId === student.id),
-          trackingEntries: data.trackingEntries.filter(t => t.studentId === student.id)
+          emotions: data.emotions.filter((e) => e.studentId === student.id),
+          sensoryInputs: data.sensoryInputs.filter((s) => s.studentId === student.id),
+          goals: data.goals.filter((g) => g.studentId === student.id),
+          trackingEntries: data.trackingEntries.filter((t) => t.studentId === student.id),
         };
 
         const result = generateMultiSectionCSV([student], studentData, {
           ...options,
           formatting: {
             ...options.formatting,
-            includeUtf8Bom: false
-          }
+            includeUtf8Bom: false,
+          },
         });
 
         fullContent += result.content;
@@ -547,8 +533,8 @@ export function generateGroupedCSV(
           ...options,
           formatting: {
             ...options.formatting,
-            includeUtf8Bom: false
-          }
+            includeUtf8Bom: false,
+          },
         });
         fullContent += result.content;
         totalRows += result.rowCount;
@@ -558,14 +544,14 @@ export function generateGroupedCSV(
 
     case 'goal': {
       // Group by goal
-      data.goals.forEach(goal => {
+      data.goals.forEach((goal) => {
         fullContent += `\n=== Goal: ${goal.title} ===\n`;
         const result = generateGoalsCSV([goal], students, {
           ...options,
           formatting: {
             ...options.formatting,
-            includeUtf8Bom: false
-          }
+            includeUtf8Bom: false,
+          },
         });
         fullContent += result.content;
         totalRows += result.rowCount;
@@ -577,7 +563,7 @@ export function generateGroupedCSV(
   return {
     content: fullContent,
     rowCount: totalRows,
-    byteSize: new Blob([fullContent]).size
+    byteSize: new Blob([fullContent]).size,
   };
 }
 
@@ -593,7 +579,7 @@ export function generateCSVExport(
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
   },
-  options: CSVExportOptions
+  options: CSVExportOptions,
 ): CSVGenerationResult {
   // If groupBy is specified, use grouped export
   if (options.groupBy) {

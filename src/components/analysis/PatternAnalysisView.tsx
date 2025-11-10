@@ -16,11 +16,7 @@ import {
   Lightbulb,
   Shield,
 } from 'lucide-react';
-import {
-  PatternResult,
-  PredictiveInsight,
-  AnomalyDetection,
-} from '@/lib/enhancedPatternAnalysis';
+import { PatternResult, PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalysis';
 import { ConfidenceIndicator } from '@/components/ConfidenceIndicator';
 import { cn } from '@/lib/utils';
 import { format, differenceInDays } from 'date-fns';
@@ -52,16 +48,21 @@ const PatternAnalysisViewComponent = ({
   if (!DEV_VIZ_ENABLED) {
     return (
       <div className="p-4 border rounded-md text-muted-foreground" role="note" aria-live="polite">
-        This legacy patterns view is available in development only. Please use the Patterns preset for the modern experience.
+        This legacy patterns view is available in development only. Please use the Patterns preset
+        for the modern experience.
       </div>
     );
   }
   const getPatternIcon = (type: string) => {
     switch (type.toLowerCase()) {
-      case 'emotion': return <Brain className="h-4 w-4" />;
-      case 'sensory': return <Eye className="h-4 w-4" />;
-      case 'environmental': return <Thermometer className="h-4 w-4" />;
-      default: return <Activity className="h-4 w-4" />;
+      case 'emotion':
+        return <Brain className="h-4 w-4" />;
+      case 'sensory':
+        return <Eye className="h-4 w-4" />;
+      case 'environmental':
+        return <Thermometer className="h-4 w-4" />;
+      default:
+        return <Activity className="h-4 w-4" />;
     }
   };
 
@@ -104,10 +105,14 @@ const PatternAnalysisViewComponent = ({
               <Card
                 key={`${pattern.type}-${pattern.pattern}`}
                 className={cn(
-                  "bg-gradient-card cursor-pointer transition-all",
-                  highlightState.type === 'emotion' && pattern.type === 'emotion' && "ring-2 ring-primary"
+                  'bg-gradient-card cursor-pointer transition-all',
+                  highlightState.type === 'emotion' &&
+                    pattern.type === 'emotion' &&
+                    'ring-2 ring-primary',
                 )}
-                onClick={() => handleHighlight('emotion', `pattern-${pattern.type}-${pattern.pattern}`)}
+                onClick={() =>
+                  handleHighlight('emotion', `pattern-${pattern.type}-${pattern.pattern}`)
+                }
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -126,7 +131,10 @@ const PatternAnalysisViewComponent = ({
                         <div className="space-y-1">
                           <p className="text-sm font-medium">Recommendations:</p>
                           {(pattern.recommendations ?? []).slice(0, 2).map((rec, i) => (
-                            <p key={i} className="text-xs text-muted-foreground flex items-start gap-1">
+                            <p
+                              key={i}
+                              className="text-xs text-muted-foreground flex items-start gap-1"
+                            >
                               <Lightbulb className="h-3 w-3 mt-0.5 flex-shrink-0" />
                               {rec}
                             </p>
@@ -170,16 +178,14 @@ const PatternAnalysisViewComponent = ({
                         </Badge>
                       </div>
 
-                      <p className="text-sm text-muted-foreground mb-2">
-                        {insight.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground mb-2">{insight.description}</p>
 
                       {insight.prediction && (
                         <div className="mb-2">
                           <p className="text-sm font-medium mb-1">Prediction:</p>
                           <div className="flex items-center gap-2 text-sm">
                             {insight.prediction.trend === 'increasing' ? (
-                            <TrendingUp className="h-4 w-4 text-success" />
+                              <TrendingUp className="h-4 w-4 text-success" />
                             ) : insight.prediction.trend === 'decreasing' ? (
                               <TrendingDown className="h-4 w-4 text-destructive" />
                             ) : (
@@ -188,9 +194,19 @@ const PatternAnalysisViewComponent = ({
                             <span className="capitalize">{insight.prediction.trend}</span>
                             <ConfidenceIndicator
                               confidence={insight.prediction.accuracy}
-                              dataPoints={filteredData.emotions.length + filteredData.sensoryInputs.length}
-                              timeSpanDays={filteredData.emotions.length > 0 && filteredData.emotions[0] ?
-                                Math.abs(differenceInDays(new Date(), filteredData.emotions[0].timestamp)) : 0}
+                              dataPoints={
+                                filteredData.emotions.length + filteredData.sensoryInputs.length
+                              }
+                              timeSpanDays={
+                                filteredData.emotions.length > 0 && filteredData.emotions[0]
+                                  ? Math.abs(
+                                      differenceInDays(
+                                        new Date(),
+                                        filteredData.emotions[0].timestamp,
+                                      ),
+                                    )
+                                  : 0
+                              }
                               rSquared={insight.prediction.accuracy}
                               className="ml-1"
                             />
@@ -202,7 +218,10 @@ const PatternAnalysisViewComponent = ({
                         <div className="space-y-1">
                           <p className="text-sm font-medium">Recommendations:</p>
                           {insight.recommendations.slice(0, 3).map((rec, i) => (
-                            <p key={i} className="text-xs text-muted-foreground flex items-start gap-1">
+                            <p
+                              key={i}
+                              className="text-xs text-muted-foreground flex items-start gap-1"
+                            >
                               <Lightbulb className="h-3 w-3 mt-0.5 flex-shrink-0" />
                               {rec}
                             </p>
@@ -214,7 +233,8 @@ const PatternAnalysisViewComponent = ({
                         <div className="mt-2 pt-2 border-t border-border">
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Shield className="h-3 w-3" />
-                            Severity: <span className="font-medium capitalize">{insight.severity}</span>
+                            Severity:{' '}
+                            <span className="font-medium capitalize">{insight.severity}</span>
                           </p>
                         </div>
                       )}
@@ -238,10 +258,18 @@ const PatternAnalysisViewComponent = ({
               <Card
                 key={`${anomaly.type}-${anomaly.timestamp.getTime()}`}
                 className={cn(
-                  "bg-gradient-card border-orange-200 cursor-pointer",
-                  highlightState.type === 'anomaly' && highlightState.id === `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}` && "ring-2 ring-orange-500"
+                  'bg-gradient-card border-orange-200 cursor-pointer',
+                  highlightState.type === 'anomaly' &&
+                    highlightState.id ===
+                      `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}` &&
+                    'ring-2 ring-orange-500',
                 )}
-                onClick={() => handleHighlight('anomaly', `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}`)}
+                onClick={() =>
+                  handleHighlight(
+                    'anomaly',
+                    `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}`,
+                  )
+                }
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">

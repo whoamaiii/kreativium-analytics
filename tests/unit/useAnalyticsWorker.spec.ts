@@ -6,13 +6,17 @@ import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { dataStorage } from '@/lib/dataStorage';
 import { analyticsConfig } from '@/lib/analyticsConfig';
-import type { AnalyticsData, AnalyticsWorkerMessage, AnalyticsConfiguration } from '@/types/analytics';
+import type {
+  AnalyticsData,
+  AnalyticsWorkerMessage,
+  AnalyticsConfiguration,
+} from '@/types/analytics';
 import type { Goal, TrackingEntry, Student } from '@/types/student';
 import type { InsightsWorkerPayload, InsightsWorkerTask } from '@/lib/insights/task';
 import type { AnalyticsResultsAI } from '@/lib/analysis';
 
 vi.mock('@/hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: (k: string) => k, tAnalytics: (k: string) => k })
+  useTranslation: () => ({ t: (k: string) => k, tAnalytics: (k: string) => k }),
 }));
 
 vi.mock('@/hooks/use-toast', () => ({ toast: vi.fn() }));
@@ -24,7 +28,6 @@ interface CapturedPost {
 }
 
 declare global {
-   
   var __WORKER_INSTANCES__: unknown[] | undefined;
 }
 
@@ -59,7 +62,10 @@ const getStudentAnalyticsSpy = vi.spyOn(analyticsManager, 'getStudentAnalytics')
 const getGoalsSpy = vi.spyOn(dataStorage, 'getGoalsForStudent');
 const getConfigSpy = vi.spyOn(analyticsConfig, 'getConfig');
 
-const createTrackingEntry = (studentId: string, overrides: Partial<TrackingEntry> = {}): TrackingEntry => ({
+const createTrackingEntry = (
+  studentId: string,
+  overrides: Partial<TrackingEntry> = {},
+): TrackingEntry => ({
   id: overrides.id ?? `track-${studentId}-${Date.now()}`,
   studentId,
   timestamp: overrides.timestamp ?? new Date(),
@@ -126,7 +132,9 @@ const emptyResults: AnalyticsResultsAI = {
 };
 
 const getWorkerInstances = (): Array<{ postMessage: Mock; addEventListener: Mock }> => {
-  const instances = globalThis.__WORKER_INSTANCES__ as Array<{ postMessage: Mock; addEventListener: Mock }> | undefined;
+  const instances = globalThis.__WORKER_INSTANCES__ as
+    | Array<{ postMessage: Mock; addEventListener: Mock }>
+    | undefined;
   return instances ?? [];
 };
 
@@ -140,12 +148,16 @@ describe('useAnalyticsWorker (unit)', () => {
     getConfigSpy.mockReturnValue({
       cache: { ttl: 600000, maxSize: 50, invalidateOnConfigChange: true },
       precomputation: { enabled: false },
-      charts: { lineWidths: { average: 2, movingAverage: 2, positive: 2, negative: 2, sensory: 2 } },
+      charts: {
+        lineWidths: { average: 2, movingAverage: 2, positive: 2, negative: 2, sensory: 2 },
+      },
     } as unknown as ReturnType<typeof analyticsConfig.getConfig>);
     globalThis.__WORKER_INSTANCES__ = [];
     lastPostedTask = null;
   });
-  afterEach(() => { vi.useRealTimers(); });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   it('fetches goals when student provided and includes in cache key path', async () => {
     getGoalsSpy.mockReturnValue([createGoal('g1', 's1')]);
@@ -153,7 +165,7 @@ describe('useAnalyticsWorker (unit)', () => {
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s1', { id: 't1' })] }),
-        { student: createStudent('s1') }
+        { student: createStudent('s1') },
       );
     });
     expect(dataStorage.getGoalsForStudent).toHaveBeenCalledWith('s1');
@@ -167,7 +179,7 @@ describe('useAnalyticsWorker (unit)', () => {
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s1', { id: 'a' })] }),
-        { student: createStudent('s1') }
+        { student: createStudent('s1') },
       );
     });
     const keyNoGoals = lastPostedTask?.cacheKey ?? '';
@@ -179,7 +191,7 @@ describe('useAnalyticsWorker (unit)', () => {
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s1', { id: 'b' })] }),
-        { student: createStudent('s1') }
+        { student: createStudent('s1') },
       );
     });
     const keyWithGoals = lastPostedTask?.cacheKey ?? '';
@@ -190,14 +202,17 @@ describe('useAnalyticsWorker (unit)', () => {
     const sub = vi.spyOn(analyticsConfig, 'subscribe');
     const cb = sub.mock.calls[0]?.[0];
     if (cb) {
-      cb({ cache: { invalidateOnConfigChange: true, ttl: 12345 }, analytics: { ANALYSIS_PERIOD_DAYS: 60 } } as unknown as AnalyticsConfiguration);
+      cb({
+        cache: { invalidateOnConfigChange: true, ttl: 12345 },
+        analytics: { ANALYSIS_PERIOD_DAYS: 60 },
+      } as unknown as AnalyticsConfiguration);
     }
     lastPostedTask = null;
     getGoalsSpy.mockReturnValueOnce([createGoal('g1', 's1')]);
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s1', { id: 'c' })] }),
-        { student: createStudent('s1') }
+        { student: createStudent('s1') },
       );
     });
     const keyAfterConfig = lastPostedTask?.cacheKey ?? '';
@@ -212,7 +227,7 @@ describe('useAnalyticsWorker (unit)', () => {
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s10', { id: 'p' })] }),
-        { student: createStudent('s10') }
+        { student: createStudent('s10') },
       );
     });
     const callsBefore = inst?.postMessage.mock.calls.length ?? 0;
@@ -223,7 +238,7 @@ describe('useAnalyticsWorker (unit)', () => {
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s10', { id: 'p2' })] }),
-        { student: createStudent('s10') }
+        { student: createStudent('s10') },
       );
     });
     const callsAfter = inst?.postMessage.mock.calls.length ?? 0;
@@ -236,7 +251,7 @@ describe('useAnalyticsWorker (unit)', () => {
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s2', { id: 't2' })] }),
-        { useAI: true, student: createStudent('s2') }
+        { useAI: true, student: createStudent('s2') },
       );
     });
     expect(analyticsManager.getStudentAnalytics).toHaveBeenCalled();
@@ -244,17 +259,21 @@ describe('useAnalyticsWorker (unit)', () => {
   });
 
   it('subscribes to cache clear events and invalidates student-specific cache', async () => {
-    const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false, enableCacheStats: true }));
+    const { result } = renderHook(() =>
+      useAnalyticsWorker({ precomputeOnIdle: false, enableCacheStats: true }),
+    );
     // Prime cache by running once
     await act(async () => {
       await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('stu-x', { id: 't3' })] }),
-        { student: createStudent('stu-x') }
+        { student: createStudent('stu-x') },
       );
     });
     // Fire student-specific clear; expect no crash (cannot directly assert internals)
     act(() => {
-      window.dispatchEvent(new CustomEvent('analytics:cache:clear:student', { detail: { studentId: 'stu-x' } }));
+      window.dispatchEvent(
+        new CustomEvent('analytics:cache:clear:student', { detail: { studentId: 'stu-x' } }),
+      );
     });
     expect(typeof result.current.clearCache).toBe('function');
   });
@@ -274,7 +293,10 @@ describe('useAnalyticsWorker (unit)', () => {
     processAnalyticsSpy.mockResolvedValue(emptyResults);
     const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
     await act(async () => {
-      await result.current.runAnalysis(createAnalyticsData({ entries: [createTrackingEntry('sx', { id: 't4' })] }), { student: createStudent('sx'), useAI: false });
+      await result.current.runAnalysis(
+        createAnalyticsData({ entries: [createTrackingEntry('sx', { id: 't4' })] }),
+        { student: createStudent('sx'), useAI: false },
+      );
     });
     expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
   });

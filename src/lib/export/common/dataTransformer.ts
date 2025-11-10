@@ -5,8 +5,8 @@
  * Memory-efficient transformations for large datasets.
  */
 
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
-import { ExportDataCollection } from "./exportOptions";
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
+import { ExportDataCollection } from './exportOptions';
 
 /**
  * Anonymization options
@@ -36,7 +36,7 @@ const DEFAULT_ANONYMIZATION: AnonymizationOptions = {
   removeDateOfBirth: true,
   truncateIds: true,
   removeNotes: false,
-  redactNotes: true
+  redactNotes: true,
 };
 
 /**
@@ -44,7 +44,7 @@ const DEFAULT_ANONYMIZATION: AnonymizationOptions = {
  */
 export function anonymizeStudent(
   student: Student,
-  options: AnonymizationOptions = DEFAULT_ANONYMIZATION
+  options: AnonymizationOptions = DEFAULT_ANONYMIZATION,
 ): Student {
   const anonymized = { ...student };
 
@@ -70,7 +70,7 @@ export function anonymizeStudent(
  */
 export function anonymizeEmotion(
   emotion: EmotionEntry,
-  options: AnonymizationOptions = DEFAULT_ANONYMIZATION
+  options: AnonymizationOptions = DEFAULT_ANONYMIZATION,
 ): EmotionEntry {
   const anonymized = { ...emotion };
 
@@ -98,7 +98,7 @@ export function anonymizeEmotion(
  */
 export function anonymizeSensory(
   sensory: SensoryEntry,
-  options: AnonymizationOptions = DEFAULT_ANONYMIZATION
+  options: AnonymizationOptions = DEFAULT_ANONYMIZATION,
 ): SensoryEntry {
   const anonymized = { ...sensory };
 
@@ -130,7 +130,7 @@ export function anonymizeSensory(
  */
 export function anonymizeGoal(
   goal: Goal,
-  options: AnonymizationOptions = DEFAULT_ANONYMIZATION
+  options: AnonymizationOptions = DEFAULT_ANONYMIZATION,
 ): Goal {
   const anonymized = { ...goal };
 
@@ -152,7 +152,7 @@ export function anonymizeGoal(
  */
 export function anonymizeTracking(
   tracking: TrackingEntry,
-  options: AnonymizationOptions = DEFAULT_ANONYMIZATION
+  options: AnonymizationOptions = DEFAULT_ANONYMIZATION,
 ): TrackingEntry {
   const anonymized = { ...tracking };
 
@@ -173,8 +173,8 @@ export function anonymizeTracking(
   }
 
   // Anonymize nested entries
-  anonymized.emotions = anonymized.emotions.map(e => anonymizeEmotion(e, options));
-  anonymized.sensoryInputs = anonymized.sensoryInputs.map(s => anonymizeSensory(s, options));
+  anonymized.emotions = anonymized.emotions.map((e) => anonymizeEmotion(e, options));
+  anonymized.sensoryInputs = anonymized.sensoryInputs.map((s) => anonymizeSensory(s, options));
 
   return anonymized;
 }
@@ -184,14 +184,14 @@ export function anonymizeTracking(
  */
 export function anonymizeData(
   data: ExportDataCollection,
-  options: AnonymizationOptions = DEFAULT_ANONYMIZATION
+  options: AnonymizationOptions = DEFAULT_ANONYMIZATION,
 ): ExportDataCollection {
   return {
-    trackingEntries: data.trackingEntries.map(t => anonymizeTracking(t, options)),
-    emotions: data.emotions.map(e => anonymizeEmotion(e, options)),
-    sensoryInputs: data.sensoryInputs.map(s => anonymizeSensory(s, options)),
-    goals: data.goals.map(g => anonymizeGoal(g, options)),
-    students: data.students?.map(s => anonymizeStudent(s, options))
+    trackingEntries: data.trackingEntries.map((t) => anonymizeTracking(t, options)),
+    emotions: data.emotions.map((e) => anonymizeEmotion(e, options)),
+    sensoryInputs: data.sensoryInputs.map((s) => anonymizeSensory(s, options)),
+    goals: data.goals.map((g) => anonymizeGoal(g, options)),
+    students: data.students?.map((s) => anonymizeStudent(s, options)),
   };
 }
 
@@ -206,14 +206,20 @@ export function redactPII(text: string): string {
   redacted = redacted.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]');
 
   // Phone numbers (various formats)
-  redacted = redacted.replace(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, '[PHONE]');
+  redacted = redacted.replace(
+    /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
+    '[PHONE]',
+  );
 
   // Common name patterns (capitalize words that might be names)
   // This is conservative - only redacts obvious patterns like "Dear John" or "From: Mary"
   redacted = redacted.replace(/\b(Dear|From|To|Mr\.|Mrs\.|Ms\.|Dr\.)\s+[A-Z][a-z]+/g, '$1 [NAME]');
 
   // Addresses (street numbers and street names)
-  redacted = redacted.replace(/\d+\s+[A-Z][a-z]+(\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr))/gi, '[ADDRESS]');
+  redacted = redacted.replace(
+    /\d+\s+[A-Z][a-z]+(\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr))/gi,
+    '[ADDRESS]',
+  );
 
   return redacted;
 }
@@ -224,7 +230,7 @@ export function redactPII(text: string): string {
  */
 export function selectFields<T extends Record<string, unknown>>(
   obj: T,
-  fields: string[]
+  fields: string[],
 ): Partial<T> {
   const result: Partial<T> = {};
 
@@ -269,11 +275,7 @@ export function getNestedField(obj: Record<string, unknown>, path: string): unkn
 /**
  * Set nested field value using dot notation
  */
-export function setNestedField(
-  obj: Record<string, unknown>,
-  path: string,
-  value: unknown
-): void {
+export function setNestedField(obj: Record<string, unknown>, path: string, value: unknown): void {
   const keys = path.split('.');
   const lastKey = keys.pop()!;
   let current: Record<string, unknown> = obj;
@@ -294,7 +296,7 @@ export function setNestedField(
  */
 export function flattenNestedData<T extends Record<string, unknown>>(
   obj: T,
-  prefix: string = ''
+  prefix: string = '',
 ): Record<string, unknown> {
   const flattened: Record<string, unknown> = {};
 
@@ -305,9 +307,9 @@ export function flattenNestedData<T extends Record<string, unknown>>(
       flattened[fullKey] = '';
     } else if (Array.isArray(value)) {
       // Convert arrays to comma-separated strings
-      flattened[fullKey] = value.map(v =>
-        typeof v === 'object' ? JSON.stringify(v) : String(v)
-      ).join('; ');
+      flattened[fullKey] = value
+        .map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v)))
+        .join('; ');
     } else if (value instanceof Date) {
       flattened[fullKey] = value.toISOString();
     } else if (typeof value === 'object') {
@@ -327,7 +329,7 @@ export function flattenNestedData<T extends Record<string, unknown>>(
  */
 export function enrichWithComputedFields<T extends Record<string, unknown>>(
   obj: T,
-  computations: Record<string, (obj: T) => unknown>
+  computations: Record<string, (obj: T) => unknown>,
 ): T & Record<string, unknown> {
   const enriched = { ...obj };
 
@@ -360,7 +362,7 @@ export const STUDENT_COMPUTED_FIELDS = {
   },
 
   activeGoalCount: (student: Student) => {
-    return student.iepGoals?.filter(g => g.status === 'active').length || 0;
+    return student.iepGoals?.filter((g) => g.status === 'active').length || 0;
   },
 
   accountAge: (student: Student) => {
@@ -369,7 +371,7 @@ export const STUDENT_COMPUTED_FIELDS = {
     const today = new Date();
     const days = Math.floor((today.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
     return days;
-  }
+  },
 };
 
 /**
@@ -400,7 +402,7 @@ export const GOAL_COMPUTED_FIELDS = {
     const target = new Date(goal.targetDate);
     const today = new Date();
     return today > target && goal.status !== 'achieved';
-  }
+  },
 };
 
 /**
@@ -419,7 +421,7 @@ export const EMOTION_COMPUTED_FIELDS = {
 
   hasHighIntensity: (emotion: EmotionEntry) => {
     return emotion.intensity >= 7;
-  }
+  },
 };
 
 /**
@@ -433,7 +435,7 @@ export function transformData(
     selectFields?: string[];
     flatten?: boolean;
     enrichWithComputed?: boolean;
-  }
+  },
 ): ExportDataCollection {
   let transformed = { ...data };
 
@@ -449,15 +451,21 @@ export function transformData(
   if (options.enrichWithComputed) {
     transformed = {
       ...transformed,
-      students: transformed.students?.map(s =>
-        enrichWithComputedFields(s, STUDENT_COMPUTED_FIELDS as Record<string, (obj: Student) => unknown>)
+      students: transformed.students?.map((s) =>
+        enrichWithComputedFields(
+          s,
+          STUDENT_COMPUTED_FIELDS as Record<string, (obj: Student) => unknown>,
+        ),
       ) as Student[],
-      goals: transformed.goals.map(g =>
-        enrichWithComputedFields(g, GOAL_COMPUTED_FIELDS as Record<string, (obj: Goal) => unknown>)
+      goals: transformed.goals.map((g) =>
+        enrichWithComputedFields(g, GOAL_COMPUTED_FIELDS as Record<string, (obj: Goal) => unknown>),
       ) as Goal[],
-      emotions: transformed.emotions.map(e =>
-        enrichWithComputedFields(e, EMOTION_COMPUTED_FIELDS as Record<string, (obj: EmotionEntry) => unknown>)
-      ) as EmotionEntry[]
+      emotions: transformed.emotions.map((e) =>
+        enrichWithComputedFields(
+          e,
+          EMOTION_COMPUTED_FIELDS as Record<string, (obj: EmotionEntry) => unknown>,
+        ),
+      ) as EmotionEntry[],
     };
   }
 
@@ -473,14 +481,14 @@ export function* transformDataBatched(
     anonymize?: boolean;
     anonymizationOptions?: AnonymizationOptions;
   },
-  batchSize: number = 1000
+  batchSize: number = 1000,
 ): Generator<{ type: string; transformed: unknown[] }> {
   // Transform students in batches
   if (data.students) {
     for (let i = 0; i < data.students.length; i += batchSize) {
       const batch = data.students.slice(i, i + batchSize);
       const transformed = options.anonymize
-        ? batch.map(s => anonymizeStudent(s, options.anonymizationOptions))
+        ? batch.map((s) => anonymizeStudent(s, options.anonymizationOptions))
         : batch;
       yield { type: 'students', transformed };
     }
@@ -490,7 +498,7 @@ export function* transformDataBatched(
   for (let i = 0; i < data.emotions.length; i += batchSize) {
     const batch = data.emotions.slice(i, i + batchSize);
     const transformed = options.anonymize
-      ? batch.map(e => anonymizeEmotion(e, options.anonymizationOptions))
+      ? batch.map((e) => anonymizeEmotion(e, options.anonymizationOptions))
       : batch;
     yield { type: 'emotions', transformed };
   }
@@ -499,7 +507,7 @@ export function* transformDataBatched(
   for (let i = 0; i < data.sensoryInputs.length; i += batchSize) {
     const batch = data.sensoryInputs.slice(i, i + batchSize);
     const transformed = options.anonymize
-      ? batch.map(s => anonymizeSensory(s, options.anonymizationOptions))
+      ? batch.map((s) => anonymizeSensory(s, options.anonymizationOptions))
       : batch;
     yield { type: 'sensoryInputs', transformed };
   }
@@ -508,7 +516,7 @@ export function* transformDataBatched(
   for (let i = 0; i < data.goals.length; i += batchSize) {
     const batch = data.goals.slice(i, i + batchSize);
     const transformed = options.anonymize
-      ? batch.map(g => anonymizeGoal(g, options.anonymizationOptions))
+      ? batch.map((g) => anonymizeGoal(g, options.anonymizationOptions))
       : batch;
     yield { type: 'goals', transformed };
   }
@@ -517,7 +525,7 @@ export function* transformDataBatched(
   for (let i = 0; i < data.trackingEntries.length; i += batchSize) {
     const batch = data.trackingEntries.slice(i, i + batchSize);
     const transformed = options.anonymize
-      ? batch.map(t => anonymizeTracking(t, options.anonymizationOptions))
+      ? batch.map((t) => anonymizeTracking(t, options.anonymizationOptions))
       : batch;
     yield { type: 'trackingEntries', transformed };
   }

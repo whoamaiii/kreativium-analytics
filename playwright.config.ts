@@ -10,7 +10,7 @@ export default defineConfig({
     baseURL: process.env.E2E_BASE_URL || 'http://127.0.0.1:4173',
     trace: 'on-first-retry',
     video: 'retain-on-failure',
-    screenshot: 'only-on-failure'
+    screenshot: 'only-on-failure',
   },
   webServer: {
     command: process.env.E2E_PREVIEW_CMD || 'npm run build:poc && npm run preview:poc',
@@ -24,5 +24,3 @@ export default defineConfig({
     },
   ],
 });
-
-

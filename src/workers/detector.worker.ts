@@ -1,7 +1,12 @@
 import * as faceapi from '@vladmandic/face-api';
 import * as tf from '@tensorflow/tfjs';
 import '@tensorflow/tfjs-backend-cpu';
-import type { DetectorWorkerMessage, DetectorWorkerResult, DetectorWorkerReady, DetectionBox } from '@/detector/types';
+import type {
+  DetectorWorkerMessage,
+  DetectorWorkerResult,
+  DetectorWorkerReady,
+  DetectionBox,
+} from '@/detector/types';
 
 let initialized = false;
 let scoreThreshold = 0.5;
@@ -10,8 +15,12 @@ let modelBaseUrl = '/models';
 async function ensureModels(): Promise<void> {
   if (initialized) return;
   // Use CPU backend in worker for maximum compatibility
-  try { await tf.setBackend('cpu'); } catch {}
-  try { await tf.ready(); } catch {}
+  try {
+    await tf.setBackend('cpu');
+  } catch {}
+  try {
+    await tf.ready();
+  } catch {}
   await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
   await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
   initialized = true;
@@ -41,7 +50,10 @@ self.addEventListener('message', async (evt: MessageEvent<DetectorWorkerMessage>
       // Use ImageData as input to improve compatibility in worker contexts
       const imgData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
       const results = await faceapi
-        .detectAllFaces(imgData as unknown as HTMLCanvasElement, new faceapi.TinyFaceDetectorOptions({ scoreThreshold }))
+        .detectAllFaces(
+          imgData as unknown as HTMLCanvasElement,
+          new faceapi.TinyFaceDetectorOptions({ scoreThreshold }),
+        )
         .withFaceExpressions();
 
       let box: DetectionBox | null = null;
@@ -49,7 +61,8 @@ self.addEventListener('message', async (evt: MessageEvent<DetectorWorkerMessage>
       let topLabel = 'neutral';
       let topProbability = 0;
 
-      let largest: { area: number; box: faceapi.Box; expressions: faceapi.FaceExpressions } | null = null;
+      let largest: { area: number; box: faceapi.Box; expressions: faceapi.FaceExpressions } | null =
+        null;
       for (const r of results ?? []) {
         const a = r.detection.box.width * r.detection.box.height;
         if (!largest || a > largest.area) {
@@ -61,7 +74,10 @@ self.addEventListener('message', async (evt: MessageEvent<DetectorWorkerMessage>
         box = { x: b.x, y: b.y, width: b.width, height: b.height };
         probabilities = largest.expressions as unknown as Record<string, number>;
         for (const [k, v] of Object.entries(probabilities)) {
-          if (v > topProbability) { topProbability = v; topLabel = k; }
+          if (v > topProbability) {
+            topProbability = v;
+            topLabel = k;
+          }
         }
       }
       const dt = performance.now() - t0;
@@ -73,11 +89,11 @@ self.addEventListener('message', async (evt: MessageEvent<DetectorWorkerMessage>
       };
       (self as unknown as Worker).postMessage(payload);
       // Transfer ownership so GC can reclaim quickly
-      try { bitmap.close?.(); } catch {}
+      try {
+        bitmap.close?.();
+      } catch {}
     }
   } catch (e) {
     // Swallow errors to keep worker alive
   }
 });
-
-

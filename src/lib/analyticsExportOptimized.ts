@@ -6,7 +6,6 @@ import { PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalys
 import { logger } from '@/lib/logger';
 import { downloadBlob } from '@/lib/utils';
 
-
 export interface AnalyticsExportData {
   student: Student;
   dateRange: {
@@ -52,7 +51,7 @@ class AnalyticsExportOptimized {
       logger.debug('Loading PDF libraries dynamically...');
       const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
         import('jspdf'),
-        import('html2canvas')
+        import('html2canvas'),
       ]);
       this.pdfLibCache.jsPDF = jsPDF;
       this.pdfLibCache.html2canvas = html2canvas;
@@ -85,7 +84,7 @@ class AnalyticsExportOptimized {
   async exportToPDF(exportData: AnalyticsExportData): Promise<void> {
     // Dynamically import heavy PDF libraries
     const { jsPDF } = await this.loadPDFLibraries();
-    
+
     const pdf = new jsPDF('p', 'mm', 'a4');
     // pageWidth/pageHeight not used currently
     const margin = 20;
@@ -100,7 +99,7 @@ class AnalyticsExportOptimized {
     pdf.text(
       `Date Range: ${format(exportData.dateRange.start, 'MMM dd, yyyy')} - ${format(exportData.dateRange.end, 'MMM dd, yyyy')}`,
       margin,
-      currentY
+      currentY,
     );
     currentY += 10;
 
@@ -118,10 +117,10 @@ class AnalyticsExportOptimized {
       `Emotions Tracked: ${exportData.data.emotions.length}`,
       `Sensory Inputs: ${exportData.data.sensoryInputs.length}`,
       `Patterns Found: ${exportData.analytics.patterns.length}`,
-      `Correlations: ${exportData.analytics.correlations.length}`
+      `Correlations: ${exportData.analytics.correlations.length}`,
     ];
 
-    summaryData.forEach(line => {
+    summaryData.forEach((line) => {
       pdf.text(line, margin, currentY);
       currentY += 7;
     });
@@ -143,7 +142,9 @@ class AnalyticsExportOptimized {
     // Header
     csvSections.push('Analytics Report');
     csvSections.push(`Student: ${exportData.student.name}`);
-    csvSections.push(`Date Range: ${format(exportData.dateRange.start, 'yyyy-MM-dd')} to ${format(exportData.dateRange.end, 'yyyy-MM-dd')}`);
+    csvSections.push(
+      `Date Range: ${format(exportData.dateRange.start, 'yyyy-MM-dd')} to ${format(exportData.dateRange.end, 'yyyy-MM-dd')}`,
+    );
     csvSections.push(`Generated: ${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`);
     csvSections.push('');
 
@@ -160,7 +161,7 @@ class AnalyticsExportOptimized {
     const csvContent = csvSections.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const filename = `analytics-report-${exportData.student.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    
+
     downloadBlob(blob, filename);
   }
 
@@ -174,27 +175,27 @@ class AnalyticsExportOptimized {
         studentId: exportData.student.id,
         dateRange: {
           start: exportData.dateRange.start.toISOString(),
-          end: exportData.dateRange.end.toISOString()
+          end: exportData.dateRange.end.toISOString(),
         },
         generatedAt: new Date().toISOString(),
-        version: '1.0.0'
+        version: '1.0.0',
       },
       summary: {
         totalSessions: exportData.data.entries.length,
         totalEmotions: exportData.data.emotions.length,
         totalSensoryInputs: exportData.data.sensoryInputs.length,
         totalPatterns: exportData.analytics.patterns.length,
-        totalCorrelations: exportData.analytics.correlations.length
+        totalCorrelations: exportData.analytics.correlations.length,
       },
       data: exportData.data,
-      analytics: exportData.analytics
+      analytics: exportData.analytics,
     };
 
     // Create and download JSON
     const jsonString = JSON.stringify(jsonData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
     const filename = `analytics-report-${exportData.student.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.json`;
-    
+
     downloadBlob(blob, filename);
   }
 }

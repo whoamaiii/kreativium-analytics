@@ -1,6 +1,11 @@
 import { logger } from '@/lib/logger';
 import { AI_ANALYSIS_ENABLED, EXPLANATION_V2_ENABLED } from '@/lib/env';
-import { storageGet, storageSet, storageRemove, isStorageAvailable } from '@/lib/storage/storageHelpers';
+import {
+  storageGet,
+  storageSet,
+  storageRemove,
+  isStorageAvailable,
+} from '@/lib/storage/storageHelpers';
 import {
   CORRELATION_THRESHOLDS,
   CORRELATION_SIGNIFICANCE,
@@ -37,7 +42,7 @@ export const STORAGE_KEYS = {
 export interface AnalyticsConfiguration {
   // Schema version to invalidate caches when structure changes
   schemaVersion: string;
-  
+
   // Feature flags (non-breaking)
   features?: {
     enableStructuredInsights?: boolean;
@@ -76,7 +81,7 @@ export interface AnalyticsConfiguration {
     // Optional severity levels for anomaly z-scores; if omitted, defaults will be applied
     anomalySeverityLevels?: {
       medium: number; // z >= medium => medium
-      high: number;   // z >= high => high
+      high: number; // z >= high => high
     };
     huber: {
       delta: number;
@@ -245,14 +250,14 @@ export interface PrecomputationConfig {
 // Default configuration
 export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfiguration = {
   schemaVersion: '2.3.0',
-  
+
   features: {
     enableStructuredInsights: false,
     enableSummaryFacade: true,
     aiAnalysisEnabled: AI_ANALYSIS_ENABLED,
     explanationV2: EXPLANATION_V2_ENABLED,
   },
-  
+
   featureEngineering: {
     timeEncoding: {
       variant: 'sixFeatureV1',
@@ -262,7 +267,7 @@ export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfiguration = {
       minVariance: FEATURE_ENGINEERING.MIN_VARIANCE,
     },
   },
-  
+
   patternAnalysis: {
     minDataPoints: DATA_QUALITY.MIN_DATA_POINTS,
     correlationThreshold: CORRELATION_THRESHOLDS.DISPLAY,
@@ -271,7 +276,7 @@ export const DEFAULT_ANALYTICS_CONFIG: AnalyticsConfiguration = {
     emotionConsistencyThreshold: FREQUENCY_THRESHOLDS.EMOTION_CONSISTENCY,
     moderateNegativeThreshold: FREQUENCY_THRESHOLDS.MODERATE_NEGATIVE,
   },
-  
+
   enhancedAnalysis: {
     minSampleSize: DATA_QUALITY.MIN_SAMPLE_SIZE,
     trendThreshold: TREND_THRESHOLDS.MINIMUM_SLOPE,
@@ -502,7 +507,11 @@ export class AnalyticsConfigManager {
       const envAi = toBool(env.VITE_AI_ANALYSIS_ENABLED);
       const envExplV2 = toBool(env.VITE_EXPLANATION_V2);
       const next: AnalyticsConfiguration = { ...this.config } as AnalyticsConfiguration;
-      next.features = { ...(next.features || {}), aiAnalysisEnabled: envAi, explanationV2: envExplV2 } as AnalyticsConfiguration['features'];
+      next.features = {
+        ...(next.features || {}),
+        aiAnalysisEnabled: envAi,
+        explanationV2: envExplV2,
+      } as AnalyticsConfiguration['features'];
       return next;
     } catch {
       // On any error, return a shallow copy
@@ -534,7 +543,7 @@ export class AnalyticsConfigManager {
   subscribe(callback: (config: AnalyticsConfiguration) => void): () => void {
     this.listeners.push(callback);
     return () => {
-      this.listeners = this.listeners.filter(listener => listener !== callback);
+      this.listeners = this.listeners.filter((listener) => listener !== callback);
     };
   }
 
@@ -548,7 +557,10 @@ export class AnalyticsConfigManager {
       // Validate the imported config structure
       if (this.validateConfig(importedConfig)) {
         // Merge over defaults so new sections (like charts) are included
-        this.config = this.deepMerge(DEFAULT_ANALYTICS_CONFIG, importedConfig as Partial<AnalyticsConfiguration>);
+        this.config = this.deepMerge(
+          DEFAULT_ANALYTICS_CONFIG,
+          importedConfig as Partial<AnalyticsConfiguration>,
+        );
         this.saveConfig();
         this.notifyListeners();
         return true;
@@ -567,16 +579,12 @@ export class AnalyticsConfigManager {
         return { ...DEFAULT_ANALYTICS_CONFIG };
       }
 
-      const stored = storageGet<AnalyticsConfiguration | null>(
-        this.storageKey,
-        null,
-        {
-          deserialize: (value) => {
-            const parsed = JSON.parse(value);
-            return this.validateConfig(parsed) ? parsed : null;
-          }
-        }
-      );
+      const stored = storageGet<AnalyticsConfiguration | null>(this.storageKey, null, {
+        deserialize: (value) => {
+          const parsed = JSON.parse(value);
+          return this.validateConfig(parsed) ? parsed : null;
+        },
+      });
 
       if (stored) {
         // Merge stored over defaults so new defaults (incl. env-driven flags) apply
@@ -609,19 +617,22 @@ export class AnalyticsConfigManager {
 
   private notifyListeners(): void {
     const configCopy = { ...this.config };
-    this.listeners.forEach(listener => listener(configCopy));
+    this.listeners.forEach((listener) => listener(configCopy));
   }
 
-  private deepMerge(target: AnalyticsConfiguration, source: Partial<AnalyticsConfiguration>): AnalyticsConfiguration {
+  private deepMerge(
+    target: AnalyticsConfiguration,
+    source: Partial<AnalyticsConfiguration>,
+  ): AnalyticsConfiguration {
     // Create a deep copy of the target
     const result = JSON.parse(JSON.stringify(target)) as AnalyticsConfiguration;
-    
+
     // Merge source into result
     const merge = (targetObj: Record<string, unknown>, sourceObj: Record<string, unknown>) => {
-      Object.keys(sourceObj).forEach(key => {
+      Object.keys(sourceObj).forEach((key) => {
         const sourceValue = sourceObj[key];
         const targetValue = targetObj[key];
-        
+
         if (sourceValue !== undefined && sourceValue !== null) {
           if (
             typeof sourceValue === 'object' &&
@@ -639,9 +650,12 @@ export class AnalyticsConfigManager {
         }
       });
     };
-    
-    merge(result as unknown as Record<string, unknown>, source as unknown as Record<string, unknown>);
-    
+
+    merge(
+      result as unknown as Record<string, unknown>,
+      source as unknown as Record<string, unknown>,
+    );
+
     return result;
   }
 
@@ -650,7 +664,7 @@ export class AnalyticsConfigManager {
     if (!config || typeof config !== 'object') {
       return false;
     }
-    
+
     const cfg = config as Record<string, unknown>;
     return (
       typeof cfg.schemaVersion === 'string' &&
@@ -678,7 +692,7 @@ export const analyticsConfig = AnalyticsConfigManager.getInstance();
 export const ANALYTICS_CONFIG = {
   ...DEFAULT_ANALYTICS_CONFIG,
   // Add missing POSITIVE_EMOTIONS set
-  POSITIVE_EMOTIONS: new Set(EMOTION_TAXONOMY.POSITIVE_EMOTIONS)
+  POSITIVE_EMOTIONS: new Set(EMOTION_TAXONOMY.POSITIVE_EMOTIONS),
 };
 export type AnalyticsConfig = typeof ANALYTICS_CONFIG;
 

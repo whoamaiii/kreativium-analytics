@@ -3,13 +3,39 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmotionEntry, SensoryEntry } from '@/types/student';
-import { Sparkles, Zap, Brain, Clock, Sun, Moon, RefreshCw, Plus, X, Trash2, Edit, Star } from 'lucide-react';
+import {
+  Sparkles,
+  Zap,
+  Brain,
+  Clock,
+  Sun,
+  Moon,
+  RefreshCw,
+  Plus,
+  X,
+  Trash2,
+  Edit,
+  Star,
+} from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useStorageState } from '@/lib/storage/useStorageState';
 
 interface QuickTemplate {
@@ -26,7 +52,10 @@ interface QuickTemplate {
 
 interface QuickEntryTemplatesProps {
   studentId: string;
-  onApplyTemplate: (emotions: Partial<EmotionEntry>[], sensoryInputs: Partial<SensoryEntry>[]) => void;
+  onApplyTemplate: (
+    emotions: Partial<EmotionEntry>[],
+    sensoryInputs: Partial<SensoryEntry>[],
+  ) => void;
 }
 
 const defaultTemplates: QuickTemplate[] = [
@@ -37,14 +66,14 @@ const defaultTemplates: QuickTemplate[] = [
     category: 'morning',
     emotions: [
       { emotion: 'calm', intensity: 3 },
-      { emotion: 'excited', intensity: 2 }
+      { emotion: 'excited', intensity: 2 },
     ],
     sensoryInputs: [
       { sensoryType: 'visual', response: 'neutral', intensity: 2 },
-      { sensoryType: 'auditory', response: 'seeking', intensity: 3 }
+      { sensoryType: 'auditory', response: 'seeking', intensity: 3 },
     ],
     isDefault: true,
-    usageCount: 0
+    usageCount: 0,
   },
   {
     id: 'transition-stress',
@@ -53,14 +82,14 @@ const defaultTemplates: QuickTemplate[] = [
     category: 'transition',
     emotions: [
       { emotion: 'anxious', intensity: 4 },
-      { emotion: 'angry', intensity: 3 }
+      { emotion: 'angry', intensity: 3 },
     ],
     sensoryInputs: [
       { sensoryType: 'auditory', response: 'avoiding', intensity: 4 },
-      { sensoryType: 'tactile', response: 'seeking', intensity: 4 }
+      { sensoryType: 'tactile', response: 'seeking', intensity: 4 },
     ],
     isDefault: true,
-    usageCount: 0
+    usageCount: 0,
   },
   {
     id: 'focused-learning',
@@ -69,29 +98,27 @@ const defaultTemplates: QuickTemplate[] = [
     category: 'learning',
     emotions: [
       { emotion: 'calm', intensity: 4 },
-      { emotion: 'excited', intensity: 3 }
+      { emotion: 'excited', intensity: 3 },
     ],
     sensoryInputs: [
       { sensoryType: 'visual', response: 'seeking', intensity: 3 },
-      { sensoryType: 'proprioceptive', response: 'neutral', intensity: 2 }
+      { sensoryType: 'proprioceptive', response: 'neutral', intensity: 2 },
     ],
     isDefault: true,
-    usageCount: 0
+    usageCount: 0,
   },
   {
     id: 'sensory-break',
     name: 'Sensory Break',
     description: 'During or after sensory regulation break',
     category: 'break',
-    emotions: [
-      { emotion: 'calm', intensity: 4 }
-    ],
+    emotions: [{ emotion: 'calm', intensity: 4 }],
     sensoryInputs: [
       { sensoryType: 'proprioceptive', response: 'seeking', intensity: 4 },
-      { sensoryType: 'vestibular', response: 'seeking', intensity: 3 }
+      { sensoryType: 'vestibular', response: 'seeking', intensity: 3 },
     ],
     isDefault: true,
-    usageCount: 0
+    usageCount: 0,
   },
   {
     id: 'afternoon-fatigue',
@@ -100,32 +127,29 @@ const defaultTemplates: QuickTemplate[] = [
     category: 'afternoon',
     emotions: [
       { emotion: 'sad', intensity: 2 },
-      { emotion: 'calm', intensity: 2 }
+      { emotion: 'calm', intensity: 2 },
     ],
     sensoryInputs: [
       { sensoryType: 'auditory', response: 'avoiding', intensity: 3 },
-      { sensoryType: 'visual', response: 'avoiding', intensity: 2 }
+      { sensoryType: 'visual', response: 'avoiding', intensity: 2 },
     ],
     isDefault: true,
-    usageCount: 0
-  }
+    usageCount: 0,
+  },
 ];
 
 /**
  * QuickEntryTemplates Component
- * 
+ *
  * Provides pre-configured templates for quick emotion and sensory input entries.
  * Templates are persisted per student in localStorage for convenience.
- * 
+ *
  * @component
  * @param {QuickEntryTemplatesProps} props - Component props
  * @param {string} props.studentId - ID of the current student
  * @param {Function} props.onApplyTemplate - Callback when a template is applied
  */
-const QuickEntryTemplatesComponent = ({
-  studentId,
-  onApplyTemplate
-}: QuickEntryTemplatesProps) => {
+const QuickEntryTemplatesComponent = ({ studentId, onApplyTemplate }: QuickEntryTemplatesProps) => {
   // Generate storage key per student
   const storageKey = useMemo(() => `quickTemplates_${studentId}`, [studentId]);
 
@@ -133,47 +157,45 @@ const QuickEntryTemplatesComponent = ({
    * Initialize templates from storage with validation.
    * Uses storage hook with custom deserializer for validation.
    */
-  const [templates, setTemplates] = useStorageState<QuickTemplate[]>(
-    storageKey,
-    defaultTemplates,
-    {
-      deserialize: (value) => {
-        try {
-          const parsed = JSON.parse(value);
+  const [templates, setTemplates] = useStorageState<QuickTemplate[]>(storageKey, defaultTemplates, {
+    deserialize: (value) => {
+      try {
+        const parsed = JSON.parse(value);
 
-          // Validate that parsed data is an array
-          if (!Array.isArray(parsed)) {
-            logger.warn('Invalid template data in storage, using defaults', { studentId });
-            return defaultTemplates;
-          }
-
-          // Basic validation of template structure
-          const isValidTemplate = (t: unknown): t is QuickTemplate => {
-            return t &&
-                   typeof (t as any).id === 'string' &&
-                   typeof (t as any).name === 'string' &&
-                   Array.isArray((t as any).emotions) &&
-                   Array.isArray((t as any).sensoryInputs);
-          };
-
-          // Filter out invalid templates
-          const validTemplates = parsed.filter(isValidTemplate);
-
-          // If no valid templates found, return defaults
-          if (validTemplates.length === 0) {
-            logger.warn('No valid templates found in storage, using defaults', { studentId });
-            return defaultTemplates;
-          }
-
-          return validTemplates;
-        } catch (error) {
-          // Log error and fall back to defaults
-          logger.error('Failed to parse saved templates, using defaults', error);
+        // Validate that parsed data is an array
+        if (!Array.isArray(parsed)) {
+          logger.warn('Invalid template data in storage, using defaults', { studentId });
           return defaultTemplates;
         }
-      },
-    }
-  );
+
+        // Basic validation of template structure
+        const isValidTemplate = (t: unknown): t is QuickTemplate => {
+          return (
+            t &&
+            typeof (t as any).id === 'string' &&
+            typeof (t as any).name === 'string' &&
+            Array.isArray((t as any).emotions) &&
+            Array.isArray((t as any).sensoryInputs)
+          );
+        };
+
+        // Filter out invalid templates
+        const validTemplates = parsed.filter(isValidTemplate);
+
+        // If no valid templates found, return defaults
+        if (validTemplates.length === 0) {
+          logger.warn('No valid templates found in storage, using defaults', { studentId });
+          return defaultTemplates;
+        }
+
+        return validTemplates;
+      } catch (error) {
+        // Log error and fall back to defaults
+        logger.error('Failed to parse saved templates, using defaults', error);
+        return defaultTemplates;
+      }
+    },
+  });
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<QuickTemplate | null>(null);
@@ -184,7 +206,7 @@ const QuickEntryTemplatesComponent = ({
     emotions: [],
     sensoryInputs: [],
     isDefault: false,
-    usageCount: 0
+    usageCount: 0,
   });
 
   const templateNameId = React.useId();
@@ -204,25 +226,23 @@ const QuickEntryTemplatesComponent = ({
 
   const applyTemplate = (template: QuickTemplate) => {
     // Add student ID to entries
-    const emotions = template.emotions.map(emotion => ({
+    const emotions = template.emotions.map((emotion) => ({
       ...emotion,
       studentId,
       id: `temp_${Date.now()}_${Math.random()}`,
-      timestamp: new Date()
+      timestamp: new Date(),
     }));
-    
-    const sensoryInputs = template.sensoryInputs.map(sensory => ({
+
+    const sensoryInputs = template.sensoryInputs.map((sensory) => ({
       ...sensory,
       studentId,
       id: `temp_${Date.now()}_${Math.random()}`,
-      timestamp: new Date()
+      timestamp: new Date(),
     }));
 
     // Update usage statistics
-    const updatedTemplates = templates.map(t => 
-      t.id === template.id 
-        ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date() }
-        : t
+    const updatedTemplates = templates.map((t) =>
+      t.id === template.id ? { ...t, usageCount: t.usageCount + 1, lastUsed: new Date() } : t,
     );
     saveTemplates(updatedTemplates);
 
@@ -231,20 +251,20 @@ const QuickEntryTemplatesComponent = ({
   };
 
   const deleteTemplate = (templateId: string) => {
-    const template = templates.find(t => t.id === templateId);
+    const template = templates.find((t) => t.id === templateId);
     if (template?.isDefault) {
-      toast.error("Cannot delete default templates");
+      toast.error('Cannot delete default templates');
       return;
     }
-    
-    const updatedTemplates = templates.filter(t => t.id !== templateId);
+
+    const updatedTemplates = templates.filter((t) => t.id !== templateId);
     saveTemplates(updatedTemplates);
-    toast.success("Template deleted");
+    toast.success('Template deleted');
   };
 
   const createTemplate = () => {
     if (!newTemplate.name?.trim()) {
-      toast.error("Template name is required");
+      toast.error('Template name is required');
       return;
     }
 
@@ -252,11 +272,18 @@ const QuickEntryTemplatesComponent = ({
       id: `custom_${Date.now()}`,
       name: newTemplate.name!,
       description: newTemplate.description || '',
-      category: (newTemplate.category as "morning" | "transition" | "learning" | "break" | "afternoon" | "custom") || 'custom',
+      category:
+        (newTemplate.category as
+          | 'morning'
+          | 'transition'
+          | 'learning'
+          | 'break'
+          | 'afternoon'
+          | 'custom') || 'custom',
       emotions: newTemplate.emotions || [],
       sensoryInputs: newTemplate.sensoryInputs || [],
       isDefault: false,
-      usageCount: 0
+      usageCount: 0,
     };
 
     const updatedTemplates = [...templates, template];
@@ -268,20 +295,26 @@ const QuickEntryTemplatesComponent = ({
       emotions: [],
       sensoryInputs: [],
       isDefault: false,
-      usageCount: 0
+      usageCount: 0,
     });
     setIsCreating(false);
-    toast.success("Template created successfully");
+    toast.success('Template created successfully');
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'morning': return 'bg-gradient-to-r from-yellow-400 to-orange-400';
-      case 'transition': return 'bg-gradient-to-r from-red-400 to-pink-400';
-      case 'learning': return 'bg-gradient-to-r from-blue-400 to-indigo-400';
-      case 'break': return 'bg-gradient-to-r from-green-400 to-teal-400';
-      case 'afternoon': return 'bg-gradient-to-r from-purple-400 to-indigo-400';
-      default: return 'bg-gradient-to-r from-gray-400 to-gray-500';
+      case 'morning':
+        return 'bg-gradient-to-r from-yellow-400 to-orange-400';
+      case 'transition':
+        return 'bg-gradient-to-r from-red-400 to-pink-400';
+      case 'learning':
+        return 'bg-gradient-to-r from-blue-400 to-indigo-400';
+      case 'break':
+        return 'bg-gradient-to-r from-green-400 to-teal-400';
+      case 'afternoon':
+        return 'bg-gradient-to-r from-purple-400 to-indigo-400';
+      default:
+        return 'bg-gradient-to-r from-gray-400 to-gray-500';
     }
   };
 
@@ -303,7 +336,12 @@ const QuickEntryTemplatesComponent = ({
           </CardTitle>
           <Dialog open={isCreating} onOpenChange={setIsCreating}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline" aria-label="Create new template" title="Create new template">
+              <Button
+                size="sm"
+                variant="outline"
+                aria-label="Create new template"
+                title="Create new template"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 <span className="hidden sm:inline">New Template</span>
               </Button>
@@ -317,21 +355,27 @@ const QuickEntryTemplatesComponent = ({
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium" htmlFor={templateNameId}>Template Name</label>
+                  <label className="text-sm font-medium" htmlFor={templateNameId}>
+                    Template Name
+                  </label>
                   <Input
                     id={templateNameId}
                     placeholder="e.g., Sensory Overload Response"
                     value={newTemplate.name || ''}
-                    onChange={(e) => setNewTemplate(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => setNewTemplate((prev) => ({ ...prev, name: e.target.value }))}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium" htmlFor={templateDescriptionId}>Description</label>
+                  <label className="text-sm font-medium" htmlFor={templateDescriptionId}>
+                    Description
+                  </label>
                   <Textarea
                     id={templateDescriptionId}
                     placeholder="Brief description of when to use this template"
                     value={newTemplate.description || ''}
-                    onChange={(e) => setNewTemplate(prev => ({ ...prev, description: e.target.value }))}
+                    onChange={(e) =>
+                      setNewTemplate((prev) => ({ ...prev, description: e.target.value }))
+                    }
                   />
                 </div>
                 <div>
@@ -344,7 +388,18 @@ const QuickEntryTemplatesComponent = ({
                   </label>
                   <Select
                     value={newTemplate.category}
-                    onValueChange={(value) => setNewTemplate(prev => ({ ...prev, category: value as "morning" | "transition" | "learning" | "break" | "afternoon" | "custom" }))}
+                    onValueChange={(value) =>
+                      setNewTemplate((prev) => ({
+                        ...prev,
+                        category: value as
+                          | 'morning'
+                          | 'transition'
+                          | 'learning'
+                          | 'break'
+                          | 'afternoon'
+                          | 'custom',
+                      }))
+                    }
                   >
                     <SelectTrigger
                       id={templateCategoryTriggerId}
@@ -366,9 +421,7 @@ const QuickEntryTemplatesComponent = ({
                   <Button variant="outline" onClick={() => setIsCreating(false)}>
                     Cancel
                   </Button>
-                  <Button onClick={createTemplate}>
-                    Create Template
-                  </Button>
+                  <Button onClick={createTemplate}>Create Template</Button>
                 </div>
               </div>
             </DialogContent>
@@ -379,16 +432,19 @@ const QuickEntryTemplatesComponent = ({
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedTemplates.map((template) => (
-            <Card key={template.id} className="relative overflow-hidden border-border/50 hover:shadow-md transition-shadow">
+            <Card
+              key={template.id}
+              className="relative overflow-hidden border-border/50 hover:shadow-md transition-shadow"
+            >
               {template.usageCount > 0 && (
                 <div className="absolute top-2 right-2 flex items-center gap-1">
                   <Star className="h-3 w-3 text-yellow-500 fill-current" />
                   <span className="text-xs text-muted-foreground">{template.usageCount}</span>
                 </div>
               )}
-              
+
               <div className={`h-2 ${getCategoryColor(template.category)}`} />
-              
+
               <CardContent className="p-4">
                 <div className="space-y-3">
                   <div>
@@ -405,7 +461,7 @@ const QuickEntryTemplatesComponent = ({
                         {template.category}
                       </Badge>
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-1">
                       {template.emotions.slice(0, 2).map((emotion, idx) => (
                         <Badge key={idx} variant="secondary" className="text-xs">
@@ -428,7 +484,7 @@ const QuickEntryTemplatesComponent = ({
                     >
                       Apply Template
                     </Button>
-                    
+
                     {!template.isDefault && (
                       <div className="flex gap-1">
                         <Button

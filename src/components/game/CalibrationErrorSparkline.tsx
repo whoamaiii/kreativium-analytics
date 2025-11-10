@@ -3,7 +3,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { EChartsOption } from 'echarts';
 import { readGameTelemetry } from '@/lib/game/telemetry';
 
-const EChartContainer = React.lazy(() => import('@/components/charts/EChartContainer').then(m => ({ default: m.EChartContainer })));
+const EChartContainer = React.lazy(() =>
+  import('@/components/charts/EChartContainer').then((m) => ({ default: m.EChartContainer })),
+);
 
 export function CalibrationErrorSparkline({ maxPoints = 30 }: { maxPoints?: number }) {
   const data = useMemo(() => {
@@ -13,7 +15,10 @@ export function CalibrationErrorSparkline({ maxPoints = 30 }: { maxPoints?: numb
       const ev = events[i] as any;
       if (ev?.kind === 'confidence_reported') {
         const ts = typeof ev.ts === 'number' ? ev.ts : Date.now();
-        const err = typeof ev.calibrationError === 'number' ? Math.max(0, Math.min(1, ev.calibrationError)) : null;
+        const err =
+          typeof ev.calibrationError === 'number'
+            ? Math.max(0, Math.min(1, ev.calibrationError))
+            : null;
         if (err != null) points.push({ ts, err });
       }
     }
@@ -26,15 +31,28 @@ export function CalibrationErrorSparkline({ maxPoints = 30 }: { maxPoints?: numb
     if (!data.length) return null;
     return {
       grid: { top: 8, bottom: 12, left: 24, right: 8 },
-      xAxis: { type: 'time', axisLabel: { show: false }, axisTick: { show: false }, axisLine: { show: false } },
-      yAxis: { type: 'value', min: 0, max: 1, axisLabel: { show: false }, axisTick: { show: false }, axisLine: { show: false }, splitLine: { show: false } },
+      xAxis: {
+        type: 'time',
+        axisLabel: { show: false },
+        axisTick: { show: false },
+        axisLine: { show: false },
+      },
+      yAxis: {
+        type: 'value',
+        min: 0,
+        max: 1,
+        axisLabel: { show: false },
+        axisTick: { show: false },
+        axisLine: { show: false },
+        splitLine: { show: false },
+      },
       series: [
         {
           type: 'line',
           smooth: true,
           showSymbol: false,
           areaStyle: { opacity: 0.25 },
-          data: data.map(p => [p.ts, Number(p.err.toFixed(3))]),
+          data: data.map((p) => [p.ts, Number(p.err.toFixed(3))]),
         },
       ],
       tooltip: { trigger: 'axis' },
@@ -55,7 +73,3 @@ export function CalibrationErrorSparkline({ maxPoints = 30 }: { maxPoints?: numb
 }
 
 export default CalibrationErrorSparkline;
-
-
-
-

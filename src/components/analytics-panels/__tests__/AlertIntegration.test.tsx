@@ -94,7 +94,7 @@ describe('Alert Integration', () => {
       <AlertsPanel
         filteredData={{ entries: [], emotions: [], sensoryInputs: [] }}
         studentId={'all'}
-      />
+      />,
     );
 
     expect(await screen.findByText(/Total:/)).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe('Alert Integration', () => {
       <AlertsPanel
         filteredData={{ entries: [], emotions: [], sensoryInputs: [] }}
         studentId={'all'}
-      />
+      />,
     );
 
     act(() => {
@@ -135,5 +135,3 @@ describe('Alert Integration', () => {
     expect(await screen.findByText(/Snoozed/i)).toBeInTheDocument();
   });
 });
-
-

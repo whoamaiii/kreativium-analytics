@@ -1,6 +1,7 @@
 # JSON Export and Backup System
 
-This module provides focused functionality for JSON export and backup/restore operations with data integrity and version management.
+This module provides focused functionality for JSON export and backup/restore operations with data
+integrity and version management.
 
 ## Architecture
 
@@ -19,6 +20,7 @@ src/lib/export/json/
 **Purpose**: Handle selective JSON export with filtering, anonymization, and pretty-printing.
 
 **Key Features**:
+
 - Selective field export (students, emotions, sensoryInputs, goals, trackingEntries)
 - Date range filtering
 - Data anonymization
@@ -52,6 +54,7 @@ parseJSONExport(jsonString: string): JSONExportData | null
 **Purpose**: Handle full data backups and restoration with validation and version management.
 
 **Key Features**:
+
 - Full backup creation
 - Student-specific backups
 - Incremental backup support (future)
@@ -105,14 +108,14 @@ getBackupStats(backup: BackupData): BackupStats
 
 ```typescript
 interface BackupData {
-  version: string;              // Schema version (e.g., "1.0.0")
-  timestamp: Date;              // Backup creation time
-  students: Student[];          // Student records
+  version: string; // Schema version (e.g., "1.0.0")
+  timestamp: Date; // Backup creation time
+  students: Student[]; // Student records
   trackingEntries: TrackingEntry[];
   emotions: EmotionEntry[];
   sensoryInputs: SensoryEntry[];
   goals: Goal[];
-  metadata: BackupMetadata;     // Backup metadata
+  metadata: BackupMetadata; // Backup metadata
 }
 ```
 
@@ -120,14 +123,14 @@ interface BackupData {
 
 ```typescript
 interface BackupMetadata {
-  exportedBy: string;           // System identifier
-  totalRecords: number;         // Total count of all records
+  exportedBy: string; // System identifier
+  totalRecords: number; // Total count of all records
   dateRange: {
-    earliest: Date;             // Earliest data point
-    latest: Date;               // Latest data point
+    earliest: Date; // Earliest data point
+    latest: Date; // Latest data point
   };
-  compressionUsed?: boolean;    // Future: compression flag
-  checksum?: string;            // Future: data integrity check
+  compressionUsed?: boolean; // Future: compression flag
+  checksum?: string; // Future: data integrity check
 }
 ```
 
@@ -135,9 +138,9 @@ interface BackupMetadata {
 
 ```typescript
 interface JSONExportData {
-  version: string;              // Export schema version
-  exportDate: string;           // ISO date string
-  options: JSONExportOptions;   // Export options used
+  version: string; // Export schema version
+  exportDate: string; // ISO date string
+  options: JSONExportOptions; // Export options used
   data: {
     students?: Student[];
     emotions?: EmotionEntry[];
@@ -162,12 +165,12 @@ const jsonString = jsonExporter.generateJSONExport(
     trackingEntries,
     emotions,
     sensoryInputs,
-    goals
+    goals,
   },
   {
     includeFields: ['students', 'emotions', 'sensoryInputs'],
-    prettyPrint: true
-  }
+    prettyPrint: true,
+  },
 );
 
 // Download the JSON file
@@ -184,19 +187,15 @@ link.click();
 ```typescript
 import { jsonExporter } from '@/lib/export/json';
 
-const jsonString = jsonExporter.generateJSONExport(
-  students,
-  allData,
-  {
-    includeFields: ['emotions', 'sensoryInputs', 'goals'],
-    dateRange: {
-      start: new Date('2024-01-01'),
-      end: new Date('2024-12-31')
-    },
-    anonymize: true,        // Anonymize student data
-    prettyPrint: true
-  }
-);
+const jsonString = jsonExporter.generateJSONExport(students, allData, {
+  includeFields: ['emotions', 'sensoryInputs', 'goals'],
+  dateRange: {
+    start: new Date('2024-01-01'),
+    end: new Date('2024-12-31'),
+  },
+  anonymize: true, // Anonymize student data
+  prettyPrint: true,
+});
 ```
 
 ### Single Student Export
@@ -204,16 +203,12 @@ const jsonString = jsonExporter.generateJSONExport(
 ```typescript
 import { jsonExporter } from '@/lib/export/json';
 
-const student = students.find(s => s.id === studentId);
+const student = students.find((s) => s.id === studentId);
 if (student) {
-  const jsonString = jsonExporter.generateStudentJSONExport(
-    student,
-    allData,
-    {
-      anonymize: false,
-      prettyPrint: true
-    }
-  );
+  const jsonString = jsonExporter.generateStudentJSONExport(student, allData, {
+    anonymize: false,
+    prettyPrint: true,
+  });
 }
 ```
 
@@ -223,15 +218,12 @@ if (student) {
 import { backupSystem } from '@/lib/export/json';
 
 // Create full backup
-const backup = backupSystem.createFullBackup(
-  students,
-  {
-    trackingEntries,
-    emotions,
-    sensoryInputs,
-    goals
-  }
-);
+const backup = backupSystem.createFullBackup(students, {
+  trackingEntries,
+  emotions,
+  sensoryInputs,
+  goals,
+});
 
 // Serialize to JSON
 const backupJson = backupSystem.serializeBackup(backup, true);
@@ -250,7 +242,7 @@ link.click();
 ```typescript
 import { backupSystem } from '@/lib/export/json';
 
-const student = students.find(s => s.id === studentId);
+const student = students.find((s) => s.id === studentId);
 if (student) {
   const backup = backupSystem.createStudentBackup(student, allData);
   const backupJson = backupSystem.serializeBackup(backup);
@@ -309,7 +301,7 @@ console.log('Backup Statistics:', {
   students: stats.students,
   totalRecords: stats.totalRecords,
   dateRange: stats.dateRange,
-  estimatedSize: `${(stats.estimatedSize / 1024).toFixed(2)} KB`
+  estimatedSize: `${(stats.estimatedSize / 1024).toFixed(2)} KB`,
 });
 ```
 
@@ -322,11 +314,7 @@ import { backupSystem } from '@/lib/export/json';
 const lastBackupTime = new Date('2024-11-01T00:00:00Z');
 
 // Create incremental backup
-const incrementalBackup = backupSystem.createIncrementalBackup(
-  lastBackupTime,
-  students,
-  allData
-);
+const incrementalBackup = backupSystem.createIncrementalBackup(lastBackupTime, students, allData);
 
 console.log(`Incremental backup contains ${incrementalBackup.metadata.totalRecords} new records`);
 ```
@@ -336,28 +324,33 @@ console.log(`Incremental backup contains ${incrementalBackup.metadata.totalRecor
 The backup system validates all data before restoration:
 
 ### Student Validation
+
 - Must have valid `id`
 - Must have `name`
 - Must have `createdAt` date
 
 ### Tracking Entry Validation
+
 - Must have valid `id`
 - Must reference existing student ID
 - Must have valid `timestamp`
 
 ### Emotion Entry Validation
+
 - Must have valid `id`
 - Must reference existing student ID
 - Must have `emotion` type
 - Intensity must be between 0-10
 
 ### Sensory Entry Validation
+
 - Must have valid `id`
 - Must reference existing student ID
 - Must have `sensoryType`
 - Must have `response`
 
 ### Goal Validation
+
 - Must have valid `id`
 - Must reference existing student ID
 - Must have `title`
@@ -366,9 +359,11 @@ The backup system validates all data before restoration:
 ## Version Management
 
 ### Current Version
+
 - **1.0.0** - Initial schema version
 
 ### Version Compatibility
+
 - Same major version = fully compatible
 - Different major version = requires migration
 - Migration logic will be added in future versions
@@ -391,27 +386,32 @@ const migrations: MigrationStrategy[] = [
     migrate: (data) => {
       // Transform data structure
       return transformedData;
-    }
-  }
+    },
+  },
 ];
 ```
 
 ## Data Integrity
 
 ### Anonymization
+
 When `anonymize: true` is set:
+
 - Student names become `Student_XXXX` (last 4 chars of ID)
 - Date of birth removed
 - Student IDs truncated to last 4 characters
 - Notes and descriptions redacted to `[REDACTED]`
 
 ### Date Handling
+
 All dates are:
+
 - Stored as ISO 8601 strings in JSON
 - Automatically converted to Date objects on parse
 - Validated during deserialization
 
 ### Validation
+
 - All records validated against schema
 - Invalid records logged and skipped
 - Student references validated (referential integrity)

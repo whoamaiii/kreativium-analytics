@@ -1,12 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { AlertTriangle, CheckCircle, Eye, TrendingUp } from "lucide-react";
-import { alertSystem, AlertHistoryEntry } from "@/lib/alertSystem";
-import { toast } from "@/hooks/use-toast";
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { AlertTriangle, CheckCircle, Eye, TrendingUp } from 'lucide-react';
+import { alertSystem, AlertHistoryEntry } from '@/lib/alertSystem';
+import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
 
@@ -24,7 +31,7 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
 
   const loadAlerts = useCallback(() => {
     let alertList: AlertHistoryEntry[];
-    
+
     if (studentId) {
       alertList = alertSystem.getStudentAlerts(studentId);
     } else {
@@ -32,7 +39,7 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
     }
 
     if (showOnlyUnresolved) {
-      alertList = alertList.filter(alert => !alert.resolved);
+      alertList = alertList.filter((alert) => !alert.resolved);
     }
 
     // Sort a copy to avoid mutating the original array
@@ -62,16 +69,16 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
    */
   const handleResolveAlert = () => {
     if (!selectedAlert) return;
-    
+
     setIsResolving(true);
-    
+
     try {
       alertSystem.resolveAlert(
-        selectedAlert.alert.id, 
+        selectedAlert.alert.id,
         'Teacher', // In a real app, this would be the current user
-        resolveNotes.trim() || undefined
+        resolveNotes.trim() || undefined,
       );
-      
+
       // Clean up state after successful resolution
       setSelectedAlert(null);
       setResolveNotes('');
@@ -117,7 +124,11 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
         <CardContent className="pt-6">
           <div className="text-center text-muted-foreground">
             <CheckCircle className="h-8 w-8 mx-auto mb-2 text-success" />
-            <p>{showOnlyUnresolved ? String(tAnalytics('alerts.noneUnresolved')) : String(tAnalytics('alerts.none'))}</p>
+            <p>
+              {showOnlyUnresolved
+                ? String(tAnalytics('alerts.noneUnresolved'))
+                : String(tAnalytics('alerts.none'))}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -127,21 +138,30 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
   return (
     <div className="space-y-4">
       {alerts.map((alertEntry) => (
-        <Card key={alertEntry.alert.id} className={`transition-all ${
-          !alertEntry.viewed ? 'ring-2 ring-primary/20' : ''
-        }`}>
+        <Card
+          key={alertEntry.alert.id}
+          className={`transition-all ${!alertEntry.viewed ? 'ring-2 ring-primary/20' : ''}`}
+        >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-3">
-                <div className="mt-1">
-                  {getSeverityIcon(alertEntry.alert.severity)}
-                </div>
+                <div className="mt-1">{getSeverityIcon(alertEntry.alert.severity)}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <CardTitle className="text-base font-semibold">
                       {alertEntry.alert.title}
                     </CardTitle>
-                    <Badge variant={getSeverityColor(alertEntry.alert.severity) as "default" | "secondary" | "destructive" | "outline" | null | undefined}>
+                    <Badge
+                      variant={
+                        getSeverityColor(alertEntry.alert.severity) as
+                          | 'default'
+                          | 'secondary'
+                          | 'destructive'
+                          | 'outline'
+                          | null
+                          | undefined
+                      }
+                    >
                       {alertEntry.alert.severity}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
@@ -153,7 +173,11 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                   </p>
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>{alertEntry.alert.timestamp.toLocaleDateString()}</span>
-                    <span>{tAnalytics('alerts.dataPointsLabel', { count: alertEntry.alert.dataPoints ?? 0 })}</span>
+                    <span>
+                      {tAnalytics('alerts.dataPointsLabel', {
+                        count: alertEntry.alert.dataPoints ?? 0,
+                      })}
+                    </span>
                     {alertEntry.resolved && (
                       <Badge variant="outline" className="text-success-foreground bg-success">
                         {String(tAnalytics('alerts.resolvedLabel'))}
@@ -173,7 +197,7 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                   </Button>
                 )}
                 {!alertEntry.resolved && (
-                  <Dialog 
+                  <Dialog
                     open={selectedAlert?.alert.id === alertEntry.alert.id}
                     onOpenChange={(open) => {
                       if (open) {
@@ -185,10 +209,7 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                     }}
                   >
                     <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                      >
+                      <Button variant="outline" size="sm">
                         {String(tCommon('resolve'))}
                       </Button>
                     </DialogTrigger>
@@ -201,28 +222,39 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                       </DialogHeader>
                       <div className="space-y-4">
                         <div>
-                          <h4 className="font-medium mb-2">{String(tAnalytics('alerts.details'))}</h4>
+                          <h4 className="font-medium mb-2">
+                            {String(tAnalytics('alerts.details'))}
+                          </h4>
                           <p className="text-sm text-muted-foreground mb-3">
                             {selectedAlert?.alert.description}
                           </p>
-                          
-                          {selectedAlert?.alert.recommendations && selectedAlert.alert.recommendations.length > 0 && (
-                            <div>
-                              <h5 className="text-sm font-medium mb-2">{String(tCommon('recommendations'))}:</h5>
-                              <ul className="text-sm text-muted-foreground space-y-1">
-                                {selectedAlert.alert.recommendations.map((rec) => (
-                                  <li key={`${selectedAlert.alert.id}-${rec}`} className="flex items-start gap-2">
-                                    <span className="text-primary">•</span>
-                                    <span>{rec}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+
+                          {selectedAlert?.alert.recommendations &&
+                            selectedAlert.alert.recommendations.length > 0 && (
+                              <div>
+                                <h5 className="text-sm font-medium mb-2">
+                                  {String(tCommon('recommendations'))}:
+                                </h5>
+                                <ul className="text-sm text-muted-foreground space-y-1">
+                                  {selectedAlert.alert.recommendations.map((rec) => (
+                                    <li
+                                      key={`${selectedAlert.alert.id}-${rec}`}
+                                      className="flex items-start gap-2"
+                                    >
+                                      <span className="text-primary">•</span>
+                                      <span>{rec}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                         </div>
-                        
+
                         <div>
-                          <label htmlFor="resolution-notes" className="text-sm font-medium mb-2 block">
+                          <label
+                            htmlFor="resolution-notes"
+                            className="text-sm font-medium mb-2 block"
+                          >
                             {String(tAnalytics('alerts.resolutionNotes'))}
                           </label>
                           <Textarea
@@ -233,16 +265,15 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                             rows={3}
                           />
                         </div>
-                        
+
                         <div className="flex justify-end gap-2">
                           <Button variant="outline" onClick={() => setSelectedAlert(null)}>
                             {String(tCommon('cancel'))}
                           </Button>
-                          <Button 
-                            onClick={handleResolveAlert}
-                            disabled={isResolving}
-                          >
-                            {isResolving ? String(tCommon('resolving')) : String(tAnalytics('alerts.resolveTitle'))}
+                          <Button onClick={handleResolveAlert} disabled={isResolving}>
+                            {isResolving
+                              ? String(tCommon('resolving'))
+                              : String(tAnalytics('alerts.resolveTitle'))}
                           </Button>
                         </div>
                       </div>
@@ -252,23 +283,26 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
               </div>
             </div>
           </CardHeader>
-          
+
           {alertEntry.alert.recommendations && alertEntry.alert.recommendations.length > 0 && (
             <CardContent className="pt-0">
               <div className="bg-muted/50 rounded-lg p-3">
-                  <h4 className="text-sm font-medium mb-2 text-foreground">
+                <h4 className="text-sm font-medium mb-2 text-foreground">
                   {String(tAnalytics('alerts.recommendedActions'))}:
                 </h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   {alertEntry.alert.recommendations.map((recommendation) => (
-                    <li key={`${alertEntry.alert.id}-${recommendation}`} className="flex items-start gap-2">
+                    <li
+                      key={`${alertEntry.alert.id}-${recommendation}`}
+                      className="flex items-start gap-2"
+                    >
                       <span className="text-primary">•</span>
                       <span>{recommendation}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-              
+
               {alertEntry.resolved && alertEntry.resolvedNotes && (
                 <div className="mt-3 bg-success/10 border border-success/20 rounded-lg p-3">
                   <h5 className="text-sm font-medium text-success-foreground mb-1">
@@ -276,7 +310,8 @@ export const AlertManager = ({ studentId, showOnlyUnresolved = false }: AlertMan
                   </h5>
                   <p className="text-sm text-success-foreground/80">{alertEntry.resolvedNotes}</p>
                   <p className="text-xs text-success-foreground/60 mt-1">
-                    {String(tAnalytics('alerts.resolvedBy'))} {alertEntry.resolvedBy} {String(tCommon('on'))} {alertEntry.resolvedAt?.toLocaleDateString()}
+                    {String(tAnalytics('alerts.resolvedBy'))} {alertEntry.resolvedBy}{' '}
+                    {String(tCommon('on'))} {alertEntry.resolvedAt?.toLocaleDateString()}
                   </p>
                 </div>
               )}

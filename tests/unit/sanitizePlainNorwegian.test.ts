@@ -5,7 +5,7 @@ describe('sanitizePlainNorwegian', () => {
   const allowed: AllowedContexts = {
     places: ['kantine'],
     activities: ['group-work'],
-    triggers: ['sosial interaksjon']
+    triggers: ['sosial interaksjon'],
   };
 
   it('removes markdown and collapses whitespace', () => {
@@ -27,4 +27,3 @@ describe('sanitizePlainNorwegian', () => {
     expect(out).toContain('kantine');
   });
 });
-

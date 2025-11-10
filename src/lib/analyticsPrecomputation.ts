@@ -1,6 +1,6 @@
-import { TrackingEntry, EmotionEntry, SensoryEntry } from "@/types/student";
-import { AnalyticsData } from "@/workers/analytics.worker";
-import { subDays, startOfDay } from "date-fns";
+import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
+import { AnalyticsData } from '@/workers/analytics.worker';
+import { subDays, startOfDay } from 'date-fns';
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import type { PrecomputationConfig } from '@/lib/analyticsConfig';
 import { deviceConstraints } from '@/lib/deviceConstraints';
@@ -29,7 +29,7 @@ export class AnalyticsPrecomputationManager {
 
   constructor(
     onAnalyze: (data: AnalyticsData) => void,
-    config: Partial<PrecomputationConfig> = {}
+    config: Partial<PrecomputationConfig> = {},
   ) {
     this.onAnalyze = onAnalyze;
     this.overrides = { ...config };
@@ -68,7 +68,7 @@ export class AnalyticsPrecomputationManager {
   schedulePrecomputation(
     allEntries: TrackingEntry[],
     allEmotions: EmotionEntry[],
-    allSensoryInputs: SensoryEntry[]
+    allSensoryInputs: SensoryEntry[],
   ): void {
     const cfg = this.getConfig();
     if (!cfg.enabled || this.isProcessing || this.schedulingInFlight) return;
@@ -79,21 +79,21 @@ export class AnalyticsPrecomputationManager {
 
     // Get unique student IDs
     const studentIds = new Set<string>();
-    allEntries.forEach(e => e.studentId && studentIds.add(e.studentId));
-    allEmotions.forEach(e => e.studentId && studentIds.add(e.studentId));
-    allSensoryInputs.forEach(s => s.studentId && studentIds.add(s.studentId));
+    allEntries.forEach((e) => e.studentId && studentIds.add(e.studentId));
+    allEmotions.forEach((e) => e.studentId && studentIds.add(e.studentId));
+    allSensoryInputs.forEach((s) => s.studentId && studentIds.add(s.studentId));
 
     // Generate tasks for each student and timeframe
-    studentIds.forEach(studentId => {
-      cfg.commonTimeframes.forEach(days => {
+    studentIds.forEach((studentId) => {
+      cfg.commonTimeframes.forEach((days) => {
         const task = this.createPrecomputationTask(
           studentId,
           days,
           allEntries,
           allEmotions,
-          allSensoryInputs
+          allSensoryInputs,
         );
-        
+
         if (task && !this.processedTasks.has(task.id)) {
           this.taskQueue.push(task);
         }
@@ -101,14 +101,14 @@ export class AnalyticsPrecomputationManager {
     });
 
     // Also add combined analytics for all students
-    cfg.commonTimeframes.forEach(days => {
+    cfg.commonTimeframes.forEach((days) => {
       const task = this.createCombinedAnalyticsTask(
         days,
         allEntries,
         allEmotions,
-        allSensoryInputs
+        allSensoryInputs,
       );
-      
+
       if (task && !this.processedTasks.has(task.id)) {
         this.taskQueue.push(task);
       }
@@ -117,7 +117,7 @@ export class AnalyticsPrecomputationManager {
     // Sort by priority (smaller timeframes first) and optionally prioritize recent students
     if (cfg.prioritizeRecentStudents) {
       const lastByStudent = new Map<string, number>();
-      allEntries.forEach(e => {
+      allEntries.forEach((e) => {
         if (!e.studentId) return;
         const t = new Date(e.timestamp).getTime();
         const prev = lastByStudent.get(e.studentId) || 0;
@@ -126,8 +126,8 @@ export class AnalyticsPrecomputationManager {
       const NOW = Date.now();
       const recentCutoff = NOW - 7 * 24 * 60 * 60 * 1000;
       this.taskQueue.sort((a, b) => {
-        const aStudent = (a.id.startsWith('student:') ? a.id.split(':')[1] : null);
-        const bStudent = (b.id.startsWith('student:') ? b.id.split(':')[1] : null);
+        const aStudent = a.id.startsWith('student:') ? a.id.split(':')[1] : null;
+        const bStudent = b.id.startsWith('student:') ? b.id.split(':')[1] : null;
         const aRecent = aStudent ? ((lastByStudent.get(aStudent) || 0) >= recentCutoff ? 0 : 1) : 2;
         const bRecent = bStudent ? ((lastByStudent.get(bStudent) || 0) >= recentCutoff ? 0 : 1) : 2;
         if (aRecent !== bRecent) return aRecent - bRecent; // recent students first
@@ -156,19 +156,19 @@ export class AnalyticsPrecomputationManager {
     days: number,
     allEntries: TrackingEntry[],
     allEmotions: EmotionEntry[],
-    allSensoryInputs: SensoryEntry[]
+    allSensoryInputs: SensoryEntry[],
   ): PrecomputationTask | null {
     const cutoffDate = subDays(new Date(), days);
-    
+
     // Filter data for this student and timeframe
-    const entries = allEntries.filter(e => 
-      e.studentId === studentId && e.timestamp >= cutoffDate
+    const entries = allEntries.filter(
+      (e) => e.studentId === studentId && e.timestamp >= cutoffDate,
     );
-    const emotions = allEmotions.filter(e => 
-      e.studentId === studentId && e.timestamp >= cutoffDate
+    const emotions = allEmotions.filter(
+      (e) => e.studentId === studentId && e.timestamp >= cutoffDate,
     );
-    const sensoryInputs = allSensoryInputs.filter(s => 
-      s.studentId === studentId && s.timestamp >= cutoffDate
+    const sensoryInputs = allSensoryInputs.filter(
+      (s) => s.studentId === studentId && s.timestamp >= cutoffDate,
     );
 
     // Skip if no data
@@ -177,12 +177,12 @@ export class AnalyticsPrecomputationManager {
     }
 
     const taskId = `student:${studentId}:days:${days}`;
-    
+
     return {
       id: taskId,
       data: { entries, emotions, sensoryInputs },
       priority: days, // Smaller timeframes have higher priority
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
@@ -193,14 +193,14 @@ export class AnalyticsPrecomputationManager {
     days: number,
     allEntries: TrackingEntry[],
     allEmotions: EmotionEntry[],
-    allSensoryInputs: SensoryEntry[]
+    allSensoryInputs: SensoryEntry[],
   ): PrecomputationTask | null {
     const cutoffDate = subDays(new Date(), days);
-    
+
     // Filter data for timeframe
-    const entries = allEntries.filter(e => e.timestamp >= cutoffDate);
-    const emotions = allEmotions.filter(e => e.timestamp >= cutoffDate);
-    const sensoryInputs = allSensoryInputs.filter(s => s.timestamp >= cutoffDate);
+    const entries = allEntries.filter((e) => e.timestamp >= cutoffDate);
+    const emotions = allEmotions.filter((e) => e.timestamp >= cutoffDate);
+    const sensoryInputs = allSensoryInputs.filter((s) => s.timestamp >= cutoffDate);
 
     // Skip if no data
     if (entries.length === 0 && emotions.length === 0 && sensoryInputs.length === 0) {
@@ -208,12 +208,12 @@ export class AnalyticsPrecomputationManager {
     }
 
     const taskId = `combined:days:${days}`;
-    
+
     return {
       id: taskId,
       data: { entries, emotions, sensoryInputs },
       priority: days + 100, // Combined analytics have lower priority
-      timestamp: new Date()
+      timestamp: new Date(),
     };
   }
 
@@ -227,10 +227,9 @@ export class AnalyticsPrecomputationManager {
 
     const cfg = this.getConfig();
     if ('requestIdleCallback' in window && cfg.precomputeOnlyWhenIdle) {
-      this.idleCallbackId = requestIdleCallback(
-        (deadline) => this.processQueue(deadline),
-        { timeout: cfg.idleTimeout }
-      );
+      this.idleCallbackId = requestIdleCallback((deadline) => this.processQueue(deadline), {
+        timeout: cfg.idleTimeout,
+      });
     } else {
       // Fallback for browsers without requestIdleCallback or when allowed outside idle
       setTimeout(() => this.processQueue(), Math.max(250, cfg.idleTimeout));
@@ -255,7 +254,9 @@ export class AnalyticsPrecomputationManager {
         this.scheduleIdleProcessing();
         return;
       }
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
 
     this.isProcessing = true;
     let processed = 0;
@@ -264,7 +265,7 @@ export class AnalyticsPrecomputationManager {
 
     // Process tasks while we have time
     while (
-      this.taskQueue.length > 0 && 
+      this.taskQueue.length > 0 &&
       processed < batchLimit &&
       (!deadline || deadline.timeRemaining() > 10)
     ) {
@@ -275,7 +276,11 @@ export class AnalyticsPrecomputationManager {
           this.onAnalyze(task.data);
           this.processedTasks.add(task.id);
         } catch (err) {
-          try { logger.error('[PrecomputationManager] Task failed', err as Error); } catch { /* noop */ }
+          try {
+            logger.error('[PrecomputationManager] Task failed', err as Error);
+          } catch {
+            /* noop */
+          }
         }
         processed++;
       }
@@ -295,7 +300,7 @@ export class AnalyticsPrecomputationManager {
   static getCommonDataQueries(
     entries: TrackingEntry[],
     emotions: EmotionEntry[],
-    sensoryInputs: SensoryEntry[]
+    sensoryInputs: SensoryEntry[],
   ): AnalyticsData[] {
     const queries: AnalyticsData[] = [];
     const now = new Date();
@@ -304,16 +309,16 @@ export class AnalyticsPrecomputationManager {
     const timeframes = [
       { days: 7, label: 'week' },
       { days: 14, label: 'twoWeeks' },
-      { days: 30, label: 'month' }
+      { days: 30, label: 'month' },
     ];
 
     timeframes.forEach(({ days }) => {
       const cutoffDate = subDays(now, days);
-      
+
       queries.push({
-        entries: entries.filter(e => e.timestamp >= cutoffDate),
-        emotions: emotions.filter(e => e.timestamp >= cutoffDate),
-        sensoryInputs: sensoryInputs.filter(s => s.timestamp >= cutoffDate)
+        entries: entries.filter((e) => e.timestamp >= cutoffDate),
+        emotions: emotions.filter((e) => e.timestamp >= cutoffDate),
+        sensoryInputs: sensoryInputs.filter((s) => s.timestamp >= cutoffDate),
       });
     });
 
@@ -321,30 +326,37 @@ export class AnalyticsPrecomputationManager {
     const todayStart = startOfDay(now);
     const todayEndExclusive = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
     queries.push({
-      entries: entries.filter(e => e.timestamp >= todayStart && e.timestamp < todayEndExclusive),
-      emotions: emotions.filter(e => e.timestamp >= todayStart && e.timestamp < todayEndExclusive),
-      sensoryInputs: sensoryInputs.filter(s => s.timestamp >= todayStart && s.timestamp < todayEndExclusive)
+      entries: entries.filter((e) => e.timestamp >= todayStart && e.timestamp < todayEndExclusive),
+      emotions: emotions.filter(
+        (e) => e.timestamp >= todayStart && e.timestamp < todayEndExclusive,
+      ),
+      sensoryInputs: sensoryInputs.filter(
+        (s) => s.timestamp >= todayStart && s.timestamp < todayEndExclusive,
+      ),
     });
 
     // High-activity periods (days with more than average activity)
     const dailyActivity = new Map<string, number>();
-    entries.forEach(entry => {
+    entries.forEach((entry) => {
       const dateKey = startOfDay(entry.timestamp).toISOString();
       dailyActivity.set(dateKey, (dailyActivity.get(dateKey) || 0) + 1);
     });
 
-    const avgActivity = Array.from(dailyActivity.values()).reduce((a, b) => a + b, 0) / dailyActivity.size;
+    const avgActivity =
+      Array.from(dailyActivity.values()).reduce((a, b) => a + b, 0) / dailyActivity.size;
     const highActivityDays = Array.from(dailyActivity.entries())
       .filter(([_, count]) => count > avgActivity * 1.5)
       .map(([date]) => new Date(date));
 
-    highActivityDays.slice(0, 3).forEach(date => {
+    highActivityDays.slice(0, 3).forEach((date) => {
       const dayStart = startOfDay(date);
       const dayEndExclusive = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
       queries.push({
-        entries: entries.filter(e => e.timestamp >= dayStart && e.timestamp < dayEndExclusive),
-        emotions: emotions.filter(e => e.timestamp >= dayStart && e.timestamp < dayEndExclusive),
-        sensoryInputs: sensoryInputs.filter(s => s.timestamp >= dayStart && s.timestamp < dayEndExclusive)
+        entries: entries.filter((e) => e.timestamp >= dayStart && e.timestamp < dayEndExclusive),
+        emotions: emotions.filter((e) => e.timestamp >= dayStart && e.timestamp < dayEndExclusive),
+        sensoryInputs: sensoryInputs.filter(
+          (s) => s.timestamp >= dayStart && s.timestamp < dayEndExclusive,
+        ),
       });
     });
 
@@ -392,7 +404,7 @@ export class AnalyticsPrecomputationManager {
       enabled: this.getConfig().enabled,
       queueSize: this.taskQueue.length,
       isProcessing: this.isProcessing,
-      processedCount: this.processedTasks.size
+      processedCount: this.processedTasks.size,
     };
   }
 }

@@ -11,7 +11,7 @@ import { join } from 'node:path';
 // Simple logger for script usage
 const log = {
   error: (msg: string) => process.stderr.write(`ERROR: ${msg}\n`),
-  info: (msg: string) => process.stdout.write(`${msg}\n`)
+  info: (msg: string) => process.stdout.write(`${msg}\n`),
 };
 
 function main() {
@@ -31,7 +31,10 @@ function main() {
     const full = join(base, name);
     try {
       const st = statSync(full);
-      if (st.isDirectory() && (name.endsWith(' src') || name.includes('AnalyticsSection.tsx src'))) {
+      if (
+        st.isDirectory() &&
+        (name.endsWith(' src') || name.includes('AnalyticsSection.tsx src'))
+      ) {
         rmSync(full, { recursive: true, force: true });
         removed.push(name);
       } else {

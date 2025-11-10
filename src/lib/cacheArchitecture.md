@@ -1,6 +1,7 @@
 ## Analytics Cache Architecture
 
-This document defines the single source of truth for analytics caching and invalidation across the app.
+This document defines the single source of truth for analytics caching and invalidation across the
+app.
 
 ### Layers
 
@@ -15,7 +16,8 @@ This document defines the single source of truth for analytics caching and inval
 
 - Deprecated: Manager TTL cache (`analyticsManager.analyticsCache`)
   - Marked deprecated; warnings added
-  - Can be disabled via `VITE_DISABLE_MANAGER_TTL_CACHE=true` or `analyticsConfig.cache.disableManagerTTLCache`
+  - Can be disabled via `VITE_DISABLE_MANAGER_TTL_CACHE=true` or
+    `analyticsConfig.cache.disableManagerTTLCache`
 
 ### Invalidation Flow
 
@@ -29,20 +31,23 @@ All data mutations must broadcast an invalidation event:
 
 Listeners:
 
-- `useAnalyticsWorker` subscribes to `analytics:cache:clear` and `analytics:cache:clear:student` and clears or invalidates by tag.
+- `useAnalyticsWorker` subscribes to `analytics:cache:clear` and `analytics:cache:clear:student` and
+  clears or invalidates by tag.
 - The worker listens for cache-control commands and clears its own caches.
 
 ### Responsibilities
 
 - UI components: use `useAnalyticsWorker` for analysis and cached results.
-- Manager (`analyticsManager`): orchestration, profiles, and analytics triggering; avoid storing TTL-cached results. The TTL cache is deprecated.
+- Manager (`analyticsManager`): orchestration, profiles, and analytics triggering; avoid storing
+  TTL-cached results. The TTL cache is deprecated.
 - Storage (`dataStorage`): persist data and broadcast invalidation on write.
 - Coordinator (`analyticsCoordinator`): centralized broadcast of invalidation events.
 
 ### Migration Path
 
 1. Prefer `useAnalyticsWorker` for fetching analytics; do not rely on `analyticsManager` TTL cache.
-2. Disable manager TTL cache in non-prod via `VITE_DISABLE_MANAGER_TTL_CACHE=true` to validate flows.
+2. Disable manager TTL cache in non-prod via `VITE_DISABLE_MANAGER_TTL_CACHE=true` to validate
+   flows.
 3. Ensure any new mutators call `analyticsCoordinator.broadcastCacheClear()`.
 
 ### Best Practices
@@ -53,7 +58,7 @@ Listeners:
 
 ### Common Pitfalls
 
-- Writing directly via storage without broadcasting: fixed by broadcasting in `dataStorage.saveTrackingEntry`.
-- Multiple cache layers diverging: treat `useAnalyticsWorker` + worker as the single source of truth.
-
-
+- Writing directly via storage without broadcasting: fixed by broadcasting in
+  `dataStorage.saveTrackingEntry`.
+- Multiple cache layers diverging: treat `useAnalyticsWorker` + worker as the single source of
+  truth.

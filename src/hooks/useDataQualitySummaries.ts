@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
 import { dataStorage } from '@/lib/dataStorage';
-import { computeDataQualitySummary, type DataQualitySummary, type DateRange } from '@/lib/analytics/dataQuality';
+import {
+  computeDataQualitySummary,
+  type DataQualitySummary,
+  type DateRange,
+} from '@/lib/analytics/dataQuality';
 
 const DEFAULT_BASELINE_MINIMUM = 5;
 
@@ -18,7 +22,7 @@ export interface DataQualityHookResult {
 export const useDataQualitySummaries = (
   studentId: string,
   range?: DateRange,
-  options?: UseDataQualitySummariesOptions
+  options?: UseDataQualitySummariesOptions,
 ): DataQualityHookResult => {
   const { baselineRange, baselineMinimum = DEFAULT_BASELINE_MINIMUM } = options ?? {};
 

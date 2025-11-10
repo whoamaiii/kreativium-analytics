@@ -150,7 +150,7 @@ export class SessionManager {
       sensoryInputs: Omit<SensoryEntry, 'id' | 'timestamp'>[];
       environmentalData: Omit<EnvironmentalEntry, 'id' | 'timestamp'> | null;
       notes: string;
-    }>
+    }>,
   ): boolean {
     const session = this.activeSessions.get(sessionId);
     if (!session) {
@@ -161,14 +161,15 @@ export class SessionManager {
     // Update data
     if (updates.emotions) session.data.emotions = updates.emotions;
     if (updates.sensoryInputs) session.data.sensoryInputs = updates.sensoryInputs;
-    if (updates.environmentalData !== undefined) session.data.environmentalData = updates.environmentalData;
+    if (updates.environmentalData !== undefined)
+      session.data.environmentalData = updates.environmentalData;
     if (updates.notes !== undefined) session.data.notes = updates.notes;
 
     // Update metadata
     session.metadata.duration = Date.now() - session.metadata.startTime.getTime();
-    session.metadata.dataPoints = 
-      session.data.emotions.length + 
-      session.data.sensoryInputs.length + 
+    session.metadata.dataPoints =
+      session.data.emotions.length +
+      session.data.sensoryInputs.length +
       (session.data.environmentalData ? 1 : 0);
 
     // Assess quality
@@ -214,21 +215,23 @@ export class SessionManager {
       id: crypto.randomUUID(),
       studentId: session.studentId,
       timestamp,
-      emotions: session.data.emotions.map(e => ({
+      emotions: session.data.emotions.map((e) => ({
         ...e,
         id: crypto.randomUUID(),
         timestamp,
       })),
-      sensoryInputs: session.data.sensoryInputs.map(s => ({
+      sensoryInputs: session.data.sensoryInputs.map((s) => ({
         ...s,
         id: crypto.randomUUID(),
         timestamp,
       })),
-      environmentalData: session.data.environmentalData ? {
-        ...session.data.environmentalData,
-        id: crypto.randomUUID(),
-        timestamp,
-      } : undefined,
+      environmentalData: session.data.environmentalData
+        ? {
+            ...session.data.environmentalData,
+            id: crypto.randomUUID(),
+            timestamp,
+          }
+        : undefined,
       notes: session.data.notes || undefined,
       generalNotes: session.data.notes || undefined,
     };
@@ -258,9 +261,9 @@ export class SessionManager {
 
     // Analytics handled by unified helper
 
-    logger.info('[SessionManager] Completed session', { 
-      sessionId, 
-      entryId: trackingEntry.id 
+    logger.info('[SessionManager] Completed session', {
+      sessionId,
+      entryId: trackingEntry.id,
     });
 
     return trackingEntry;
@@ -317,9 +320,7 @@ export class SessionManager {
    */
   recoverSessions(): SessionRecoveryData[] {
     const recovered: SessionRecoveryData[] = [];
-    const keys = Object.keys(localStorage).filter(k =>
-      k.startsWith(STORAGE_KEYS.SESSION_PREFIX)
-    );
+    const keys = Object.keys(localStorage).filter((k) => k.startsWith(STORAGE_KEYS.SESSION_PREFIX));
 
     for (const key of keys) {
       try {
@@ -332,7 +333,7 @@ export class SessionManager {
           if (session.metadata.endTime) {
             session.metadata.endTime = new Date(session.metadata.endTime);
           }
-          
+
           // Check if session is not too old (24 hours)
           const age = Date.now() - session.metadata.startTime.getTime();
           if (age < 24 * 60 * 60 * 1000) {
@@ -364,7 +365,7 @@ export class SessionManager {
    */
   getActiveSessionsForStudent(studentId: string): SessionRecoveryData[] {
     return Array.from(this.activeSessions.values()).filter(
-      session => session.studentId === studentId && session.metadata.status === 'active'
+      (session) => session.studentId === studentId && session.metadata.status === 'active',
     );
   }
 
@@ -373,7 +374,7 @@ export class SessionManager {
    */
   getAllActiveSessions(): SessionRecoveryData[] {
     return Array.from(this.activeSessions.values()).filter(
-      session => session.metadata.status === 'active'
+      (session) => session.metadata.status === 'active',
     );
   }
 
@@ -381,17 +382,17 @@ export class SessionManager {
    * Get session statistics
    */
   getStatistics(studentId?: string): SessionStatistics {
-    const relevantHistory = studentId 
-      ? this.sessionHistory.filter(s => s.studentId === studentId)
+    const relevantHistory = studentId
+      ? this.sessionHistory.filter((s) => s.studentId === studentId)
       : this.sessionHistory;
 
-    const completed = relevantHistory.filter(s => s.status === 'completed');
-    const abandoned = relevantHistory.filter(s => s.status === 'abandoned');
+    const completed = relevantHistory.filter((s) => s.status === 'completed');
+    const abandoned = relevantHistory.filter((s) => s.status === 'abandoned');
 
     // Count issues
     const issueCount = new Map<string, number>();
-    relevantHistory.forEach(session => {
-      session.quality.issues.forEach(issue => {
+    relevantHistory.forEach((session) => {
+      session.quality.issues.forEach((issue) => {
         issueCount.set(issue, (issueCount.get(issue) || 0) + 1);
       });
     });
@@ -405,15 +406,18 @@ export class SessionManager {
       totalSessions: relevantHistory.length,
       completedSessions: completed.length,
       abandonedSessions: abandoned.length,
-      averageDuration: completed.length > 0
-        ? completed.reduce((sum, s) => sum + s.duration, 0) / completed.length
-        : 0,
-      averageDataPoints: completed.length > 0
-        ? completed.reduce((sum, s) => sum + s.dataPoints, 0) / completed.length
-        : 0,
-      averageQuality: completed.length > 0
-        ? completed.reduce((sum, s) => sum + s.quality.score, 0) / completed.length
-        : 0,
+      averageDuration:
+        completed.length > 0
+          ? completed.reduce((sum, s) => sum + s.duration, 0) / completed.length
+          : 0,
+      averageDataPoints:
+        completed.length > 0
+          ? completed.reduce((sum, s) => sum + s.dataPoints, 0) / completed.length
+          : 0,
+      averageQuality:
+        completed.length > 0
+          ? completed.reduce((sum, s) => sum + s.quality.score, 0) / completed.length
+          : 0,
       mostCommonIssues,
     };
   }
@@ -456,7 +460,7 @@ export class SessionManager {
     } catch (error) {
       logger.error('[SessionManager] Failed to persist session', {
         sessionId: session.sessionId,
-        error
+        error,
       });
     }
   }
@@ -506,7 +510,7 @@ export class SessionManager {
     const recovered = this.recoverSessions();
     const now = Date.now();
 
-    recovered.forEach(session => {
+    recovered.forEach((session) => {
       const age = now - session.metadata.startTime.getTime();
       // Auto-abandon sessions older than 2 hours
       if (age > 2 * 60 * 60 * 1000) {
@@ -531,7 +535,9 @@ export class SessionManager {
    */
   updateQualityThreshold(threshold: number): void {
     this.validationQualityThreshold = Math.max(0, Math.min(100, threshold));
-    logger.info('[SessionManager] Updated quality threshold', { threshold: this.validationQualityThreshold });
+    logger.info('[SessionManager] Updated quality threshold', {
+      threshold: this.validationQualityThreshold,
+    });
   }
 
   /**
@@ -549,11 +555,10 @@ export class SessionManager {
     this.sessionHistory = [];
 
     // Clear from localStorage
-    const keys = Object.keys(localStorage).filter(k =>
-      k.startsWith(STORAGE_KEYS.SESSION_PREFIX) ||
-      k === STORAGE_KEYS.SESSION_HISTORY
+    const keys = Object.keys(localStorage).filter(
+      (k) => k.startsWith(STORAGE_KEYS.SESSION_PREFIX) || k === STORAGE_KEYS.SESSION_HISTORY,
     );
-    keys.forEach(key => localStorage.removeItem(key));
+    keys.forEach((key) => localStorage.removeItem(key));
 
     logger.info('[SessionManager] Cleared all sessions');
   }

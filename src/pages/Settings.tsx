@@ -23,7 +23,7 @@ const Settings = (): JSX.Element => {
   // Detector configuration
   const [detectorType, setDetectorType] = useStorageState(
     STORAGE_KEYS.EMOTION_DETECTOR_TYPE,
-    'faceapi-worker'
+    'faceapi-worker',
   );
 
   // Adult mode PIN
@@ -36,7 +36,7 @@ const Settings = (): JSX.Element => {
         const n = Number(JSON.parse(value));
         return Number.isFinite(n) ? n : null;
       },
-    }
+    },
   );
 
   // Note: persist() function removed - all state automatically persists via useStorageState
@@ -61,7 +61,12 @@ const Settings = (): JSX.Element => {
           <aside className="md:col-span-1 space-y-2" aria-label="Settings navigation">
             <ul className="text-sm">
               <li>
-<Button variant="outline" className="w-full justify-start" onClick={() => navigate('/reports')} data-testid="settings-link-reports">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => navigate('/reports')}
+                  data-testid="settings-link-reports"
+                >
                   {String(tSettings('data.export'))}
                 </Button>
               </li>
@@ -71,55 +76,145 @@ const Settings = (): JSX.Element => {
           <section className="md:col-span-3 space-y-4">
             <Card className="bg-gradient-card border-0 shadow-soft">
               <CardContent className="p-6 space-y-4">
-                <h2 className="text-xl font-semibold">{String(tCommon('settings.accessibility', { defaultValue: 'Accessibility & Motion' }))}</h2>
+                <h2 className="text-xl font-semibold">
+                  {String(
+                    tCommon('settings.accessibility', { defaultValue: 'Accessibility & Motion' }),
+                  )}
+                </h2>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{String(tCommon('settings.motion', { defaultValue: 'Reduce motion' }))}</div>
-                    <div className="text-sm text-muted-foreground">{String(tCommon('settings.motionDesc', { defaultValue: 'Limit animations and confetti' }))}</div>
+                    <div className="font-medium">
+                      {String(tCommon('settings.motion', { defaultValue: 'Reduce motion' }))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(
+                        tCommon('settings.motionDesc', {
+                          defaultValue: 'Limit animations and confetti',
+                        }),
+                      )}
+                    </div>
                   </div>
-                  <Switch checked={motionReduced} onCheckedChange={(v) => { setMotionReduced(v); persist(); }} />
+                  <Switch
+                    checked={motionReduced}
+                    onCheckedChange={(v) => {
+                      setMotionReduced(v);
+                      persist();
+                    }}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{String(tCommon('settings.sound', { defaultValue: 'Sound volume' }))}</div>
-                    <div className="text-sm text-muted-foreground">{String(tCommon('settings.soundDesc', { defaultValue: 'Success and level-up effects' }))}</div>
+                    <div className="font-medium">
+                      {String(tCommon('settings.sound', { defaultValue: 'Sound volume' }))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(
+                        tCommon('settings.soundDesc', {
+                          defaultValue: 'Success and level-up effects',
+                        }),
+                      )}
+                    </div>
                   </div>
-                  <input type="range" min={0} max={1} step={0.01} value={soundVolume} onChange={(e) => { setSoundVolume(Number(e.target.value)); persist(); }} aria-label={String(tCommon('settings.sound'))} />
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={soundVolume}
+                    onChange={(e) => {
+                      setSoundVolume(Number(e.target.value));
+                      persist();
+                    }}
+                    aria-label={String(tCommon('settings.sound'))}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{String(tCommon('settings.hints', { defaultValue: 'Enable hints' }))}</div>
-                    <div className="text-sm text-muted-foreground">{String(tCommon('settings.hintsDesc', { defaultValue: 'Allow in-round hint prompts' }))}</div>
+                    <div className="font-medium">
+                      {String(tCommon('settings.hints', { defaultValue: 'Enable hints' }))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(
+                        tCommon('settings.hintsDesc', {
+                          defaultValue: 'Allow in-round hint prompts',
+                        }),
+                      )}
+                    </div>
                   </div>
-                  <Switch checked={hintsEnabled} onCheckedChange={(v) => { setHintsEnabled(v); persist(); }} />
+                  <Switch
+                    checked={hintsEnabled}
+                    onCheckedChange={(v) => {
+                      setHintsEnabled(v);
+                      persist();
+                    }}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{String(tCommon('settings.highContrast', { defaultValue: 'High contrast' }))}</div>
-                    <div className="text-sm text-muted-foreground">{String(tCommon('settings.highContrastDesc', { defaultValue: 'Increase contrast for legibility' }))}</div>
+                    <div className="font-medium">
+                      {String(tCommon('settings.highContrast', { defaultValue: 'High contrast' }))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(
+                        tCommon('settings.highContrastDesc', {
+                          defaultValue: 'Increase contrast for legibility',
+                        }),
+                      )}
+                    </div>
                   </div>
-                  <Switch checked={highContrast} onCheckedChange={(v) => { setHighContrast(v); persist(); }} />
+                  <Switch
+                    checked={highContrast}
+                    onCheckedChange={(v) => {
+                      setHighContrast(v);
+                      persist();
+                    }}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{String(tCommon('settings.quietRewards', { defaultValue: 'Quiet rewards' }))}</div>
-                    <div className="text-sm text-muted-foreground">{String(tCommon('settings.quietRewardsDesc', { defaultValue: 'Use subtle visuals instead of sounds' }))}</div>
+                    <div className="font-medium">
+                      {String(tCommon('settings.quietRewards', { defaultValue: 'Quiet rewards' }))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(
+                        tCommon('settings.quietRewardsDesc', {
+                          defaultValue: 'Use subtle visuals instead of sounds',
+                        }),
+                      )}
+                    </div>
                   </div>
-                  <Switch checked={quietRewards} onCheckedChange={(v) => { setQuietRewards(v); persist(); }} />
+                  <Switch
+                    checked={quietRewards}
+                    onCheckedChange={(v) => {
+                      setQuietRewards(v);
+                      persist();
+                    }}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="font-medium">{String(tCommon('settings.detector', { defaultValue: 'Detector' }))}</div>
-                    <div className="text-sm text-muted-foreground">{String(tCommon('settings.detectorDesc', { defaultValue: 'Choose detection backend (requires reload)' }))}</div>
+                    <div className="font-medium">
+                      {String(tCommon('settings.detector', { defaultValue: 'Detector' }))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(
+                        tCommon('settings.detectorDesc', {
+                          defaultValue: 'Choose detection backend (requires reload)',
+                        }),
+                      )}
+                    </div>
                   </div>
                   <select
                     value={detectorType}
-                    onChange={(e) => { setDetectorType(e.target.value); persist(); }}
+                    onChange={(e) => {
+                      setDetectorType(e.target.value);
+                      persist();
+                    }}
                     className="rounded-md bg-white/10 px-2 py-1"
                     aria-label={String(tCommon('settings.detector'))}
                   >
@@ -131,18 +226,32 @@ const Settings = (): JSX.Element => {
 
                 <div className="flex items-center justify-between pt-2">
                   <div>
-                    <div className="font-medium">{String(tCommon('settings.calibration', { defaultValue: 'Calibration' }))}</div>
-                    <div className="text-sm text-muted-foreground">{String(tCommon('settings.calibrationDesc', { defaultValue: 'Reset and re-run calibration flow' }))}</div>
+                    <div className="font-medium">
+                      {String(tCommon('settings.calibration', { defaultValue: 'Calibration' }))}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {String(
+                        tCommon('settings.calibrationDesc', {
+                          defaultValue: 'Reset and re-run calibration flow',
+                        }),
+                      )}
+                    </div>
                   </div>
-                  <Button variant="outline" onClick={removeCalibration}>{String(tCommon('settings.resetCalibration', { defaultValue: 'Reset' }))}</Button>
+                  <Button variant="outline" onClick={removeCalibration}>
+                    {String(tCommon('settings.resetCalibration', { defaultValue: 'Reset' }))}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-gradient-card border-0 shadow-soft">
               <CardContent className="p-6 space-y-4">
-                <h2 className="text-xl font-semibold">{String(tCommon('settings.adultPin', { defaultValue: 'Adult PIN' }))}</h2>
+                <h2 className="text-xl font-semibold">
+                  {String(tCommon('settings.adultPin', { defaultValue: 'Adult PIN' }))}
+                </h2>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="adult-pin">PIN</label>
+                  <label className="text-sm font-medium" htmlFor="adult-pin">
+                    PIN
+                  </label>
                   <input
                     id="adult-pin"
                     type="password"
@@ -156,26 +265,56 @@ const Settings = (): JSX.Element => {
                     aria-label="Adult PIN"
                   />
                   <div className="text-xs text-muted-foreground">
-                    {verifiedUntil ? `${String(tCommon('settings.unlockedUntil', { defaultValue: 'Unlocked until' }))} ${new Date(verifiedUntil).toLocaleTimeString()}` : String(tCommon('settings.locked', { defaultValue: 'Locked' }))}
+                    {verifiedUntil
+                      ? `${String(tCommon('settings.unlockedUntil', { defaultValue: 'Unlocked until' }))} ${new Date(verifiedUntil).toLocaleTimeString()}`
+                      : String(tCommon('settings.locked', { defaultValue: 'Locked' }))}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => { /* PIN automatically saved via useStorageState */ }}>{String(tCommon('buttons.save', { defaultValue: 'Save' }))}</Button>
-                  <Button variant="outline" onClick={() => { setVerifiedUntil(null); }}>{String(tCommon('settings.resetVerification', { defaultValue: 'Reset verification' }))}</Button>
-                  <Button variant="outline" onClick={() => { setAdultPin('1234'); }}>{String(tCommon('settings.setDefaultPin', { defaultValue: 'Set 1234' }))}</Button>
+                  <Button
+                    onClick={() => {
+                      /* PIN automatically saved via useStorageState */
+                    }}
+                  >
+                    {String(tCommon('buttons.save', { defaultValue: 'Save' }))}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setVerifiedUntil(null);
+                    }}
+                  >
+                    {String(
+                      tCommon('settings.resetVerification', { defaultValue: 'Reset verification' }),
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setAdultPin('1234');
+                    }}
+                  >
+                    {String(tCommon('settings.setDefaultPin', { defaultValue: 'Set 1234' }))}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-gradient-card border-0 shadow-soft">
               <CardContent className="p-6 space-y-3">
-            <h2 className="text-xl font-semibold">{tSettings('data.title')}</h2>
-            <p className="text-sm text-muted-foreground">{tSettings('dataExport.description')}</p>
-            <div>
-              <Button variant="outline" onClick={() => navigate('/reports')} aria-label={tSettings('data.export')}>
-                <FileText className="h-4 w-4 mr-2" />
-                {String(tSettings('data.export'))}
-              </Button>
-            </div>
+                <h2 className="text-xl font-semibold">{tSettings('data.title')}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {tSettings('dataExport.description')}
+                </p>
+                <div>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/reports')}
+                    aria-label={tSettings('data.export')}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    {String(tSettings('data.export'))}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </section>
@@ -186,4 +325,3 @@ const Settings = (): JSX.Element => {
 };
 
 export default Settings;
-

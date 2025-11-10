@@ -16,7 +16,13 @@ import type { TrendPoint } from '@/lib/alerts/detectors/ewma';
 import type { BurstEvent } from '@/lib/alerts/detectors/burst';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
-import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } from '@/types/student';
+import type {
+  EmotionEntry,
+  Goal,
+  Intervention,
+  SensoryEntry,
+  TrackingEntry,
+} from '@/types/student';
 import { generateSparklineData } from '@/lib/chartUtils';
 import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/alerts/constants';
@@ -108,7 +114,10 @@ export class AlertDetectionEngine {
   private readonly baselineThresholds: Record<string, number>;
   private readonly seriesLimit: number;
   /** Optional Tau-U detector dependency; when absent, intervention analysis is skipped. */
-  private readonly tauUDetector?: (args: { intervention: Intervention; goal: Goal | null }) => DetectorResult | null;
+  private readonly tauUDetector?: (args: {
+    intervention: Intervention;
+    goal: Goal | null;
+  }) => DetectorResult | null;
   private readonly generator: CandidateGenerator;
 
   constructor(opts?: {
@@ -120,7 +129,10 @@ export class AlertDetectionEngine {
     /** Optional cap applied to series lengths for performance */
     seriesLimit?: number;
     /** Optional Tau-U detector to decouple this engine from Tau-U implementation. */
-    tauUDetector?: (args: { intervention: Intervention; goal: Goal | null }) => DetectorResult | null;
+    tauUDetector?: (args: {
+      intervention: Intervention;
+      goal: Goal | null;
+    }) => DetectorResult | null;
   }) {
     this.baselineService = opts?.baselineService ?? new BaselineService();
     this.policies = opts?.policies ?? new AlertPolicies();
@@ -157,7 +169,9 @@ export class AlertDetectionEngine {
     const now = input.now ?? new Date();
     const nowTs = now.getTime();
     if (!input.studentId) return [];
-    try { logger.debug?.('[AlertEngine] runDetection:start', { studentId: input.studentId }); } catch {}
+    try {
+      logger.debug?.('[AlertEngine] runDetection:start', { studentId: input.studentId });
+    } catch {}
 
     const thresholdOverrides = this.learner.getThresholdOverrides();
     const baseline = input.baseline ?? this.baselineService.getEmotionBaseline(input.studentId);
@@ -225,13 +239,20 @@ export class AlertDetectionEngine {
       ...tauCandidates,
     ];
 
-    const alerts = candidates.map((candidate) => this.buildAlert(candidate, input.studentId, nowTs));
+    const alerts = candidates.map((candidate) =>
+      this.buildAlert(candidate, input.studentId, nowTs),
+    );
 
     const deduped = this.policies
       .deduplicateAlerts(alerts)
       .map(({ governance, ...event }) => ({ ...event }));
 
-    try { logger.debug?.('[AlertEngine] runDetection:end', { studentId: input.studentId, alerts: deduped.length }); } catch {}
+    try {
+      logger.debug?.('[AlertEngine] runDetection:end', {
+        studentId: input.studentId,
+        alerts: deduped.length,
+      });
+    } catch {}
     return deduped;
   }
 
@@ -283,13 +304,15 @@ export class AlertDetectionEngine {
   ): DetectorResult | null {
     if (!result) return null;
     const defaultBaseline = getDefaultDetectorThreshold(detectorType);
-    const baseFromEngine = (typeof baselineOverride === 'number' && baselineOverride > 0)
-      ? baselineOverride
-      : (this.baselineThresholds[detectorType] ?? defaultBaseline);
+    const baseFromEngine =
+      typeof baselineOverride === 'number' && baselineOverride > 0
+        ? baselineOverride
+        : (this.baselineThresholds[detectorType] ?? defaultBaseline);
     const override = context.overrides[detectorType];
-    const baselineFromOverride = override?.baselineThreshold && override.baselineThreshold > 0
-      ? override.baselineThreshold
-      : baseFromEngine;
+    const baselineFromOverride =
+      override?.baselineThreshold && override.baselineThreshold > 0
+        ? override.baselineThreshold
+        : baseFromEngine;
     const learnerAdjusted = override
       ? baselineFromOverride * (1 + override.adjustmentValue)
       : baseFromEngine;
@@ -304,7 +327,8 @@ export class AlertDetectionEngine {
     const safeBase = baseForScale > 0 ? baseForScale : defaultBaseline;
     const safeApplied = applied > 0 ? applied : defaultBaseline;
     const scale = safeBase > 0 ? safeApplied / safeBase : 1;
-    const adjustedScore = safeBase > 0 ? Math.min(1, Math.max(0, result.score / scale)) : result.score;
+    const adjustedScore =
+      safeBase > 0 ? Math.min(1, Math.max(0, result.score / scale)) : result.score;
 
     context.thresholdTraces[detectorType] = {
       adjustment: safeBase > 0 ? (safeApplied - safeBase) / safeBase : 0,
@@ -339,22 +363,22 @@ export class AlertDetectionEngine {
     );
 
     // Step 2: Finalize alert event with metadata enrichment and policies
-    return finalizeAlertEvent(
-      candidate,
-      aggregated,
-      studentId,
-      {
-        seriesLimit: this.seriesLimit,
-        policies: this.policies,
-      },
-    );
+    return finalizeAlertEvent(candidate, aggregated, studentId, {
+      seriesLimit: this.seriesLimit,
+      policies: this.policies,
+    });
   }
 
   /**
    * Compute lightweight series statistics for diagnostics.
    * Returns min, max, mean, and variance (sample) to assist with validation.
    */
-  private computeSeriesStats(series: TrendPoint[]): { min: number; max: number; mean: number; variance: number } {
+  private computeSeriesStats(series: TrendPoint[]): {
+    min: number;
+    max: number;
+    mean: number;
+    variance: number;
+  } {
     if (!series.length) return { min: 0, max: 0, mean: 0, variance: 0 };
     let min = Number.POSITIVE_INFINITY;
     let max = Number.NEGATIVE_INFINITY;
@@ -378,7 +402,12 @@ export class AlertDetectionEngine {
     const variance = n > 1 ? acc / (n - 1) : 0;
     if (!Number.isFinite(min)) min = 0;
     if (!Number.isFinite(max)) max = 0;
-    return { min, max, mean: Number.isFinite(mean) ? mean : 0, variance: Number.isFinite(variance) ? variance : 0 };
+    return {
+      min,
+      max,
+      mean: Number.isFinite(mean) ? mean : 0,
+      variance: Number.isFinite(variance) ? variance : 0,
+    };
   }
 }
 

@@ -43,13 +43,13 @@ describe('useAnalyticsWorker', () => {
     const testData = { entries: [], emotions: [], sensoryInputs: [] };
 
     // Allow the init effect to run
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
 
     // Wait until the mocked worker has been constructed
     const mod: any = await import('@/workers/analytics.worker?worker');
     let tries = 0;
     while (!mod.__getLastWorker() && tries < 20) {
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise((r) => setTimeout(r, 5));
       tries++;
     }
     // Mark worker as ready so queued tasks flush immediately
@@ -57,32 +57,42 @@ describe('useAnalyticsWorker', () => {
     worker.onmessage({ data: { type: 'progress', progress: { stage: 'ready', percent: 1 } } });
 
     await act(async () => {
-      await result.current.runAnalysis(testData, { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
+      await result.current.runAnalysis(testData, {
+        student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any,
+        useAI: false,
+      });
     });
 
     await waitFor(() => {
       expect(mockPostMessage).toHaveBeenCalled();
     });
     // We now send a typed Insights/Compute task envelope to the worker
-    expect(mockPostMessage).toHaveBeenCalledWith(expect.objectContaining({
-      type: 'Insights/Compute',
-      payload: expect.any(Object),
-      cacheKey: expect.any(String),
-      ttlSeconds: expect.any(Number),
-    }));
+    expect(mockPostMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'Insights/Compute',
+        payload: expect.any(Object),
+        cacheKey: expect.any(String),
+        ttlSeconds: expect.any(Number),
+      }),
+    );
     expect(result.current.error).toBeNull();
   });
 
   it('should update state on successful analysis', async () => {
     const { result } = renderHook(() => useAnalyticsWorker());
-    const testResults = { patterns: [], correlations: [], environmentalCorrelations: [], insights: [] };
+    const testResults = {
+      patterns: [],
+      correlations: [],
+      environmentalCorrelations: [],
+      insights: [],
+    };
 
     // Wait for worker
     const mod: any = await import('@/workers/analytics.worker?worker');
     let worker = mod.__getLastWorker();
     let tries = 0;
     while (!worker && tries < 20) {
-      await new Promise(r => setTimeout(r, 5));
+      await new Promise((r) => setTimeout(r, 5));
       worker = mod.__getLastWorker();
       tries++;
     }
@@ -126,7 +136,7 @@ describe('useAnalyticsWorker', () => {
     const mod: any = await import('@/workers/analytics.worker?worker');
     let tries = 0;
     while (!mod.__getLastWorker() && tries < 10) {
-      await new Promise(r => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 0));
       tries++;
     }
 

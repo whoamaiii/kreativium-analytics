@@ -24,15 +24,15 @@ interface Milestone {
   achieved: boolean;
   progress: number;
   estimatedDate: Date | null;
-  icon: React.ComponentType<{className?: string}>;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 
-const DataCollectionRoadmapComponent = ({ 
-  emotions, 
-  sensoryInputs, 
-  entries, 
-  className 
+const DataCollectionRoadmapComponent = ({
+  emotions,
+  sensoryInputs,
+  entries,
+  className,
 }: DataCollectionRoadmapProps) => {
   const { formatDate } = useTranslation();
 
@@ -40,27 +40,26 @@ const DataCollectionRoadmapComponent = ({
   const currentStatus = useMemo(() => {
     const totalDataPoints = emotions.length + sensoryInputs.length;
     const allTimestamps = [
-      ...emotions.map(e => e.timestamp),
-      ...sensoryInputs.map(s => s.timestamp),
-      ...entries.map(e => e.timestamp)
+      ...emotions.map((e) => e.timestamp),
+      ...sensoryInputs.map((s) => s.timestamp),
+      ...entries.map((e) => e.timestamp),
     ].sort((a, b) => a.getTime() - b.getTime());
 
-    const daysSpan = allTimestamps.length > 0 
-      ? differenceInDays(new Date(), allTimestamps[0]) + 1 
-      : 0;
+    const daysSpan =
+      allTimestamps.length > 0 ? differenceInDays(new Date(), allTimestamps[0]) + 1 : 0;
 
     return {
       dataPoints: totalDataPoints,
       daysSpan,
       startDate: allTimestamps[0] || new Date(),
-      hasData: totalDataPoints > 0
+      hasData: totalDataPoints > 0,
     };
   }, [emotions, sensoryInputs, entries]);
 
   // Define roadmap milestones
   const milestones: Milestone[] = useMemo(() => {
     const baseDate = currentStatus.startDate || new Date();
-    
+
     return [
       {
         id: 'initial',
@@ -73,7 +72,7 @@ const DataCollectionRoadmapComponent = ({
         progress: Math.min(100, (currentStatus.dataPoints / 3 + currentStatus.daysSpan / 3) * 50),
         estimatedDate: currentStatus.dataPoints >= 3 ? null : addDays(baseDate, 3),
         icon: Target,
-        color: 'bg-blue-500'
+        color: 'bg-blue-500',
       },
       {
         id: 'basic',
@@ -84,9 +83,12 @@ const DataCollectionRoadmapComponent = ({
         confidenceLevel: 'Lav sikkerhet (25%)',
         achieved: currentStatus.dataPoints >= 10 && currentStatus.daysSpan >= 14,
         progress: Math.min(100, (currentStatus.dataPoints / 10 + currentStatus.daysSpan / 14) * 50),
-        estimatedDate: currentStatus.dataPoints >= 10 && currentStatus.daysSpan >= 14 ? null : addDays(baseDate, 14),
+        estimatedDate:
+          currentStatus.dataPoints >= 10 && currentStatus.daysSpan >= 14
+            ? null
+            : addDays(baseDate, 14),
         icon: Clock,
-        color: 'bg-orange-500'
+        color: 'bg-orange-500',
       },
       {
         id: 'reliable',
@@ -97,9 +99,12 @@ const DataCollectionRoadmapComponent = ({
         confidenceLevel: 'Middels sikkerhet (50%)',
         achieved: currentStatus.dataPoints >= 20 && currentStatus.daysSpan >= 28,
         progress: Math.min(100, (currentStatus.dataPoints / 20 + currentStatus.daysSpan / 28) * 50),
-        estimatedDate: currentStatus.dataPoints >= 20 && currentStatus.daysSpan >= 28 ? null : addDays(baseDate, 28),
+        estimatedDate:
+          currentStatus.dataPoints >= 20 && currentStatus.daysSpan >= 28
+            ? null
+            : addDays(baseDate, 28),
         icon: CheckCircle2,
-        color: 'bg-yellow-500'
+        color: 'bg-yellow-500',
       },
       {
         id: 'strong',
@@ -110,9 +115,12 @@ const DataCollectionRoadmapComponent = ({
         confidenceLevel: 'Høy sikkerhet (75%)',
         achieved: currentStatus.dataPoints >= 35 && currentStatus.daysSpan >= 42,
         progress: Math.min(100, (currentStatus.dataPoints / 35 + currentStatus.daysSpan / 42) * 50),
-        estimatedDate: currentStatus.dataPoints >= 35 && currentStatus.daysSpan >= 42 ? null : addDays(baseDate, 42),
+        estimatedDate:
+          currentStatus.dataPoints >= 35 && currentStatus.daysSpan >= 42
+            ? null
+            : addDays(baseDate, 42),
         icon: CheckCircle2,
-        color: 'bg-green-500'
+        color: 'bg-green-500',
       },
       {
         id: 'excellent',
@@ -123,15 +131,18 @@ const DataCollectionRoadmapComponent = ({
         confidenceLevel: 'Meget høy sikkerhet (90%)',
         achieved: currentStatus.dataPoints >= 50 && currentStatus.daysSpan >= 60,
         progress: Math.min(100, (currentStatus.dataPoints / 50 + currentStatus.daysSpan / 60) * 50),
-        estimatedDate: currentStatus.dataPoints >= 50 && currentStatus.daysSpan >= 60 ? null : addDays(baseDate, 60),
+        estimatedDate:
+          currentStatus.dataPoints >= 50 && currentStatus.daysSpan >= 60
+            ? null
+            : addDays(baseDate, 60),
         icon: CheckCircle2,
-        color: 'bg-emerald-500'
-      }
+        color: 'bg-emerald-500',
+      },
     ];
   }, [currentStatus]);
 
   // Get current and next milestone
-  const currentMilestone = milestones.findIndex(m => !m.achieved);
+  const currentMilestone = milestones.findIndex((m) => !m.achieved);
   const nextMilestone = milestones[currentMilestone];
 
   if (!currentStatus.hasData) {
@@ -170,7 +181,7 @@ const DataCollectionRoadmapComponent = ({
           <div className="flex items-center justify-between mb-2">
             <span className="font-medium">Din fremgang</span>
             <Badge variant="outline">
-              {milestones.filter(m => m.achieved).length} av {milestones.length} milepæler
+              {milestones.filter((m) => m.achieved).length} av {milestones.length} milepæler
             </Badge>
           </div>
           <div className="grid grid-cols-2 gap-4 text-sm">
@@ -197,7 +208,7 @@ const DataCollectionRoadmapComponent = ({
                 <p className="text-sm text-muted-foreground">{nextMilestone.description}</p>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span>Fremgang</span>
@@ -229,33 +240,35 @@ const DataCollectionRoadmapComponent = ({
           <div className="relative">
             {/* Timeline line */}
             <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
-            
+
             {milestones.map((milestone) => (
               <div key={milestone.id} className="relative flex items-start gap-4 pb-6">
                 {/* Milestone icon */}
-                <div className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2 ${
-                  milestone.achieved 
-                    ? `${milestone.color} border-transparent text-white` 
-                    : 'bg-background border-border text-muted-foreground'
-                }`}>
+                <div
+                  className={`relative z-10 flex items-center justify-center w-12 h-12 rounded-full border-2 ${
+                    milestone.achieved
+                      ? `${milestone.color} border-transparent text-white`
+                      : 'bg-background border-border text-muted-foreground'
+                  }`}
+                >
                   <milestone.icon className="h-5 w-5" />
                 </div>
-                
+
                 {/* Milestone content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h5 className={`font-medium ${milestone.achieved ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    <h5
+                      className={`font-medium ${milestone.achieved ? 'text-foreground' : 'text-muted-foreground'}`}
+                    >
                       {milestone.title}
                     </h5>
                     <Badge variant={milestone.achieved ? 'default' : 'outline'} className="ml-2">
                       {milestone.achieved ? 'Oppnådd' : milestone.confidenceLevel}
                     </Badge>
                   </div>
-                  
-                  <p className="text-sm text-muted-foreground mb-2">
-                    {milestone.description}
-                  </p>
-                  
+
+                  <p className="text-sm text-muted-foreground mb-2">{milestone.description}</p>
+
                   <div className="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>{milestone.targetDataPoints} datapunkter</span>
                     <span>{milestone.targetDays} dager</span>
@@ -263,7 +276,7 @@ const DataCollectionRoadmapComponent = ({
                       <span>Estimert: {formatDate(milestone.estimatedDate)}</span>
                     )}
                   </div>
-                  
+
                   {!milestone.achieved && milestone.progress > 0 && (
                     <div className="mt-2">
                       <Progress value={milestone.progress} className="h-1" />

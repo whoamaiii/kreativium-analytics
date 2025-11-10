@@ -1,10 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { MockDataLoader } from "@/components/MockDataLoader";
-import { TestingDebugPanel } from "@/components/TestingDebugPanel";
-import { Database, Bug, Beaker } from "lucide-react";
-import { IS_PROD } from "@/lib/env";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { MockDataLoader } from '@/components/MockDataLoader';
+import { TestingDebugPanel } from '@/components/TestingDebugPanel';
+import { Database, Bug, Beaker } from 'lucide-react';
+import { IS_PROD } from '@/lib/env';
 
 /**
  * TestingToolsSection Component

@@ -6,8 +6,8 @@
  * - Identification of significant factor relationships
  */
 
-import { TrackingEntry } from "@/types/student";
-import { analyticsConfig } from "@/lib/analyticsConfig";
+import { TrackingEntry } from '@/types/student';
+import { analyticsConfig } from '@/lib/analyticsConfig';
 import { pearsonCorrelation, pValueForCorrelation } from '@/lib/statistics';
 import { convertLightingToNumeric } from './utils';
 
@@ -40,25 +40,30 @@ export function generateCorrelationMatrix(trackingEntries: TrackingEntry[]): Cor
     'sensorySeekingRatio',
     'noiseLevel',
     'temperature',
-    'lightingQuality'
+    'lightingQuality',
   ];
 
   // Build positive emotion lookup from taxonomy (case-insensitive)
-  const positiveSet = new Set((taxonomy?.positiveEmotions || []).map(e => e.toLowerCase()));
+  const positiveSet = new Set((taxonomy?.positiveEmotions || []).map((e) => e.toLowerCase()));
 
-  const dataPoints = trackingEntries.map(entry => ({
-    avgEmotionIntensity: entry.emotions.length > 0
-      ? entry.emotions.reduce((sum, e) => sum + e.intensity, 0) / entry.emotions.length
-      : 0,
-    positiveEmotionRatio: entry.emotions.length > 0
-      ? entry.emotions.filter(e => positiveSet.has(e.emotion.toLowerCase())).length / entry.emotions.length
-      : 0,
-    sensorySeekingRatio: entry.sensoryInputs.length > 0
-      ? entry.sensoryInputs.filter(s => s.response.toLowerCase().includes('seeking')).length / entry.sensoryInputs.length
-      : 0,
+  const dataPoints = trackingEntries.map((entry) => ({
+    avgEmotionIntensity:
+      entry.emotions.length > 0
+        ? entry.emotions.reduce((sum, e) => sum + e.intensity, 0) / entry.emotions.length
+        : 0,
+    positiveEmotionRatio:
+      entry.emotions.length > 0
+        ? entry.emotions.filter((e) => positiveSet.has(e.emotion.toLowerCase())).length /
+          entry.emotions.length
+        : 0,
+    sensorySeekingRatio:
+      entry.sensoryInputs.length > 0
+        ? entry.sensoryInputs.filter((s) => s.response.toLowerCase().includes('seeking')).length /
+          entry.sensoryInputs.length
+        : 0,
     noiseLevel: entry.environmentalData?.roomConditions?.noiseLevel || 0,
     temperature: entry.environmentalData?.roomConditions?.temperature || 0,
-    lightingQuality: convertLightingToNumeric(entry.environmentalData?.roomConditions?.lighting)
+    lightingQuality: convertLightingToNumeric(entry.environmentalData?.roomConditions?.lighting),
   }));
 
   const matrix: number[][] = [];
@@ -66,9 +71,12 @@ export function generateCorrelationMatrix(trackingEntries: TrackingEntry[]): Cor
 
   // Significance thresholds from config with safe fallbacks
   const sig = enhancedAnalysis?.correlationSignificance;
-  const baseThreshold = Math.max(0, Math.min(1, (sig?.low ?? patternAnalysis.correlationThreshold ?? 0.3)));
-  const moderateCut = Math.max(baseThreshold, Math.min(1, sig?.moderate ?? (baseThreshold + 0.2)));
-  const highCut = Math.max(moderateCut, Math.min(1, sig?.high ?? (baseThreshold + 0.4)));
+  const baseThreshold = Math.max(
+    0,
+    Math.min(1, sig?.low ?? patternAnalysis.correlationThreshold ?? 0.3),
+  );
+  const moderateCut = Math.max(baseThreshold, Math.min(1, sig?.moderate ?? baseThreshold + 0.2));
+  const highCut = Math.max(moderateCut, Math.min(1, sig?.high ?? baseThreshold + 0.4));
 
   factors.forEach((factor1, i) => {
     matrix[i] = [];
@@ -80,7 +88,12 @@ export function generateCorrelationMatrix(trackingEntries: TrackingEntry[]): Cor
         const dv = dataPoints[k] as any;
         const v1 = dv[factor1];
         const v2 = dv[factor2];
-        if (typeof v1 === 'number' && Number.isFinite(v1) && typeof v2 === 'number' && Number.isFinite(v2)) {
+        if (
+          typeof v1 === 'number' &&
+          Number.isFinite(v1) &&
+          typeof v2 === 'number' &&
+          Number.isFinite(v2)
+        ) {
           x.push(v1);
           y.push(v2);
         }
@@ -91,7 +104,11 @@ export function generateCorrelationMatrix(trackingEntries: TrackingEntry[]): Cor
       matrix[i][j] = correlation;
 
       // Significance gate uses |r| >= baseThreshold and minimum sample size from enhancedAnalysis
-      if (i < j && Math.abs(correlation) >= baseThreshold && nPairs >= enhancedAnalysis.minSampleSize) {
+      if (
+        i < j &&
+        Math.abs(correlation) >= baseThreshold &&
+        nPairs >= enhancedAnalysis.minSampleSize
+      ) {
         const pValue = pValueForCorrelation(correlation, nPairs);
         const absR = Math.abs(correlation);
         const significance: 'low' | 'moderate' | 'high' =
@@ -102,7 +119,7 @@ export function generateCorrelationMatrix(trackingEntries: TrackingEntry[]): Cor
           factor2,
           correlation,
           pValue,
-          significance
+          significance,
         });
       }
     });
@@ -111,6 +128,8 @@ export function generateCorrelationMatrix(trackingEntries: TrackingEntry[]): Cor
   return {
     factors,
     matrix,
-    significantPairs: significantPairs.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation))
+    significantPairs: significantPairs.sort(
+      (a, b) => Math.abs(b.correlation) - Math.abs(a.correlation),
+    ),
   };
 }

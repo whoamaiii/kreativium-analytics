@@ -161,7 +161,7 @@ export interface ProfileManager {
  */
 export type HealthCalculator = (
   results: AnalyticsResultsCompat,
-  config?: AnalyticsConfiguration
+  config?: AnalyticsConfiguration,
 ) => number;
 
 /**
@@ -359,7 +359,7 @@ export class StudentAnalyticsOrchestrator {
    */
   public async getAnalytics(
     student: Student,
-    options?: StudentAnalyticsOptions
+    options?: StudentAnalyticsOptions,
   ): Promise<AnalyticsResults> {
     // Step 1: Ensure profile is initialized
     this.initializeProfile(student.id);
@@ -441,10 +441,7 @@ export class StudentAnalyticsOrchestrator {
    * await orchestrator.triggerAnalysis(student);
    * ```
    */
-  public async triggerAnalysis(
-    student: Student,
-    options?: StudentAnalyticsOptions
-  ): Promise<void> {
+  public async triggerAnalysis(student: Student, options?: StudentAnalyticsOptions): Promise<void> {
     try {
       if (!student || !student.id) {
         logger.warn('[studentAnalytics] triggerAnalysis: invalid student', { student });
@@ -518,7 +515,7 @@ export class StudentAnalyticsOrchestrator {
  * ```
  */
 export function createStudentAnalyticsOrchestrator(
-  deps: StudentAnalyticsOrchestratorDeps
+  deps: StudentAnalyticsOrchestratorDeps,
 ): StudentAnalyticsOrchestrator {
   return new StudentAnalyticsOrchestrator(deps);
 }

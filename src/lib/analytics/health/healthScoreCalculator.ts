@@ -251,7 +251,7 @@ import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
  */
 export function calculateHealthScore(
   results: AnalyticsResultsCompat,
-  config?: AnalyticsConfiguration
+  config?: AnalyticsConfiguration,
 ): number {
   // Extract weights from config with safe fallback to defaults
   const { WEIGHTS } = config?.healthScore ?? ANALYTICS_CONFIG.healthScore;
@@ -284,20 +284,21 @@ export function calculateHealthScore(
     hasMinimumData?: boolean;
     confidence?: number;
   };
-  const hasMinimumData = extended.hasMinimumData ?? (
-    results.patterns.length > 0 || results.correlations.length > 0
-  );
+  const hasMinimumData =
+    extended.hasMinimumData ?? (results.patterns.length > 0 || results.correlations.length > 0);
   if (hasMinimumData) {
     score += WEIGHTS.MINIMUM_DATA;
   }
 
   // Confidence Scaling: Prefer AI confidence when available
-  const aiConfidence = typeof results.ai?.confidence?.overall === 'number'
-    ? results.ai.confidence.overall
-    : undefined;
-  const confidence = typeof aiConfidence === 'number'
-    ? aiConfidence
-    : (typeof extended.confidence === 'number' ? extended.confidence : 1);
+  const aiConfidence =
+    typeof results.ai?.confidence?.overall === 'number' ? results.ai.confidence.overall : undefined;
+  const confidence =
+    typeof aiConfidence === 'number'
+      ? aiConfidence
+      : typeof extended.confidence === 'number'
+        ? extended.confidence
+        : 1;
 
   // Scale base score by confidence
   let finalScore = Math.round(score * confidence);
@@ -305,7 +306,7 @@ export function calculateHealthScore(
   // AI Quality Bonuses: Small additive boosts for high-quality AI runs
   if (results.ai) {
     const caveats = results.ai.caveats || [];
-    const usedFallback = caveats.some(c => /fallback/i.test(c));
+    const usedFallback = caveats.some((c) => /fallback/i.test(c));
     const heuristicOnly = (results.ai.provider || '').toLowerCase() === 'heuristic';
 
     // AI Provider Bonus

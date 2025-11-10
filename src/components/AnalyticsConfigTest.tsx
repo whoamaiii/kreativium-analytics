@@ -37,35 +37,35 @@ const AnalyticsConfigTest = () => {
       analyticsConfig.updateConfig({
         patternAnalysis: {
           ...originalConfig.patternAnalysis,
-          minDataPoints: 7
-        }
+          minDataPoints: 7,
+        },
       });
-      
+
       // Simulate page reload by creating new instance
       const newConfigManager = analyticsConfig;
       const loadedConfig = newConfigManager.getConfig();
-      
+
       if (loadedConfig.patternAnalysis.minDataPoints === 7) {
         results.push({
           name: 'Configuration Persistence',
           status: 'pass',
-          message: 'Configuration saved and loaded from localStorage successfully'
+          message: 'Configuration saved and loaded from localStorage successfully',
         });
       } else {
         results.push({
           name: 'Configuration Persistence',
           status: 'fail',
-          message: 'Configuration not persisted correctly'
+          message: 'Configuration not persisted correctly',
         });
       }
-      
+
       // Reset to original
       analyticsConfig.updateConfig(originalConfig);
     } catch (error) {
       results.push({
         name: 'Configuration Persistence',
         status: 'fail',
-        message: `Error: ${error}`
+        message: `Error: ${error}`,
       });
     }
 
@@ -73,65 +73,67 @@ const AnalyticsConfigTest = () => {
     try {
       analyticsConfig.setPreset('sensitive');
       const sensitiveConfig = analyticsConfig.getConfig();
-      
-      if (sensitiveConfig.alertSensitivity.level === 'high' &&
-          sensitiveConfig.patternAnalysis.minDataPoints === 2) {
+
+      if (
+        sensitiveConfig.alertSensitivity.level === 'high' &&
+        sensitiveConfig.patternAnalysis.minDataPoints === 2
+      ) {
         results.push({
           name: 'Preset Configuration',
           status: 'pass',
-          message: 'Sensitive preset applied correctly'
+          message: 'Sensitive preset applied correctly',
         });
       } else {
         results.push({
           name: 'Preset Configuration',
           status: 'fail',
-          message: 'Preset not applied correctly'
+          message: 'Preset not applied correctly',
         });
       }
-      
+
       // Reset to balanced
       analyticsConfig.setPreset('balanced');
     } catch (error) {
       results.push({
         name: 'Preset Configuration',
         status: 'fail',
-        message: `Error: ${error}`
+        message: `Error: ${error}`,
       });
     }
 
     // Test 3: Cache Invalidation on Config Change
     try {
       const initialCacheSize = cacheSize;
-      
+
       // Update config with invalidateOnConfigChange = true
       analyticsConfig.updateConfig({
         cache: {
           ...currentConfig.cache,
-          invalidateOnConfigChange: true
-        }
+          invalidateOnConfigChange: true,
+        },
       });
-      
+
       // Change a threshold to trigger cache invalidation
       analyticsConfig.updateConfig({
         patternAnalysis: {
           ...currentConfig.patternAnalysis,
-          minDataPoints: 5
-        }
+          minDataPoints: 5,
+        },
       });
-      
+
       // Give the event loop a tick for cache invalidation without setTimeout
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      
+
       results.push({
         name: 'Cache Invalidation',
         status: 'pass',
-        message: `Cache invalidation working (was ${initialCacheSize}, now ${cacheSize})`
+        message: `Cache invalidation working (was ${initialCacheSize}, now ${cacheSize})`,
       });
     } catch (error) {
       results.push({
         name: 'Cache Invalidation',
         status: 'fail',
-        message: `Error: ${error}`
+        message: `Error: ${error}`,
       });
     }
 
@@ -139,40 +141,40 @@ const AnalyticsConfigTest = () => {
     try {
       const exported = analyticsConfig.exportConfig();
       const parsed = JSON.parse(exported);
-      
+
       if (parsed.patternAnalysis && parsed.alertSensitivity && parsed.cache) {
         // Modify and import
         parsed.patternAnalysis.minDataPoints = 10;
         const importSuccess = analyticsConfig.importConfig(JSON.stringify(parsed));
-        
+
         if (importSuccess && analyticsConfig.getConfig().patternAnalysis.minDataPoints === 10) {
           results.push({
             name: 'Configuration Export/Import',
             status: 'pass',
-            message: 'Configuration exported and imported successfully'
+            message: 'Configuration exported and imported successfully',
           });
         } else {
           results.push({
             name: 'Configuration Export/Import',
             status: 'fail',
-            message: 'Import failed or values not updated'
+            message: 'Import failed or values not updated',
           });
         }
       } else {
         results.push({
           name: 'Configuration Export/Import',
           status: 'fail',
-          message: 'Export format invalid'
+          message: 'Export format invalid',
         });
       }
-      
+
       // Reset to defaults
       analyticsConfig.resetToDefaults();
     } catch (error) {
       results.push({
         name: 'Configuration Export/Import',
         status: 'fail',
-        message: `Error: ${error}`
+        message: `Error: ${error}`,
       });
     }
 
@@ -183,32 +185,32 @@ const AnalyticsConfigTest = () => {
           level: 'high',
           emotionIntensityMultiplier: 1.5,
           frequencyMultiplier: 1.5,
-          anomalyMultiplier: 1.5
-        }
+          anomalyMultiplier: 1.5,
+        },
       });
-      
+
       const config = analyticsConfig.getConfig();
       if (config.alertSensitivity.emotionIntensityMultiplier === 1.5) {
         results.push({
           name: 'Sensitivity Multipliers',
           status: 'pass',
-          message: 'Sensitivity multipliers applied correctly'
+          message: 'Sensitivity multipliers applied correctly',
         });
       } else {
         results.push({
           name: 'Sensitivity Multipliers',
           status: 'fail',
-          message: 'Multipliers not set correctly'
+          message: 'Multipliers not set correctly',
         });
       }
-      
+
       // Reset
       analyticsConfig.resetToDefaults();
     } catch (error) {
       results.push({
         name: 'Sensitivity Multipliers',
         status: 'fail',
-        message: `Error: ${error}`
+        message: `Error: ${error}`,
       });
     }
 
@@ -226,16 +228,19 @@ const AnalyticsConfigTest = () => {
     }
   }, []);
 
-  const getStatusColor = useCallback((status: TestResult['status']): 'default' | 'destructive' | 'secondary' | 'outline' => {
-    switch (status) {
-      case 'pass':
-        return 'default';
-      case 'fail':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  }, []);
+  const getStatusColor = useCallback(
+    (status: TestResult['status']): 'default' | 'destructive' | 'secondary' | 'outline' => {
+      switch (status) {
+        case 'pass':
+          return 'default';
+        case 'fail':
+          return 'destructive';
+        default:
+          return 'secondary';
+      }
+    },
+    [],
+  );
 
   return (
     <Card>
@@ -244,20 +249,24 @@ const AnalyticsConfigTest = () => {
           <Settings className="h-5 w-5" />
           {String(tAnalytics('configTest.title'))}
         </CardTitle>
-        <CardDescription>
-          {String(tAnalytics('configTest.description'))}
-        </CardDescription>
+        <CardDescription>{String(tAnalytics('configTest.description'))}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{String(tAnalytics('configTest.currentConfiguration'))}</p>
+            <p className="text-sm text-muted-foreground">
+              {String(tAnalytics('configTest.currentConfiguration'))}
+            </p>
             <div className="flex gap-2">
               <Badge variant="outline">
-                {tAnalytics('configTest.alertLevel', { level: currentConfig.alertSensitivity.level })}
+                {tAnalytics('configTest.alertLevel', {
+                  level: currentConfig.alertSensitivity.level,
+                })}
               </Badge>
               <Badge variant="outline">
-                {tAnalytics('configTest.minDataPoints', { count: currentConfig.patternAnalysis.minDataPoints })}
+                {tAnalytics('configTest.minDataPoints', {
+                  count: currentConfig.patternAnalysis.minDataPoints,
+                })}
               </Badge>
               <Badge variant="outline">
                 {tAnalytics('configTest.cacheSize', { size: cacheSize })}
@@ -283,7 +292,15 @@ const AnalyticsConfigTest = () => {
                   <p className="font-medium">{result.name}</p>
                   <p className="text-sm text-muted-foreground">{result.message}</p>
                 </div>
-                <Badge variant={getStatusColor(result.status) as "default" | "secondary" | "destructive" | "outline"}>
+                <Badge
+                  variant={
+                    getStatusColor(result.status) as
+                      | 'default'
+                      | 'secondary'
+                      | 'destructive'
+                      | 'outline'
+                  }
+                >
                   {result.status.toUpperCase()}
                 </Badge>
               </div>
@@ -292,7 +309,9 @@ const AnalyticsConfigTest = () => {
         )}
 
         <div className="pt-4 border-t">
-          <p className="text-sm text-muted-foreground mb-2">{String(tAnalytics('configTest.quickActions'))}</p>
+          <p className="text-sm text-muted-foreground mb-2">
+            {String(tAnalytics('configTest.quickActions'))}
+          </p>
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
@@ -308,18 +327,10 @@ const AnalyticsConfigTest = () => {
             >
               {String(tAnalytics('configTest.setSensitive'))}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => analyticsConfig.resetToDefaults()}
-            >
+            <Button size="sm" variant="outline" onClick={() => analyticsConfig.resetToDefaults()}>
               {String(tAnalytics('configTest.resetDefaults'))}
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={clearCache}
-            >
+            <Button size="sm" variant="outline" onClick={clearCache}>
               {String(tAnalytics('configTest.clearCache'))}
             </Button>
           </div>

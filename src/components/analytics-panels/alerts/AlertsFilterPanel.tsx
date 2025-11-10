@@ -132,11 +132,7 @@ export const AlertsFilterPanel: React.FC<AlertsFilterPanelProps> = ({
     <div className="space-y-4">
       {/* Search bar */}
       <div className="flex flex-wrap items-center gap-3" role="group" aria-label="Search and range">
-        <AlertSearchBar
-          value={searchQuery}
-          onChange={onSearchQueryChange}
-          ref={searchInputRef}
-        />
+        <AlertSearchBar value={searchQuery} onChange={onSearchQueryChange} ref={searchInputRef} />
       </div>
 
       {/* Filter controls */}

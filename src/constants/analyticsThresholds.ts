@@ -42,17 +42,17 @@ export const CORRELATION_THRESHOLDS = {
   LABEL: 0.25,
 
   /** Threshold for "significant" correlation in insights */
-  SIGNIFICANT: 0.50,
+  SIGNIFICANT: 0.5,
 
   /** Threshold for "strong" correlation used in high-priority alerts */
-  STRONG: 0.70,
+  STRONG: 0.7,
 
   /** Conservative threshold used in "conservative" analytics preset */
-  CONSERVATIVE: 0.40,
+  CONSERVATIVE: 0.4,
 
   /** Sensitive threshold used in "sensitive" analytics preset */
   SENSITIVE: 0.15,
-} as const
+} as const;
 
 /**
  * Statistical significance levels for correlation analysis.
@@ -69,7 +69,7 @@ export const CORRELATION_SIGNIFICANCE = {
 
   /** Low significance: weak patterns, exploratory only */
   LOW: 0.3,
-} as const
+} as const;
 
 // =============================================================================
 // TIME WINDOWS & ANALYSIS PERIODS
@@ -102,7 +102,7 @@ export const TIME_WINDOWS = {
 
   /** Target time span for high-quality statistical analysis (3 weeks) */
   QUALITY_TIME_SPAN_DAYS: 21,
-} as const
+} as const;
 
 // =============================================================================
 // DATA QUALITY & SAMPLE SIZE THRESHOLDS
@@ -149,7 +149,7 @@ export const DATA_QUALITY = {
 
   /** Sensitive preset: enables predictions with smaller samples */
   MIN_SAMPLE_SIZE_SENSITIVE: 3,
-} as const
+} as const;
 
 /**
  * Confidence thresholds for data quality and prediction reliability.
@@ -175,7 +175,7 @@ export const CONFIDENCE_THRESHOLDS = {
 
   /** Maximum days since last entry before data is considered stale */
   DAYS_SINCE_LAST_ENTRY: 7,
-} as const
+} as const;
 
 // =============================================================================
 // ANOMALY DETECTION THRESHOLDS
@@ -210,7 +210,7 @@ export const ANOMALY_THRESHOLDS = {
 
   /** Sensitive preset: catches earlier deviations (2σ) */
   SENSITIVE: 2.0,
-} as const
+} as const;
 
 /**
  * Trend detection thresholds for time series analysis.
@@ -221,7 +221,7 @@ export const ANOMALY_THRESHOLDS = {
 export const TREND_THRESHOLDS = {
   /** Minimum trend slope to classify as "increasing" or "decreasing" */
   MINIMUM_SLOPE: 0.02,
-} as const
+} as const;
 
 // =============================================================================
 // INTENSITY & SEVERITY THRESHOLDS
@@ -249,7 +249,7 @@ export const INTENSITY_THRESHOLDS = {
 
   /** Threshold for stress assessment (intensity ≥ 4 = potential stress) */
   STRESS_INTENSITY: 4,
-} as const
+} as const;
 
 /**
  * Frequency thresholds for pattern classification.
@@ -272,7 +272,7 @@ export const FREQUENCY_THRESHOLDS = {
 
   /** Sensitive preset: detects concerns at lower frequencies */
   CONCERN_FREQUENCY_SENSITIVE: 0.2,
-} as const
+} as const;
 
 // =============================================================================
 // EMOTION TREND THRESHOLDS
@@ -293,7 +293,7 @@ export const EMOTION_TREND_THRESHOLDS = {
 
   /** Number of recent emotions to consider for trend analysis */
   RECENT_COUNT: 7,
-} as const
+} as const;
 
 // =============================================================================
 // CACHE CONFIGURATION
@@ -325,7 +325,7 @@ export const CACHE_CONFIG = {
 
   /** Whether to invalidate cache when configuration changes */
   INVALIDATE_ON_CONFIG_CHANGE: true,
-} as const
+} as const;
 
 // =============================================================================
 // ALERT SYSTEM LIMITS
@@ -365,7 +365,7 @@ export const ALERT_LIMITS = {
 
   /** Minimum confidence threshold for displaying alerts */
   MIN_CONFIDENCE: 0.1,
-} as const
+} as const;
 
 /**
  * Alert deduplication and throttling configuration.
@@ -387,7 +387,7 @@ export const ALERT_TIMING = {
 
   /** "Don't show again" duration (7 days) */
   DONT_SHOW_AGAIN_DAYS: 7,
-} as const
+} as const;
 
 /**
  * Alert detection engine configuration.
@@ -409,7 +409,7 @@ export const ALERT_DETECTION = {
 
   /** Conservative preset: higher decision interval */
   CUSUM_DECISION_INTERVAL_CONSERVATIVE: 5.5,
-} as const
+} as const;
 
 // =============================================================================
 // CHART & VISUALIZATION SETTINGS
@@ -451,7 +451,7 @@ export const CHART_CONFIG = {
     /** Sensory input line */
     SENSORY: 2,
   },
-} as const
+} as const;
 
 // =============================================================================
 // INSIGHTS & DISPLAY LIMITS
@@ -472,7 +472,7 @@ export const INSIGHTS_LIMITS = {
 
   /** Maximum number of predictions to show */
   MAX_PREDICTIONS: 2,
-} as const
+} as const;
 
 // =============================================================================
 // FEATURE ENGINEERING CONSTANTS
@@ -489,7 +489,7 @@ export const FEATURE_ENGINEERING = {
 
   /** Whether to clamp normalized values to [0, 1] range */
   CLAMP_TO_UNIT: true,
-} as const
+} as const;
 
 /**
  * Huber regression parameters for robust trend fitting.
@@ -508,7 +508,7 @@ export const HUBER_REGRESSION = {
 
   /** Convergence tolerance */
   TOLERANCE: 1e-6,
-} as const
+} as const;
 
 // =============================================================================
 // BACKGROUND PRECOMPUTATION SETTINGS
@@ -541,7 +541,7 @@ export const PRECOMPUTATION_CONFIG = {
 
   /** Common timeframes to precompute (7, 14, 30 days) */
   COMMON_TIMEFRAMES: [7, 14, 30],
-} as const
+} as const;
 
 // =============================================================================
 // WEIGHT CONFIGURATIONS
@@ -567,7 +567,7 @@ export const CONFIDENCE_WEIGHTS = {
 
   /** Recency boost for recent data */
   RECENCY_BOOST: 0.1,
-} as const
+} as const;
 
 /**
  * Weights for analytics health score calculation.
@@ -590,7 +590,7 @@ export const HEALTH_SCORE_WEIGHTS = {
 
   /** Weight for minimum data sufficiency */
   MINIMUM_DATA: 20,
-} as const
+} as const;
 
 /**
  * Weights for alert source ranking.
@@ -607,7 +607,7 @@ export const SOURCE_RANKING_WEIGHTS = {
 
   /** Weight for recency of the detection */
   RECENCY: 0.2,
-} as const
+} as const;
 
 // =============================================================================
 // ALERT SENSITIVITY MULTIPLIERS
@@ -637,7 +637,7 @@ export const SENSITIVITY_MULTIPLIERS = {
     FREQUENCY: 1.2,
     ANOMALY: 1.2,
   },
-} as const
+} as const;
 
 // =============================================================================
 // STRESS ASSESSMENT CONFIGURATION
@@ -654,7 +654,7 @@ export const STRESS_ASSESSMENT = {
 
   /** Intensity threshold for stress classification (4 on 1-10 scale) */
   INTENSITY_THRESHOLD: 4,
-} as const
+} as const;
 
 // =============================================================================
 // TAXONOMY & CLASSIFICATION
@@ -677,17 +677,18 @@ export const EMOTION_TAXONOMY = {
     'relaxed',
     'optimistic',
   ] as const,
-} as const
+} as const;
 
 // =============================================================================
 // TYPE EXPORTS
 // =============================================================================
 
 /** Type-safe access to correlation threshold values */
-export type CorrelationThreshold = typeof CORRELATION_THRESHOLDS[keyof typeof CORRELATION_THRESHOLDS]
+export type CorrelationThreshold =
+  (typeof CORRELATION_THRESHOLDS)[keyof typeof CORRELATION_THRESHOLDS];
 
 /** Type-safe access to time window values */
-export type TimeWindow = typeof TIME_WINDOWS[keyof typeof TIME_WINDOWS]
+export type TimeWindow = (typeof TIME_WINDOWS)[keyof typeof TIME_WINDOWS];
 
 /** Type-safe access to alert limit values */
-export type AlertLimit = typeof ALERT_LIMITS[keyof typeof ALERT_LIMITS]
+export type AlertLimit = (typeof ALERT_LIMITS)[keyof typeof ALERT_LIMITS];

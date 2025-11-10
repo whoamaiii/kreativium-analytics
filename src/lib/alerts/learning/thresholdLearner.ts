@@ -183,7 +183,10 @@ export class ThresholdLearner {
     return readJSON<string[]>(STORAGE_INDEX_KEY) ?? [];
   }
 
-  static buildSamplesFromTelemetry(entries: AlertTelemetryEntry[], detectorType: string): ThresholdFeedbackSample[] {
+  static buildSamplesFromTelemetry(
+    entries: AlertTelemetryEntry[],
+    detectorType: string,
+  ): ThresholdFeedbackSample[] {
     return entries
       .filter((entry) => (entry.detectorTypes ?? []).includes(detectorType))
       .map((entry) => ({

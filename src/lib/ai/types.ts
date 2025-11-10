@@ -77,8 +77,11 @@ export interface ChatResponse {
   metrics: ChatCallMetrics;
 }
 
-export interface OpenRouterClientConfig extends Pick<AiConfig,
-  'modelName' | 'temperature' | 'maxTokens' | 'topP' | 'timeoutMs' | 'apiKey'> {
+export interface OpenRouterClientConfig
+  extends Pick<
+    AiConfig,
+    'modelName' | 'temperature' | 'maxTokens' | 'topP' | 'timeoutMs' | 'apiKey'
+  > {
   baseUrl?: string; // defaults to https://openrouter.ai/api/v1
   // Additional retry configuration
   maxRetries?: number; // default 3
@@ -104,4 +107,10 @@ export interface RequestOptions {
   suppressToasts?: boolean; // if true, suppress user-facing toasts on errors
 }
 
-export type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
+export type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JSONValue[]
+  | { [key: string]: JSONValue };

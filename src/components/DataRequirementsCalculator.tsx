@@ -25,71 +25,76 @@ interface ConfidenceRequirement {
   description: string;
 }
 
-export const DataRequirementsCalculator = ({ 
-  emotions, 
-  sensoryInputs, 
-  entries, 
-  className 
+export const DataRequirementsCalculator = ({
+  emotions,
+  sensoryInputs,
+  entries,
+  className,
 }: DataRequirementsCalculatorProps) => {
   const { tAnalytics, formatDate } = useTranslation();
 
   // Define confidence level requirements
-  const requirements: ConfidenceRequirement[] = useMemo(() => [
-    {
-      level: 'low',
-      percentage: 25,
-      minDataPoints: 5,
-      minDays: 7,
-      minRSquared: 0.3,
-      color: 'bg-destructive',
-      description: String(tAnalytics('confidence.low'))
-    },
-    {
-      level: 'medium',
-      percentage: 50,
-      minDataPoints: 15,
-      minDays: 21,
-      minRSquared: 0.5,
-      color: 'bg-warning',
-      description: String(tAnalytics('confidence.medium'))
-    },
-    {
-      level: 'high',
-      percentage: 75,
-      minDataPoints: 30,
-      minDays: 42,
-      minRSquared: 0.7,
-      color: 'bg-success',
-      description: String(tAnalytics('confidence.high'))
-    }
-  ], [tAnalytics]);
+  const requirements: ConfidenceRequirement[] = useMemo(
+    () => [
+      {
+        level: 'low',
+        percentage: 25,
+        minDataPoints: 5,
+        minDays: 7,
+        minRSquared: 0.3,
+        color: 'bg-destructive',
+        description: String(tAnalytics('confidence.low')),
+      },
+      {
+        level: 'medium',
+        percentage: 50,
+        minDataPoints: 15,
+        minDays: 21,
+        minRSquared: 0.5,
+        color: 'bg-warning',
+        description: String(tAnalytics('confidence.medium')),
+      },
+      {
+        level: 'high',
+        percentage: 75,
+        minDataPoints: 30,
+        minDays: 42,
+        minRSquared: 0.7,
+        color: 'bg-success',
+        description: String(tAnalytics('confidence.high')),
+      },
+    ],
+    [tAnalytics],
+  );
 
   // Calculate current data status
   const currentStatus = useMemo(() => {
     const totalDataPoints = emotions.length + sensoryInputs.length;
     const allTimestamps = [
-      ...emotions.map(e => e.timestamp),
-      ...sensoryInputs.map(s => s.timestamp),
-      ...entries.map(e => e.timestamp)
+      ...emotions.map((e) => e.timestamp),
+      ...sensoryInputs.map((s) => s.timestamp),
+      ...entries.map((e) => e.timestamp),
     ].sort((a, b) => a.getTime() - b.getTime());
 
-    const daysSpan = allTimestamps.length > 0 
-      ? differenceInDays(new Date(), allTimestamps[0]) + 1 
-      : 0;
+    const daysSpan =
+      allTimestamps.length > 0 ? differenceInDays(new Date(), allTimestamps[0]) + 1 : 0;
 
     return {
       dataPoints: totalDataPoints,
       daysSpan,
       entriesCount: entries.length,
       startDate: allTimestamps[0] || new Date(),
-      hasData: totalDataPoints > 0
+      hasData: totalDataPoints > 0,
     };
   }, [emotions, sensoryInputs, entries]);
 
   // Calculate progress toward each confidence level
   const progressCalculations = useMemo(() => {
-    return requirements.map(req => {
-      const dataPointsProgress = Math.min(100, (currentStatus.dataPoints / req.minDataPoints) * 100);
+    return requirements.map((req) => {
+      const dataPointsProgress = Math.min(
+        100,
+        (currentStatus.dataPoints / req.minDataPoints) * 100,
+      );
       const daysProgress = Math.min(100, (currentStatus.daysSpan / req.minDays) * 100);
       const overallProgress = Math.min(dataPointsProgress, daysProgress);
 
@@ -106,28 +111,30 @@ export const DataRequirementsCalculator = ({
         dataPoints: {
           current: currentStatus.dataPoints,
           needed: dataPointsNeeded,
-          progress: dataPointsProgress
+          progress: dataPointsProgress,
         },
         days: {
           current: currentStatus.daysSpan,
           needed: daysNeeded,
-          progress: daysProgress
+          progress: daysProgress,
         },
         daysToTarget,
         targetDate,
-        isAchieved: overallProgress >= 100
+        isAchieved: overallProgress >= 100,
       };
     });
   }, [requirements, currentStatus]);
 
   // Get next target confidence level
-  const nextTarget = progressCalculations.find(p => !p.isAchieved);
-  const currentLevel = progressCalculations.filter(p => p.isAchieved).length;
+  const nextTarget = progressCalculations.find((p) => !p.isAchieved);
+  const currentLevel = progressCalculations.filter((p) => p.isAchieved).length;
 
   // Calculate recommended daily collection rate
   const getRecommendedRate = () => {
     if (!nextTarget) return null;
-    const dailyRate = Math.ceil(nextTarget.dataPoints.needed / Math.max(nextTarget.daysToTarget, 1));
+    const dailyRate = Math.ceil(
+      nextTarget.dataPoints.needed / Math.max(nextTarget.daysToTarget, 1),
+    );
     return Math.max(1, dailyRate);
   };
 
@@ -143,11 +150,10 @@ export const DataRequirementsCalculator = ({
         <CardContent className="text-center py-8">
           <AlertCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground mb-4">
-            Ingen data registrert ennå. Start med å samle data for å se fremgang mot sikkerhetsnivåer.
+            Ingen data registrert ennå. Start med å samle data for å se fremgang mot
+            sikkerhetsnivåer.
           </p>
-          <Button variant="outline">
-            Start datainnsamling
-          </Button>
+          <Button variant="outline">Start datainnsamling</Button>
         </CardContent>
       </Card>
     );
@@ -177,7 +183,9 @@ export const DataRequirementsCalculator = ({
               {currentLevel >= 3 && 'Høyt nivå oppnådd'}
             </p>
           </div>
-          <Badge variant={currentLevel >= 3 ? 'default' : currentLevel >= 1 ? 'secondary' : 'outline'}>
+          <Badge
+            variant={currentLevel >= 3 ? 'default' : currentLevel >= 1 ? 'secondary' : 'outline'}
+          >
             {currentLevel >= 3 ? 'Høy' : currentLevel >= 1 ? 'Middels' : 'Lav'} sikkerhet
           </Badge>
         </div>
@@ -191,14 +199,16 @@ export const DataRequirementsCalculator = ({
                 {Math.round(nextTarget.progress)}% fullført
               </span>
             </div>
-            
+
             <Progress value={nextTarget.progress} className="h-2" />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span>Datapunkter</span>
-                  <span>{nextTarget.dataPoints.current} / {nextTarget.requirement.minDataPoints}</span>
+                  <span>
+                    {nextTarget.dataPoints.current} / {nextTarget.requirement.minDataPoints}
+                  </span>
                 </div>
                 <Progress value={nextTarget.dataPoints.progress} className="h-1" />
                 {nextTarget.dataPoints.needed > 0 && (
@@ -207,11 +217,13 @@ export const DataRequirementsCalculator = ({
                   </p>
                 )}
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span>Tidsperiode</span>
-                  <span>{nextTarget.days.current} / {nextTarget.requirement.minDays} dager</span>
+                  <span>
+                    {nextTarget.days.current} / {nextTarget.requirement.minDays} dager
+                  </span>
                 </div>
                 <Progress value={nextTarget.days.progress} className="h-1" />
                 {nextTarget.days.needed > 0 && (
@@ -242,11 +254,12 @@ export const DataRequirementsCalculator = ({
         <div className="space-y-3">
           <h4 className="font-medium">Alle sikkerhetsnivåer</h4>
           {progressCalculations.map((calc) => (
-            <div 
+            <div
               key={calc.requirement.level}
               className={`flex items-center justify-between p-3 rounded-lg border ${
-                calc.isAchieved ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800' : 
-                'bg-muted/30'
+                calc.isAchieved
+                  ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800'
+                  : 'bg-muted/30'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -258,7 +271,8 @@ export const DataRequirementsCalculator = ({
                 <div>
                   <p className="font-medium">{calc.requirement.description}</p>
                   <p className="text-xs text-muted-foreground">
-                    {calc.requirement.minDataPoints} datapunkter over {calc.requirement.minDays} dager
+                    {calc.requirement.minDataPoints} datapunkter over {calc.requirement.minDays}{' '}
+                    dager
                   </p>
                 </div>
               </div>
@@ -278,7 +292,7 @@ export const DataRequirementsCalculator = ({
 
         {/* Collection recommendations */}
         {nextTarget && (
-        <div className="p-4 bg-primary/10 rounded-lg">
+          <div className="p-4 bg-primary/10 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-primary" />
               <span className="font-medium text-primary-foreground">Anbefalinger</span>

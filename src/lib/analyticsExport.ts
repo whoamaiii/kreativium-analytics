@@ -23,7 +23,6 @@ import { PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalys
 import { logger } from '@/lib/logger';
 import { downloadBlob } from '@/lib/utils';
 
-
 export interface AnalyticsExportData {
   student: Student;
   dateRange: {
@@ -58,7 +57,11 @@ class AnalyticsExport {
   /**
    * Unified export entrypoint used by dashboards; delegates to format-specific methods.
    */
-  async exportTo(format: ExportFormat, exportData: AnalyticsExportData, options?: { pdf?: { chartQuality?: 'standard' | 'high' | 'print' } }): Promise<void> {
+  async exportTo(
+    format: ExportFormat,
+    exportData: AnalyticsExportData,
+    options?: { pdf?: { chartQuality?: 'standard' | 'high' | 'print' } },
+  ): Promise<void> {
     switch (format) {
       case 'pdf':
         await this.exportToPDF(exportData, options?.pdf);
@@ -77,7 +80,10 @@ class AnalyticsExport {
   /**
    * Export analytics data to PDF format
    */
-  async exportToPDF(exportData: AnalyticsExportData, opts?: { chartQuality?: 'standard' | 'high' | 'print' }): Promise<void> {
+  async exportToPDF(
+    exportData: AnalyticsExportData,
+    opts?: { chartQuality?: 'standard' | 'high' | 'print' },
+  ): Promise<void> {
     const jsPDF = await getJsPDF();
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.width;
@@ -87,8 +93,10 @@ class AnalyticsExport {
 
     const pixelRatio = (() => {
       switch (opts?.chartQuality) {
-        case 'standard': return 2;
-        case 'print': return 4;
+        case 'standard':
+          return 2;
+        case 'print':
+          return 4;
         case 'high':
         default:
           return 3;
@@ -104,7 +112,7 @@ class AnalyticsExport {
     pdf.text(
       `Date Range: ${format(exportData.dateRange.start, 'MMM dd, yyyy')} - ${format(exportData.dateRange.end, 'MMM dd, yyyy')}`,
       margin,
-      currentY
+      currentY,
     );
     currentY += 10;
 
@@ -122,10 +130,10 @@ class AnalyticsExport {
       `Emotions Tracked: ${exportData.data.emotions.length}`,
       `Sensory Inputs: ${exportData.data.sensoryInputs.length}`,
       `Patterns Found: ${exportData.analytics.patterns.length}`,
-      `Correlations: ${exportData.analytics.correlations.length}`
+      `Correlations: ${exportData.analytics.correlations.length}`,
     ];
 
-    summaryData.forEach(line => {
+    summaryData.forEach((line) => {
       pdf.text(line, margin, currentY);
       currentY += 7;
     });
@@ -150,11 +158,19 @@ class AnalyticsExport {
         }
 
         pdf.setFont(undefined, 'bold');
-        pdf.text(`${index + 1}. ${pattern.pattern.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}`, margin, currentY);
+        pdf.text(
+          `${index + 1}. ${pattern.pattern.replace('-', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}`,
+          margin,
+          currentY,
+        );
         currentY += 7;
 
         pdf.setFont(undefined, 'normal');
-        pdf.text(`Type: ${pattern.type} | Confidence: ${Math.round(pattern.confidence * 100)}%`, margin + 5, currentY);
+        pdf.text(
+          `Type: ${pattern.type} | Confidence: ${Math.round(pattern.confidence * 100)}%`,
+          margin + 5,
+          currentY,
+        );
         currentY += 7;
 
         pdf.text(`Description: ${pattern.description}`, margin + 5, currentY);
@@ -164,9 +180,9 @@ class AnalyticsExport {
           pdf.text('Recommendations:', margin + 5, currentY);
           currentY += 7;
 
-          pattern.recommendations.forEach(rec => {
+          pattern.recommendations.forEach((rec) => {
             const lines = pdf.splitTextToSize(`• ${rec}`, pageWidth - margin * 2 - 10);
-            lines.forEach(line => {
+            lines.forEach((line) => {
               if (currentY > pageHeight - 20) {
                 pdf.addPage();
                 currentY = margin;
@@ -199,11 +215,19 @@ class AnalyticsExport {
         }
 
         pdf.setFont(undefined, 'bold');
-        pdf.text(`${index + 1}. ${correlation.factor1} <-> ${correlation.factor2}`, margin, currentY);
+        pdf.text(
+          `${index + 1}. ${correlation.factor1} <-> ${correlation.factor2}`,
+          margin,
+          currentY,
+        );
         currentY += 7;
 
         pdf.setFont(undefined, 'normal');
-        pdf.text(`Correlation: r = ${correlation.correlation.toFixed(3)} | Significance: ${correlation.significance}`, margin + 5, currentY);
+        pdf.text(
+          `Correlation: r = ${correlation.correlation.toFixed(3)} | Significance: ${correlation.significance}`,
+          margin + 5,
+          currentY,
+        );
         currentY += 7;
 
         pdf.text(`Description: ${correlation.description}`, margin + 5, currentY);
@@ -212,7 +236,10 @@ class AnalyticsExport {
     }
 
     // Predictive Insights Section
-    if (exportData.analytics.predictiveInsights && exportData.analytics.predictiveInsights.length > 0) {
+    if (
+      exportData.analytics.predictiveInsights &&
+      exportData.analytics.predictiveInsights.length > 0
+    ) {
       if (currentY > pageHeight - 50) {
         pdf.addPage();
         currentY = margin;
@@ -234,11 +261,15 @@ class AnalyticsExport {
         currentY += 7;
 
         pdf.setFont(undefined, 'normal');
-        pdf.text(`Confidence: ${Math.round(insight.confidence * 100)}% | Severity: ${insight.severity || 'N/A'}`, margin + 5, currentY);
+        pdf.text(
+          `Confidence: ${Math.round(insight.confidence * 100)}% | Severity: ${insight.severity || 'N/A'}`,
+          margin + 5,
+          currentY,
+        );
         currentY += 7;
 
         const descLines = pdf.splitTextToSize(insight.description, pageWidth - margin * 2 - 10);
-        descLines.forEach(line => {
+        descLines.forEach((line) => {
           if (currentY > pageHeight - 20) {
             pdf.addPage();
             currentY = margin;
@@ -275,7 +306,7 @@ class AnalyticsExport {
         }
 
         const lines = pdf.splitTextToSize(`${index + 1}. ${insight}`, pageWidth - margin * 2);
-        lines.forEach(line => {
+        lines.forEach((line) => {
           pdf.text(line, margin, currentY);
           currentY += 7;
         });
@@ -290,7 +321,9 @@ class AnalyticsExport {
       let colIndex = 0;
       let rowMaxHeight = 0;
 
-      const getImage = async (chart: NonNullable<AnalyticsExportData['chartExports']>[number]): Promise<{ dataURL: string; width: number; height: number }> => {
+      const getImage = async (
+        chart: NonNullable<AnalyticsExportData['chartExports']>[number],
+      ): Promise<{ dataURL: string; width: number; height: number }> => {
         if (chart.svgString) {
           const svgBlob = new Blob([chart.svgString], { type: 'image/svg+xml;charset=utf-8' });
           const url = URL.createObjectURL(svgBlob);
@@ -302,7 +335,11 @@ class AnalyticsExport {
               i.src = url;
             });
             const aspect = img.height / img.width;
-            return { dataURL: chart.svgString as unknown as string, width: colWidth, height: colWidth * aspect };
+            return {
+              dataURL: chart.svgString as unknown as string,
+              width: colWidth,
+              height: colWidth * aspect,
+            };
           } finally {
             URL.revokeObjectURL(url);
           }
@@ -362,7 +399,7 @@ class AnalyticsExport {
           const canvas = await html2canvas(chart.element, {
             scale: pixelRatio,
             backgroundColor: '#ffffff',
-            logging: false
+            logging: false,
           });
 
           const imgWidth = pageWidth - margin * 2;
@@ -376,7 +413,9 @@ class AnalyticsExport {
     }
 
     // Save the PDF
-    pdf.save(`analytics-report-${exportData.student.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    pdf.save(
+      `analytics-report-${exportData.student.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.pdf`,
+    );
   }
 
   /**
@@ -388,7 +427,9 @@ class AnalyticsExport {
     // Header Information
     csvSections.push('Analytics Report');
     csvSections.push(`Student Name,${exportData.student.name}`);
-    csvSections.push(`Date Range,"${format(exportData.dateRange.start, 'MMM dd, yyyy')} - ${format(exportData.dateRange.end, 'MMM dd, yyyy')}"`);
+    csvSections.push(
+      `Date Range,"${format(exportData.dateRange.start, 'MMM dd, yyyy')} - ${format(exportData.dateRange.end, 'MMM dd, yyyy')}"`,
+    );
     csvSections.push(`Generated,${format(new Date(), 'MMM dd, yyyy HH:mm')}`);
     csvSections.push('');
 
@@ -405,9 +446,9 @@ class AnalyticsExport {
     if (exportData.data.emotions.length > 0) {
       csvSections.push('Emotion Data');
       csvSections.push('Date,Time,Emotion,Intensity,Triggers,Notes');
-      exportData.data.emotions.forEach(emotion => {
+      exportData.data.emotions.forEach((emotion) => {
         csvSections.push(
-          `${format(emotion.timestamp, 'yyyy-MM-dd')},${format(emotion.timestamp, 'HH:mm')},"${emotion.emotion}",${emotion.intensity},"${(emotion.triggers || []).join('; ')}","${emotion.notes || ''}"`
+          `${format(emotion.timestamp, 'yyyy-MM-dd')},${format(emotion.timestamp, 'HH:mm')},"${emotion.emotion}",${emotion.intensity},"${(emotion.triggers || []).join('; ')}","${emotion.notes || ''}"`,
         );
       });
       csvSections.push('');
@@ -417,11 +458,11 @@ class AnalyticsExport {
     if (exportData.data.sensoryInputs.length > 0) {
       csvSections.push('Sensory Input Data');
       csvSections.push('Date,Time,Type,Response,Intensity,Context,Notes');
-      exportData.data.sensoryInputs.forEach(sensory => {
+      exportData.data.sensoryInputs.forEach((sensory) => {
         const contextVal = (sensory as unknown as { context?: string }).context ?? '';
         const intensityVal = typeof sensory.intensity === 'number' ? sensory.intensity : '';
         csvSections.push(
-          `${format(sensory.timestamp, 'yyyy-MM-dd')},${format(sensory.timestamp, 'HH:mm')},"${sensory.sensoryType}","${sensory.response}",${intensityVal},"${contextVal}","${sensory.notes || ''}"`
+          `${format(sensory.timestamp, 'yyyy-MM-dd')},${format(sensory.timestamp, 'HH:mm')},"${sensory.sensoryType}","${sensory.response}",${intensityVal},"${contextVal}","${sensory.notes || ''}"`,
         );
       });
       csvSections.push('');
@@ -431,9 +472,9 @@ class AnalyticsExport {
     if (exportData.analytics.patterns.length > 0) {
       csvSections.push('Behavioral Patterns');
       csvSections.push('Pattern,Type,Confidence,Frequency,Data Points,Description,Recommendations');
-      exportData.analytics.patterns.forEach(pattern => {
+      exportData.analytics.patterns.forEach((pattern) => {
         csvSections.push(
-          `"${pattern.pattern}","${pattern.type}",${(pattern.confidence * 100).toFixed(1)}%,${pattern.frequency},${pattern.dataPoints},"${pattern.description}","${(pattern.recommendations || []).join('; ')}"`
+          `"${pattern.pattern}","${pattern.type}",${(pattern.confidence * 100).toFixed(1)}%,${pattern.frequency},${pattern.dataPoints},"${pattern.description}","${(pattern.recommendations || []).join('; ')}"`,
         );
       });
       csvSections.push('');
@@ -443,21 +484,24 @@ class AnalyticsExport {
     if (exportData.analytics.correlations.length > 0) {
       csvSections.push('Environmental Correlations');
       csvSections.push('Factor 1,Factor 2,Correlation,Significance,Description,Recommendations');
-      exportData.analytics.correlations.forEach(correlation => {
+      exportData.analytics.correlations.forEach((correlation) => {
         csvSections.push(
-          `"${correlation.factor1}","${correlation.factor2}",${correlation.correlation.toFixed(3)},"${correlation.significance}","${correlation.description}","${(correlation.recommendations || []).join('; ')}"`
+          `"${correlation.factor1}","${correlation.factor2}",${correlation.correlation.toFixed(3)},"${correlation.significance}","${correlation.description}","${(correlation.recommendations || []).join('; ')}"`,
         );
       });
       csvSections.push('');
     }
 
     // Predictive Insights
-    if (exportData.analytics.predictiveInsights && exportData.analytics.predictiveInsights.length > 0) {
+    if (
+      exportData.analytics.predictiveInsights &&
+      exportData.analytics.predictiveInsights.length > 0
+    ) {
       csvSections.push('Predictive Insights');
       csvSections.push('Title,Confidence,Severity,Description,Trend,Recommendations');
-      exportData.analytics.predictiveInsights.forEach(insight => {
+      exportData.analytics.predictiveInsights.forEach((insight) => {
         csvSections.push(
-          `"${insight.title}",${(insight.confidence * 100).toFixed(1)}%,"${insight.severity || 'N/A'}","${insight.description}","${insight.prediction?.trend || 'N/A'}","${(insight.recommendations || []).join('; ')}"`
+          `"${insight.title}",${(insight.confidence * 100).toFixed(1)}%,"${insight.severity || 'N/A'}","${insight.description}","${insight.prediction?.trend || 'N/A'}","${(insight.recommendations || []).join('; ')}"`,
         );
       });
     }
@@ -466,7 +510,7 @@ class AnalyticsExport {
     const csvContent = csvSections.join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const filename = `analytics-report-${exportData.student.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    
+
     downloadBlob(blob, filename);
   }
 
@@ -480,29 +524,32 @@ class AnalyticsExport {
         studentId: exportData.student.id,
         dateRange: {
           start: exportData.dateRange.start.toISOString(),
-          end: exportData.dateRange.end.toISOString()
+          end: exportData.dateRange.end.toISOString(),
         },
         generatedAt: new Date().toISOString(),
-        version: '1.0.0'
+        version: '1.0.0',
       },
       summary: {
         totalSessions: exportData.data.entries.length,
         totalEmotions: exportData.data.emotions.length,
         totalSensoryInputs: exportData.data.sensoryInputs.length,
         totalPatterns: exportData.analytics.patterns.length,
-        totalCorrelations: exportData.analytics.correlations.length
+        totalCorrelations: exportData.analytics.correlations.length,
       },
       data: {
-        emotions: exportData.data.emotions.map(emotion => ({
+        emotions: exportData.data.emotions.map((emotion) => ({
           id: emotion.id,
           timestamp: emotion.timestamp.toISOString(),
           emotion: emotion.emotion,
           intensity: emotion.intensity,
           triggers: emotion.triggers || [],
-          notes: emotion.notes || null
+          notes: emotion.notes || null,
         })),
-        sensoryInputs: exportData.data.sensoryInputs.map(sensory => {
-          const withOptional = sensory as unknown as { context?: string; intensity?: number | null };
+        sensoryInputs: exportData.data.sensoryInputs.map((sensory) => {
+          const withOptional = sensory as unknown as {
+            context?: string;
+            intensity?: number | null;
+          };
           return {
             id: sensory.id,
             timestamp: sensory.timestamp.toISOString(),
@@ -510,61 +557,65 @@ class AnalyticsExport {
             response: sensory.response,
             intensity: typeof sensory.intensity === 'number' ? sensory.intensity : null,
             context: withOptional.context ?? null,
-            notes: sensory.notes || null
+            notes: sensory.notes || null,
           };
         }),
-        trackingEntries: exportData.data.entries.map(entry => ({
+        trackingEntries: exportData.data.entries.map((entry) => ({
           id: entry.id,
           timestamp: entry.timestamp.toISOString(),
           emotionCount: entry.emotions.length,
           sensoryCount: entry.sensoryInputs.length,
-          environmentalData: entry.environmentalData || null
-        }))
+          environmentalData: entry.environmentalData || null,
+        })),
       },
       analytics: {
-        patterns: exportData.analytics.patterns.map(pattern => ({
+        patterns: exportData.analytics.patterns.map((pattern) => ({
           pattern: pattern.pattern,
           type: pattern.type,
           confidence: pattern.confidence,
           frequency: pattern.frequency,
           dataPoints: pattern.dataPoints,
           description: pattern.description,
-          recommendations: pattern.recommendations || []
+          recommendations: pattern.recommendations || [],
         })),
-        correlations: exportData.analytics.correlations.map(correlation => ({
+        correlations: exportData.analytics.correlations.map((correlation) => ({
           factor1: correlation.factor1,
           factor2: correlation.factor2,
           correlation: correlation.correlation,
           significance: correlation.significance,
           description: correlation.description,
-          recommendations: correlation.recommendations || []
+          recommendations: correlation.recommendations || [],
         })),
         insights: exportData.analytics.insights,
-        predictiveInsights: exportData.analytics.predictiveInsights?.map(insight => ({
-          title: insight.title,
-          description: insight.description,
-          confidence: insight.confidence,
-          severity: insight.severity || null,
-          prediction: insight.prediction ? {
-            trend: insight.prediction.trend,
-            accuracy: insight.prediction.accuracy || null
-          } : null,
-          recommendations: insight.recommendations || []
-        })) || [],
-        anomalies: exportData.analytics.anomalies?.map(anomaly => ({
-          type: anomaly.type,
-          severity: anomaly.severity,
-          timestamp: anomaly.timestamp.toISOString(),
-          description: anomaly.description || null
-        })) || []
-      }
+        predictiveInsights:
+          exportData.analytics.predictiveInsights?.map((insight) => ({
+            title: insight.title,
+            description: insight.description,
+            confidence: insight.confidence,
+            severity: insight.severity || null,
+            prediction: insight.prediction
+              ? {
+                  trend: insight.prediction.trend,
+                  accuracy: insight.prediction.accuracy || null,
+                }
+              : null,
+            recommendations: insight.recommendations || [],
+          })) || [],
+        anomalies:
+          exportData.analytics.anomalies?.map((anomaly) => ({
+            type: anomaly.type,
+            severity: anomaly.severity,
+            timestamp: anomaly.timestamp.toISOString(),
+            description: anomaly.description || null,
+          })) || [],
+      },
     };
 
     // Create and download JSON
     const jsonString = JSON.stringify(jsonData, null, 2);
     const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
     const filename = `analytics-report-${exportData.student.name.replace(/\s+/g, '-').toLowerCase()}-${format(new Date(), 'yyyy-MM-dd')}.json`;
-    
+
     downloadBlob(blob, filename);
   }
 }

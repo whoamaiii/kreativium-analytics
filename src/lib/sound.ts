@@ -52,7 +52,3 @@ export function playLevelUpFanfare(volume: number = 0.18) {
 
   g.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
 }
-
-
-
-

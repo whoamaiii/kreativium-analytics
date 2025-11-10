@@ -1,6 +1,6 @@
-import type { EvidenceSource, EvidenceSourceId } from "./types";
-import { ZEvidenceSource } from "./types";
-export type { EvidenceSource, EvidenceSourceId } from "./types";
+import type { EvidenceSource, EvidenceSourceId } from './types';
+import { ZEvidenceSource } from './types';
+export type { EvidenceSource, EvidenceSourceId } from './types';
 
 let cachedSources: ReadonlyArray<Readonly<EvidenceSource>> | null = null;
 let cachePromise: Promise<ReadonlyArray<Readonly<EvidenceSource>>> | null = null;
@@ -17,14 +17,18 @@ export function __setEvidenceJsonProvider(provider: null | (() => Promise<unknow
 
 function freezeSources(items: EvidenceSource[]): ReadonlyArray<Readonly<EvidenceSource>> {
   const frozenItems = items.map((item) => {
-    const frozenTags = Object.freeze([...(item.tags ?? [])]) as ReadonlyArray<EvidenceSource["tags"][number]>;
+    const frozenTags = Object.freeze([...(item.tags ?? [])]) as ReadonlyArray<
+      EvidenceSource['tags'][number]
+    >;
     const frozenGradeBands = item.gradeBands
-      ? (Object.freeze([...(item.gradeBands)]) as ReadonlyArray<NonNullable<EvidenceSource["gradeBands"]>[number]>)
+      ? (Object.freeze([...item.gradeBands]) as ReadonlyArray<
+          NonNullable<EvidenceSource['gradeBands']>[number]
+        >)
       : undefined;
     const frozen: EvidenceSource = {
       ...item,
-      tags: frozenTags as unknown as EvidenceSource["tags"],
-      gradeBands: frozenGradeBands as unknown as EvidenceSource["gradeBands"],
+      tags: frozenTags as unknown as EvidenceSource['tags'],
+      gradeBands: frozenGradeBands as unknown as EvidenceSource['gradeBands'],
     };
     return Object.freeze(frozen);
   });
@@ -34,13 +38,15 @@ function freezeSources(items: EvidenceSource[]): ReadonlyArray<Readonly<Evidence
 async function fetchAndValidateJson(): Promise<EvidenceSource[]> {
   const moduleOrData = evidenceJsonProvider
     ? await evidenceJsonProvider()
-    : await import("@/lib/evidence/ebpSources.json");
-  const raw = (moduleOrData as unknown as { default?: unknown }).default ?? (moduleOrData as unknown as unknown);
+    : await import('@/lib/evidence/ebpSources.json');
+  const raw =
+    (moduleOrData as unknown as { default?: unknown }).default ??
+    (moduleOrData as unknown as unknown);
   try {
     const data = ZEvidenceSource.array().parse(raw);
     return data as EvidenceSource[];
   } catch (e) {
-    throw new Error("Invalid evidence sources JSON: validation failed");
+    throw new Error('Invalid evidence sources JSON: validation failed');
   }
 }
 

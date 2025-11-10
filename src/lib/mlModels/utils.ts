@@ -6,9 +6,7 @@
  * @returns Euclidean distance between the two points
  */
 export function euclideanDistance(point1: number[], point2: number[]): number {
-  return Math.sqrt(
-    point1.reduce((sum, val, i) => sum + Math.pow(val - point2[i], 2), 0)
-  );
+  return Math.sqrt(point1.reduce((sum, val, i) => sum + Math.pow(val - point2[i], 2), 0));
 }
 
 /**
@@ -23,7 +21,7 @@ export function normalizeFeatures(features: number[][]): number[][] {
   const maxs = new Array(dimensions).fill(-Infinity);
 
   // Find min and max for each dimension
-  features.forEach(feature => {
+  features.forEach((feature) => {
     feature.forEach((val, i) => {
       mins[i] = Math.min(mins[i], val);
       maxs[i] = Math.max(maxs[i], val);
@@ -31,10 +29,10 @@ export function normalizeFeatures(features: number[][]): number[][] {
   });
 
   // Normalize
-  return features.map(feature =>
+  return features.map((feature) =>
     feature.map((val, i) => {
       const range = maxs[i] - mins[i];
       return range === 0 ? 0 : (val - mins[i]) / range;
-    })
+    }),
   );
 }

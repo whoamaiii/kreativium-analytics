@@ -25,7 +25,10 @@ function Host({ trigger }: { trigger?: boolean }) {
   const { runAnalysis } = useAnalyticsWorker();
   React.useEffect(() => {
     if (trigger) {
-      void runAnalysis(makeData(), { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
+      void runAnalysis(makeData(), {
+        student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any,
+        useAI: false,
+      });
     }
   }, [trigger, runAnalysis]);
   return null;
@@ -59,7 +62,11 @@ describe('useAnalyticsWorker: circuit and notifications', () => {
     function HostInner({ trigger }: { trigger?: boolean }) {
       const { runAnalysis } = Hook();
       React.useEffect(() => {
-        if (trigger) void runAnalysis(makeData(), { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
+        if (trigger)
+          void runAnalysis(makeData(), {
+            student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any,
+            useAI: false,
+          });
       }, [trigger, runAnalysis]);
       return null;
     }
@@ -75,7 +82,7 @@ describe('useAnalyticsWorker: circuit and notifications', () => {
 
     // Re-render to ensure dedupe (no second toast within window)
     render(React.createElement(HostInner, { trigger: true }));
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 10));
     expect(toastSpy).toHaveBeenCalledTimes(1);
   });
 
@@ -96,12 +103,20 @@ describe('useAnalyticsWorker: circuit and notifications', () => {
           this.onerror?.(new ErrorEvent('error', { message: 'boom' }));
         }, 0);
       }
-      terminate() {/* noop */}
-      postMessage() {/* noop */}
+      terminate() {
+        /* noop */
+      }
+      postMessage() {
+        /* noop */
+      }
     }
-    vi.doMock('@/workers/analytics.worker?worker', () => ({
-      default: FakeWorker,
-    }), { virtual: true });
+    vi.doMock(
+      '@/workers/analytics.worker?worker',
+      () => ({
+        default: FakeWorker,
+      }),
+      { virtual: true },
+    );
 
     const toastSpy = vi.spyOn(toastModule, 'toast');
 
@@ -110,7 +125,11 @@ describe('useAnalyticsWorker: circuit and notifications', () => {
     function HostInner({ trigger }: { trigger?: boolean }) {
       const { runAnalysis } = Hook();
       React.useEffect(() => {
-        if (trigger) void runAnalysis(makeData(), { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
+        if (trigger)
+          void runAnalysis(makeData(), {
+            student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any,
+            useAI: false,
+          });
       }, [trigger, runAnalysis]);
       return null;
     }
@@ -127,7 +146,7 @@ describe('useAnalyticsWorker: circuit and notifications', () => {
 
     // Trigger again; dedupe should keep it at 1 within window
     render(React.createElement(HostInner, { trigger: true }));
-    await new Promise(r => setTimeout(r, 10));
+    await new Promise((r) => setTimeout(r, 10));
     expect(toastSpy).toHaveBeenCalledTimes(1);
   });
 });

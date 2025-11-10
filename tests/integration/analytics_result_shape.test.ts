@@ -5,11 +5,13 @@ import { analyticsManager } from '@/lib/analyticsManager';
 import { computeInsights } from '@/lib/insights/unified';
 
 vi.mock('@/lib/logger', () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 describe('Integration: AnalyticsResults shape consistency', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   function expectShape(res: AnalyticsResults) {
     expect(Array.isArray(res.patterns)).toBe(true);
@@ -27,16 +29,30 @@ describe('Integration: AnalyticsResults shape consistency', () => {
   });
 
   it('fallback path returns full shape', async () => {
-    const r = await analyticsWorkerFallback.processAnalytics({ entries: [], emotions: [], sensoryInputs: [] } as any, {} as any);
+    const r = await analyticsWorkerFallback.processAnalytics(
+      { entries: [], emotions: [], sensoryInputs: [] } as any,
+      {} as any,
+    );
     expectShape(r as unknown as AnalyticsResults);
   });
 
   it('AI path returns compatible shape', async () => {
-    vi.spyOn(analyticsManager, 'getStudentAnalytics' as any, 'get').mockReturnValue(analyticsManager as any);
+    vi.spyOn(analyticsManager, 'getStudentAnalytics' as any, 'get').mockReturnValue(
+      analyticsManager as any,
+    );
     vi.spyOn(analyticsManager, 'getStudentAnalytics').mockResolvedValue({
-      patterns: [], correlations: [], environmentalCorrelations: [], predictiveInsights: [], anomalies: [], insights: [], suggestedInterventions: []
+      patterns: [],
+      correlations: [],
+      environmentalCorrelations: [],
+      predictiveInsights: [],
+      anomalies: [],
+      insights: [],
+      suggestedInterventions: [],
     } as any);
-    const res = await analyticsManager.getStudentAnalytics({ id: 's1', name: 'S', createdAt: new Date() } as any, { useAI: true });
+    const res = await analyticsManager.getStudentAnalytics(
+      { id: 's1', name: 'S', createdAt: new Date() } as any,
+      { useAI: true },
+    );
     expectShape(res as AnalyticsResults);
   });
 
@@ -46,5 +62,3 @@ describe('Integration: AnalyticsResults shape consistency', () => {
     expectShape(res as AnalyticsResults);
   });
 });
-
-

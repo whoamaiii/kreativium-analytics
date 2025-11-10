@@ -1,4 +1,8 @@
-import { DEFAULT_ANALYTICS_CONFIG, AnalyticsConfiguration, analyticsConfig } from '@/lib/analyticsConfig';
+import {
+  DEFAULT_ANALYTICS_CONFIG,
+  AnalyticsConfiguration,
+  analyticsConfig,
+} from '@/lib/analyticsConfig';
 import { logger } from '@/lib/logger';
 
 export interface ConfigValidation {
@@ -51,7 +55,10 @@ function validateShape(cfg: unknown): cfg is AnalyticsConfiguration {
   return true;
 }
 
-export function validateAnalyticsRuntimeConfig(cfg: unknown): { config: AnalyticsConfiguration; meta: ConfigValidation } {
+export function validateAnalyticsRuntimeConfig(cfg: unknown): {
+  config: AnalyticsConfiguration;
+  meta: ConfigValidation;
+} {
   try {
     if (validateShape(cfg)) {
       return { config: cfg, meta: { isValid: true, errors: [] } };
@@ -60,9 +67,14 @@ export function validateAnalyticsRuntimeConfig(cfg: unknown): { config: Analytic
     // fall through to default
   }
   try {
-    logger.error('[analyticsConfigValidation] Invalid analytics configuration detected. Falling back to defaults.');
+    logger.error(
+      '[analyticsConfigValidation] Invalid analytics configuration detected. Falling back to defaults.',
+    );
   } catch {}
-  return { config: DEFAULT_ANALYTICS_CONFIG, meta: { isValid: false, errors: ['invalid-shape-or-values'] } };
+  return {
+    config: DEFAULT_ANALYTICS_CONFIG,
+    meta: { isValid: false, errors: ['invalid-shape-or-values'] },
+  };
 }
 
 // Helper to always return a safe, validated config

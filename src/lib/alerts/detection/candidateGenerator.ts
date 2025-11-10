@@ -13,7 +13,13 @@ import { detectBetaRateShift } from '@/lib/alerts/detectors/betaRate';
 import { detectAssociation } from '@/lib/alerts/detectors/association';
 import type { AssociationDetectorInput } from '@/lib/alerts/detectors/association';
 import { detectBurst, BurstEvent } from '@/lib/alerts/detectors/burst';
-import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } from '@/types/student';
+import type {
+  EmotionEntry,
+  Goal,
+  Intervention,
+  SensoryEntry,
+  TrackingEntry,
+} from '@/types/student';
 import { normalizeTimestamp, truncateSeries } from '@/lib/alerts/utils';
 import { logger } from '@/lib/logger';
 
@@ -68,7 +74,10 @@ type DetectorFunction = () => DetectorResult | null | undefined;
 /**
  * Optional Tau-U detector dependency signature.
  */
-export type TauUDetectorFunction = (args: { intervention: Intervention; goal: Goal | null }) => DetectorResult | null;
+export type TauUDetectorFunction = (args: {
+  intervention: Intervention;
+  goal: Goal | null;
+}) => DetectorResult | null;
 
 /**
  * CandidateGenerator
@@ -124,33 +133,49 @@ export class CandidateGenerator {
       overrides: Record<string, ThresholdOverride>,
     ) => ApplyThresholdContext;
   }): AlertCandidate[] {
-    const { emotionSeries, baseline, studentId, thresholdOverrides, nowTs, applyThreshold, createThresholdContext } = args;
+    const {
+      emotionSeries,
+      baseline,
+      studentId,
+      thresholdOverrides,
+      nowTs,
+      applyThreshold,
+      createThresholdContext,
+    } = args;
     const candidates: AlertCandidate[] = [];
 
     emotionSeries.forEach((series, key) => {
       const baselineStats = this.lookupEmotionBaseline(baseline, key);
-      const context = createThresholdContext(AlertKind.BehaviorSpike, studentId, thresholdOverrides);
+      const context = createThresholdContext(
+        AlertKind.BehaviorSpike,
+        studentId,
+        thresholdOverrides,
+      );
       const detectors: DetectorResult[] = [];
       const detectorTypes: string[] = [];
 
-      const ewmaRaw = this.safeDetect('ewma', () => detectEWMATrend(series, {
-        label: `${key} EWMA`,
-        baselineMedian: baselineStats?.median,
-        baselineIqr: baselineStats?.iqr,
-      }));
+      const ewmaRaw = this.safeDetect('ewma', () =>
+        detectEWMATrend(series, {
+          label: `${key} EWMA`,
+          baselineMedian: baselineStats?.median,
+          baselineIqr: baselineStats?.iqr,
+        }),
+      );
       const ewma = applyThreshold('ewma', ewmaRaw, context);
       if (ewma) {
         if (isValidDetectorResult(ewma)) detectors.push(ewma);
         detectorTypes.push('ewma');
       }
 
-      const cusumRaw = this.safeDetect('cusum', () => detectCUSUMShift(series, {
-        label: `${key} CUSUM`,
-        baselineMean: baselineStats?.median,
-        baselineSigma: baselineStats?.iqr ? baselineStats.iqr / 1.349 : undefined,
-        kFactor: this.cusumConfig.kFactor,
-        decisionInterval: this.cusumConfig.decisionInterval,
-      }));
+      const cusumRaw = this.safeDetect('cusum', () =>
+        detectCUSUMShift(series, {
+          label: `${key} CUSUM`,
+          baselineMean: baselineStats?.median,
+          baselineSigma: baselineStats?.iqr ? baselineStats.iqr / 1.349 : undefined,
+          kFactor: this.cusumConfig.kFactor,
+          decisionInterval: this.cusumConfig.decisionInterval,
+        }),
+      );
       const cusum = applyThreshold('cusum', cusumRaw, context);
       if (cusum) {
         if (isValidDetectorResult(cusum)) detectors.push(cusum);
@@ -191,7 +216,10 @@ export class CandidateGenerator {
    * Detects significant changes in high-intensity sensory response rates.
    */
   buildSensoryCandidates(args: {
-    sensoryAggregates: Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }>;
+    sensoryAggregates: Map<
+      string,
+      { successes: number; trials: number; delta: number; series: TrendPoint[] }
+    >;
     baseline?: StudentBaseline | null;
     studentId: string;
     thresholdOverrides: Record<string, ThresholdOverride>;
@@ -207,22 +235,36 @@ export class CandidateGenerator {
       overrides: Record<string, ThresholdOverride>,
     ) => ApplyThresholdContext;
   }): AlertCandidate[] {
-    const { sensoryAggregates, baseline, studentId, thresholdOverrides, nowTs, applyThreshold, createThresholdContext } = args;
+    const {
+      sensoryAggregates,
+      baseline,
+      studentId,
+      thresholdOverrides,
+      nowTs,
+      applyThreshold,
+      createThresholdContext,
+    } = args;
     const candidates: AlertCandidate[] = [];
 
     sensoryAggregates.forEach((agg, key) => {
       const baselineStats = this.lookupSensoryBaseline(baseline, key);
-      const context = createThresholdContext(AlertKind.BehaviorSpike, studentId, thresholdOverrides);
+      const context = createThresholdContext(
+        AlertKind.BehaviorSpike,
+        studentId,
+        thresholdOverrides,
+      );
       const detectors: DetectorResult[] = [];
       const detectorTypes: string[] = [];
 
-      const betaRaw = this.safeDetect('beta', () => detectBetaRateShift({
-        successes: agg.successes,
-        trials: agg.trials,
-        baselinePrior: baselineStats?.ratePrior ?? { alpha: 1, beta: 1 },
-        delta: agg.delta,
-        label: `${key} rate shift`,
-      }));
+      const betaRaw = this.safeDetect('beta', () =>
+        detectBetaRateShift({
+          successes: agg.successes,
+          trials: agg.trials,
+          baselinePrior: baselineStats?.ratePrior ?? { alpha: 1, beta: 1 },
+          delta: agg.delta,
+          label: `${key} rate shift`,
+        }),
+      );
       const beta = applyThreshold('beta', betaRaw, context);
       if (!beta) return;
       if (isValidDetectorResult(beta)) detectors.push(beta);
@@ -275,10 +317,21 @@ export class CandidateGenerator {
       overrides: Record<string, ThresholdOverride>,
     ) => ApplyThresholdContext;
   }): AlertCandidate[] {
-    const { dataset, studentId, thresholdOverrides, nowTs, applyThreshold, createThresholdContext } = args;
+    const {
+      dataset,
+      studentId,
+      thresholdOverrides,
+      nowTs,
+      applyThreshold,
+      createThresholdContext,
+    } = args;
     if (!dataset) return [];
 
-    const context = createThresholdContext(AlertKind.ContextAssociation, studentId, thresholdOverrides);
+    const context = createThresholdContext(
+      AlertKind.ContextAssociation,
+      studentId,
+      thresholdOverrides,
+    );
     const associationRaw = this.safeDetect('association', () => detectAssociation(dataset));
     const association = applyThreshold('association', associationRaw, context);
     if (!association) return [];
@@ -289,22 +342,24 @@ export class CandidateGenerator {
     }));
     const lastTimestamp = dataset.timestamps[dataset.timestamps.length - 1] ?? nowTs;
 
-    return [{
-      kind: AlertKind.ContextAssociation,
-      label: dataset.label,
-      detectors: [association],
-      detectorTypes: ['association'],
-      series,
-      lastTimestamp,
-      tier: 0.85,
-      metadata: {
-        contingency: dataset.contingency,
-        context: dataset.context,
+    return [
+      {
+        kind: AlertKind.ContextAssociation,
+        label: dataset.label,
+        detectors: [association],
+        detectorTypes: ['association'],
+        series,
+        lastTimestamp,
+        tier: 0.85,
+        metadata: {
+          contingency: dataset.contingency,
+          context: dataset.context,
+        },
+        thresholdAdjustments: context.thresholdTraces,
+        experimentKey: context.experimentKey,
+        experimentVariant: context.variant,
       },
-      thresholdAdjustments: context.thresholdTraces,
-      experimentKey: context.experimentKey,
-      experimentVariant: context.variant,
-    }];
+    ];
   }
 
   /**
@@ -327,33 +382,47 @@ export class CandidateGenerator {
       overrides: Record<string, ThresholdOverride>,
     ) => ApplyThresholdContext;
   }): AlertCandidate[] {
-    const { burstEvents, studentId, thresholdOverrides, nowTs, applyThreshold, createThresholdContext } = args;
+    const {
+      burstEvents,
+      studentId,
+      thresholdOverrides,
+      nowTs,
+      applyThreshold,
+      createThresholdContext,
+    } = args;
     if (!burstEvents.length) return [];
 
     const context = createThresholdContext(AlertKind.BehaviorSpike, studentId, thresholdOverrides);
-    const burstRaw = this.safeDetect('burst', () => detectBurst(burstEvents, { label: 'High-intensity episode' }));
+    const burstRaw = this.safeDetect('burst', () =>
+      detectBurst(burstEvents, { label: 'High-intensity episode' }),
+    );
     const burst = applyThreshold('burst', burstRaw, context);
     if (!burst) return [];
 
-    const series: TrendPoint[] = burstEvents.map((evt) => ({ timestamp: evt.timestamp, value: evt.value }));
+    const series: TrendPoint[] = burstEvents.map((evt) => ({
+      timestamp: evt.timestamp,
+      value: evt.value,
+    }));
     const lastTimestamp = burstEvents[burstEvents.length - 1]?.timestamp ?? nowTs;
 
-    return [{
-      kind: AlertKind.BehaviorSpike,
-      label: 'High intensity burst',
-      detectors: [burst],
-      detectorTypes: ['burst'],
-      series,
-      lastTimestamp,
-      tier: 1,
-      metadata: {
-        eventCount: burst.sources?.[0]?.details?.eventCount ?? burstEvents.length,
-        detectionQuality: this.computeDetectionQuality([burst], series),
+    return [
+      {
+        kind: AlertKind.BehaviorSpike,
+        label: 'High intensity burst',
+        detectors: [burst],
+        detectorTypes: ['burst'],
+        series,
+        lastTimestamp,
+        tier: 1,
+        metadata: {
+          eventCount: burst.sources?.[0]?.details?.eventCount ?? burstEvents.length,
+          detectionQuality: this.computeDetectionQuality([burst], series),
+        },
+        thresholdAdjustments: context.thresholdTraces,
+        experimentKey: context.experimentKey,
+        experimentVariant: context.variant,
       },
-      thresholdAdjustments: context.thresholdTraces,
-      experimentKey: context.experimentKey,
-      experimentVariant: context.variant,
-    }];
+    ];
   }
 
   /**
@@ -380,7 +449,15 @@ export class CandidateGenerator {
     ) => ApplyThresholdContext;
   }): AlertCandidate[] {
     if (!this.tauUDetector) return [];
-    const { interventions, goals, studentId, thresholdOverrides, nowTs, applyThreshold, createThresholdContext } = args;
+    const {
+      interventions,
+      goals,
+      studentId,
+      thresholdOverrides,
+      nowTs,
+      applyThreshold,
+      createThresholdContext,
+    } = args;
     if (!interventions.length) return [];
 
     const goalIndex = new Map<string, Goal>();
@@ -389,21 +466,36 @@ export class CandidateGenerator {
     const candidates: AlertCandidate[] = [];
     interventions.forEach((intervention) => {
       if (!intervention?.id) return;
-      if (intervention.status && intervention.status !== 'active' && intervention.status !== 'completed') return;
-      const linkedGoal = goals.find((goal) => (goal.interventions ?? []).includes(intervention.id)) ?? goalIndex.get(intervention.relatedGoals?.[0] ?? '');
-      const context = createThresholdContext(AlertKind.InterventionDue, studentId, thresholdOverrides);
-      const tauRaw = this.safeDetect('tauU', () => this.tauUDetector!({ intervention, goal: linkedGoal ?? null }));
+      if (
+        intervention.status &&
+        intervention.status !== 'active' &&
+        intervention.status !== 'completed'
+      )
+        return;
+      const linkedGoal =
+        goals.find((goal) => (goal.interventions ?? []).includes(intervention.id)) ??
+        goalIndex.get(intervention.relatedGoals?.[0] ?? '');
+      const context = createThresholdContext(
+        AlertKind.InterventionDue,
+        studentId,
+        thresholdOverrides,
+      );
+      const tauRaw = this.safeDetect('tauU', () =>
+        this.tauUDetector!({ intervention, goal: linkedGoal ?? null }),
+      );
       const detector = applyThreshold('tauU', tauRaw, context, this.baselineThresholds.tauU);
       if (!detector || !detector.analysis?.tauU) return;
       const tauResult = detector.analysis.tauU;
       if (Math.abs(tauResult.effectSize) < 0.2) return;
 
-      const phaseData = (detector.analysis as Record<string, unknown>)?.phaseData as {
-        phaseA: number[];
-        phaseB: number[];
-        timestampsA: number[];
-        timestampsB: number[];
-      } | undefined;
+      const phaseData = (detector.analysis as Record<string, unknown>)?.phaseData as
+        | {
+            phaseA: number[];
+            phaseB: number[];
+            timestampsA: number[];
+            timestampsB: number[];
+          }
+        | undefined;
 
       const series: TrendPoint[] = [];
       if (phaseData) {
@@ -416,7 +508,7 @@ export class CandidateGenerator {
         phaseData.phaseB.forEach((value, idx) => {
           const ts = Number.isFinite(phaseData.timestampsB?.[idx])
             ? phaseData.timestampsB[idx]
-            : nowTs - (phaseData.phaseB.length - idx) * 86_400_000 / 2;
+            : nowTs - ((phaseData.phaseB.length - idx) * 86_400_000) / 2;
           series.push({ timestamp: ts, value });
         });
       } else {
@@ -484,8 +576,13 @@ export class CandidateGenerator {
    * Build per-sensory behavior aggregates with success/trial counts.
    * Aggregates by sensory type and tracks high-intensity events (intensity >= 4).
    */
-  buildSensoryAggregates(sensory: SensoryEntry[]): Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }> {
-    const map = new Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }>();
+  buildSensoryAggregates(
+    sensory: SensoryEntry[],
+  ): Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }> {
+    const map = new Map<
+      string,
+      { successes: number; trials: number; delta: number; series: TrendPoint[] }
+    >();
     for (let i = 0; i < sensory.length; i += 1) {
       const entry = sensory[i]!;
       const ts = normalizeTimestamp(entry.timestamp);
@@ -552,7 +649,8 @@ export class CandidateGenerator {
       timestamps.push(ts);
     }
 
-    const total = highNoiseHighEmotion + highNoiseLowEmotion + lowNoiseHighEmotion + lowNoiseLowEmotion;
+    const total =
+      highNoiseHighEmotion + highNoiseLowEmotion + lowNoiseHighEmotion + lowNoiseLowEmotion;
     if (total < 5) return null;
 
     return {
@@ -605,7 +703,9 @@ export class CandidateGenerator {
         const n = Number(nearbySensory[j]!.intensity ?? 0);
         if (Number.isFinite(n)) paired.push(n);
       }
-      const pairedValue = paired.length ? paired.reduce((sum, val) => sum + val, 0) / paired.length : 0;
+      const pairedValue = paired.length
+        ? paired.reduce((sum, val) => sum + val, 0) / paired.length
+        : 0;
       events.push({ timestamp: ts, value: intensity, pairedValue });
     }
 
@@ -616,9 +716,14 @@ export class CandidateGenerator {
    * Compute lightweight detection quality metrics.
    * Returns count of valid detectors, average confidence, and series length.
    */
-  private computeDetectionQuality(detectors: DetectorResult[], series: TrendPoint[]): { validDetectors: number; avgConfidence: number; seriesLength: number } {
+  private computeDetectionQuality(
+    detectors: DetectorResult[],
+    series: TrendPoint[],
+  ): { validDetectors: number; avgConfidence: number; seriesLength: number } {
     const valid = detectors.filter((d) => isValidDetectorResult(d));
-    const avgConfidence = valid.length ? valid.reduce((s, d) => s + (d.confidence ?? 0), 0) / valid.length : 0;
+    const avgConfidence = valid.length
+      ? valid.reduce((s, d) => s + (d.confidence ?? 0), 0) / valid.length
+      : 0;
     return {
       validDetectors: valid.length,
       avgConfidence,
@@ -643,7 +748,10 @@ export class CandidateGenerator {
    * Look up emotion baseline statistics from student baseline.
    * Tries multiple time windows (14, 7, 30 days) in order of preference.
    */
-  private lookupEmotionBaseline(baseline: StudentBaseline | null | undefined, key: string): { median: number; iqr: number } | null {
+  private lookupEmotionBaseline(
+    baseline: StudentBaseline | null | undefined,
+    key: string,
+  ): { median: number; iqr: number } | null {
     if (!baseline) return null;
     const windows = [14, 7, 30];
     for (const window of windows) {

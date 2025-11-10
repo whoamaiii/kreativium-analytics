@@ -63,7 +63,7 @@ export interface AlertActionHandlers {
  */
 export function useAlertActionHandlers(
   onCreateGoal: (alert: AlertWithGovernance) => void,
-  studentId?: string
+  studentId?: string,
 ): AlertActionHandlers {
   const reportDraftKey = studentId ? `reports:drafts:${studentId}` : 'reports:drafts:unknown';
   const [reportDraft, setReportDraft] = useStorageState<any[]>(reportDraftKey, [], {
@@ -74,7 +74,7 @@ export function useAlertActionHandlers(
         return [];
       }
     },
-    serialize: (v) => JSON.stringify(v)
+    serialize: (v) => JSON.stringify(v),
   });
   /**
    * Handle create goal action
@@ -84,7 +84,7 @@ export function useAlertActionHandlers(
     (alert: AlertWithGovernance) => {
       onCreateGoal(alert);
     },
-    [onCreateGoal]
+    [onCreateGoal],
   );
 
   /**
@@ -107,7 +107,7 @@ export function useAlertActionHandlers(
         toast.error('Failed to add intervention');
       }
     },
-    []
+    [],
   );
 
   /**
@@ -134,24 +134,27 @@ export function useAlertActionHandlers(
    * Handle add to report action
    * Appends alert to report draft in storage
    */
-  const handleAddToReport = useCallback((alert: AlertWithGovernance) => {
-    try {
-      const list = [...reportDraft];
-      list.push({
-        type: 'alert',
-        id: alert.id,
-        createdAt: new Date().toISOString(),
-        summary: alert.metadata?.summary ?? alert.kind,
-      });
+  const handleAddToReport = useCallback(
+    (alert: AlertWithGovernance) => {
+      try {
+        const list = [...reportDraft];
+        list.push({
+          type: 'alert',
+          id: alert.id,
+          createdAt: new Date().toISOString(),
+          summary: alert.metadata?.summary ?? alert.kind,
+        });
 
-      // Keep only last 200 entries
-      setReportDraft(list.slice(-200));
-      toast.success('Added to report draft');
-    } catch (error) {
-      logger.error('Failed to add to report', error);
-      toast.error('Failed to add to report');
-    }
-  }, [reportDraft, setReportDraft]);
+        // Keep only last 200 entries
+        setReportDraft(list.slice(-200));
+        toast.success('Added to report draft');
+      } catch (error) {
+        logger.error('Failed to add to report', error);
+        toast.error('Failed to add to report');
+      }
+    },
+    [reportDraft, setReportDraft],
+  );
 
   /**
    * Handle notify team action

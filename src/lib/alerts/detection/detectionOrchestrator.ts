@@ -10,7 +10,13 @@ import {
 import { TrendPoint } from '@/lib/alerts/detectors/ewma';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
-import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } from '@/types/student';
+import type {
+  EmotionEntry,
+  Goal,
+  Intervention,
+  SensoryEntry,
+  TrackingEntry,
+} from '@/types/student';
 import { generateSparklineData } from '@/lib/chartUtils';
 import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/alerts/constants';
 import { logger } from '@/lib/logger';
@@ -109,12 +115,14 @@ export class DetectionOrchestrator {
       decisionInterval: ANALYTICS_CONFIG.alerts?.cusum?.decisionInterval ?? 5,
     };
 
-    this.candidateGenerator = opts?.candidateGenerator ?? new CandidateGenerator({
-      cusumConfig,
-      seriesLimit: this.seriesLimit,
-      tauUDetector: opts?.tauUDetector,
-      baselineThresholds: this.baselineThresholds,
-    });
+    this.candidateGenerator =
+      opts?.candidateGenerator ??
+      new CandidateGenerator({
+        cusumConfig,
+        seriesLimit: this.seriesLimit,
+        tauUDetector: opts?.tauUDetector,
+        baselineThresholds: this.baselineThresholds,
+      });
   }
 
   /**
@@ -140,7 +148,9 @@ export class DetectionOrchestrator {
     if (!input.studentId) return [];
 
     try {
-      logger.debug?.('[DetectionOrchestrator] orchestrateDetection:start', { studentId: input.studentId });
+      logger.debug?.('[DetectionOrchestrator] orchestrateDetection:start', {
+        studentId: input.studentId,
+      });
     } catch {}
 
     // Stage 2: Retrieve baseline and threshold overrides
@@ -212,7 +222,9 @@ export class DetectionOrchestrator {
     ];
 
     // Stage 6: Build alert events from candidates
-    const alerts = candidates.map((candidate) => this.buildAlert(candidate, input.studentId, nowTs));
+    const alerts = candidates.map((candidate) =>
+      this.buildAlert(candidate, input.studentId, nowTs),
+    );
 
     // Stage 7: Apply deduplication and return final alerts
     const deduped = this.policies
@@ -222,7 +234,7 @@ export class DetectionOrchestrator {
     try {
       logger.debug?.('[DetectionOrchestrator] orchestrateDetection:end', {
         studentId: input.studentId,
-        alerts: deduped.length
+        alerts: deduped.length,
       });
     } catch {}
 
@@ -303,15 +315,17 @@ export class DetectionOrchestrator {
 
     // Determine base threshold
     const defaultBaseline = getDefaultDetectorThreshold(detectorType);
-    const baseFromEngine = (typeof baselineOverride === 'number' && baselineOverride > 0)
-      ? baselineOverride
-      : (this.baselineThresholds[detectorType] ?? defaultBaseline);
+    const baseFromEngine =
+      typeof baselineOverride === 'number' && baselineOverride > 0
+        ? baselineOverride
+        : (this.baselineThresholds[detectorType] ?? defaultBaseline);
 
     // Apply learner override
     const override = context.overrides[detectorType];
-    const baselineFromOverride = override?.baselineThreshold && override.baselineThreshold > 0
-      ? override.baselineThreshold
-      : baseFromEngine;
+    const baselineFromOverride =
+      override?.baselineThreshold && override.baselineThreshold > 0
+        ? override.baselineThreshold
+        : baseFromEngine;
     const learnerAdjusted = override
       ? baselineFromOverride * (1 + override.adjustmentValue)
       : baseFromEngine;
@@ -330,7 +344,8 @@ export class DetectionOrchestrator {
     const safeBase = baseForScale > 0 ? baseForScale : defaultBaseline;
     const safeApplied = applied > 0 ? applied : defaultBaseline;
     const scale = safeBase > 0 ? safeApplied / safeBase : 1;
-    const adjustedScore = safeBase > 0 ? Math.min(1, Math.max(0, result.score / scale)) : result.score;
+    const adjustedScore =
+      safeBase > 0 ? Math.min(1, Math.max(0, result.score / scale)) : result.score;
 
     // Record threshold trace
     context.thresholdTraces[detectorType] = {
@@ -381,7 +396,7 @@ export class DetectionOrchestrator {
     const tierScore = Math.max(0, Math.min(1, candidate.tier));
     const aggregateScore = Math.min(
       1,
-      (0.4 * impact) + (0.25 * confidence) + (0.2 * recency) + (0.15 * tierScore),
+      0.4 * impact + 0.25 * confidence + 0.2 * recency + 0.15 * tierScore,
     );
 
     const severity = severityFromScore(aggregateScore);
@@ -392,8 +407,11 @@ export class DetectionOrchestrator {
 
     const thresholdOverridesRecord = candidate.thresholdAdjustments
       ? Object.fromEntries(
-        Object.entries(candidate.thresholdAdjustments).map(([detectorType, trace]) => [detectorType, trace.adjustment]),
-      )
+          Object.entries(candidate.thresholdAdjustments).map(([detectorType, trace]) => [
+            detectorType,
+            trace.adjustment,
+          ]),
+        )
       : undefined;
 
     const metadata: AlertMetadata = {
@@ -407,7 +425,9 @@ export class DetectionOrchestrator {
       tier: candidate.tier,
       impact,
       summary: candidate.detectors[0]?.impactHint ?? candidate.label,
-      sourceRanks: topSources.map((s) => (s.details as Record<string, unknown>)?.rank ?? null).filter(Boolean),
+      sourceRanks: topSources
+        .map((s) => (s.details as Record<string, unknown>)?.rank ?? null)
+        .filter(Boolean),
       thresholdOverrides: thresholdOverridesRecord,
       experimentKey: candidate.experimentKey,
       experimentVariant: candidate.experimentVariant,
@@ -445,7 +465,12 @@ export class DetectionOrchestrator {
    * Compute lightweight series statistics for diagnostics.
    * Returns min, max, mean, and variance (sample) to assist with validation.
    */
-  private computeSeriesStats(series: TrendPoint[]): { min: number; max: number; mean: number; variance: number } {
+  private computeSeriesStats(series: TrendPoint[]): {
+    min: number;
+    max: number;
+    mean: number;
+    variance: number;
+  } {
     if (!series.length) return { min: 0, max: 0, mean: 0, variance: 0 };
     let min = Number.POSITIVE_INFINITY;
     let max = Number.NEGATIVE_INFINITY;
@@ -473,7 +498,7 @@ export class DetectionOrchestrator {
       min,
       max,
       mean: Number.isFinite(mean) ? mean : 0,
-      variance: Number.isFinite(variance) ? variance : 0
+      variance: Number.isFinite(variance) ? variance : 0,
     };
   }
 }

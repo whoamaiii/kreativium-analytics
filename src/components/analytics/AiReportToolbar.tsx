@@ -36,12 +36,7 @@ export function AiReportToolbar({
       <div className="p-4 flex flex-wrap items-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={labels.copyAria}
-              onClick={onCopy}
-            >
+            <Button variant="outline" size="sm" aria-label={labels.copyAria} onClick={onCopy}>
               <ClipboardIcon className="h-4 w-4 mr-2" />
               {labels.copy}
             </Button>
@@ -51,12 +46,7 @@ export function AiReportToolbar({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={labels.pdfAria}
-              onClick={onDownload}
-            >
+            <Button variant="outline" size="sm" aria-label={labels.pdfAria} onClick={onDownload}>
               <Download className="h-4 w-4 mr-2" />
               {labels.pdf}
             </Button>
@@ -66,12 +56,7 @@ export function AiReportToolbar({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-label={labels.shareAria}
-              onClick={onShare}
-            >
+            <Button variant="outline" size="sm" aria-label={labels.shareAria} onClick={onShare}>
               <Share2 className="h-4 w-4 mr-2" />
               {labels.share}
             </Button>
@@ -81,7 +66,8 @@ export function AiReportToolbar({
 
         {lastAction.at && (
           <span className="text-[11px] text-muted-foreground ml-1">
-            {labels.lastExportShort}: {lastAction.type?.toUpperCase()} {new Date(lastAction.at).toLocaleTimeString()}
+            {labels.lastExportShort}: {lastAction.type?.toUpperCase()}{' '}
+            {new Date(lastAction.at).toLocaleTimeString()}
           </span>
         )}
       </div>

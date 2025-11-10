@@ -8,11 +8,17 @@ vi.mock('@/lib/cachedPatternAnalysis', () => ({
     analyzeEmotionPatterns: vi.fn().mockReturnValue([]),
     analyzeSensoryPatterns: vi.fn().mockReturnValue([]),
     analyzeEnvironmentalCorrelations: vi.fn().mockReturnValue([
-      { factor1: 'emotion', factor2: 'sensory', correlation: 0.5, significance: 'high', description: 'test' }
+      {
+        factor1: 'emotion',
+        factor2: 'sensory',
+        correlation: 0.5,
+        significance: 'high',
+        description: 'test',
+      },
     ]),
     generatePredictiveInsights: vi.fn().mockResolvedValue([]),
     detectAnomalies: vi.fn().mockReturnValue([]),
-  })
+  }),
 }));
 
 // Mock the global postMessage for worker context
@@ -30,7 +36,7 @@ describe('analytics.worker', () => {
   });
 
   it('should handle ANALYZE message', async () => {
-const testData: AnalyticsData = {
+    const testData: AnalyticsData = {
       entries: [{ id: '1', timestamp: new Date(), value: 5 }],
       emotions: [],
       sensoryInputs: [],
@@ -46,8 +52,8 @@ const testData: AnalyticsData = {
           patterns: expect.any(Array),
           correlations: expect.any(Array),
           insights: expect.any(Array),
-        })
-      })
+        }),
+      }),
     );
   });
 
@@ -68,8 +74,8 @@ const testData: AnalyticsData = {
           patterns: [],
           correlations: [],
           insights: [],
-        })
-      })
+        }),
+      }),
     );
   });
 });

@@ -14,7 +14,14 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { PinOff, Eye } from 'lucide-react';
 import { AlertWithGovernance, AlertStatus } from '@/lib/alerts/types';
@@ -98,7 +105,9 @@ export const PinnedAlertCard: React.FC<PinnedAlertCardProps> = ({
             <span className="text-sm font-medium truncate">{getAlertSummary(alert)}</span>
           </div>
 
-          <div className="text-xs text-muted-foreground mt-1">{formatAlertDate(alert.createdAt)}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {formatAlertDate(alert.createdAt)}
+          </div>
 
           {/* Source info */}
           {alert.sources && alert.sources.length > 0 && (
@@ -152,11 +161,16 @@ export const PinnedAlertCard: React.FC<PinnedAlertCardProps> = ({
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>{String(tAnalytics('alerts.resolveTitle'))}</DialogTitle>
-                  <DialogDescription>{String(tAnalytics('alerts.resolveDescription'))}</DialogDescription>
+                  <DialogDescription>
+                    {String(tAnalytics('alerts.resolveDescription'))}
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="pinned-resolution-notes" className="text-sm font-medium mb-2 block">
+                    <label
+                      htmlFor="pinned-resolution-notes"
+                      className="text-sm font-medium mb-2 block"
+                    >
                       {String(tAnalytics('alerts.resolutionNotes'))}
                     </label>
                     <Textarea

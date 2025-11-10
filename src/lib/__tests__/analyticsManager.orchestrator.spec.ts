@@ -29,7 +29,7 @@ vi.mock('@/lib/insights/unified', () => ({
     suggestedInterventions: [],
     confidence: 0.9,
     hasMinimumData: true,
-  }))
+  })),
 }));
 
 describe('orchestrator exports from analyticsManager', () => {
@@ -80,4 +80,3 @@ describe('orchestrator exports from analyticsManager', () => {
     expect(result.diagnostics).toMatchObject({ entries: 1, emotions: 1, sensoryInputs: 1 });
   });
 });
-

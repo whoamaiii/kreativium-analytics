@@ -1,28 +1,38 @@
 /**
  * @fileoverview ProgressDashboard - Comprehensive goal tracking and analytics visualization
- * 
+ *
  * Provides detailed insights into student goal progress with multiple visualization types:
  * - Overall progress metrics and KPIs
  * - Time-series progress tracking
- * - Category-based performance analysis  
+ * - Category-based performance analysis
  * - Priority goal recommendations
- * 
+ *
  * @module components/ProgressDashboard
  */
 
-import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Goal, Student } from "@/types/student";
-import type { EChartsOption } from "echarts";
+import { useState, useMemo, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Goal, Student } from '@/types/student';
+import type { EChartsOption } from 'echarts';
 import React from 'react';
-const EChartContainer = React.lazy(() => import("@/components/charts/EChartContainer").then(m => ({ default: m.EChartContainer })));
-import { TrendingUp, Crosshair, Award, Clock, CheckCircle } from "lucide-react";
-import { format, differenceInDays, startOfWeek, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth } from "date-fns";
-import { AnimatedCounter } from "@/components/AnimatedCounter";
+const EChartContainer = React.lazy(() =>
+  import('@/components/charts/EChartContainer').then((m) => ({ default: m.EChartContainer })),
+);
+import { TrendingUp, Crosshair, Award, Clock, CheckCircle } from 'lucide-react';
+import {
+  format,
+  differenceInDays,
+  startOfWeek,
+  endOfWeek,
+  eachWeekOfInterval,
+  startOfMonth,
+  endOfMonth,
+} from 'date-fns';
+import { AnimatedCounter } from '@/components/AnimatedCounter';
 
 interface ProgressDashboardProps {
   student: Student;
@@ -31,15 +41,15 @@ interface ProgressDashboardProps {
 
 /**
  * ProgressDashboard Component
- * 
+ *
  * Displays comprehensive analytics and visualizations for student goal progress.
  * Provides metrics, trends, category breakdowns, and priority recommendations.
- * 
+ *
  * @component
  * @param {ProgressDashboardProps} props - Component props
  * @param {Student} props.student - Student whose progress is being tracked
  * @param {Goal[]} props.goals - Array of student goals to analyze
- * 
+ *
  * @example
  * ```tsx
  * <ProgressDashboard student={currentStudent} goals={studentGoals} />
@@ -52,7 +62,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
   /**
    * Calculate key progress metrics from goals data.
    * Memoized to prevent unnecessary recalculations on re-renders.
-   * 
+   *
    * @returns {Object} Progress metrics
    * @returns {number} totalGoals - Total number of goals
    * @returns {number} activeGoals - Number of active goals
@@ -62,25 +72,34 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
    * @returns {number} atRiskGoals - Goals falling behind schedule
    */
   const progressMetrics = useMemo(() => {
-    const activeGoals = goals.filter(g => g.status === 'active');
-    const achievedGoals = goals.filter(g => g.status === 'achieved');
-    const overallProgress = goals.length > 0 
-      ? goals.reduce((sum, goal) => sum + goal.currentProgress, 0) / goals.length 
-      : 0;
+    const activeGoals = goals.filter((g) => g.status === 'active');
+    const achievedGoals = goals.filter((g) => g.status === 'achieved');
+    const overallProgress =
+      goals.length > 0
+        ? goals.reduce((sum, goal) => sum + goal.currentProgress, 0) / goals.length
+        : 0;
 
-    const onTrackGoals = activeGoals.filter(goal => {
+    const onTrackGoals = activeGoals.filter((goal) => {
       const daysUntilTarget = differenceInDays(goal.targetDate, new Date());
-      const expectedProgress = daysUntilTarget > 0 
-        ? Math.max(0, 100 - (daysUntilTarget / differenceInDays(goal.targetDate, goal.createdDate)) * 100)
-        : 100;
+      const expectedProgress =
+        daysUntilTarget > 0
+          ? Math.max(
+              0,
+              100 - (daysUntilTarget / differenceInDays(goal.targetDate, goal.createdDate)) * 100,
+            )
+          : 100;
       return goal.currentProgress >= expectedProgress * 0.8; // 80% of expected progress
     });
 
-    const atRiskGoals = activeGoals.filter(goal => {
+    const atRiskGoals = activeGoals.filter((goal) => {
       const daysUntilTarget = differenceInDays(goal.targetDate, new Date());
-      const expectedProgress = daysUntilTarget > 0 
-        ? Math.max(0, 100 - (daysUntilTarget / differenceInDays(goal.targetDate, goal.createdDate)) * 100)
-        : 100;
+      const expectedProgress =
+        daysUntilTarget > 0
+          ? Math.max(
+              0,
+              100 - (daysUntilTarget / differenceInDays(goal.targetDate, goal.createdDate)) * 100,
+            )
+          : 100;
       return goal.currentProgress < expectedProgress * 0.6; // Less than 60% of expected progress
     });
 
@@ -90,12 +109,11 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
       achievedGoals: achievedGoals.length,
       overallProgress,
       onTrackGoals: onTrackGoals.length,
-      atRiskGoals: atRiskGoals.length
+      atRiskGoals: atRiskGoals.length,
     };
   }, [goals]);
 
   // Prepare chart data for progress over time
-
 
   const progressChartData = useMemo(() => {
     const allDataPoints: Array<{
@@ -106,14 +124,14 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
       category: string;
     }> = [];
 
-    goals.forEach(goal => {
-      goal.dataPoints.forEach(point => {
+    goals.forEach((goal) => {
+      goal.dataPoints.forEach((point) => {
         allDataPoints.push({
           date: point.timestamp,
           goalId: goal.id,
           goalTitle: goal.title,
           value: point.value,
-          category: goal.category
+          category: goal.category,
         });
       });
     });
@@ -122,23 +140,24 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
     const now = new Date();
     const startDate = startOfMonth(new Date(now.getFullYear(), now.getMonth() - 2, 1));
     const endDate = endOfMonth(now);
-    
+
     const weeks = eachWeekOfInterval({ start: startDate, end: endDate });
-    
-    const result = weeks.map(weekStart => {
+
+    const result = weeks.map((weekStart) => {
       const weekEnd = endOfWeek(weekStart);
-      const weekData = allDataPoints.filter(point => 
-        point.date >= weekStart && point.date <= weekEnd
+      const weekData = allDataPoints.filter(
+        (point) => point.date >= weekStart && point.date <= weekEnd,
       );
 
-      const avgProgress = weekData.length > 0
-        ? weekData.reduce((sum, point) => sum + point.value, 0) / weekData.length
-        : 0;
+      const avgProgress =
+        weekData.length > 0
+          ? weekData.reduce((sum, point) => sum + point.value, 0) / weekData.length
+          : 0;
 
       return {
         week: format(weekStart, 'MMM dd'),
         progress: Math.round(avgProgress),
-        dataPoints: weekData.length
+        dataPoints: weekData.length,
       };
     });
     return result;
@@ -148,18 +167,18 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
    * Effect to show a brief loading state when goals data changes.
    * This provides visual feedback during data processing and prevents jarring updates.
    * Includes proper cleanup to prevent memory leaks.
-   * 
+   *
    * @dependencies goals - Triggers when goals data changes
    */
   useEffect(() => {
     // Set loading state for smooth transitions
     setIsAnalyzingTrends(true);
-    
+
     // Create timeout for loading animation
     const timeoutId = setTimeout(() => {
       setIsAnalyzingTrends(false);
     }, 300);
-    
+
     // Cleanup function to prevent memory leaks
     return () => {
       clearTimeout(timeoutId);
@@ -171,48 +190,63 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
   // Category progress data
   const categoryData = useMemo(() => {
     const categories = ['behavioral', 'academic', 'social', 'sensory', 'communication'];
-    return categories.map(category => {
-      const categoryGoals = goals.filter(g => g.category === category);
-      const avgProgress = categoryGoals.length > 0
-        ? categoryGoals.reduce((sum, goal) => sum + goal.currentProgress, 0) / categoryGoals.length
-        : 0;
-      
-      return {
-        category: category.charAt(0).toUpperCase() + category.slice(1),
-        progress: Math.round(avgProgress),
-        count: categoryGoals.length,
-        achieved: categoryGoals.filter(g => g.status === 'achieved').length
-      };
-    }).filter(item => item.count > 0);
+    return categories
+      .map((category) => {
+        const categoryGoals = goals.filter((g) => g.category === category);
+        const avgProgress =
+          categoryGoals.length > 0
+            ? categoryGoals.reduce((sum, goal) => sum + goal.currentProgress, 0) /
+              categoryGoals.length
+            : 0;
+
+        return {
+          category: category.charAt(0).toUpperCase() + category.slice(1),
+          progress: Math.round(avgProgress),
+          count: categoryGoals.length,
+          achieved: categoryGoals.filter((g) => g.status === 'achieved').length,
+        };
+      })
+      .filter((item) => item.count > 0);
   }, [goals]);
 
-  const COLORS = ['hsl(var(--primary))', 'hsl(var(--secondary))', 'hsl(var(--accent))', 'hsl(var(--info))', 'hsl(var(--success))'];
+  const COLORS = [
+    'hsl(var(--primary))',
+    'hsl(var(--secondary))',
+    'hsl(var(--accent))',
+    'hsl(var(--info))',
+    'hsl(var(--success))',
+  ];
 
   const getStatusColor = (status: Goal['status']) => {
     switch (status) {
-      case 'active': return 'text-info';
-      case 'achieved': return 'text-success';
-      case 'modified': return 'text-warning';
-      case 'discontinued': return 'text-destructive';
-      default: return 'text-gray-600';
+      case 'active':
+        return 'text-info';
+      case 'achieved':
+        return 'text-success';
+      case 'modified':
+        return 'text-warning';
+      case 'discontinued':
+        return 'text-destructive';
+      default:
+        return 'text-gray-600';
     }
   };
 
   const getPriorityGoals = () => {
     const now = new Date();
     return goals
-      .filter(g => g.status === 'active')
-      .map(goal => ({
+      .filter((g) => g.status === 'active')
+      .map((goal) => ({
         ...goal,
         daysUntilTarget: differenceInDays(goal.targetDate, now),
-        urgencyScore: (100 - goal.currentProgress) / Math.max(1, differenceInDays(goal.targetDate, now))
+        urgencyScore:
+          (100 - goal.currentProgress) / Math.max(1, differenceInDays(goal.targetDate, now)),
       }))
       .sort((a, b) => b.urgencyScore - a.urgencyScore)
       .slice(0, 5);
   };
 
-
- return (
+  return (
     <div className="space-y-6">
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -253,9 +287,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
             <div className="text-2xl font-bold text-green-600">
               <AnimatedCounter value={progressMetrics.onTrackGoals} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              goals meeting expectations
-            </p>
+            <p className="text-xs text-muted-foreground">goals meeting expectations</p>
           </CardContent>
         </Card>
 
@@ -268,9 +300,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
             <div className="text-2xl font-bold text-red-600">
               <AnimatedCounter value={progressMetrics.atRiskGoals} />
             </div>
-            <p className="text-xs text-muted-foreground">
-              goals needing attention
-            </p>
+            <p className="text-xs text-muted-foreground">goals needing attention</p>
           </CardContent>
         </Card>
       </div>
@@ -294,41 +324,55 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
                 <div aria-label="Loading trends chart" className="h-[300px] w-full">
                   <div className="h-full w-full animate-pulse rounded-md border border-border/50 bg-muted/20" />
                 </div>
-              ) : (() => {
-                const option: EChartsOption = {
-                  dataset: { source: progressChartData },
-                  grid: { top: 24, right: 16, bottom: 32, left: 40 },
-                  xAxis: { type: "category", name: "Week", nameGap: 24 },
-                  yAxis: { type: "value", name: "Progress (%)", nameGap: 28, min: 0, max: 100 },
-                  tooltip: {
-                    trigger: "axis",
-                    axisPointer: { type: "line" },
-                    valueFormatter: (val) => (typeof val === "number" ? `${Math.round(val)}%` : String(val)),
-                  },
-                  legend: { show: false },
-                  series: [
-                    {
-                      type: "line",
-                      smooth: true,
-                      showSymbol: true,
-                      symbolSize: 6,
-                      encode: { x: "week", y: "progress" },
-                      lineStyle: { width: 2 },
-                      areaStyle: { opacity: 0.08 },
+              ) : (
+                (() => {
+                  const option: EChartsOption = {
+                    dataset: { source: progressChartData },
+                    grid: { top: 24, right: 16, bottom: 32, left: 40 },
+                    xAxis: { type: 'category', name: 'Week', nameGap: 24 },
+                    yAxis: { type: 'value', name: 'Progress (%)', nameGap: 28, min: 0, max: 100 },
+                    tooltip: {
+                      trigger: 'axis',
+                      axisPointer: { type: 'line' },
+                      valueFormatter: (val) =>
+                        typeof val === 'number' ? `${Math.round(val)}%` : String(val),
                     },
-                  ],
-                };
-                return (
-                  <React.Suspense fallback={<div className="h-[300px] rounded-md border bg-card motion-safe:animate-pulse" aria-label="Loading progress trends" />}> 
-                    <EChartContainer 
-                      option={option} 
-                      height={300} 
-                      aria-label="Progress trends line chart"
-                      exportRegistration={{ id: 'progress-trends', type: 'progress', title: 'Progress Trends (Last 3 Months)' }}
-                    />
-                  </React.Suspense>
-                );
-              })()}
+                    legend: { show: false },
+                    series: [
+                      {
+                        type: 'line',
+                        smooth: true,
+                        showSymbol: true,
+                        symbolSize: 6,
+                        encode: { x: 'week', y: 'progress' },
+                        lineStyle: { width: 2 },
+                        areaStyle: { opacity: 0.08 },
+                      },
+                    ],
+                  };
+                  return (
+                    <React.Suspense
+                      fallback={
+                        <div
+                          className="h-[300px] rounded-md border bg-card motion-safe:animate-pulse"
+                          aria-label="Loading progress trends"
+                        />
+                      }
+                    >
+                      <EChartContainer
+                        option={option}
+                        height={300}
+                        aria-label="Progress trends line chart"
+                        exportRegistration={{
+                          id: 'progress-trends',
+                          type: 'progress',
+                          title: 'Progress Trends (Last 3 Months)',
+                        }}
+                      />
+                    </React.Suspense>
+                  );
+                })()
+              )}
             </CardContent>
           </Card>
 
@@ -340,17 +384,22 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
             <CardContent>
               <div className="space-y-3">
                 {goals
-                  .filter(goal => goal.dataPoints.length > 1)
+                  .filter((goal) => goal.dataPoints.length > 1)
                   .sort((a, b) => {
-                    const aLatest = Math.max(...a.dataPoints.map(dp => dp.timestamp.getTime()));
-                    const bLatest = Math.max(...b.dataPoints.map(dp => dp.timestamp.getTime()));
+                    const aLatest = Math.max(...a.dataPoints.map((dp) => dp.timestamp.getTime()));
+                    const bLatest = Math.max(...b.dataPoints.map((dp) => dp.timestamp.getTime()));
                     return bLatest - aLatest;
                   })
                   .slice(0, 5)
-                  .map(goal => {
-                    const latestPoint = goal.dataPoints.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0];
+                  .map((goal) => {
+                    const latestPoint = goal.dataPoints.sort(
+                      (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+                    )[0];
                     return (
-                      <div key={goal.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div
+                        key={goal.id}
+                        className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                      >
                         <div className="flex-1">
                           <p className="font-medium">{goal.title}</p>
                           <p className="text-sm text-muted-foreground">
@@ -380,33 +429,45 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
                 const option: EChartsOption = {
                   dataset: { source: categoryData },
                   grid: { top: 24, right: 16, bottom: 32, left: 40 },
-                  xAxis: { type: "category", name: "Category", nameGap: 24 },
-                  yAxis: { type: "value", name: "Progress (%)", nameGap: 28, min: 0, max: 100 },
+                  xAxis: { type: 'category', name: 'Category', nameGap: 24 },
+                  yAxis: { type: 'value', name: 'Progress (%)', nameGap: 28, min: 0, max: 100 },
                   tooltip: {
-                    trigger: "axis",
-                    axisPointer: { type: "shadow" },
-                    valueFormatter: (val) => (typeof val === "number" ? `${Math.round(val)}%` : String(val)),
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    valueFormatter: (val) =>
+                      typeof val === 'number' ? `${Math.round(val)}%` : String(val),
                   },
                   legend: { show: false },
                   series: [
                     {
-                      type: "bar",
-                      encode: { x: "category", y: "progress" },
-                      barWidth: "50%",
+                      type: 'bar',
+                      encode: { x: 'category', y: 'progress' },
+                      barWidth: '50%',
                       itemStyle: { borderRadius: [4, 4, 0, 0] },
                     },
                   ],
                 };
-                  return (
-                    <React.Suspense fallback={<div className="h-[300px] rounded-md border bg-card motion-safe:animate-pulse" aria-label="Loading category chart" />}> 
-                      <EChartContainer 
-                        option={option} 
-                        height={300} 
-                        aria-label="Goal completion by category bar chart"
-                        exportRegistration={{ id: 'goal-completion-by-category', type: 'progress', title: 'Goal Completion by Category' }}
+                return (
+                  <React.Suspense
+                    fallback={
+                      <div
+                        className="h-[300px] rounded-md border bg-card motion-safe:animate-pulse"
+                        aria-label="Loading category chart"
                       />
-                    </React.Suspense>
-                  );
+                    }
+                  >
+                    <EChartContainer
+                      option={option}
+                      height={300}
+                      aria-label="Goal completion by category bar chart"
+                      exportRegistration={{
+                        id: 'goal-completion-by-category',
+                        type: 'progress',
+                        title: 'Goal Completion by Category',
+                      }}
+                    />
+                  </React.Suspense>
+                );
               })()}
             </CardContent>
           </Card>
@@ -425,30 +486,42 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
                       source: categoryData.map((d) => ({ name: d.category, value: d.progress })),
                     },
                     tooltip: {
-                      trigger: "item",
-                      valueFormatter: (val) => (typeof val === "number" ? `${Math.round(val)}%` : String(val)),
+                      trigger: 'item',
+                      valueFormatter: (val) =>
+                        typeof val === 'number' ? `${Math.round(val)}%` : String(val),
                     },
-                    legend: { bottom: 0, type: "scroll" },
+                    legend: { bottom: 0, type: 'scroll' },
                     series: [
                       {
-                        type: "pie",
-                        radius: ["50%", "70%"],
+                        type: 'pie',
+                        radius: ['50%', '70%'],
                         avoidLabelOverlap: true,
                         label: {
                           show: true,
-                          formatter: "{b}: {c}%",
+                          formatter: '{b}: {c}%',
                         },
-                        encode: { itemName: "name", value: "value" },
+                        encode: { itemName: 'name', value: 'value' },
                       },
                     ],
                   };
                   return (
-                    <React.Suspense fallback={<div className="h-[250px] rounded-md border bg-card motion-safe:animate-pulse" aria-label="Loading donut chart" />}> 
-                      <EChartContainer 
-                        option={option} 
-                        height={250} 
+                    <React.Suspense
+                      fallback={
+                        <div
+                          className="h-[250px] rounded-md border bg-card motion-safe:animate-pulse"
+                          aria-label="Loading donut chart"
+                        />
+                      }
+                    >
+                      <EChartContainer
+                        option={option}
+                        height={250}
                         aria-label="Progress by category donut chart"
-                        exportRegistration={{ id: 'progress-by-category', type: 'progress', title: 'Progress by Category' }}
+                        exportRegistration={{
+                          id: 'progress-by-category',
+                          type: 'progress',
+                          title: 'Progress by Category',
+                        }}
                       />
                     </React.Suspense>
                   );
@@ -496,8 +569,10 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
                         <p className="text-sm text-muted-foreground">{goal.category}</p>
                       </div>
                       <div className="text-right">
-                        <Badge variant={goal.daysUntilTarget < 30 ? "destructive" : "outline"}>
-                          {goal.daysUntilTarget > 0 ? `${goal.daysUntilTarget} days left` : 'Overdue'}
+                        <Badge variant={goal.daysUntilTarget < 30 ? 'destructive' : 'outline'}>
+                          {goal.daysUntilTarget > 0
+                            ? `${goal.daysUntilTarget} days left`
+                            : 'Overdue'}
                         </Badge>
                       </div>
                     </div>
@@ -523,8 +598,12 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
                 {getPriorityGoals().length === 0 && (
                   <div className="text-center py-8">
                     <Award className="h-12 w-12 text-success mx-auto mb-2" />
-                    <p className="text-lg font-medium text-success-foreground">All goals are on track!</p>
-                    <p className="text-muted-foreground">Great work keeping {student.name}'s progress moving forward.</p>
+                    <p className="text-lg font-medium text-success-foreground">
+                      All goals are on track!
+                    </p>
+                    <p className="text-muted-foreground">
+                      Great work keeping {student.name}'s progress moving forward.
+                    </p>
                   </div>
                 )}
               </div>

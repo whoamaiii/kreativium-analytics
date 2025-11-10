@@ -1,7 +1,8 @@
 /* @unused-exports-keep: retained for analytics PDF and explanation features */
 import type { SourceItem } from '@/types/analytics';
 
-export const SOCIAL_CONTEXT_RE = /(sosial|sosiale|venn|venner|kompis|klasse|klasserom|gruppe|grupp(e|eoppgave)?|team|pararbeid|friminutt|pause|lunsj|frokost|middag|kveld(s)?stell|morgen(s)?rutine|morgenstell|morgenrutine|kantine|ute|inne|hjemme|avlast|interaksj|samarbeid|samspill|konflikt|lek|leke|presentasjon|diskusjon|overgang(er)?|medelever|familie|besøk)/i;
+export const SOCIAL_CONTEXT_RE =
+  /(sosial|sosiale|venn|venner|kompis|klasse|klasserom|gruppe|grupp(e|eoppgave)?|team|pararbeid|friminutt|pause|lunsj|frokost|middag|kveld(s)?stell|morgen(s)?rutine|morgenstell|morgenrutine|kantine|ute|inne|hjemme|avlast|interaksj|samarbeid|samspill|konflikt|lek|leke|presentasjon|diskusjon|overgang(er)?|medelever|familie|besøk)/i;
 export const CITATION_LIMIT = 8;
 
 export const clampText = (value: string, limit = 120): string => {
@@ -27,17 +28,26 @@ export const sourcePrimaryLabel = (source: SourceItem): string => {
   return parts.join(' / ');
 };
 
-export const describeSource = (source: SourceItem, noteClamp = 120): { primary: string; secondary: string } => {
+export const describeSource = (
+  source: SourceItem,
+  noteClamp = 120,
+): { primary: string; secondary: string } => {
   const primary = `${sourcePrimaryLabel(source)} ${formatSourceTimestamp(source.timestamp)}`.trim();
   const emotionDetails = source.emotions
     .filter((emotion) => !!emotion.emotion)
     .slice(0, 4)
-    .map((emotion) => `${emotion.emotion}${typeof emotion.intensity === 'number' ? ` (${emotion.intensity})` : ''}`)
+    .map(
+      (emotion) =>
+        `${emotion.emotion}${typeof emotion.intensity === 'number' ? ` (${emotion.intensity})` : ''}`,
+    )
     .join(', ');
   const sensoryDetails = source.sensory
     .filter((sense) => sense.response || sense.type)
     .slice(0, 4)
-    .map((sense) => `${sense.type || 'sans'} → ${sense.response}${typeof sense.intensity === 'number' ? ` (${sense.intensity})` : ''}`)
+    .map(
+      (sense) =>
+        `${sense.type || 'sans'} → ${sense.response}${typeof sense.intensity === 'number' ? ` (${sense.intensity})` : ''}`,
+    )
     .join(', ');
   const secondaryParts = [
     source.note ? `notat: ${clampText(source.note, noteClamp)}` : '',
@@ -55,16 +65,22 @@ export const describeSourceForPrompt = (source: SourceItem): string => {
   return secondary ? `${primary} · ${secondary}` : primary;
 };
 
-export const collectEnvironmentDetails = (source: SourceItem): Array<{ label: string; value: string }> => {
+export const collectEnvironmentDetails = (
+  source: SourceItem,
+): Array<{ label: string; value: string }> => {
   const env = source.environment;
   if (!env) return [];
   const details: Array<{ label: string; value: string }> = [];
   if (env.timeOfDay) details.push({ label: 'Tid på dagen', value: env.timeOfDay });
-  if (typeof env.studentCount === 'number') details.push({ label: 'Antall elever', value: String(env.studentCount) });
+  if (typeof env.studentCount === 'number')
+    details.push({ label: 'Antall elever', value: String(env.studentCount) });
   if (env.lighting) details.push({ label: 'Belysning', value: env.lighting });
-  if (typeof env.noiseLevel === 'number') details.push({ label: 'Støynivå', value: String(env.noiseLevel) });
-  if (typeof env.temperature === 'number') details.push({ label: 'Temperatur', value: String(env.temperature) });
-  if (typeof env.humidity === 'number') details.push({ label: 'Luftfuktighet', value: String(env.humidity) });
+  if (typeof env.noiseLevel === 'number')
+    details.push({ label: 'Støynivå', value: String(env.noiseLevel) });
+  if (typeof env.temperature === 'number')
+    details.push({ label: 'Temperatur', value: String(env.temperature) });
+  if (typeof env.humidity === 'number')
+    details.push({ label: 'Luftfuktighet', value: String(env.humidity) });
   if (env.weather) details.push({ label: 'Vær', value: env.weather });
   if (env.notes) details.push({ label: 'Miljønotat', value: env.notes });
   return details;

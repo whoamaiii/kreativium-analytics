@@ -82,8 +82,8 @@ export interface MLSession {
     noise?: 'loud' | 'moderate' | 'quiet';
     temperature?: 'hot' | 'cold' | 'comfortable';
     crowded?: 'very' | 'moderate' | 'not';
-    smells?: boolean;  // Presence of specific smells
-    textures?: boolean;  // Presence of notable textures
+    smells?: boolean; // Presence of specific smells
+    textures?: boolean; // Presence of notable textures
   };
   /**
    * Activities performed during the session.

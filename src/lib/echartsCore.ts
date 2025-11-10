@@ -34,5 +34,3 @@ echarts.use([
 ]);
 
 export { echarts };
-
-

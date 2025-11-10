@@ -19,13 +19,24 @@ describe('AlertSystem', () => {
   });
 
   it('should generate alerts for a student', () => {
-    const mockAlerts: TriggerAlert[] = [{
-      id: 'alert-1', title: 'New Pattern', severity: 'medium', type: 'pattern',
-      description: 'test', recommendations: [], timestamp: new Date(), studentId: 'student-1', dataPoints: 5
-    }];
+    const mockAlerts: TriggerAlert[] = [
+      {
+        id: 'alert-1',
+        title: 'New Pattern',
+        severity: 'medium',
+        type: 'pattern',
+        description: 'test',
+        recommendations: [],
+        timestamp: new Date(),
+        studentId: 'student-1',
+        dataPoints: 5,
+      },
+    ];
     // Spy directly on instance methods
     const paSpy = vi.spyOn(patternAnalysis, 'generateTriggerAlerts').mockReturnValue(mockAlerts);
-    const saveSpy = vi.spyOn(alertSystem as unknown as { saveAlerts: (a: TriggerAlert[]) => void }, 'saveAlerts').mockImplementation(() => {});
+    const saveSpy = vi
+      .spyOn(alertSystem as unknown as { saveAlerts: (a: TriggerAlert[]) => void }, 'saveAlerts')
+      .mockImplementation(() => {});
 
     alertSystem.generateAlertsForStudent(student, [], [], []);
 
@@ -46,16 +57,20 @@ describe('AlertSystem', () => {
         recommendations: [],
         // Use a very recent timestamp so it's within frequency window
         timestamp: new Date(Date.now() - 60 * 60 * 1000),
-        dataPoints: 10
+        dataPoints: 10,
       },
       viewed: false,
-      resolved: false
+      resolved: false,
     };
     localStorage.setItem('sensoryTracker_alerts', JSON.stringify([existing]));
 
     // Because a recent alert exists and is not high severity, the generator short-circuits before calling patternAnalysis
-    const paSpy = vi.spyOn(patternAnalysis, 'generateTriggerAlerts').mockReturnValue([{ ...existing.alert, description: 'Updated' } as unknown as TriggerAlert]);
-    const saveSpy = vi.spyOn(alertSystem as unknown as { saveAlerts: (a: TriggerAlert[]) => void }, 'saveAlerts').mockImplementation(() => {});
+    const paSpy = vi
+      .spyOn(patternAnalysis, 'generateTriggerAlerts')
+      .mockReturnValue([{ ...existing.alert, description: 'Updated' } as unknown as TriggerAlert]);
+    const saveSpy = vi
+      .spyOn(alertSystem as unknown as { saveAlerts: (a: TriggerAlert[]) => void }, 'saveAlerts')
+      .mockImplementation(() => {});
 
     alertSystem.generateAlertsForStudent(student, [], [], []);
 
@@ -69,11 +84,19 @@ describe('AlertSystem', () => {
     const history: AlertHistoryEntry[] = [
       {
         alert: {
-          id: 'a1', studentId: 'student-1', title: 'Test', description: 'Desc',
-          severity: 'medium', type: 'pattern', timestamp: new Date(), dataPoints: 1, recommendations: []
+          id: 'a1',
+          studentId: 'student-1',
+          title: 'Test',
+          description: 'Desc',
+          severity: 'medium',
+          type: 'pattern',
+          timestamp: new Date(),
+          dataPoints: 1,
+          recommendations: [],
         },
-        viewed: false, resolved: false
-      }
+        viewed: false,
+        resolved: false,
+      },
     ];
     localStorage.setItem('sensoryTracker_alerts', JSON.stringify(history));
 
@@ -85,10 +108,18 @@ describe('AlertSystem', () => {
   it('should mark an alert as resolved', () => {
     const alert: AlertHistoryEntry = {
       alert: {
-        id: 'a1', studentId: 'student-1', title: 'Test', description: 'Desc',
-        severity: 'medium', type: 'pattern', timestamp: new Date(), dataPoints: 1, recommendations: []
+        id: 'a1',
+        studentId: 'student-1',
+        title: 'Test',
+        description: 'Desc',
+        severity: 'medium',
+        type: 'pattern',
+        timestamp: new Date(),
+        dataPoints: 1,
+        recommendations: [],
       },
-      viewed: false, resolved: false
+      viewed: false,
+      resolved: false,
     };
     localStorage.setItem('sensoryTracker_alerts', JSON.stringify([alert]));
 

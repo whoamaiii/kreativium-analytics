@@ -99,14 +99,14 @@ export function clearAnalyticsLocalStorage(): LocalStorageClearResult {
   try {
     // Define relevant prefixes and exact keys to clear
     const relevantPrefixes = [
-      ANALYTICS_STORAGE_KEYS.cachePrefix,      // "analytics-cache"
+      ANALYTICS_STORAGE_KEYS.cachePrefix, // "analytics-cache"
       ANALYTICS_STORAGE_KEYS.performancePrefix, // "performance-cache"
     ];
 
     const exactKeys = [
-      ANALYTICS_STORAGE_KEYS.analyticsConfig,   // "sensory-compass-analytics-config"
+      ANALYTICS_STORAGE_KEYS.analyticsConfig, // "sensory-compass-analytics-config"
       ANALYTICS_STORAGE_KEYS.analyticsProfiles, // "sensoryTracker_analyticsProfiles"
-      STORAGE_KEYS.AI_METRICS,                  // AI metrics key from @/lib/ai/metrics
+      STORAGE_KEYS.AI_METRICS, // AI metrics key from @/lib/ai/metrics
     ];
 
     // Collect keys to remove using storage helpers
@@ -116,8 +116,8 @@ export function clearAnalyticsLocalStorage(): LocalStorageClearResult {
     const allKeys = storageKeys();
 
     // Filter keys matching prefixes or exact matches
-    allKeys.forEach(key => {
-      const hasRelevantPrefix = relevantPrefixes.some(prefix => key.includes(prefix));
+    allKeys.forEach((key) => {
+      const hasRelevantPrefix = relevantPrefixes.some((prefix) => key.includes(prefix));
       const isExactMatch = exactKeys.includes(key);
 
       if (hasRelevantPrefix || isExactMatch) {
@@ -261,8 +261,8 @@ export function getAnalyticsCacheCount(): number {
     // Get all keys using storage helper
     const allKeys = storageKeys();
 
-    allKeys.forEach(key => {
-      const hasRelevantPrefix = relevantPrefixes.some(prefix => key.includes(prefix));
+    allKeys.forEach((key) => {
+      const hasRelevantPrefix = relevantPrefixes.some((prefix) => key.includes(prefix));
       const isExactMatch = exactKeys.includes(key);
 
       if (hasRelevantPrefix || isExactMatch) {

@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document demonstrates how `AnalyticsManagerService` integrates with the new `StudentAnalyticsOrchestrator` to achieve clean separation between cache management and orchestration logic.
+This document demonstrates how `AnalyticsManagerService` integrates with the new
+`StudentAnalyticsOrchestrator` to achieve clean separation between cache management and
+orchestration logic.
 
 ## Current Architecture (Before Phase 2b)
 
@@ -11,7 +13,7 @@ class AnalyticsManagerService {
   async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
     // 1. Initialize profile
     this.initializeStudentAnalytics(student.id);
-    
+
     // 2. Check TTL cache
     const ttlDisabled = this.isManagerTtlCacheDisabled();
     if (!ttlDisabled) {
@@ -20,15 +22,15 @@ class AnalyticsManagerService {
         return cached.results;
       }
     }
-    
+
     // 3. Run analytics
     const results = await this.analyticsRunner.run(student, options?.useAI);
-    
+
     // 4. Update cache
     if (!ttlDisabled) {
       this.analyticsCache.set(student.id, { results, timestamp: new Date() });
     }
-    
+
     // 5. Update profile
     const profile = this.analyticsProfiles.get(student.id);
     if (profile) {
@@ -37,13 +39,14 @@ class AnalyticsManagerService {
       this.analyticsProfiles.set(student.id, profile);
       this.saveAnalyticsProfiles();
     }
-    
+
     return results;
   }
 }
 ```
 
 **Issues**:
+
 - Mixed concerns (cache + orchestration + profile management)
 - Hard to test individual components
 - 72 lines of complex logic in one method
@@ -54,25 +57,28 @@ class AnalyticsManagerService {
 ### Step 1: Create Orchestrator Instance
 
 ```typescript
-import { createStudentAnalyticsOrchestrator, createProfileManagerAdapter } from '@/lib/analytics/orchestration';
+import {
+  createStudentAnalyticsOrchestrator,
+  createProfileManagerAdapter,
+} from '@/lib/analytics/orchestration';
 import { getProfileMap, initializeStudentProfile, saveProfiles } from '@/lib/analyticsProfiles';
 import { calculateHealthScore } from '@/lib/analytics/health';
 
 class AnalyticsManagerService {
   private orchestrator: StudentAnalyticsOrchestrator;
-  
+
   constructor(storage: IDataStorage, profiles: AnalyticsProfileMap) {
     // ... existing initialization ...
-    
+
     // Create orchestrator with dependencies
     this.orchestrator = createStudentAnalyticsOrchestrator({
       runner: this.analyticsRunner,
       profileManager: createProfileManagerAdapter({
         initialize: initializeStudentProfile,
         getMap: getProfileMap,
-        save: saveProfiles
+        save: saveProfiles,
       }),
-      healthCalculator: calculateHealthScore
+      healthCalculator: calculateHealthScore,
     });
   }
 }
@@ -82,7 +88,10 @@ class AnalyticsManagerService {
 
 ```typescript
 class AnalyticsManagerService {
-  async getStudentAnalytics(student: Student, options?: { useAI?: boolean }): Promise<AnalyticsResults> {
+  async getStudentAnalytics(
+    student: Student,
+    options?: { useAI?: boolean },
+  ): Promise<AnalyticsResults> {
     // Step 1: Check TTL cache (deprecated, will be removed)
     const ttlDisabled = isManagerTtlCacheDisabled();
     if (!ttlDisabled) {
@@ -92,41 +101,41 @@ class AnalyticsManagerService {
         return cached.results;
       }
     }
-    
+
     // Step 2: Delegate to orchestrator (cache-agnostic)
     const results = await this.orchestrator.getAnalytics(student, options);
-    
+
     // Step 3: Update TTL cache if enabled
     if (!ttlDisabled) {
       this.analyticsCache.set(student.id, { results, timestamp: new Date() });
     }
-    
+
     return results;
   }
-  
+
   // Helper: Extract cache checking logic
   private checkTtlCache(studentId: string, options?: { useAI?: boolean }) {
     const cached = this.analyticsCache.get(studentId);
     if (!cached) return null;
-    
+
     const now = new Date();
     const cacheAge = now.getTime() - cached.timestamp.getTime();
     const ttl = getTtlMs();
-    
+
     if (cacheAge >= ttl) return null;
-    
+
     // AI preference logic
     const preferAI = options?.useAI === true;
     const preferHeuristic = options?.useAI === false;
     const provider = (cached.results as any)?.ai?.provider;
     const isCachedAI = typeof provider === 'string' && provider.toLowerCase() !== 'heuristic';
-    
+
     if (preferHeuristic && isCachedAI) return null;
     if (preferAI && !isCachedAI) return null;
-    
+
     return cached;
   }
-  
+
   private emitTtlDeprecationWarning(studentId: string) {
     // Rate-limited deprecation warning (existing logic)
     // ...
@@ -144,14 +153,17 @@ class AnalyticsManagerService {
         logger.warn('[analyticsManager] triggerAnalyticsForStudent: invalid student', { student });
         return;
       }
-      
+
       // Clear TTL cache
       this.analyticsCache.delete(student.id);
-      
+
       // Delegate to orchestrator
       await this.orchestrator.triggerAnalysis(student);
     } catch (error) {
-      logger.error('[analyticsManager] triggerAnalyticsForStudent failed', { error, studentId: student?.id });
+      logger.error('[analyticsManager] triggerAnalyticsForStudent failed', {
+        error,
+        studentId: student?.id,
+      });
     }
   }
 }
@@ -172,17 +184,18 @@ class AnalyticsManagerService {
 
 ### 1. Separation of Concerns
 
-| Component | Responsibility |
-|-----------|---------------|
-| **Manager** | TTL cache management (deprecated layer) |
-| **Orchestrator** | Analytics workflow coordination |
-| **Runner** | Analytics computation |
-| **Profile Manager** | Profile storage |
-| **Health Calculator** | Quality scoring |
+| Component             | Responsibility                          |
+| --------------------- | --------------------------------------- |
+| **Manager**           | TTL cache management (deprecated layer) |
+| **Orchestrator**      | Analytics workflow coordination         |
+| **Runner**            | Analytics computation                   |
+| **Profile Manager**   | Profile storage                         |
+| **Health Calculator** | Quality scoring                         |
 
 ### 2. Testability
 
 **Before**: Testing required mocking cache, profiles, runner, AND orchestration logic
+
 ```typescript
 // Complex test setup with many mocks
 test('getStudentAnalytics with cache hit', async () => {
@@ -194,6 +207,7 @@ test('getStudentAnalytics with cache hit', async () => {
 ```
 
 **After**: Test orchestrator independently from cache
+
 ```typescript
 // Clean test with focused mocks
 test('orchestrator.getAnalytics', async () => {
@@ -202,7 +216,7 @@ test('orchestrator.getAnalytics', async () => {
   const orchestrator = createStudentAnalyticsOrchestrator({
     runner: mockRunner,
     profileManager: mockProfileManager,
-    healthCalculator: () => 85
+    healthCalculator: () => 85,
   });
   // ... simple assertions ...
 });
@@ -211,6 +225,7 @@ test('orchestrator.getAnalytics', async () => {
 ### 3. Reusability
 
 The orchestrator can be used in different contexts:
+
 - **Manager**: With TTL cache (deprecated)
 - **Hooks**: With usePerformanceCache
 - **Workers**: Internal worker cache
@@ -220,31 +235,30 @@ The orchestrator can be used in different contexts:
 
 Clear path to deprecate manager TTL cache:
 
-**Phase 1** (Current): Manager checks TTL, delegates to orchestrator
-**Phase 2**: Hooks use orchestrator directly, manager usage decreases
-**Phase 3**: Remove manager TTL cache entirely
+**Phase 1** (Current): Manager checks TTL, delegates to orchestrator **Phase 2**: Hooks use
+orchestrator directly, manager usage decreases **Phase 3**: Remove manager TTL cache entirely
 **Phase 4**: Manager becomes thin facade or removed
 
 ## Code Metrics
 
 ### Before Extraction
 
-| Metric | Value |
-|--------|-------|
-| analyticsManager.ts | 641 lines |
-| getStudentAnalytics() | ~72 lines |
+| Metric                | Value                                      |
+| --------------------- | ------------------------------------------ |
+| analyticsManager.ts   | 641 lines                                  |
+| getStudentAnalytics() | ~72 lines                                  |
 | Cyclomatic Complexity | High (nested cache logic + AI preferences) |
-| Dependencies | Tightly coupled to cache, profiles, runner |
+| Dependencies          | Tightly coupled to cache, profiles, runner |
 
 ### After Extraction
 
-| Metric | Manager | Orchestrator |
-|--------|---------|--------------|
-| Lines of Code | ~50 reduced | 567 lines |
-| getStudentAnalytics() | ~25 lines (thin wrapper) | N/A |
-| getAnalytics() | N/A | ~50 lines (core logic) |
-| Cyclomatic Complexity | Low (cache check + delegate) | Medium (orchestration flow) |
-| Dependencies | Cache + Orchestrator | Injected (runner, profiles, health) |
+| Metric                | Manager                      | Orchestrator                        |
+| --------------------- | ---------------------------- | ----------------------------------- |
+| Lines of Code         | ~50 reduced                  | 567 lines                           |
+| getStudentAnalytics() | ~25 lines (thin wrapper)     | N/A                                 |
+| getAnalytics()        | N/A                          | ~50 lines (core logic)              |
+| Cyclomatic Complexity | Low (cache check + delegate) | Medium (orchestration flow)         |
+| Dependencies          | Cache + Orchestrator         | Injected (runner, profiles, health) |
 
 ### Net Impact
 
@@ -272,7 +286,7 @@ import { createStudentAnalyticsOrchestrator } from '@/lib/analytics/orchestratio
 const orchestrator = createStudentAnalyticsOrchestrator({
   runner: analyticsRunner,
   profileManager: profileManagerAdapter,
-  healthCalculator: calculateHealthScore
+  healthCalculator: calculateHealthScore,
 });
 
 const results = await orchestrator.getAnalytics(student);
@@ -284,7 +298,7 @@ const results = await orchestrator.getAnalytics(student);
 function useStudentAnalytics(student: Student) {
   const orchestrator = useOrchestratorInstance();
   const cache = usePerformanceCache();
-  
+
   return useQuery({
     queryKey: ['analytics', student.id],
     queryFn: async () => {
@@ -295,7 +309,7 @@ function useStudentAnalytics(student: Student) {
       const results = await orchestrator.getAnalytics(student);
       cache.set(student.id, results);
       return results;
-    }
+    },
   });
 }
 ```
@@ -307,26 +321,26 @@ function useStudentAnalytics(student: Student) {
 ```typescript
 describe('StudentAnalyticsOrchestrator', () => {
   it('initializes profile before analytics', async () => {
-    const mockProfileManager = { 
+    const mockProfileManager = {
       initialize: jest.fn(),
       get: jest.fn(() => mockProfile),
-      set: jest.fn()
+      set: jest.fn(),
     };
     const orchestrator = createStudentAnalyticsOrchestrator({
       runner: mockRunner,
       profileManager: mockProfileManager,
-      healthCalculator: () => 85
+      healthCalculator: () => 85,
     });
-    
+
     await orchestrator.getAnalytics(mockStudent);
-    
+
     expect(mockProfileManager.initialize).toHaveBeenCalledWith(mockStudent.id);
   });
-  
+
   it('updates profile after analytics', async () => {
     // ... test profile updates ...
   });
-  
+
   it('handles runner failures gracefully', async () => {
     // ... test error handling ...
   });
@@ -342,11 +356,11 @@ describe('AnalyticsManagerService', () => {
     const results = await manager.getStudentAnalytics(student);
     expect(results).toBeDefined();
   });
-  
+
   it('respects TTL cache when enabled', async () => {
     // ... test cache hit path ...
   });
-  
+
   it('bypasses TTL cache when disabled', async () => {
     // ... test cache bypass ...
   });
@@ -380,4 +394,6 @@ const results = await orchestrator.getAnalyticsForMany(students);
 
 ## Conclusion
 
-The `StudentAnalyticsOrchestrator` provides a clean, testable, cache-agnostic orchestration layer. The manager transitions to a thin wrapper focused solely on deprecated TTL cache management, with a clear path to eventual removal.
+The `StudentAnalyticsOrchestrator` provides a clean, testable, cache-agnostic orchestration layer.
+The manager transitions to a thin wrapper focused solely on deprecated TTL cache management, with a
+clear path to eventual removal.

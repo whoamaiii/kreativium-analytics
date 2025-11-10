@@ -53,7 +53,9 @@ export class AnalyticsRunner {
     try {
       const trackingEntries = this.storage.getEntriesForStudent(student.id) || [];
       const emotions: EmotionEntry[] = trackingEntries.flatMap((entry) => entry.emotions || []);
-      const sensoryInputs: SensoryEntry[] = trackingEntries.flatMap((entry) => entry.sensoryInputs || []);
+      const sensoryInputs: SensoryEntry[] = trackingEntries.flatMap(
+        (entry) => entry.sensoryInputs || [],
+      );
 
       const engine = this.createAnalysisEngine(useAI);
       const opts: AnalysisOptions = { includeAiMetadata: true };
@@ -65,20 +67,36 @@ export class AnalyticsRunner {
         results.ai.caveats.push('AI disabled or unavailable; heuristic used');
       }
 
-      await this.applySummaryFacade(student.id, trackingEntries, emotions, sensoryInputs, results as AnalyticsResultsCompat);
+      await this.applySummaryFacade(
+        student.id,
+        trackingEntries,
+        emotions,
+        sensoryInputs,
+        results as AnalyticsResultsCompat,
+      );
 
       if (trackingEntries.length > 0) {
-        await alertSystem.generateAlertsForStudent(student, emotions, sensoryInputs, trackingEntries);
+        await alertSystem.generateAlertsForStudent(
+          student,
+          emotions,
+          sensoryInputs,
+          trackingEntries,
+        );
       }
 
       return results as AnalyticsResultsCompat;
     } catch (error) {
       logger.error(`[analyticsRunner] run failed for student ${student.id}`, {
-        error: error instanceof Error ? { message: error.message, stack: error.stack, name: error.name } : error,
+        error:
+          error instanceof Error
+            ? { message: error.message, stack: error.stack, name: error.name }
+            : error,
       });
 
       try {
-        const fallback = await new HeuristicAnalysisEngine().analyzeStudent(student.id, undefined, { includeAiMetadata: true });
+        const fallback = await new HeuristicAnalysisEngine().analyzeStudent(student.id, undefined, {
+          includeAiMetadata: true,
+        });
         const fallbackResults = fallback as AnalyticsResultsCompat & { error?: unknown };
         if (fallbackResults.error) {
           return createFailureResult();
@@ -87,7 +105,10 @@ export class AnalyticsRunner {
       } catch (fallbackError) {
         logger.error('[analyticsRunner] Heuristic fallback failed', {
           studentId: student.id,
-          error: fallbackError instanceof Error ? { message: fallbackError.message, stack: fallbackError.stack } : fallbackError,
+          error:
+            fallbackError instanceof Error
+              ? { message: fallbackError.message, stack: fallbackError.stack }
+              : fallbackError,
         });
         return createFailureResult();
       }
@@ -103,9 +124,15 @@ export class AnalyticsRunner {
   ): Promise<void> {
     try {
       const liveConfig = (() => {
-        try { return analyticsConfig.getConfig(); } catch { return null; }
+        try {
+          return analyticsConfig.getConfig();
+        } catch {
+          return null;
+        }
       })();
-      const useSummaryFacade = (liveConfig?.features?.enableSummaryFacade ?? ANALYTICS_CONFIG.features?.enableSummaryFacade) === true;
+      const useSummaryFacade =
+        (liveConfig?.features?.enableSummaryFacade ??
+          ANALYTICS_CONFIG.features?.enableSummaryFacade) === true;
       if (!useSummaryFacade) return;
 
       const summary = await generateAnalyticsSummary({
@@ -120,7 +147,8 @@ export class AnalyticsRunner {
       });
 
       results.insights = summary.insights;
-      (results as AnalyticsResultsCompat & { hasMinimumData?: boolean }).hasMinimumData = summary.hasMinimumData;
+      (results as AnalyticsResultsCompat & { hasMinimumData?: boolean }).hasMinimumData =
+        summary.hasMinimumData;
       (results as AnalyticsResultsCompat & { confidence?: number }).confidence = summary.confidence;
 
       try {
@@ -138,7 +166,10 @@ export class AnalyticsRunner {
         logger.warn('[analyticsRunner] Summary facade debug logging failed', logError);
       }
     } catch (summaryError) {
-      logger.warn('[analyticsRunner] Summary facade failed, keeping original insights:', summaryError);
+      logger.warn(
+        '[analyticsRunner] Summary facade failed, keeping original insights:',
+        summaryError,
+      );
     }
   }
 }

@@ -61,7 +61,7 @@ export const analyticsManagerLite = {
   async clearStudentCache(studentId: string) {
     const manager = await this.getFullManager();
     return manager.clearStudentCache(studentId);
-  }
+  },
 };
 
 // Export as default for easier migration

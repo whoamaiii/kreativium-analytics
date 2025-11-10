@@ -14,12 +14,16 @@ describe('inferTagsFromText', () => {
   });
 
   it('detects math keywords broadly', () => {
-    const tags = inferTagsFromText('count numbers, addition, subtraction, fractions and math facts');
+    const tags = inferTagsFromText(
+      'count numbers, addition, subtraction, fractions and math facts',
+    );
     expect(tags).toContain(DomainTag.Math);
   });
 
   it('detects behavior/FBA signals including ABC and tantrum', () => {
-    const tags = inferTagsFromText('PBIS intervention with ABC data, antecedent, escape, attention, and tantrum');
+    const tags = inferTagsFromText(
+      'PBIS intervention with ABC data, antecedent, escape, attention, and tantrum',
+    );
     expect(tags).toContain(DomainTag.Behavior);
     expect(tags).toContain(DomainTag.FBA);
   });
@@ -33,5 +37,3 @@ describe('inferTagsFromText', () => {
     expect(t3).toContain(DomainTag.AAC);
   });
 });
-
-

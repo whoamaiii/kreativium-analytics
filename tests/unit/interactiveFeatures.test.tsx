@@ -20,7 +20,11 @@ const MockDataVisualization = ({ data }: { data: number[] | null }) => {
   );
 };
 
-const MockFilterControls = ({ onFilterChange }: { onFilterChange: (filters: { emotion: string | null }) => void }) => {
+const MockFilterControls = ({
+  onFilterChange,
+}: {
+  onFilterChange: (filters: { emotion: string | null }) => void;
+}) => {
   return (
     <div>
       <button onClick={() => onFilterChange({ emotion: 'happy' })}>Filter Happy</button>
@@ -34,17 +38,17 @@ describe('Interactive Features', () => {
     test('should handle student selection', () => {
       const handleSelect = vi.fn();
       render(<MockStudentList onSelect={handleSelect} />);
-      
+
       const student1Button = screen.getByText('Student 1');
       fireEvent.click(student1Button);
-      
+
       expect(handleSelect).toHaveBeenCalledWith('student-1');
     });
 
     test('should update visualization on data change', () => {
       const { rerender } = render(<MockDataVisualization data={null} />);
       expect(screen.getByText('No data')).toBeInTheDocument();
-      
+
       rerender(<MockDataVisualization data={[1, 2, 3]} />);
       expect(screen.getByText('Displaying 3 entries')).toBeInTheDocument();
     });
@@ -52,21 +56,27 @@ describe('Interactive Features', () => {
     test('should handle filter changes', () => {
       const handleFilterChange = vi.fn();
       render(<MockFilterControls onFilterChange={handleFilterChange} />);
-      
+
       const filterButton = screen.getByText('Filter Happy');
       fireEvent.click(filterButton);
-      
+
       expect(handleFilterChange).toHaveBeenCalledWith({ emotion: 'happy' });
-      
+
       const clearButton = screen.getByText('Clear Filters');
       fireEvent.click(clearButton);
-      
+
       expect(handleFilterChange).toHaveBeenCalledWith({ emotion: null });
     });
   });
 
   describe('Error Handling UI', () => {
-    const MockErrorBoundary = ({ children, fallback }: { children: React.ReactNode, fallback: React.ComponentType<{ error: Error }> }) => {
+    const MockErrorBoundary = ({
+      children,
+      fallback,
+    }: {
+      children: React.ReactNode;
+      fallback: React.ComponentType<{ error: Error }>;
+    }) => {
       const [hasError, setHasError] = React.useState(false);
       const [error, setError] = React.useState<Error | null>(null);
 
@@ -104,7 +114,7 @@ describe('Interactive Features', () => {
         render(
           <MockErrorBoundary fallback={ErrorFallback}>
             <ThrowError />
-          </MockErrorBoundary>
+          </MockErrorBoundary>,
         );
       }).toThrow();
 
@@ -114,16 +124,20 @@ describe('Interactive Features', () => {
   });
 
   describe('Loading States', () => {
-    const MockLoadingComponent = ({ isLoading, data }: { isLoading: boolean, data?: string }) => {
+    const MockLoadingComponent = ({ isLoading, data }: { isLoading: boolean; data?: string }) => {
       if (isLoading) {
-        return <div role="status" aria-busy="true">Loading...</div>;
+        return (
+          <div role="status" aria-busy="true">
+            Loading...
+          </div>
+        );
       }
       return <div>{data || 'No data'}</div>;
     };
 
     test('should show loading state', () => {
       render(<MockLoadingComponent isLoading={true} />);
-      
+
       const loadingElement = screen.getByRole('status');
       expect(loadingElement).toBeInTheDocument();
       expect(loadingElement).toHaveAttribute('aria-busy', 'true');
@@ -133,7 +147,7 @@ describe('Interactive Features', () => {
     test('should show data after loading', () => {
       const { rerender } = render(<MockLoadingComponent isLoading={true} />);
       expect(screen.getByText('Loading...')).toBeInTheDocument();
-      
+
       rerender(<MockLoadingComponent isLoading={false} data="Test data" />);
       expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
       expect(screen.getByText('Test data')).toBeInTheDocument();
@@ -141,9 +155,13 @@ describe('Interactive Features', () => {
   });
 
   describe('Form Validation', () => {
-    const MockForm = ({ onSubmit }: { onSubmit: (data: Record<string, FormDataEntryValue>) => void }) => {
+    const MockForm = ({
+      onSubmit,
+    }: {
+      onSubmit: (data: Record<string, FormDataEntryValue>) => void;
+    }) => {
       const [errors, setErrors] = React.useState<Record<string, string>>({});
-      
+
       const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         const formData = new FormData(e.target as HTMLFormElement);
@@ -156,14 +174,14 @@ describe('Interactive Features', () => {
         if (!data.grade) {
           newErrors.grade = 'Grade is required';
         }
-        
+
         if (Object.keys(newErrors).length > 0) {
           setErrors(newErrors);
         } else {
           onSubmit(data);
         }
       };
-      
+
       return (
         <form onSubmit={handleSubmit}>
           <div>
@@ -182,10 +200,10 @@ describe('Interactive Features', () => {
     test('should validate required fields', () => {
       const handleSubmit = vi.fn();
       render(<MockForm onSubmit={handleSubmit} />);
-      
+
       const submitButton = screen.getByText('Submit');
       fireEvent.click(submitButton);
-      
+
       expect(screen.getByText('Name is required')).toBeInTheDocument();
       expect(screen.getByText('Grade is required')).toBeInTheDocument();
       expect(handleSubmit).not.toHaveBeenCalled();
@@ -194,19 +212,19 @@ describe('Interactive Features', () => {
     test('should submit valid form', () => {
       const handleSubmit = vi.fn();
       render(<MockForm onSubmit={handleSubmit} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Name');
       const gradeInput = screen.getByPlaceholderText('Grade');
-      
+
       fireEvent.change(nameInput, { target: { value: 'John Doe' } });
       fireEvent.change(gradeInput, { target: { value: '10' } });
-      
+
       const submitButton = screen.getByText('Submit');
       fireEvent.click(submitButton);
-      
+
       expect(handleSubmit).toHaveBeenCalledWith({
         name: 'John Doe',
-        grade: '10'
+        grade: '10',
       });
     });
   });

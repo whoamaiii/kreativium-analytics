@@ -28,9 +28,3 @@ export interface TaskDifficulty {
   holdDurationMs: number;
   hint: 'none' | 'gentle' | 'strong';
 }
-
-
-
-
-
-

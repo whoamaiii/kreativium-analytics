@@ -19,8 +19,8 @@ analytics panels, how to wire i18n keys, and the accessibility requirements for 
   - Uses react-router-dom useSearchParams if available; falls back to history.replaceState
     otherwise.
   - Handles back/forward navigation via popstate and router updates.
-- Backward compatibility: older values (charts, patterns, correlations, visualizations) are normalized to the
-  current keys where possible for deep-link stability.
+- Backward compatibility: older values (charts, patterns, correlations, visualizations) are
+  normalized to the current keys where possible for deep-link stability.
   - This conversion happens in the hook via normalizeTab().
 
 Deep linking examples:

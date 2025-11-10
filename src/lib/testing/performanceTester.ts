@@ -35,28 +35,28 @@ export interface ComponentBenchmarkOptions {
 export async function benchmarkComponentRender(
   componentName: string,
   componentFactory: () => ReactElement,
-  options: ComponentBenchmarkOptions = {}
+  options: ComponentBenchmarkOptions = {},
 ): Promise<RenderBenchmarkResult> {
   const {
     iterations = 100,
     testRerenders = false,
     propVariations = [],
-    timeoutMs = 5000
+    timeoutMs = 5000,
   } = options;
 
   const renderTimes: number[] = [];
   let rerenderCount = 0;
 
-  const timeout = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error(`Benchmark timeout after ${timeoutMs}ms`)), timeoutMs)
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`Benchmark timeout after ${timeoutMs}ms`)), timeoutMs),
   );
 
   const benchmark = async () => {
     for (let i = 0; i < iterations; i++) {
       const startTime = performance.now();
-      
+
       const { rerender, unmount } = render(componentFactory());
-      
+
       const renderTime = performance.now() - startTime;
       renderTimes.push(renderTime);
 
@@ -64,20 +64,20 @@ export async function benchmarkComponentRender(
       if (testRerenders && propVariations.length > 0) {
         const rerenderStartTime = performance.now();
         const variation = propVariations[i % propVariations.length];
-        
+
         // Create new component with varied props
         rerender(React.cloneElement(componentFactory(), variation));
-        
+
         const rerenderTime = performance.now() - rerenderStartTime;
         renderTimes.push(rerenderTime);
         rerenderCount++;
       }
 
       unmount();
-      
+
       // Yield to event loop
       if (i % 10 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
   };
@@ -98,7 +98,7 @@ export async function benchmarkComponentRender(
     minRenderTime,
     maxRenderTime,
     totalRenders: renderTimes.length,
-    rerenderCount: testRerenders ? rerenderCount : undefined
+    rerenderCount: testRerenders ? rerenderCount : undefined,
   };
 }
 
@@ -107,7 +107,7 @@ export async function benchmarkComponentRender(
  */
 export function calculateRenderImprovement(
   before: RenderBenchmarkResult,
-  after: RenderBenchmarkResult
+  after: RenderBenchmarkResult,
 ): {
   improvementPercentage: number;
   avgRenderTimeReduction: number;
@@ -115,14 +115,14 @@ export function calculateRenderImprovement(
 } {
   const avgRenderTimeReduction = before.averageRenderTime - after.averageRenderTime;
   const improvementPercentage = (avgRenderTimeReduction / before.averageRenderTime) * 100;
-  
+
   // Consider improvement significant if > 10% reduction
   const significant = improvementPercentage > 10;
 
   return {
     improvementPercentage,
     avgRenderTimeReduction,
-    significant
+    significant,
   };
 }
 

@@ -107,7 +107,9 @@ const getToolbarStorageKey = (
 
 const getStringArray = (value: unknown): string[] => {
   if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+    return value.filter(
+      (item): item is string => typeof item === 'string' && item.trim().length > 0,
+    );
   }
   if (typeof value === 'string' && value.trim().length > 0) {
     return [value];
@@ -142,7 +144,9 @@ export const useKreativiumAiState = (): KreativiumAiState => {
   const [resolvedSources, setResolvedSources] = useState<Map<string, EvidenceSource>>(new Map());
   const [toolbarLast, setToolbarLast] = useState<ToolbarLastAction>(DEFAULT_TOOLBAR_LAST);
 
-  const resultsCacheRef = useRef<Map<string, { current: AnalyticsResultsAI; baseline: AnalyticsResultsAI | null }>>(new Map());
+  const resultsCacheRef = useRef<
+    Map<string, { current: AnalyticsResultsAI; baseline: AnalyticsResultsAI | null }>
+  >(new Map());
 
   const timeframe = useMemo(() => computeRange(preset), [preset]);
 
@@ -195,13 +199,19 @@ export const useKreativiumAiState = (): KreativiumAiState => {
     resultsCacheRef.current.clear();
   }, [iepSafeMode]);
 
-  const { current: dataQuality, baseline: baselineDataQuality, isBaselineInsufficient: hasSmallBaseline } = useDataQualitySummaries(
+  const {
+    current: dataQuality,
+    baseline: baselineDataQuality,
+    isBaselineInsufficient: hasSmallBaseline,
+  } = useDataQualitySummaries(
     studentId,
     timeframe ? { start: timeframe.start, end: timeframe.end } : undefined,
     {
-      baselineRange: comparisonRange ? { start: comparisonRange.start, end: comparisonRange.end } : undefined,
+      baselineRange: comparisonRange
+        ? { start: comparisonRange.start, end: comparisonRange.end }
+        : undefined,
       baselineMinimum: 5,
-    }
+    },
   );
 
   const keyFindings = useMemo(() => getStringArray(results?.keyFindings), [results]);
@@ -305,7 +315,10 @@ export const useKreativiumAiState = (): KreativiumAiState => {
           .catch(() => null);
       }
 
-      const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);
+      const [res, base] = await Promise.all([
+        currentPromise,
+        baselinePromise ?? Promise.resolve(null),
+      ]);
       setResults(res);
       setBaselineResults(base);
       resultsCacheRef.current.set(cacheKey, { current: res, baseline: base });
@@ -316,14 +329,7 @@ export const useKreativiumAiState = (): KreativiumAiState => {
       setIsAnalyzing(false);
       setIsAnalyzingBaseline(false);
     }
-  }, [
-    studentId,
-    timeframe,
-    iepSafeMode,
-    compareEnabled,
-    comparisonRange,
-    cacheKey,
-  ]);
+  }, [studentId, timeframe, iepSafeMode, compareEnabled, comparisonRange, cacheKey]);
 
   const refreshAnalyze = useCallback(async () => {
     if (!studentId) {
@@ -359,7 +365,10 @@ export const useKreativiumAiState = (): KreativiumAiState => {
           .catch(() => null);
       }
 
-      const [res, base] = await Promise.all([currentPromise, baselinePromise ?? Promise.resolve(null)]);
+      const [res, base] = await Promise.all([
+        currentPromise,
+        baselinePromise ?? Promise.resolve(null),
+      ]);
       setResults(res);
       setBaselineResults(base);
       resultsCacheRef.current.set(cacheKey, { current: res, baseline: base });
@@ -370,14 +379,7 @@ export const useKreativiumAiState = (): KreativiumAiState => {
       setIsAnalyzing(false);
       setIsAnalyzingBaseline(false);
     }
-  }, [
-    studentId,
-    timeframe,
-    compareEnabled,
-    comparisonRange,
-    iepSafeMode,
-    cacheKey,
-  ]);
+  }, [studentId, timeframe, compareEnabled, comparisonRange, iepSafeMode, cacheKey]);
 
   const testAI = useCallback(async () => {
     setIsTesting(true);
@@ -395,7 +397,7 @@ export const useKreativiumAiState = (): KreativiumAiState => {
           maxTokens: 8,
           temperature: 0,
           localOnly: aiConfig.localOnly ?? false,
-        }
+        },
       );
       setResults(null);
       if (!resp?.content?.toLowerCase().includes('pong')) {

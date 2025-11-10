@@ -25,8 +25,8 @@ test.describe('Dashboard smoke (POC)', () => {
 
     // Back to dashboard and verify new entry button is present
     await page.goto('/');
-    await expect(page.getByRole('button', { name: /Ny Registrering|Add Your First Student/i }).first()).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Ny Registrering|Add Your First Student/i }).first(),
+    ).toBeVisible();
   });
 });
-
-

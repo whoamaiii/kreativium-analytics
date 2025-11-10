@@ -78,9 +78,9 @@ const TAG_DISPLAY: Record<string, { nb: string; sv: string }> = {
 
 export async function formatAiReportText(
   result: AnalyticsResultsAI,
-  opts?: { includeMetadata?: boolean; locale?: LocaleKey }
+  opts?: { includeMetadata?: boolean; locale?: LocaleKey },
 ): Promise<string> {
-  const locale: LocaleKey = (opts?.locale ?? 'nb');
+  const locale: LocaleKey = opts?.locale ?? 'nb';
   const L = LABELS[locale];
   const out: string[] = [];
   if ((result as any).summary) {
@@ -91,15 +91,20 @@ export async function formatAiReportText(
 
   out.push(`# ${L.keyFindings}`);
   const kf = ((result as any).keyFindings || []) as string[];
-  out.push(...(kf.length ? kf.map(x => `• ${x}`) : ['(Ingen)']));
+  out.push(...(kf.length ? kf.map((x) => `• ${x}`) : ['(Ingen)']));
   out.push('');
 
   out.push(`# ${L.patterns}`);
-  out.push(...((result.patterns || []).map(p => `• ${p.name || 'Mønster'}${p.description ? ` — ${p.description}` : ''}`)));
+  out.push(
+    ...(result.patterns || []).map(
+      (p) => `• ${p.name || 'Mønster'}${p.description ? ` — ${p.description}` : ''}`,
+    ),
+  );
   out.push('');
 
   // Collect unique source IDs across all interventions for resolution
-  const interventions: InterventionResult[] = ((result as any).suggestedInterventions || []) as InterventionResult[];
+  const interventions: InterventionResult[] = ((result as any).suggestedInterventions ||
+    []) as InterventionResult[];
   const uniqueSourceIds = new Set<string>();
   for (const i of interventions) {
     if (Array.isArray(i.sources)) {
@@ -118,7 +123,7 @@ export async function formatAiReportText(
   } catch (_e) {
     resolved = [];
   }
-  const idToSource = new Map<string, EvidenceSource>(resolved.map(s => [s.id, s]));
+  const idToSource = new Map<string, EvidenceSource>(resolved.map((s) => [s.id, s]));
 
   // Enhanced interventions with inline sources, tier/scope, and metrics
   out.push(`# ${L.interventions}`);
@@ -132,16 +137,26 @@ export async function formatAiReportText(
         if (s) names.push(s.title);
       }
       const sourcesText = names.length ? ` [${L.sources}: ${names.join(', ')}]` : '';
-      const tierScope = (i.tier || i.scope) ? ` [${i.tier || ''}${i.scope ? `${i.tier ? ', ' : ''}${i.scope}` : ''}]` : '';
-      const metricsText = (Array.isArray(i.metrics) && i.metrics.length) ? ` [${L.goals}: ${i.metrics.join(', ')}]` : '';
-      out.push(`• ${i.title}${i.description ? ` — ${i.description}` : ''}${sourcesText}${tierScope}${metricsText}`);
+      const tierScope =
+        i.tier || i.scope
+          ? ` [${i.tier || ''}${i.scope ? `${i.tier ? ', ' : ''}${i.scope}` : ''}]`
+          : '';
+      const metricsText =
+        Array.isArray(i.metrics) && i.metrics.length
+          ? ` [${L.goals}: ${i.metrics.join(', ')}]`
+          : '';
+      out.push(
+        `• ${i.title}${i.description ? ` — ${i.description}` : ''}${sourcesText}${tierScope}${metricsText}`,
+      );
     }
   }
   out.push('');
 
   // UDL and HLP sections (if present)
-  const allUdl = Array.from(new Set(interventions.flatMap(i => i.udlCheckpoints || []).filter(Boolean)));
-  const allHlps = Array.from(new Set(interventions.flatMap(i => i.hlps || []).filter(Boolean)));
+  const allUdl = Array.from(
+    new Set(interventions.flatMap((i) => i.udlCheckpoints || []).filter(Boolean)),
+  );
+  const allHlps = Array.from(new Set(interventions.flatMap((i) => i.hlps || []).filter(Boolean)));
   if (allUdl.length) {
     out.push(`# ${L.udl}`);
     for (const u of allUdl) out.push(`• ${u}`);
@@ -154,18 +169,28 @@ export async function formatAiReportText(
   }
 
   // Tier summary and scope summary
-  const tiers = interventions.map(i => i.tier).filter(Boolean) as string[];
-  const scopes = interventions.map(i => i.scope).filter(Boolean) as string[];
+  const tiers = interventions.map((i) => i.tier).filter(Boolean) as string[];
+  const scopes = interventions.map((i) => i.scope).filter(Boolean) as string[];
   if (tiers.length) {
-    const counts = tiers.reduce((acc, t) => (acc[t] = (acc[t] || 0) + 1, acc), {} as Record<string, number>);
+    const counts = tiers.reduce(
+      (acc, t) => ((acc[t] = (acc[t] || 0) + 1), acc),
+      {} as Record<string, number>,
+    );
     out.push(`# ${L.tiers}`);
-    Object.keys(counts).sort().forEach(k => out.push(`• ${k}: ${counts[k]}`));
+    Object.keys(counts)
+      .sort()
+      .forEach((k) => out.push(`• ${k}: ${counts[k]}`));
     out.push('');
   }
   if (scopes.length) {
-    const counts = scopes.reduce((acc, s) => (acc[s] = (acc[s] || 0) + 1, acc), {} as Record<string, number>);
+    const counts = scopes.reduce(
+      (acc, s) => ((acc[s] = (acc[s] || 0) + 1), acc),
+      {} as Record<string, number>,
+    );
     out.push(`# ${L.scope}`);
-    Object.keys(counts).sort().forEach(k => out.push(`• ${k}: ${counts[k]}`));
+    Object.keys(counts)
+      .sort()
+      .forEach((k) => out.push(`• ${k}: ${counts[k]}`));
     out.push('');
   }
 
@@ -177,10 +202,12 @@ export async function formatAiReportText(
       if (seenIds.has(s.id)) continue;
       seenIds.add(s.id);
       const lvl = s.evidenceLevel ? ` [${s.evidenceLevel} evidens]` : '';
-      const year = (s.year != null) ? String(s.year) : 'N/A';
+      const year = s.year != null ? String(s.year) : 'N/A';
       const excerptText = s.shortExcerpt ? ` — ${s.shortExcerpt}` : '';
       const urlText = s.url ? ` [${s.url}]` : '';
-      const tags = (Array.isArray(s.tags) ? s.tags : []).map(t => TAG_DISPLAY[String(t)]?.[locale] || String(t)).join(', ');
+      const tags = (Array.isArray(s.tags) ? s.tags : [])
+        .map((t) => TAG_DISPLAY[String(t)]?.[locale] || String(t))
+        .join(', ');
       const tagsText = tags ? ` [${L.tags}: ${tags}]` : '';
       out.push(`• ${s.title} (${year})${excerptText}${urlText}${lvl}${tagsText}`);
     }
@@ -190,16 +217,26 @@ export async function formatAiReportText(
   if (opts?.includeMetadata && result.ai) {
     out.push(`# AI‑metadata`);
     out.push(`${L.model}: ${result.ai.model || ''}`);
-    if (result.ai.latencyMs != null) out.push(`${L.latency}: ${Math.round(result.ai.latencyMs)} ms`);
-    if (result.ai.usage) out.push(`${L.tokens}: prompt ${result.ai.usage.promptTokens ?? 0} • completion ${result.ai.usage.completionTokens ?? 0} • total ${result.ai.usage.totalTokens ?? 0}`);
-    if ((result.ai.usage as any)?.cacheReadTokens) out.push(`${L.cacheRead}: ${(result.ai.usage as any).cacheReadTokens}`);
-    if ((result.ai.usage as any)?.cacheWriteTokens) out.push(`${L.cacheWrite}: ${(result.ai.usage as any).cacheWriteTokens}`);
-    if (Array.isArray(result.ai.caveats) && result.ai.caveats.length) out.push(`${L.caveats}: ${result.ai.caveats.join('; ')}`);
+    if (result.ai.latencyMs != null)
+      out.push(`${L.latency}: ${Math.round(result.ai.latencyMs)} ms`);
+    if (result.ai.usage)
+      out.push(
+        `${L.tokens}: prompt ${result.ai.usage.promptTokens ?? 0} • completion ${result.ai.usage.completionTokens ?? 0} • total ${result.ai.usage.totalTokens ?? 0}`,
+      );
+    if ((result.ai.usage as any)?.cacheReadTokens)
+      out.push(`${L.cacheRead}: ${(result.ai.usage as any).cacheReadTokens}`);
+    if ((result.ai.usage as any)?.cacheWriteTokens)
+      out.push(`${L.cacheWrite}: ${(result.ai.usage as any).cacheWriteTokens}`);
+    if (Array.isArray(result.ai.caveats) && result.ai.caveats.length)
+      out.push(`${L.caveats}: ${result.ai.caveats.join('; ')}`);
   }
   return out.join('\n');
 }
 
-export async function downloadPdfFromText(text: string, filename: string = 'kreativium_ai_rapport.pdf'): Promise<void> {
+export async function downloadPdfFromText(
+  text: string,
+  filename: string = 'kreativium_ai_rapport.pdf',
+): Promise<void> {
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const margin = 40;
@@ -210,7 +247,10 @@ export async function downloadPdfFromText(text: string, filename: string = 'krea
   doc.setFontSize(11);
   const paragraphs = text.split('\n');
   for (const para of paragraphs) {
-    if (para.trim().length === 0) { y += 12; continue; }
+    if (para.trim().length === 0) {
+      y += 12;
+      continue;
+    }
     const wrapped = doc.splitTextToSize(para, usable);
     for (const line of wrapped) {
       if (y > doc.internal.pageSize.getHeight() - margin) {
@@ -223,4 +263,3 @@ export async function downloadPdfFromText(text: string, filename: string = 'krea
   }
   doc.save(filename);
 }
-

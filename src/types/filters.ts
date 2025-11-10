@@ -10,12 +10,7 @@ export const CHALLENGING_EMOTION_TOKENS = [
   'tired',
 ] as const;
 
-export const POSITIVE_EMOTION_TOKENS_CORE = [
-  'happy',
-  'calm',
-  'proud',
-  'focused',
-] as const;
+export const POSITIVE_EMOTION_TOKENS_CORE = ['happy', 'calm', 'proud', 'focused'] as const;
 
 export const SENSORY_TYPE_TOKENS = [
   'visual',
@@ -27,7 +22,9 @@ export const SENSORY_TYPE_TOKENS = [
   'gustatory',
 ] as const;
 
-export type ClassroomActivityToken = NonNullable<NonNullable<EnvironmentalEntry['classroom']>['activity']>;
+export type ClassroomActivityToken = NonNullable<
+  NonNullable<EnvironmentalEntry['classroom']>['activity']
+>;
 
 export const CLASSROOM_ACTIVITY_TOKENS: ClassroomActivityToken[] = [
   'instruction',
@@ -47,24 +44,4 @@ export const LIGHTING_CONDITION_TOKENS = [
   'dim',
 ] as const;
 
-export const NATURAL_LIGHTING_TOKENS = [
-  'natural',
-  'sunlight',
-] as const;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export const NATURAL_LIGHTING_TOKENS = ['natural', 'sunlight'] as const;

@@ -88,9 +88,10 @@ export function filterValidResults(detectorResults: DetectorResult[]): DetectorR
  * combined.impact // => 0.8 (max score)
  * combined.confidence // => 0.9 (max confidence)
  */
-export function combineDetectorScores(
-  detectorResults: DetectorResult[],
-): { impact: number; confidence: number } {
+export function combineDetectorScores(detectorResults: DetectorResult[]): {
+  impact: number;
+  confidence: number;
+} {
   const validResults = filterValidResults(detectorResults);
 
   if (validResults.length === 0) {

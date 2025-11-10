@@ -5,7 +5,7 @@
  * Pure function that transforms ReportContent into formatted HTML.
  */
 
-import type { ReportContent, PDFReportOptions } from "./types";
+import type { ReportContent, PDFReportOptions } from './types';
 
 /**
  * Generates a print-ready HTML report from structured content
@@ -129,7 +129,7 @@ function generateSummarySection(summary: ReportContent['summary']): string {
  */
 function generateEmotionSection(
   emotionAnalysis: ReportContent['emotionAnalysis'],
-  includeCharts?: boolean
+  includeCharts?: boolean,
 ): string {
   return `
     <div class="section">
@@ -146,7 +146,7 @@ function generateEmotionSection(
  */
 function generateSensorySection(
   sensoryAnalysis: ReportContent['sensoryAnalysis'],
-  includeCharts?: boolean
+  includeCharts?: boolean,
 ): string {
   return `
     <div class="section">
@@ -161,13 +161,17 @@ function generateSensorySection(
  * Generates the goal progress section
  */
 function generateGoalSection(goalProgress: ReportContent['goalProgress']): string {
-  const goalItems = goalProgress.map(goal => `
+  const goalItems = goalProgress
+    .map(
+      (goal) => `
             <div class="goal-item">
                 <h3>${escapeHtml(goal.title)}</h3>
                 <p><strong>Progress:</strong> ${goal.progress}% complete</p>
                 <p><strong>Status:</strong> ${escapeHtml(goal.status)}</p>
             </div>
-        `).join('');
+        `,
+    )
+    .join('');
 
   return `
     <div class="section">
@@ -180,9 +184,7 @@ function generateGoalSection(goalProgress: ReportContent['goalProgress']): strin
  * Generates the recommendations section
  */
 function generateRecommendationsSection(recommendations: string[]): string {
-  const recommendationItems = recommendations.map(rec =>
-    `<li>${escapeHtml(rec)}</li>`
-  ).join('');
+  const recommendationItems = recommendations.map((rec) => `<li>${escapeHtml(rec)}</li>`).join('');
 
   return `
     <div class="section">
@@ -207,8 +209,8 @@ function escapeHtml(text: string | undefined): string {
     '<': '&lt;',
     '>': '&gt;',
     '"': '&quot;',
-    "'": '&#39;'
+    "'": '&#39;',
   };
 
-  return text.replace(/[&<>"']/g, char => htmlEscapeMap[char]);
+  return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char]);
 }

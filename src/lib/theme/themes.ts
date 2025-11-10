@@ -28,9 +28,3 @@ export const THEMES: Record<ThemeId, ThemeSpec> = {
 export function getTheme(id: ThemeId): ThemeSpec {
   return THEMES[id] ?? THEMES.regnbueland;
 }
-
-
-
-
-
-

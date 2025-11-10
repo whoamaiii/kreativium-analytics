@@ -89,7 +89,7 @@ export function calculateConfidence(
   emotions: readonly EmotionEntry[],
   sensoryInputs: readonly SensoryEntry[],
   trackingEntries: readonly TrackingEntry[],
-  cfgParam?: ConfidenceConfig
+  cfgParam?: ConfidenceConfig,
 ): number {
   const cfg = getEffectiveConfidenceConfig(cfgParam);
   const TH = cfg.THRESHOLDS as any;
@@ -166,7 +166,7 @@ export function generateInsights(
   },
   emotions: readonly EmotionEntry[],
   trackingEntries: readonly TrackingEntry[],
-  cfgParam?: InsightConfig
+  cfgParam?: InsightConfig,
 ): InsightOutput;
 export function generateInsights(
   emotions: ReadonlyArray<EmotionEntry>,
@@ -174,7 +174,7 @@ export function generateInsights(
   trackingEntries: ReadonlyArray<TrackingEntry>,
   patterns: ReadonlyArray<PatternResult>,
   correlations: ReadonlyArray<CorrelationResult>,
-  config?: InsightConfig
+  config?: InsightConfig,
 ): InsightOutput;
 
 export type StructuredInsight = { key: string; params?: Record<string, unknown> };
@@ -187,7 +187,7 @@ export function generateInsightsStructured(
   },
   emotions: readonly EmotionEntry[],
   trackingEntries: readonly TrackingEntry[],
-  cfgParam?: InsightConfig
+  cfgParam?: InsightConfig,
 ): StructuredInsight[] {
   const cfg = getEffectiveInsightsConfig(cfgParam);
   const messages: StructuredInsight[] = [];
@@ -197,38 +197,61 @@ export function generateInsightsStructured(
   }
 
   if (trackingEntries.length < cfg.MIN_SESSIONS_FOR_FULL_ANALYTICS) {
-    messages.push({ key: 'analytics.insights.messages.limitedData', params: { sessions: trackingEntries.length } });
+    messages.push({
+      key: 'analytics.insights.messages.limitedData',
+      params: { sessions: trackingEntries.length },
+    });
   }
 
   results.patterns
-    .filter(p => p.confidence > cfg.HIGH_CONFIDENCE_PATTERN_THRESHOLD)
+    .filter((p) => p.confidence > cfg.HIGH_CONFIDENCE_PATTERN_THRESHOLD)
     .slice(0, cfg.MAX_PATTERNS_TO_SHOW)
-    .forEach(pattern => messages.push({
-      key: 'analytics.insights.messages.patternDetected',
-      params: { description: pattern.description, confidencePct: Math.round(pattern.confidence * 100) }
-    }));
+    .forEach((pattern) =>
+      messages.push({
+        key: 'analytics.insights.messages.patternDetected',
+        params: {
+          description: pattern.description,
+          confidencePct: Math.round(pattern.confidence * 100),
+        },
+      }),
+    );
 
   results.correlations
-    .filter(c => (c as any).significance === 'high')
+    .filter((c) => (c as any).significance === 'high')
     .slice(0, cfg.MAX_CORRELATIONS_TO_SHOW)
-    .forEach(correlation => messages.push({ key: 'analytics.insights.messages.strongCorrelation', params: { description: correlation.description } }));
+    .forEach((correlation) =>
+      messages.push({
+        key: 'analytics.insights.messages.strongCorrelation',
+        params: { description: correlation.description },
+      }),
+    );
 
-  results.predictiveInsights
-    .slice(0, cfg.MAX_PREDICTIONS_TO_SHOW)
-    .forEach(pi => messages.push({ key: 'analytics.insights.messages.prediction', params: { description: pi.description, confidencePct: Math.round(pi.confidence * 100) } }));
+  results.predictiveInsights.slice(0, cfg.MAX_PREDICTIONS_TO_SHOW).forEach((pi) =>
+    messages.push({
+      key: 'analytics.insights.messages.prediction',
+      params: { description: pi.description, confidencePct: Math.round(pi.confidence * 100) },
+    }),
+  );
 
   if (emotions.length >= cfg.RECENT_EMOTION_COUNT) {
     const recent = emotions.slice(-cfg.RECENT_EMOTION_COUNT);
     // POSITIVE_EMOTIONS may be a Set<string>
     const fullCfg = getEffectiveFullConfig() as typeof ANALYTICS_CONFIG;
-    const positiveSet: Set<string> = (fullCfg.POSITIVE_EMOTIONS ?? ANALYTICS_CONFIG.POSITIVE_EMOTIONS) as Set<string>;
-    const positives = recent.filter(e => positiveSet.has(e.emotion.toLowerCase())).length;
+    const positiveSet: Set<string> = (fullCfg.POSITIVE_EMOTIONS ??
+      ANALYTICS_CONFIG.POSITIVE_EMOTIONS) as Set<string>;
+    const positives = recent.filter((e) => positiveSet.has(e.emotion.toLowerCase())).length;
     const positiveRate = positives / recent.length;
     const pct = Math.round(positiveRate * 100);
     if (positiveRate > cfg.POSITIVE_EMOTION_TREND_THRESHOLD) {
-      messages.push({ key: 'analytics.insights.messages.positiveTrend', params: { percentage: pct } });
+      messages.push({
+        key: 'analytics.insights.messages.positiveTrend',
+        params: { percentage: pct },
+      });
     } else if (positiveRate < cfg.NEGATIVE_EMOTION_TREND_THRESHOLD) {
-      messages.push({ key: 'analytics.insights.messages.negativeTrend', params: { percentage: pct } });
+      messages.push({
+        key: 'analytics.insights.messages.negativeTrend',
+        params: { percentage: pct },
+      });
     }
   }
 
@@ -285,7 +308,11 @@ function renderStructuredInsight(insight: StructuredInsight): string {
 export function generateInsights(...args: any[]): InsightOutput {
   // Branch 1: New signature with results object first
   if (args.length >= 3 && args[0] && typeof args[0] === 'object' && 'patterns' in args[0]) {
-    const results = args[0] as { patterns: PatternResult[]; correlations: CorrelationResult[]; predictiveInsights: Array<{ description: string; confidence: number }>; };
+    const results = args[0] as {
+      patterns: PatternResult[];
+      correlations: CorrelationResult[];
+      predictiveInsights: Array<{ description: string; confidence: number }>;
+    };
     const emotions = args[1] as readonly EmotionEntry[];
     const trackingEntries = args[2] as readonly TrackingEntry[];
     const cfg = getEffectiveInsightsConfig(args[3] as InsightConfig | undefined);
@@ -305,17 +332,21 @@ export function generateInsights(...args: any[]): InsightOutput {
 
   // Data sufficiency
   if (trackingEntries.length < cfg.MIN_SESSIONS_FOR_FULL_ANALYTICS) {
-    insights.push(`Limited data available (${trackingEntries.length} sessions). Continue collecting data for better insights.`);
+    insights.push(
+      `Limited data available (${trackingEntries.length} sessions). Continue collecting data for better insights.`,
+    );
   }
 
   // Highlight high-confidence patterns
   const significantPatterns = patterns
-    .filter(p => p.confidence >= cfg.HIGH_CONFIDENCE_PATTERN_THRESHOLD)
+    .filter((p) => p.confidence >= cfg.HIGH_CONFIDENCE_PATTERN_THRESHOLD)
     .slice(0, cfg.MAX_PATTERNS_TO_SHOW);
 
-  significantPatterns.forEach(p => {
+  significantPatterns.forEach((p) => {
     const pct = Math.round(p.confidence * 100);
-    insights.push(`Pattern detected (${(p as any).type}): ${(p as any).pattern} (${pct}% confidence). ${p.description}`);
+    insights.push(
+      `Pattern detected (${(p as any).type}): ${(p as any).pattern} (${pct}% confidence). ${p.description}`,
+    );
   });
 
   // Summarize strongest correlations
@@ -326,33 +357,51 @@ export function generateInsights(...args: any[]): InsightOutput {
 
   strongCorrelations.forEach((c: any) => {
     insights.push(
-      `Correlation: ${c.factor1} <-> ${c.factor2} (r=${typeof c.correlation === 'number' ? c.correlation.toFixed(2) : '0.00'}, ${c.significance}). ${c.description}`
+      `Correlation: ${c.factor1} <-> ${c.factor2} (r=${typeof c.correlation === 'number' ? c.correlation.toFixed(2) : '0.00'}, ${c.significance}). ${c.description}`,
     );
   });
 
   // Simple recent emotion perspective
   if (emotions.length > 0) {
     const recent = emotions.slice(-Math.max(1, cfg.RECENT_EMOTION_COUNT));
-    const top = getTopCategory(recent.map(e => e.emotion.toLowerCase()));
+    const top = getTopCategory(recent.map((e) => e.emotion.toLowerCase()));
     if (top) {
-      insights.push(`Recent emotions most frequently observed: ${top.key} (${top.count} of last ${recent.length}).`);
+      insights.push(
+        `Recent emotions most frequently observed: ${top.key} (${top.count} of last ${recent.length}).`,
+      );
     }
   }
 
   // Sensory snapshot
   if (sensoryInputs.length > 0) {
     const recentSensory = sensoryInputs.slice(-Math.max(1, Math.min(10, sensoryInputs.length)));
-    const seeking = recentSensory.filter(s => s.response.toLowerCase().includes('seeking')).length;
-    const avoiding = recentSensory.filter(s => s.response.toLowerCase().includes('avoiding')).length;
+    const seeking = recentSensory.filter((s) =>
+      s.response.toLowerCase().includes('seeking'),
+    ).length;
+    const avoiding = recentSensory.filter((s) =>
+      s.response.toLowerCase().includes('avoiding'),
+    ).length;
     if (seeking > avoiding && seeking > 0) {
-      insights.push('Recent sensory pattern leans toward seeking behavior. Consider structured sensory breaks.');
+      insights.push(
+        'Recent sensory pattern leans toward seeking behavior. Consider structured sensory breaks.',
+      );
     } else if (avoiding > seeking && avoiding > 0) {
-      insights.push('Recent sensory pattern shows avoidance. Provide access to low-stimulation spaces.');
+      insights.push(
+        'Recent sensory pattern shows avoidance. Provide access to low-stimulation spaces.',
+      );
     }
   }
 
   // Ensure bounded size
-  return insights.slice(0, Math.max(cfg.MAX_PATTERNS_TO_SHOW, cfg.MAX_CORRELATIONS_TO_SHOW, cfg.MAX_PREDICTIONS_TO_SHOW, 5));
+  return insights.slice(
+    0,
+    Math.max(
+      cfg.MAX_PATTERNS_TO_SHOW,
+      cfg.MAX_CORRELATIONS_TO_SHOW,
+      cfg.MAX_PREDICTIONS_TO_SHOW,
+      5,
+    ),
+  );
 }
 
 /**
@@ -385,7 +434,7 @@ export function generateInsightsFromWorkerInputs(
   emotionPatterns: PatternResult[],
   sensoryPatterns: PatternResult[],
   correlations: CorrelationResult[],
-  data: { entries: TrackingEntry[]; emotions: EmotionEntry[] }
+  data: { entries: TrackingEntry[]; emotions: EmotionEntry[] },
 ): InsightOutput;
 export function generateInsightsFromWorkerInputs(
   input: {
@@ -395,19 +444,26 @@ export function generateInsightsFromWorkerInputs(
     sensoryInputs?: ReadonlyArray<SensoryEntry>;
     trackingEntries?: ReadonlyArray<TrackingEntry>;
   },
-  overrides?: { insightConfig?: InsightConfig }
+  overrides?: { insightConfig?: InsightConfig },
 ): InsightOutput;
 export function generateInsightsFromWorkerInputs(
-  ...args: [PatternResult[], PatternResult[], CorrelationResult[], { entries: TrackingEntry[]; emotions: EmotionEntry[] }] | [
-    {
-      patterns?: ReadonlyArray<PatternResult>;
-      correlations?: ReadonlyArray<CorrelationResult>;
-      emotions?: ReadonlyArray<EmotionEntry>;
-      sensoryInputs?: ReadonlyArray<SensoryEntry>;
-      trackingEntries?: ReadonlyArray<TrackingEntry>;
-    },
-    { insightConfig?: InsightConfig }?
-  ]
+  ...args:
+    | [
+        PatternResult[],
+        PatternResult[],
+        CorrelationResult[],
+        { entries: TrackingEntry[]; emotions: EmotionEntry[] },
+      ]
+    | [
+        {
+          patterns?: ReadonlyArray<PatternResult>;
+          correlations?: ReadonlyArray<CorrelationResult>;
+          emotions?: ReadonlyArray<EmotionEntry>;
+          sensoryInputs?: ReadonlyArray<SensoryEntry>;
+          trackingEntries?: ReadonlyArray<TrackingEntry>;
+        },
+        { insightConfig?: InsightConfig }?,
+      ]
 ): InsightOutput {
   // Branch A: Canonical signature with separate emotion/sensory pattern arrays
   if (Array.isArray(args[0])) {
@@ -419,7 +475,11 @@ export function generateInsightsFromWorkerInputs(
     // Non-mutating composition
     const patterns: PatternResult[] = [...emotionPatterns, ...sensoryPatterns];
 
-    const results = { patterns, correlations, predictiveInsights: [] as Array<{ description: string; confidence: number }> };
+    const results = {
+      patterns,
+      correlations,
+      predictiveInsights: [] as Array<{ description: string; confidence: number }>,
+    };
     return generateInsights(results, data.emotions, data.entries);
   }
 
@@ -440,10 +500,14 @@ export function generateInsightsFromWorkerInputs(
   const trackingEntries = (input.trackingEntries ?? []).slice();
 
   return generateInsights(
-    { patterns: patterns as PatternResult[], correlations: legacyCorrelations as CorrelationResult[], predictiveInsights: [] },
+    {
+      patterns: patterns as PatternResult[],
+      correlations: legacyCorrelations as CorrelationResult[],
+      predictiveInsights: [],
+    },
     emotions,
     trackingEntries,
-    overrides?.insightConfig
+    overrides?.insightConfig,
   );
 }
 

@@ -17,7 +17,7 @@ import {
   formatDate,
   formatArray,
   filterByDateRange,
-  anonymizeStudentName
+  anonymizeStudentName,
 } from '../index';
 
 describe('CSV Formatter Utilities', () => {
@@ -95,13 +95,13 @@ describe('CSV Formatter Utilities', () => {
     const data = [
       { timestamp: new Date('2024-01-01'), value: 1 },
       { timestamp: new Date('2024-01-15'), value: 2 },
-      { timestamp: new Date('2024-02-01'), value: 3 }
+      { timestamp: new Date('2024-02-01'), value: 3 },
     ];
 
     it('should filter by date range', () => {
       const filtered = filterByDateRange(data, {
         start: new Date('2024-01-10'),
-        end: new Date('2024-01-20')
+        end: new Date('2024-01-20'),
       });
       expect(filtered).toHaveLength(1);
       expect(filtered[0].value).toBe(2);
@@ -138,9 +138,9 @@ describe('CSV Generation', () => {
         baselineData: {
           emotionalRegulation: 5,
           sensoryProcessing: 5,
-          environmentalPreferences: {}
-        }
-      }
+          environmentalPreferences: {},
+        },
+      },
     ] as Student[];
 
     emotions = [
@@ -151,7 +151,7 @@ describe('CSV Generation', () => {
         intensity: 7,
         timestamp: new Date('2024-01-15T10:00:00'),
         triggers: ['recess', 'games'],
-        notes: 'Very cheerful today'
+        notes: 'Very cheerful today',
       },
       {
         id: 'emotion-2',
@@ -160,8 +160,8 @@ describe('CSV Generation', () => {
         intensity: 5,
         timestamp: new Date('2024-01-16T14:00:00'),
         triggers: ['math homework'],
-        notes: 'Had difficulty with fractions'
-      }
+        notes: 'Had difficulty with fractions',
+      },
     ];
 
     sensoryInputs = [
@@ -172,8 +172,8 @@ describe('CSV Generation', () => {
         response: 'seeking',
         intensity: 6,
         timestamp: new Date('2024-01-15T11:00:00'),
-        notes: 'Enjoys music during work'
-      }
+        notes: 'Enjoys music during work',
+      },
     ];
 
     goals = [
@@ -196,10 +196,10 @@ describe('CSV Generation', () => {
             id: 'dp-1',
             timestamp: new Date('2024-01-15'),
             value: 10,
-            notes: 'Initial measurement'
-          }
-        ]
-      }
+            notes: 'Initial measurement',
+          },
+        ],
+      },
     ];
 
     trackingEntries = [
@@ -208,8 +208,8 @@ describe('CSV Generation', () => {
         studentId: 'student-1',
         timestamp: new Date('2024-01-15T09:00:00'),
         emotions: emotions,
-        sensoryInputs: sensoryInputs
-      }
+        sensoryInputs: sensoryInputs,
+      },
     ];
   });
 
@@ -240,7 +240,7 @@ describe('CSV Generation', () => {
   describe('generateEmotionsCSV', () => {
     it('should generate emotions CSV', () => {
       const result = generateEmotionsCSV(emotions, students, {
-        includeFields: ['emotions']
+        includeFields: ['emotions'],
       });
 
       expect(result.content).toContain('Date,Student,Emotion');
@@ -253,7 +253,7 @@ describe('CSV Generation', () => {
     it('should anonymize data', () => {
       const result = generateEmotionsCSV(emotions, students, {
         includeFields: ['emotions'],
-        anonymize: true
+        anonymize: true,
       });
 
       expect(result.content).not.toContain('John Doe');
@@ -265,8 +265,8 @@ describe('CSV Generation', () => {
         includeFields: ['emotions'],
         dateRange: {
           start: new Date('2024-01-15'),
-          end: new Date('2024-01-15T23:59:59')
-        }
+          end: new Date('2024-01-15T23:59:59'),
+        },
       });
 
       expect(result.rowCount).toBe(1);
@@ -276,8 +276,8 @@ describe('CSV Generation', () => {
       const result = generateEmotionsCSV(emotions, students, {
         includeFields: ['emotions'],
         formatting: {
-          includeUtf8Bom: true
-        }
+          includeUtf8Bom: true,
+        },
       });
 
       expect(result.content).toMatch(/^\uFEFF/);
@@ -287,8 +287,8 @@ describe('CSV Generation', () => {
       const result = generateEmotionsCSV(emotions, students, {
         includeFields: ['emotions'],
         formatting: {
-          dateFormat: 'MM/dd/yyyy'
-        }
+          dateFormat: 'MM/dd/yyyy',
+        },
       });
 
       expect(result.content).toContain('01/15/2024');
@@ -298,7 +298,7 @@ describe('CSV Generation', () => {
   describe('generateSensoryCSV', () => {
     it('should generate sensory CSV', () => {
       const result = generateSensoryCSV(sensoryInputs, students, {
-        includeFields: ['sensoryInputs']
+        includeFields: ['sensoryInputs'],
       });
 
       expect(result.content).toContain('Date,Student,Sensory Type');
@@ -311,7 +311,7 @@ describe('CSV Generation', () => {
   describe('generateGoalsCSV', () => {
     it('should generate goals CSV', () => {
       const result = generateGoalsCSV(goals, students, {
-        includeFields: ['goals']
+        includeFields: ['goals'],
       });
 
       expect(result.content).toContain('Student,Goal Title');
@@ -322,7 +322,7 @@ describe('CSV Generation', () => {
 
     it('should calculate progress percentage', () => {
       const result = generateGoalsCSV(goals, students, {
-        includeFields: ['goals']
+        includeFields: ['goals'],
       });
 
       expect(result.content).toContain('50'); // 10/20 = 50%
@@ -332,24 +332,28 @@ describe('CSV Generation', () => {
   describe('generateTrackingCSV', () => {
     it('should generate tracking CSV', () => {
       const result = generateTrackingCSV(trackingEntries, students, {
-        includeFields: ['trackingEntries']
+        includeFields: ['trackingEntries'],
       });
 
-      expect(result.content).toContain('Date,Student,Session Duration');
+      expect(result.content).toContain('Date,Student,"Session Duration (min)"');
       expect(result.rowCount).toBe(1);
     });
   });
 
   describe('generateCSVExport', () => {
     it('should generate multi-section export', () => {
-      const result = generateCSVExport(students, {
-        emotions,
-        sensoryInputs,
-        goals,
-        trackingEntries
-      }, {
-        includeFields: ['emotions', 'sensoryInputs', 'goals']
-      });
+      const result = generateCSVExport(
+        students,
+        {
+          emotions,
+          sensoryInputs,
+          goals,
+          trackingEntries,
+        },
+        {
+          includeFields: ['emotions', 'sensoryInputs', 'goals'],
+        },
+      );
 
       expect(result.content).toContain('=== EMOTIONS ===');
       expect(result.content).toContain('=== SENSORY INPUTS ===');
@@ -358,29 +362,37 @@ describe('CSV Generation', () => {
     });
 
     it('should generate grouped export', () => {
-      const result = generateCSVExport(students, {
-        emotions,
-        sensoryInputs,
-        goals,
-        trackingEntries
-      }, {
-        includeFields: ['emotions', 'sensoryInputs'],
-        groupBy: 'student'
-      });
+      const result = generateCSVExport(
+        students,
+        {
+          emotions,
+          sensoryInputs,
+          goals,
+          trackingEntries,
+        },
+        {
+          includeFields: ['emotions', 'sensoryInputs'],
+          groupBy: 'student',
+        },
+      );
 
       expect(result.content).toContain('John Doe');
       expect(result.rowCount).toBeGreaterThan(0);
     });
 
     it('should handle empty data', () => {
-      const result = generateCSVExport(students, {
-        emotions: [],
-        sensoryInputs: [],
-        goals: [],
-        trackingEntries: []
-      }, {
-        includeFields: ['emotions']
-      });
+      const result = generateCSVExport(
+        students,
+        {
+          emotions: [],
+          sensoryInputs: [],
+          goals: [],
+          trackingEntries: [],
+        },
+        {
+          includeFields: ['emotions'],
+        },
+      );
 
       expect(result.content).toContain('Date,Student,Emotion');
       expect(result.rowCount).toBe(0);
@@ -389,18 +401,20 @@ describe('CSV Generation', () => {
 
   describe('RFC 4180 Compliance', () => {
     it('should handle special characters correctly', () => {
-      const specialEmotions: EmotionEntry[] = [{
-        id: 'emotion-special',
-        studentId: 'student-1',
-        emotion: 'mixed, complex',
-        intensity: 5,
-        timestamp: new Date('2024-01-15'),
-        notes: 'Student said "I feel weird"\nMultiple lines',
-        triggers: ['test, quiz', 'homework']
-      }];
+      const specialEmotions: EmotionEntry[] = [
+        {
+          id: 'emotion-special',
+          studentId: 'student-1',
+          emotion: 'mixed, complex',
+          intensity: 5,
+          timestamp: new Date('2024-01-15'),
+          notes: 'Student said "I feel weird"\nMultiple lines',
+          triggers: ['test, quiz', 'homework'],
+        },
+      ];
 
       const result = generateEmotionsCSV(specialEmotions, students, {
-        includeFields: ['emotions']
+        includeFields: ['emotions'],
       });
 
       expect(result.content).toContain('"mixed, complex"');
@@ -409,7 +423,7 @@ describe('CSV Generation', () => {
 
     it('should use consistent line endings', () => {
       const result = generateEmotionsCSV(emotions, students, {
-        includeFields: ['emotions']
+        includeFields: ['emotions'],
       });
 
       const lines = result.content.split('\n');
@@ -425,12 +439,12 @@ describe('CSV Generation', () => {
         emotion: 'happy',
         intensity: Math.floor(Math.random() * 10),
         timestamp: new Date(),
-        notes: `Note ${i}`
+        notes: `Note ${i}`,
       }));
 
       const start = Date.now();
       const result = generateEmotionsCSV(largeEmotions, students, {
-        includeFields: ['emotions']
+        includeFields: ['emotions'],
       });
       const duration = Date.now() - start;
 
@@ -442,7 +456,7 @@ describe('CSV Generation', () => {
   describe('Edge Cases', () => {
     it('should handle students with no data', () => {
       const result = generateEmotionsCSV([], students, {
-        includeFields: ['emotions']
+        includeFields: ['emotions'],
       });
 
       expect(result.rowCount).toBe(0);
@@ -450,33 +464,37 @@ describe('CSV Generation', () => {
     });
 
     it('should handle missing student references', () => {
-      const orphanEmotions: EmotionEntry[] = [{
-        id: 'emotion-orphan',
-        studentId: 'nonexistent-student',
-        emotion: 'happy',
-        intensity: 5,
-        timestamp: new Date()
-      }];
+      const orphanEmotions: EmotionEntry[] = [
+        {
+          id: 'emotion-orphan',
+          studentId: 'nonexistent-student',
+          emotion: 'happy',
+          intensity: 5,
+          timestamp: new Date(),
+        },
+      ];
 
       const result = generateEmotionsCSV(orphanEmotions, students, {
-        includeFields: ['emotions']
+        includeFields: ['emotions'],
       });
 
       expect(result.content).toContain('Unknown');
     });
 
     it('should handle missing optional fields', () => {
-      const minimalEmotions: EmotionEntry[] = [{
-        id: 'emotion-minimal',
-        studentId: 'student-1',
-        emotion: 'happy',
-        intensity: 5,
-        timestamp: new Date()
-        // No notes, triggers, etc.
-      }];
+      const minimalEmotions: EmotionEntry[] = [
+        {
+          id: 'emotion-minimal',
+          studentId: 'student-1',
+          emotion: 'happy',
+          intensity: 5,
+          timestamp: new Date(),
+          // No notes, triggers, etc.
+        },
+      ];
 
       const result = generateEmotionsCSV(minimalEmotions, students, {
-        includeFields: ['emotions']
+        includeFields: ['emotions'],
       });
 
       expect(result.rowCount).toBe(1);

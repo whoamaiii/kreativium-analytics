@@ -150,7 +150,9 @@ export const AlertGroupSection: React.FC<AlertGroupSectionProps> = ({
       {/* Alert list */}
       <CollapsibleContent>
         {alerts.length === 0 ? (
-          <div className="text-sm text-muted-foreground mt-2">{String(tAnalytics('alerts.none'))}</div>
+          <div className="text-sm text-muted-foreground mt-2">
+            {String(tAnalytics('alerts.none'))}
+          </div>
         ) : (
           <ul className="mt-3 space-y-2" aria-label={`Alerts list for ${label}`}>
             {alerts.map((alert) => (

@@ -61,12 +61,7 @@ export interface SourceRef extends AlertSource {
   parameters?: Record<string, unknown>;
 }
 
-export type AlertActionKind =
-  | 'acknowledge'
-  | 'snooze'
-  | 'resolve'
-  | 'open_details'
-  | 'custom';
+export type AlertActionKind = 'acknowledge' | 'snooze' | 'resolve' | 'open_details' | 'custom';
 
 export interface AlertAction {
   id: string;
@@ -345,7 +340,11 @@ export function isValidSourceRef(input: unknown): input is SourceRef {
       return false;
     }
 
-    if (Number.isNaN(candidate.confidence) || candidate.confidence < 0 || candidate.confidence > 1) {
+    if (
+      Number.isNaN(candidate.confidence) ||
+      candidate.confidence < 0 ||
+      candidate.confidence > 1
+    ) {
       return false;
     }
   }
@@ -363,7 +362,12 @@ export function isValidDetectorResult(input: unknown): input is DetectorResult {
   }
 
   const candidate = input as DetectorResult;
-  if (typeof candidate.score !== 'number' || Number.isNaN(candidate.score) || candidate.score < 0 || candidate.score > 1) {
+  if (
+    typeof candidate.score !== 'number' ||
+    Number.isNaN(candidate.score) ||
+    candidate.score < 0 ||
+    candidate.score > 1
+  ) {
     return false;
   }
 
@@ -376,7 +380,10 @@ export function isValidDetectorResult(input: unknown): input is DetectorResult {
     return false;
   }
 
-  if (candidate.sources && (!Array.isArray(candidate.sources) || candidate.sources.some((src) => !isValidSourceRef(src)))) {
+  if (
+    candidate.sources &&
+    (!Array.isArray(candidate.sources) || candidate.sources.some((src) => !isValidSourceRef(src)))
+  ) {
     return false;
   }
 
@@ -426,7 +433,10 @@ export function isValidAlertEvent(input: unknown): input is AlertEvent {
     return false;
   }
 
-  if (candidate.sources && (!Array.isArray(candidate.sources) || candidate.sources.some((src) => !isValidSourceRef(src)))) {
+  if (
+    candidate.sources &&
+    (!Array.isArray(candidate.sources) || candidate.sources.some((src) => !isValidSourceRef(src)))
+  ) {
     return false;
   }
 
@@ -523,7 +533,22 @@ export interface StudentBaseline {
 
 // Function type contracts for utilities
 export type AssessBaselineQuality = (baseline: StudentBaseline) => BaselineQualityMetrics;
-export type ValidateDataSufficiency = (sessions: number, uniqueDays: number, minSessions: number, minUniqueDays: number) => BaselineValidationResult;
-export type DetectOutliers = (values: number[], zThreshold?: number) => { cleaned: number[]; outlierIndices: number[] };
-export type CompareBaselines = (a: StudentBaseline, b: StudentBaseline) => { similarity: number; drift: number };
-export type DetectBaselineShift = (series: { timestamps: number[]; values: number[] }) => { shifted: boolean; score: number; trend?: TrendAnalysisResult };
+export type ValidateDataSufficiency = (
+  sessions: number,
+  uniqueDays: number,
+  minSessions: number,
+  minUniqueDays: number,
+) => BaselineValidationResult;
+export type DetectOutliers = (
+  values: number[],
+  zThreshold?: number,
+) => { cleaned: number[]; outlierIndices: number[] };
+export type CompareBaselines = (
+  a: StudentBaseline,
+  b: StudentBaseline,
+) => { similarity: number; drift: number };
+export type DetectBaselineShift = (series: { timestamps: number[]; values: number[] }) => {
+  shifted: boolean;
+  score: number;
+  trend?: TrendAnalysisResult;
+};

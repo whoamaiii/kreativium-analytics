@@ -12,11 +12,11 @@ vi.mock('@/lib/insights/unified', () => ({
     suggestedInterventions: [],
     confidence: 1,
     hasMinimumData: true,
-  }))
+  })),
 }));
 
 vi.mock('@/lib/alertSystem', () => ({
-  alertSystem: { generateAlertsForStudent: vi.fn().mockResolvedValue(undefined) }
+  alertSystem: { generateAlertsForStudent: vi.fn().mockResolvedValue(undefined) },
 }));
 
 // Provide a simple in-memory dataStorage mock
@@ -37,13 +37,13 @@ vi.mock('@/lib/dataStorage', () => {
         const list = trackingByStudent.get(entry.studentId) ?? [];
         list.push(entry);
         trackingByStudent.set(entry.studentId, list);
-      }
+      },
     },
     IDataStorage: {} as any,
     __reset: () => {
       trackingByStudent.clear();
       goalsByStudent.clear();
-    }
+    },
   };
 });
 
@@ -63,8 +63,12 @@ vi.mock('@/lib/analyticsConfig', async (orig) => {
 
 vi.mock('@/lib/logger', () => ({
   logger: {
-    debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), configure: vi.fn(),
-  }
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    configure: vi.fn(),
+  },
 }));
 
 import { analyticsManager } from '@/lib/analyticsManager';
@@ -78,11 +82,19 @@ function setupLocalStorage() {
   // @ts-expect-error Test installs minimal localStorage polyfill for browser-like behavior
   global.localStorage = {
     getItem: (k: string) => (store.has(k) ? store.get(k)! : null),
-    setItem: (k: string, v: string) => { store.set(k, String(v)); },
-    removeItem: (k: string) => { store.delete(k); },
-    clear: () => { store.clear(); },
+    setItem: (k: string, v: string) => {
+      store.set(k, String(v));
+    },
+    removeItem: (k: string) => {
+      store.delete(k);
+    },
+    clear: () => {
+      store.clear();
+    },
     key: (i: number) => Array.from(store.keys())[i] ?? null,
-    get length() { return store.size; }
+    get length() {
+      return store.size;
+    },
   } as any;
 }
 
@@ -105,7 +117,13 @@ describe('analyticsManager.getStudentAnalytics', () => {
 
     // Seed some simple tracking data via dataStorage mock
     const { dataStorage }: any = await import('@/lib/dataStorage');
-    const entry = { id: 't1', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] };
+    const entry = {
+      id: 't1',
+      studentId: 's1',
+      timestamp: new Date(),
+      emotions: [],
+      sensoryInputs: [],
+    };
     dataStorage.saveTrackingEntry(entry);
 
     const result = await analyticsManager.getStudentAnalytics(student);
@@ -158,7 +176,9 @@ describe('analyticsManager.getStudentAnalytics', () => {
 
   it('uses DEFAULT_ANALYTICS_CONFIG TTL when analyticsConfig.getConfig throws', async () => {
     // Make analyticsConfig.getConfig throw
-    (analyticsConfig.getConfig as any).mockImplementationOnce(() => { throw new Error('config failed'); });
+    (analyticsConfig.getConfig as any).mockImplementationOnce(() => {
+      throw new Error('config failed');
+    });
 
     const student = { id: 's1', name: 'Alice' } as any;
     const r1 = await analyticsManager.getStudentAnalytics(student);

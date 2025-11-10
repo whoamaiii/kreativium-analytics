@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 /**
  * @interface DashboardSectionProps
  * Props for the DashboardSection component.
- * 
+ *
  * @property {Student} student - The student object.
  * @property {TrackingEntry[]} trackingEntries - All tracking entries for the student.
  * @property {object} filteredData - Data filtered by the selected date range.
@@ -42,14 +42,14 @@ interface DashboardSectionProps {
   isLoadingInsights: boolean;
 }
 
-export function DashboardSection({ 
-  student, 
-  trackingEntries, 
-  filteredData, 
-  selectedRange, 
+export function DashboardSection({
+  student,
+  trackingEntries,
+  filteredData,
+  selectedRange,
   onRangeChange,
   insights,
-  isLoadingInsights, 
+  isLoadingInsights,
 }: DashboardSectionProps) {
   const { tStudent, tCommon } = useTranslation();
   const navigate = useNavigate();
@@ -59,21 +59,25 @@ export function DashboardSection({
   const stats = {
     totalSessions: filteredData.entries.length,
     totalEmotions: filteredData.emotions.length,
-    totalSensoryInputs: filteredData.sensoryInputs.length
+    totalSensoryInputs: filteredData.sensoryInputs.length,
   };
 
   // Calculate simple data quality score
   const dataQualityScore = Math.min(
     100,
     Math.round(
-      ((stats.totalSessions * 0.4) + (stats.totalEmotions * 0.3) + (stats.totalSensoryInputs * 0.3)) / 10 * 100
-    )
+      ((stats.totalSessions * 0.4 + stats.totalEmotions * 0.3 + stats.totalSensoryInputs * 0.3) /
+        10) *
+        100,
+    ),
   );
 
   const getQualityStatus = (score: number) => {
-    if (score >= 80) return { label: 'Utmerket', color: 'bg-green-500', variant: 'default' as const };
+    if (score >= 80)
+      return { label: 'Utmerket', color: 'bg-green-500', variant: 'default' as const };
     if (score >= 60) return { label: 'God', color: 'bg-blue-500', variant: 'secondary' as const };
-    if (score >= 40) return { label: 'Moderat', color: 'bg-yellow-500', variant: 'outline' as const };
+    if (score >= 40)
+      return { label: 'Moderat', color: 'bg-yellow-500', variant: 'outline' as const };
     return { label: 'Trenger mer data', color: 'bg-red-500', variant: 'destructive' as const };
   };
 
@@ -85,9 +89,7 @@ export function DashboardSection({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Oversikt</h2>
-          <p className="text-muted-foreground">
-            Sammendrag av {student.name}s data og aktivitet
-          </p>
+          <p className="text-muted-foreground">Sammendrag av {student.name}s data og aktivitet</p>
         </div>
         <Button
           onClick={() => navigate(`/track/${student.id}`)}
@@ -120,10 +122,7 @@ export function DashboardSection({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <DateRangeSelector 
-            selectedRange={selectedRange}
-            onRangeChange={onRangeChange}
-          />
+          <DateRangeSelector selectedRange={selectedRange} onRangeChange={onRangeChange} />
         </CardContent>
       </Card>
 
@@ -142,7 +141,7 @@ export function DashboardSection({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -156,7 +155,7 @@ export function DashboardSection({
             </div>
           </CardContent>
         </Card>
-        
+
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -190,12 +189,12 @@ export function DashboardSection({
               {qualityStatus.label}
             </Badge>
           </div>
-          
+
           <div className="bg-muted rounded-full h-2 mb-4 overflow-hidden">
-            <div 
+            <div
               className={cn(
-                "bg-primary h-2 rounded-full transition-all duration-500",
-                "w-full origin-left"
+                'bg-primary h-2 rounded-full transition-all duration-500',
+                'w-full origin-left',
               )}
               style={{ transform: `scaleX(${dataQualityScore / 100})` }}
             />
@@ -207,13 +206,15 @@ export function DashboardSection({
                 <span className="text-sm text-muted-foreground">
                   {showAdvancedDetails ? 'Skjul detaljer' : 'Vis detaljert analyse'}
                 </span>
-                <ChevronDown className={cn(
-                  "h-4 w-4 transition-transform",
-                  showAdvancedDetails && "rotate-180"
-                )} />
+                <ChevronDown
+                  className={cn(
+                    'h-4 w-4 transition-transform',
+                    showAdvancedDetails && 'rotate-180',
+                  )}
+                />
               </Button>
             </CollapsibleTrigger>
-            
+
             <CollapsibleContent className="space-y-6 mt-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <DataRequirementsCalculator
@@ -227,7 +228,7 @@ export function DashboardSection({
                   sensoryInputs={filteredData.sensoryInputs}
                 />
               </div>
-              
+
               <DataCollectionRoadmap
                 entries={filteredData.entries}
                 emotions={filteredData.emotions}
@@ -254,24 +255,28 @@ export function DashboardSection({
             </div>
           </CardContent>
         </Card>
-      ) : insights && insights.suggestions && insights.suggestions.length > 0 && (
-        <Card className="bg-gradient-card border-0 shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              AI-genererte innsikter
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {insights.suggestions.slice(0, 3).map((suggestion: string) => (
-                <div key={suggestion} className="p-3 bg-accent/20 rounded-lg">
-                  <p className="text-sm">{suggestion}</p>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      ) : (
+        insights &&
+        insights.suggestions &&
+        insights.suggestions.length > 0 && (
+          <Card className="bg-gradient-card border-0 shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                AI-genererte innsikter
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {insights.suggestions.slice(0, 3).map((suggestion: string) => (
+                  <div key={suggestion} className="p-3 bg-accent/20 rounded-lg">
+                    <p className="text-sm">{suggestion}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )
       )}
 
       {/* Recent Sessions */}

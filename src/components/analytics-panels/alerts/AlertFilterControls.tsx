@@ -14,7 +14,13 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { AlertSeverity, AlertKind, AlertWithGovernance } from '@/lib/alerts/types';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -142,7 +148,12 @@ export const AlertFilterControls: React.FC<AlertFilterControlsProps> = ({
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-slate-600">Severity</span>
           <div className="flex flex-wrap gap-1">
-            {[AlertSeverity.Critical, AlertSeverity.Important, AlertSeverity.Moderate, AlertSeverity.Low].map((sev) => (
+            {[
+              AlertSeverity.Critical,
+              AlertSeverity.Important,
+              AlertSeverity.Moderate,
+              AlertSeverity.Low,
+            ].map((sev) => (
               <Button
                 key={sev}
                 variant={selectedSeverities.includes(sev) ? 'default' : 'outline'}
@@ -268,7 +279,11 @@ export const AlertFilterControls: React.FC<AlertFilterControlsProps> = ({
       </div>
 
       {/* Row 2: Confidence slider */}
-      <div className="flex flex-wrap items-center gap-3" role="group" aria-label="Confidence filter">
+      <div
+        className="flex flex-wrap items-center gap-3"
+        role="group"
+        aria-label="Confidence filter"
+      >
         <label htmlFor="alerts-confidence" className="text-xs font-medium text-slate-600">
           Min confidence
         </label>
@@ -291,7 +306,11 @@ export const AlertFilterControls: React.FC<AlertFilterControlsProps> = ({
       </div>
 
       {/* Row 3: Source type filters */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Source type filters">
+      <div
+        className="flex flex-wrap items-center gap-2"
+        role="group"
+        aria-label="Source type filters"
+      >
         <span className="text-xs font-medium text-slate-600">Sources</span>
         {availableSourceTypes.length === 0 ? (
           <span className="text-xs text-slate-400">No source types yet</span>
@@ -317,7 +336,11 @@ export const AlertFilterControls: React.FC<AlertFilterControlsProps> = ({
       </div>
 
       {/* Row 4: Algorithm filters */}
-      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Algorithm filters">
+      <div
+        className="flex flex-wrap items-center gap-2"
+        role="group"
+        aria-label="Algorithm filters"
+      >
         <span className="text-xs font-medium text-slate-600">Algorithms</span>
         {availableSourceLabels.length === 0 ? (
           <span className="text-xs text-slate-400">No detector labels yet</span>

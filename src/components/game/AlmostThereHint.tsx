@@ -24,7 +24,3 @@ export function AlmostThereHint({ visible }: AlmostThereHintProps) {
     </AnimatePresence>
   );
 }
-
-
-
-

@@ -1,23 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  Student,
-  TrackingEntry,
-  EmotionEntry,
-  SensoryEntry,
-  Goal,
-} from '@/types/student';
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
 import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
 
 /**
  * @hook useStudentData
- * 
+ *
  * A custom hook to fetch and manage all data related to a specific student.
  * This hook centralizes the logic for retrieving a student's profile, tracking entries,
  * emotions, sensory inputs, and goals from data storage.
  *
  * @param {string | undefined} studentId - The ID of the student to fetch data for.
- * 
+ *
  * @returns {object} An object containing:
  *  - `student`: The student's profile data.
  *  - `trackingEntries`: All tracking entries for the student.
@@ -58,18 +52,18 @@ export const useStudentData = (studentId: string | undefined) => {
 
       if (studentData) {
         setStudent(studentData);
-        
+
         const entries = dataStorage.getEntriesForStudent(studentId);
         setTrackingEntries(entries);
 
-        const emotions = entries.flatMap(entry => entry.emotions);
-        const sensoryInputs = entries.flatMap(entry => entry.sensoryInputs);
-        
+        const emotions = entries.flatMap((entry) => entry.emotions);
+        const sensoryInputs = entries.flatMap((entry) => entry.sensoryInputs);
+
         setAllEmotions(emotions);
         setAllSensoryInputs(sensoryInputs);
-        
+
         const allGoals = dataStorage.getGoals();
-        const studentGoals = allGoals.filter(goal => goal.studentId === studentId);
+        const studentGoals = allGoals.filter((goal) => goal.studentId === studentId);
         setGoals(studentGoals);
       } else {
         setError('Student not found.');
@@ -94,20 +88,20 @@ export const useStudentData = (studentId: string | undefined) => {
   const reloadGoals = useCallback(() => {
     if (studentId) {
       const allGoals = dataStorage.getGoals();
-      const studentGoals = allGoals.filter(goal => goal.studentId === studentId);
+      const studentGoals = allGoals.filter((goal) => goal.studentId === studentId);
       setGoals(studentGoals);
     }
   }, [studentId]);
 
-  return { 
-    student, 
-    trackingEntries, 
-    allEmotions, 
-    allSensoryInputs, 
-    goals, 
-    isLoading, 
+  return {
+    student,
+    trackingEntries,
+    allEmotions,
+    allSensoryInputs,
+    goals,
+    isLoading,
     error,
     reloadGoals,
-    reloadData: loadData
+    reloadData: loadData,
   };
-}; 
+};

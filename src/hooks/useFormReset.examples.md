@@ -1,10 +1,12 @@
 # useFormReset Hook - Refactoring Guide
 
-This document shows how to refactor the duplicate form reset patterns across components using the new `useFormReset` hook.
+This document shows how to refactor the duplicate form reset patterns across components using the
+new `useFormReset` hook.
 
 ## 1. GoalManager.tsx
 
 ### Before (Original Pattern)
+
 ```tsx
 // Lines 50-58: Initial state
 const [newGoal, setNewGoal] = useState({
@@ -44,6 +46,7 @@ createGoal() {
 ```
 
 ### After (Refactored with useFormReset)
+
 ```tsx
 import { useFormReset } from '@/hooks/useFormReset';
 
@@ -81,6 +84,7 @@ const createGoal = () => {
 ```
 
 **Benefits:**
+
 - Eliminates duplicate state definition (8 fields)
 - Single point of change for initial values
 - Reset function automatically maintains consistency
@@ -90,6 +94,7 @@ const createGoal = () => {
 ## 2. SensoryTracker.tsx
 
 ### Before (Original Pattern - Multiple useState calls)
+
 ```tsx
 // Lines 46-58: Multiple independent state variables
 const [selectedType, setSelectedType] = useState<string>('');
@@ -128,6 +133,7 @@ const handleSubmit = () => {
 ```
 
 ### After (Refactored with useFormReset)
+
 ```tsx
 import { useFormReset } from '@/hooks/useFormReset';
 
@@ -140,16 +146,19 @@ const { values, setValues, reset } = useFormReset({
   environment: '',
   location: '',
   copingStrategies: [] as string[],
-  newCopingStrategy: '' // Also managed by hook
+  newCopingStrategy: '', // Also managed by hook
 });
 
 // Handlers remain mostly the same, using values and setValues
 const handleAddCopingStrategy = () => {
-  if (values.newCopingStrategy.trim() && !values.copingStrategies.includes(values.newCopingStrategy.trim())) {
-    setValues(prev => ({
+  if (
+    values.newCopingStrategy.trim() &&
+    !values.copingStrategies.includes(values.newCopingStrategy.trim())
+  ) {
+    setValues((prev) => ({
       ...prev,
       copingStrategies: [...prev.copingStrategies, prev.newCopingStrategy.trim()],
-      newCopingStrategy: ''
+      newCopingStrategy: '',
     }));
   }
 };
@@ -168,17 +177,18 @@ const handleSubmit = () => {
     copingStrategies: values.copingStrategies.length > 0 ? values.copingStrategies : undefined,
   });
 
-  reset();  // Single line replaces 7-line reset
+  reset(); // Single line replaces 7-line reset
 };
 
 // Form usage
 <Input
   value={values.location}
-  onChange={(e) => setValues(prev => ({ ...prev, location: e.target.value }))}
-/>
+  onChange={(e) => setValues((prev) => ({ ...prev, location: e.target.value }))}
+/>;
 ```
 
 **Benefits:**
+
 - Eliminates 8 separate useState calls
 - Reduces mental overhead (single source of truth)
 - Reset goes from 7 lines to 1 line
@@ -189,13 +199,16 @@ const handleSubmit = () => {
 ## 3. EmotionTracker.tsx
 
 ### Before (Original Pattern - Multiple useState calls)
+
 ```tsx
 // Lines 48-55: Seven independent state variables
 const [selectedEmotion, setSelectedEmotion] = useState<string>('');
 const [selectedSubEmotion, setSelectedSubEmotion] = useState<string>('');
 const [intensity, setIntensity] = useState<number>(3);
 const [duration, setDuration] = useState<number>(0);
-const [escalationPattern, setEscalationPattern] = useState<'sudden' | 'gradual' | 'unknown'>('unknown');
+const [escalationPattern, setEscalationPattern] = useState<'sudden' | 'gradual' | 'unknown'>(
+  'unknown',
+);
 const [notes, setNotes] = useState('');
 const [triggers, setTriggers] = useState<string[]>([]);
 const [newTrigger, setNewTrigger] = useState('');
@@ -230,6 +243,7 @@ const handleSubmit = () => {
 ```
 
 ### After (Refactored with useFormReset)
+
 ```tsx
 import { useFormReset } from '@/hooks/useFormReset';
 
@@ -242,16 +256,16 @@ const { values, setValues, reset } = useFormReset({
   escalationPattern: 'unknown' as 'sudden' | 'gradual' | 'unknown',
   notes: '',
   triggers: [] as string[],
-  newTrigger: ''
+  newTrigger: '',
 });
 
 // Handlers simplified
 const handleAddTrigger = () => {
   if (values.newTrigger.trim() && !values.triggers.includes(values.newTrigger.trim())) {
-    setValues(prev => ({
+    setValues((prev) => ({
       ...prev,
       triggers: [...prev.triggers, prev.newTrigger.trim()],
-      newTrigger: ''
+      newTrigger: '',
     }));
   }
 };
@@ -268,16 +282,18 @@ const handleSubmit = () => {
     subEmotion: values.selectedSubEmotion || undefined,
     intensity: values.intensity as EmotionEntry['intensity'],
     duration: values.duration > 0 ? values.duration : undefined,
-    escalationPattern: values.escalationPattern !== 'unknown' ? values.escalationPattern : undefined,
+    escalationPattern:
+      values.escalationPattern !== 'unknown' ? values.escalationPattern : undefined,
     notes: values.notes.trim() || undefined,
     triggers: values.triggers.length > 0 ? values.triggers : undefined,
   });
 
-  reset();  // Single line replaces 7-line reset
+  reset(); // Single line replaces 7-line reset
 };
 ```
 
 **Benefits:**
+
 - Reduces 8 useState calls to 1 hook
 - 7-line reset becomes 1 line
 - Easier to maintain and extend
@@ -288,6 +304,7 @@ const handleSubmit = () => {
 ## 4. ReportBuilder.tsx
 
 ### Before (Original Pattern - Complex nested state)
+
 ```tsx
 // Lines 63-77: Complex state with nested object
 const [reportData, setReportData] = useState({
@@ -324,6 +341,7 @@ const [reportData, setReportData] = useState({
 ```
 
 ### After (Refactored with useFormReset)
+
 ```tsx
 import { useFormReset } from '@/hooks/useFormReset';
 
@@ -355,6 +373,7 @@ const { values: reportData, setValues: setReportData, reset: resetForm } = useFo
 ```
 
 **Benefits:**
+
 - Makes intent clear: "this is a form with reset capability"
 - No behavior change, but semantic clarity
 - Consistent with other form components
@@ -392,29 +411,36 @@ Use this checklist when refactoring each component:
 ## Additional Usage Patterns
 
 ### Conditional Field Updates
+
 ```tsx
 const handleChange = (field: keyof typeof values, value: unknown) => {
-  setValues(prev => ({ ...prev, [field]: value }));
+  setValues((prev) => ({ ...prev, [field]: value }));
 };
 ```
 
 ### Partial Reset (Reset only specific fields)
+
 ```tsx
 const resetField = (field: keyof typeof values) => {
   const initialValue = {
     title: '',
     description: '',
   }[field];
-  setValues(prev => ({ ...prev, [field]: initialValue }));
+  setValues((prev) => ({ ...prev, [field]: initialValue }));
 };
 ```
 
 ### Form Validation State
+
 ```tsx
 // Store validation errors alongside form values
-const { values: formState, setValues: setFormState, reset: resetForm } = useFormReset({
+const {
+  values: formState,
+  setValues: setFormState,
+  reset: resetForm,
+} = useFormReset({
   data: { title: '', description: '' },
   errors: {} as Record<string, string>,
-  touched: {} as Record<string, boolean>
+  touched: {} as Record<string, boolean>,
 });
 ```

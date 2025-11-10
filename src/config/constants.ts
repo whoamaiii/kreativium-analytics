@@ -161,7 +161,7 @@ export const PROBABILITY = {
   /** Social scenario probabilities */
   SOCIAL_SCENARIOS: {
     /** Probability of group work scenario */
-    GROUP_WORK: 0.30,
+    GROUP_WORK: 0.3,
     /** Probability of recess scenario */
     RECESS: 0.55,
     /** Probability of cafeteria scenario */

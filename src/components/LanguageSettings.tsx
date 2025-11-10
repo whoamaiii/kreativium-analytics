@@ -24,27 +24,33 @@ export const LanguageSettings = () => {
         <Button
           variant="ghost"
           size="sm"
-          aria-label={currentLanguage === 'nb' ? String(tCommon('language.norwegian')) : String(tCommon('language.english'))}
+          aria-label={
+            currentLanguage === 'nb'
+              ? String(tCommon('language.norwegian'))
+              : String(tCommon('language.english'))
+          }
           title={String(tCommon('language.change'))}
           className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
         >
           <Globe className="h-4 w-4" />
           <span className="hidden sm:inline">
-            {currentLanguage === 'nb' 
+            {currentLanguage === 'nb'
               ? String(tCommon('language.norwegian'))
-              : String(tCommon('language.english'))
-            }
+              : String(tCommon('language.english'))}
           </span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="backdrop-blur-md bg-popover/90 border border-border/40 shadow-lg">
-        <DropdownMenuItem 
+      <DropdownMenuContent
+        align="end"
+        className="backdrop-blur-md bg-popover/90 border border-border/40 shadow-lg"
+      >
+        <DropdownMenuItem
           onClick={() => handleLanguageChange('nb')}
           className={currentLanguage === 'nb' ? 'bg-accent' : ''}
         >
           {String(tCommon('language.norwegian'))}
         </DropdownMenuItem>
-        <DropdownMenuItem 
+        <DropdownMenuItem
           onClick={() => handleLanguageChange('en')}
           className={currentLanguage === 'en' ? 'bg-accent' : ''}
         >

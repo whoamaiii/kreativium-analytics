@@ -1,29 +1,30 @@
-import { useId, useState, memo } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { EnvironmentalEntry } from "@/types/student";
-import { 
-  Thermometer, 
-  Sun, 
-  Volume2, 
-  Users, 
-  Cloud, 
-  Plus,
-  X
-} from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useId, useState, memo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { EnvironmentalEntry } from '@/types/student';
+import { Thermometer, Sun, Volume2, Users, Cloud, Plus, X } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface EnvironmentalTrackerProps {
   onEnvironmentalAdd: (entry: Omit<EnvironmentalEntry, 'id' | 'timestamp'>) => void;
   studentId: string;
 }
 
-const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: EnvironmentalTrackerProps) => {
+const EnvironmentalTrackerComponent = ({
+  onEnvironmentalAdd,
+  studentId,
+}: EnvironmentalTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const specialEventInputId = useId();
   const [roomTemperature, setRoomTemperature] = useState<number>(22);
@@ -44,12 +45,14 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: Enviro
   };
 
   const handleRemoveSpecialEvent = (event: string) => {
-    setSpecialEvents(specialEvents.filter(e => e !== event));
+    setSpecialEvents(specialEvents.filter((e) => e !== event));
   };
 
   const handleSubmit = () => {
     if (!lighting || !classroomActivity || !weather || !timeOfDay) {
-      toast.error('Please fill out all required fields (lighting, activity, weather, time of day).');
+      toast.error(
+        'Please fill out all required fields (lighting, activity, weather, time of day).',
+      );
       return;
     }
 
@@ -57,21 +60,21 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: Enviro
       roomConditions: {
         temperature: roomTemperature,
         lighting: lighting as 'bright' | 'normal' | 'dim',
-        noiseLevel: noiseLevel
+        noiseLevel: noiseLevel,
       },
-      weather: { 
+      weather: {
         condition: weather as 'sunny' | 'cloudy' | 'rainy' | 'snowy',
-        temperature: roomTemperature 
+        temperature: roomTemperature,
       },
       classroom: {
         activity: classroomActivity as 'low' | 'moderate' | 'high',
-        timeOfDay: timeOfDay
+        timeOfDay: timeOfDay,
       },
-      notes: notes.trim() || undefined
+      notes: notes.trim() || undefined,
     };
 
     onEnvironmentalAdd(entry);
-    
+
     // Reset form
     setRoomTemperature(22);
     setLighting('');
@@ -125,8 +128,12 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: Enviro
               <SelectValue placeholder={String(tTracking('environmental.lighting'))} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="bright">{String(tTracking('environmental.lighting.bright'))}</SelectItem>
-              <SelectItem value="normal">{String(tTracking('environmental.lighting.normal'))}</SelectItem>
+              <SelectItem value="bright">
+                {String(tTracking('environmental.lighting.bright'))}
+              </SelectItem>
+              <SelectItem value="normal">
+                {String(tTracking('environmental.lighting.normal'))}
+              </SelectItem>
               <SelectItem value="dim">{String(tTracking('environmental.lighting.dim'))}</SelectItem>
             </SelectContent>
           </Select>
@@ -164,7 +171,9 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: Enviro
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="low">{String(tTracking('environmental.levels.low'))}</SelectItem>
-              <SelectItem value="moderate">{String(tTracking('environmental.levels.moderate'))}</SelectItem>
+              <SelectItem value="moderate">
+                {String(tTracking('environmental.levels.moderate'))}
+              </SelectItem>
               <SelectItem value="high">{String(tTracking('environmental.levels.high'))}</SelectItem>
             </SelectContent>
           </Select>
@@ -195,10 +204,18 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: Enviro
               <SelectValue placeholder={String(tTracking('environmental.weather'))} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="sunny">{String(tTracking('environmental.weatherOptions.sunny'))}</SelectItem>
-              <SelectItem value="cloudy">{String(tTracking('environmental.weatherOptions.cloudy'))}</SelectItem>
-              <SelectItem value="rainy">{String(tTracking('environmental.weatherOptions.rainy'))}</SelectItem>
-              <SelectItem value="snowy">{String(tTracking('environmental.weatherOptions.snowy'))}</SelectItem>
+              <SelectItem value="sunny">
+                {String(tTracking('environmental.weatherOptions.sunny'))}
+              </SelectItem>
+              <SelectItem value="cloudy">
+                {String(tTracking('environmental.weatherOptions.cloudy'))}
+              </SelectItem>
+              <SelectItem value="rainy">
+                {String(tTracking('environmental.weatherOptions.rainy'))}
+              </SelectItem>
+              <SelectItem value="snowy">
+                {String(tTracking('environmental.weatherOptions.snowy'))}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -213,9 +230,15 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: Enviro
               <SelectValue placeholder={String(tTracking('environmental.timeOfDay'))} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="morning">{String(tTracking('environmental.timeOfDayOptions.morning'))}</SelectItem>
-              <SelectItem value="afternoon">{String(tTracking('environmental.timeOfDayOptions.afternoon'))}</SelectItem>
-              <SelectItem value="evening">{String(tTracking('environmental.timeOfDayOptions.evening'))}</SelectItem>
+              <SelectItem value="morning">
+                {String(tTracking('environmental.timeOfDayOptions.morning'))}
+              </SelectItem>
+              <SelectItem value="afternoon">
+                {String(tTracking('environmental.timeOfDayOptions.afternoon'))}
+              </SelectItem>
+              <SelectItem value="evening">
+                {String(tTracking('environmental.timeOfDayOptions.evening'))}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -256,11 +279,7 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: Enviro
         </div>
 
         {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={!isFormValid}
-          className="w-full"
-        >
+        <Button onClick={handleSubmit} disabled={!isFormValid} className="w-full">
           {String(tCommon('buttons.save'))} {String(tTracking('environmental.title'))}
         </Button>
       </CardContent>

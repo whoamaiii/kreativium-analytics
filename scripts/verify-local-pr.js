@@ -20,7 +20,10 @@ const requiredFiles = [
 ];
 
 const markers = [
-  { file: '.github/drafts/feat-runtime-analytics.md', includes: ['Status: BLOCKED', 'Task 2', 'Task 5'] },
+  {
+    file: '.github/drafts/feat-runtime-analytics.md',
+    includes: ['Status: BLOCKED', 'Task 2', 'Task 5'],
+  },
   { file: 'docs/PR_BLOCKERS.md', includes: ['Status: BLOCKED', 'Task 2', 'Task 5'] },
   { file: 'CHANGELOG_UNRELEASED.md', includes: ['Unreleased', 'analyticsConfig'] },
 ];
@@ -76,7 +79,9 @@ function main() {
     }
   }
 
-  console.log('\n[prepare-local-pr] All checks passed. Ready to open or merge when blockers are resolved.');
+  console.log(
+    '\n[prepare-local-pr] All checks passed. Ready to open or merge when blockers are resolved.',
+  );
 }
 
 main();

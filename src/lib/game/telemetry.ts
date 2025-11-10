@@ -1,6 +1,14 @@
 import { STORAGE_KEYS } from '@/lib/storage/keys';
 
-export type GameEventKind = 'round_start' | 'round_success' | 'round_fail' | 'hint_used' | 'prob_sample' | 'mode_start' | 'mode_end' | 'confidence_reported';
+export type GameEventKind =
+  | 'round_start'
+  | 'round_success'
+  | 'round_fail'
+  | 'hint_used'
+  | 'prob_sample'
+  | 'mode_start'
+  | 'mode_end'
+  | 'confidence_reported';
 
 export interface GameEventBase {
   ts: number;
@@ -10,16 +18,56 @@ export interface GameEventBase {
   detector?: string;
 }
 
-export interface RoundStartEvent extends GameEventBase { kind: 'round_start'; }
-export interface RoundSuccessEvent extends GameEventBase { kind: 'round_success'; timeMs: number; stars: number; streak: number; fpsBuckets?: Record<string, number>; stabilityMs?: number; intensity?: number; }
-export interface RoundFailEvent extends GameEventBase { kind: 'round_fail'; reason: 'timeout' | 'skip'; fpsBuckets?: Record<string, number>; }
-export interface HintUsedEvent extends GameEventBase { kind: 'hint_used'; }
-export interface ProbSampleEvent extends GameEventBase { kind: 'prob_sample'; prob: number; fps?: number; }
-export interface ModeStartEvent extends GameEventBase { kind: 'mode_start'; mode: string; }
-export interface ModeEndEvent extends GameEventBase { kind: 'mode_end'; mode: string; durationMs?: number; }
-export interface ConfidenceReportedEvent extends GameEventBase { kind: 'confidence_reported'; confidence: number; actualProb: number; calibrationError: number; }
+export interface RoundStartEvent extends GameEventBase {
+  kind: 'round_start';
+}
+export interface RoundSuccessEvent extends GameEventBase {
+  kind: 'round_success';
+  timeMs: number;
+  stars: number;
+  streak: number;
+  fpsBuckets?: Record<string, number>;
+  stabilityMs?: number;
+  intensity?: number;
+}
+export interface RoundFailEvent extends GameEventBase {
+  kind: 'round_fail';
+  reason: 'timeout' | 'skip';
+  fpsBuckets?: Record<string, number>;
+}
+export interface HintUsedEvent extends GameEventBase {
+  kind: 'hint_used';
+}
+export interface ProbSampleEvent extends GameEventBase {
+  kind: 'prob_sample';
+  prob: number;
+  fps?: number;
+}
+export interface ModeStartEvent extends GameEventBase {
+  kind: 'mode_start';
+  mode: string;
+}
+export interface ModeEndEvent extends GameEventBase {
+  kind: 'mode_end';
+  mode: string;
+  durationMs?: number;
+}
+export interface ConfidenceReportedEvent extends GameEventBase {
+  kind: 'confidence_reported';
+  confidence: number;
+  actualProb: number;
+  calibrationError: number;
+}
 
-export type GameEvent = RoundStartEvent | RoundSuccessEvent | RoundFailEvent | HintUsedEvent | ProbSampleEvent | ModeStartEvent | ModeEndEvent | ConfidenceReportedEvent;
+export type GameEvent =
+  | RoundStartEvent
+  | RoundSuccessEvent
+  | RoundFailEvent
+  | HintUsedEvent
+  | ProbSampleEvent
+  | ModeStartEvent
+  | ModeEndEvent
+  | ConfidenceReportedEvent;
 
 export function recordGameEvent(event: GameEvent): void {
   try {
@@ -52,12 +100,15 @@ export function readGameTelemetry(): GameEvent[] {
 }
 
 export function clearGameTelemetry(): void {
-  try { localStorage.removeItem(STORAGE_KEYS.EMOTION_TELEMETRY); } catch {}
+  try {
+    localStorage.removeItem(STORAGE_KEYS.EMOTION_TELEMETRY);
+  } catch {}
 }
 
-export function computeEmotionTrends():
-  Record<string, { reactionTimes: number[]; stabilityMs: number[] }>
-{
+export function computeEmotionTrends(): Record<
+  string,
+  { reactionTimes: number[]; stabilityMs: number[] }
+> {
   const events = readGameTelemetry();
   const out: Record<string, { reactionTimes: number[]; stabilityMs: number[] }> = {};
   for (const ev of events) {
@@ -72,7 +123,10 @@ export function computeEmotionTrends():
   return out;
 }
 
-export function computeSessionSummary(startTs?: number, endTs?: number): {
+export function computeSessionSummary(
+  startTs?: number,
+  endTs?: number,
+): {
   startTs: number | null;
   endTs: number | null;
   perEmotion: Record<string, { attempts: number; successes: number; accuracy: number | null }>;
@@ -81,12 +135,19 @@ export function computeSessionSummary(startTs?: number, endTs?: number): {
   calibrationErrorAvg: number | null;
 } {
   const events = readGameTelemetry();
-  const start = typeof startTs === 'number' ? startTs : (() => {
-    const lastStart = [...events].reverse().find(e => (e as any).kind === 'mode_start') as any;
-    return lastStart?.ts ?? null;
-  })();
+  const start =
+    typeof startTs === 'number'
+      ? startTs
+      : (() => {
+          const lastStart = [...events]
+            .reverse()
+            .find((e) => (e as any).kind === 'mode_start') as any;
+          return lastStart?.ts ?? null;
+        })();
   const end = typeof endTs === 'number' ? endTs : Date.now();
-  const windowed = events.filter(ev => (start == null || ev.ts >= start) && (end == null || ev.ts <= end));
+  const windowed = events.filter(
+    (ev) => (start == null || ev.ts >= start) && (end == null || ev.ts <= end),
+  );
 
   const attemptsByEmotion = new Map<string, number>();
   const successByEmotion = new Map<string, number>();
@@ -114,7 +175,10 @@ export function computeSessionSummary(startTs?: number, endTs?: number): {
     }
   }
 
-  const perEmotion: Record<string, { attempts: number; successes: number; accuracy: number | null }> = {};
+  const perEmotion: Record<
+    string,
+    { attempts: number; successes: number; accuracy: number | null }
+  > = {};
   const allEmotions = new Set<string>([...attemptsByEmotion.keys(), ...successByEmotion.keys()]);
   allEmotions.forEach((emotion) => {
     const attempts = attemptsByEmotion.get(emotion) ?? 0;
@@ -126,14 +190,28 @@ export function computeSessionSummary(startTs?: number, endTs?: number): {
     };
   });
 
-  const timeToSuccessAvgMs = timeToSuccess.length ? Math.round(timeToSuccess.reduce((a, b) => a + b, 0) / timeToSuccess.length) : null;
-  const hintRate = roundsSet.size ? (roundsWithHint.size / roundsSet.size) : null;
-  const calibrationErrorAvg = calibErrors.length ? (calibErrors.reduce((a, b) => a + b, 0) / calibErrors.length) : null;
+  const timeToSuccessAvgMs = timeToSuccess.length
+    ? Math.round(timeToSuccess.reduce((a, b) => a + b, 0) / timeToSuccess.length)
+    : null;
+  const hintRate = roundsSet.size ? roundsWithHint.size / roundsSet.size : null;
+  const calibrationErrorAvg = calibErrors.length
+    ? calibErrors.reduce((a, b) => a + b, 0) / calibErrors.length
+    : null;
 
-  return { startTs: start ?? null, endTs: end ?? null, perEmotion, timeToSuccessAvgMs, hintRate, calibrationErrorAvg };
+  return {
+    startTs: start ?? null,
+    endTs: end ?? null,
+    perEmotion,
+    timeToSuccessAvgMs,
+    hintRate,
+    calibrationErrorAvg,
+  };
 }
 
-export function streamSessionSummary(startTs?: number, context?: { studentId?: string; mode?: string }): void {
+export function streamSessionSummary(
+  startTs?: number,
+  context?: { studentId?: string; mode?: string },
+): void {
   try {
     const summary = computeSessionSummary(startTs);
     const worker = (window as any)?.__analyticsWorker as Worker | undefined;
@@ -145,5 +223,3 @@ export function streamSessionSummary(startTs?: number, context?: { studentId?: s
     // ignore streaming errors
   }
 }
-
-

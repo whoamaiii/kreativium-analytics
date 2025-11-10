@@ -10,12 +10,16 @@ import {
 } from '@/lib/chartUtils';
 import type { WeeklyEvaluationReport } from '@/lib/alerts/types';
 
-const EChartContainer = React.lazy(() => import('@/components/charts/EChartContainer').then((mod) => ({ default: mod.EChartContainer })));
+const EChartContainer = React.lazy(() =>
+  import('@/components/charts/EChartContainer').then((mod) => ({ default: mod.EChartContainer })),
+);
 
 function hasData(option: unknown): boolean {
   if (!option) return false;
   const series = (option as { series?: unknown[] }).series;
-  return Array.isArray(series) ? series.some((entry) => Array.isArray((entry as any)?.data) && (entry as any).data.length > 0) : true;
+  return Array.isArray(series)
+    ? series.some((entry) => Array.isArray((entry as any)?.data) && (entry as any).data.length > 0)
+    : true;
 }
 
 export const CalibrationDashboard = () => {
@@ -26,8 +30,14 @@ export const CalibrationDashboard = () => {
     return generateCalibrationCurve(latestReport.calibration);
   }, [latestReport]);
 
-  const brierOption = useMemo(() => (reports.length ? createBrierScoreChart(reports) : null), [reports]);
-  const thresholdOption = useMemo(() => (reports.length ? createThresholdTrendChart(reports) : null), [reports]);
+  const brierOption = useMemo(
+    () => (reports.length ? createBrierScoreChart(reports) : null),
+    [reports],
+  );
+  const thresholdOption = useMemo(
+    () => (reports.length ? createThresholdTrendChart(reports) : null),
+    [reports],
+  );
   const fairnessOption = useMemo(() => {
     if (!latestReport?.fairness?.length) return null;
     return generateFairnessMetricsChart(latestReport.fairness);
@@ -49,15 +59,28 @@ export const CalibrationDashboard = () => {
   }, [reports]);
 
   if (loading) {
-    return <div className="h-64 animate-pulse rounded-md border bg-muted" aria-label="Loading calibration dashboard" />;
+    return (
+      <div
+        className="h-64 animate-pulse rounded-md border bg-muted"
+        aria-label="Loading calibration dashboard"
+      />
+    );
   }
 
   if (error) {
-    return <div className="rounded-md border border-destructive p-4 text-sm text-destructive">{error}</div>;
+    return (
+      <div className="rounded-md border border-destructive p-4 text-sm text-destructive">
+        {error}
+      </div>
+    );
   }
 
   if (!latestReport) {
-    return <div className="rounded-md border p-4 text-sm text-muted-foreground">No weekly evaluations available yet.</div>;
+    return (
+      <div className="rounded-md border p-4 text-sm text-muted-foreground">
+        No weekly evaluations available yet.
+      </div>
+    );
   }
 
   const abExperiments = latestReport.experiments ?? [];
@@ -68,9 +91,13 @@ export const CalibrationDashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Calibration & Quality Dashboard</h2>
-          <p className="text-sm text-muted-foreground">Week starting {new Date(latestReport.weekStart).toLocaleDateString()}</p>
+          <p className="text-sm text-muted-foreground">
+            Week starting {new Date(latestReport.weekStart).toLocaleDateString()}
+          </p>
         </div>
-        <Button size="sm" variant="outline" onClick={handleExport}>Export JSON</Button>
+        <Button size="sm" variant="outline" onClick={handleExport}>
+          Export JSON
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -80,11 +107,28 @@ export const CalibrationDashboard = () => {
           </CardHeader>
           <CardContent>
             {calibrationOption && hasData(calibrationOption) ? (
-              <React.Suspense fallback={<div className="h-64 animate-pulse rounded-md bg-muted" aria-label="Loading calibration chart" />}>
-                <EChartContainer option={calibrationOption} height={260} exportRegistration={{ id: 'alerts-calibration', type: 'calibration', title: 'Alert Calibration Reliability' }} />
+              <React.Suspense
+                fallback={
+                  <div
+                    className="h-64 animate-pulse rounded-md bg-muted"
+                    aria-label="Loading calibration chart"
+                  />
+                }
+              >
+                <EChartContainer
+                  option={calibrationOption}
+                  height={260}
+                  exportRegistration={{
+                    id: 'alerts-calibration',
+                    type: 'calibration',
+                    title: 'Alert Calibration Reliability',
+                  }}
+                />
               </React.Suspense>
             ) : (
-              <p className="text-sm text-muted-foreground">Not enough labelled feedback to build calibration curve.</p>
+              <p className="text-sm text-muted-foreground">
+                Not enough labelled feedback to build calibration curve.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -95,11 +139,28 @@ export const CalibrationDashboard = () => {
           </CardHeader>
           <CardContent>
             {brierOption && hasData(brierOption) ? (
-              <React.Suspense fallback={<div className="h-64 animate-pulse rounded-md bg-muted" aria-label="Loading Brier score chart" />}>
-                <EChartContainer option={brierOption} height={260} exportRegistration={{ id: 'alerts-brier', type: 'calibration', title: 'Brier Score Over Time' }} />
+              <React.Suspense
+                fallback={
+                  <div
+                    className="h-64 animate-pulse rounded-md bg-muted"
+                    aria-label="Loading Brier score chart"
+                  />
+                }
+              >
+                <EChartContainer
+                  option={brierOption}
+                  height={260}
+                  exportRegistration={{
+                    id: 'alerts-brier',
+                    type: 'calibration',
+                    title: 'Brier Score Over Time',
+                  }}
+                />
               </React.Suspense>
             ) : (
-              <p className="text-sm text-muted-foreground">No historical Brier score data available.</p>
+              <p className="text-sm text-muted-foreground">
+                No historical Brier score data available.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -110,11 +171,28 @@ export const CalibrationDashboard = () => {
           </CardHeader>
           <CardContent>
             {fairnessOption && hasData(fairnessOption) ? (
-              <React.Suspense fallback={<div className="h-64 animate-pulse rounded-md bg-muted" aria-label="Loading fairness chart" />}>
-                <EChartContainer option={fairnessOption} height={280} exportRegistration={{ id: 'alerts-fairness', type: 'calibration', title: 'Fairness Metrics' }} />
+              <React.Suspense
+                fallback={
+                  <div
+                    className="h-64 animate-pulse rounded-md bg-muted"
+                    aria-label="Loading fairness chart"
+                  />
+                }
+              >
+                <EChartContainer
+                  option={fairnessOption}
+                  height={280}
+                  exportRegistration={{
+                    id: 'alerts-fairness',
+                    type: 'calibration',
+                    title: 'Fairness Metrics',
+                  }}
+                />
               </React.Suspense>
             ) : (
-              <p className="text-sm text-muted-foreground">No demographic breakdowns recorded for this week.</p>
+              <p className="text-sm text-muted-foreground">
+                No demographic breakdowns recorded for this week.
+              </p>
             )}
           </CardContent>
         </Card>
@@ -125,16 +203,36 @@ export const CalibrationDashboard = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {thresholdOption && hasData(thresholdOption) ? (
-              <React.Suspense fallback={<div className="h-64 animate-pulse rounded-md bg-muted" aria-label="Loading threshold adjustments chart" />}>
-                <EChartContainer option={thresholdOption} height={260} exportRegistration={{ id: 'alerts-threshold', type: 'calibration', title: 'Threshold Adjustments' }} />
+              <React.Suspense
+                fallback={
+                  <div
+                    className="h-64 animate-pulse rounded-md bg-muted"
+                    aria-label="Loading threshold adjustments chart"
+                  />
+                }
+              >
+                <EChartContainer
+                  option={thresholdOption}
+                  height={260}
+                  exportRegistration={{
+                    id: 'alerts-threshold',
+                    type: 'calibration',
+                    title: 'Threshold Adjustments',
+                  }}
+                />
               </React.Suspense>
             ) : (
-              <p className="text-sm text-muted-foreground">No threshold adjustments have been applied yet.</p>
+              <p className="text-sm text-muted-foreground">
+                No threshold adjustments have been applied yet.
+              </p>
             )}
             {thresholdOverrides.length ? (
               <ul className="space-y-1 text-xs text-muted-foreground">
                 {thresholdOverrides.map((override) => (
-                  <li key={override.detectorType}>{override.detectorType}: {Math.round((override.adjustmentValue ?? 0) * 100)}% adjustment · samples {override.sampleSize ?? 'n/a'}</li>
+                  <li key={override.detectorType}>
+                    {override.detectorType}: {Math.round((override.adjustmentValue ?? 0) * 100)}%
+                    adjustment · samples {override.sampleSize ?? 'n/a'}
+                  </li>
                 ))}
               </ul>
             ) : null}
@@ -152,12 +250,16 @@ export const CalibrationDashboard = () => {
               {trendSummaries.map((trend) => (
                 <li key={trend.metric} className="rounded border border-border p-2">
                   <p className="font-semibold capitalize">{trend.metric}</p>
-                  <p className="text-muted-foreground">Δ {trend.delta.toFixed(3)} ({trend.direction})</p>
+                  <p className="text-muted-foreground">
+                    Δ {trend.delta.toFixed(3)} ({trend.direction})
+                  </p>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">Need at least two weeks of reports to calculate trends.</p>
+            <p className="text-sm text-muted-foreground">
+              Need at least two weeks of reports to calculate trends.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -172,11 +274,14 @@ export const CalibrationDashboard = () => {
               {abExperiments.map((experiment) => (
                 <div key={experiment.key} className="rounded border border-border p-3">
                   <p className="font-semibold">{experiment.key}</p>
-                  <p className="text-xs text-muted-foreground">{experiment.hypothesis ?? 'Threshold tuning experiment'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {experiment.hypothesis ?? 'Threshold tuning experiment'}
+                  </p>
                   <ul className="mt-2 space-y-1 text-xs">
                     {experiment.variants?.map((variant) => (
                       <li key={variant.variant}>
-                        <span className="font-medium">Variant {variant.variant}:</span> PPV {(variant.ppv ?? 0).toFixed(2)}, n={variant.samples}
+                        <span className="font-medium">Variant {variant.variant}:</span> PPV{' '}
+                        {(variant.ppv ?? 0).toFixed(2)}, n={variant.samples}
                       </li>
                     ))}
                   </ul>

@@ -1,13 +1,13 @@
-import { useState, memo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { IntensityScale } from "@/components/ui/intensity-scale";
-import { TagInput } from "@/components/ui/tag-input";
-import { EmotionEntry } from "@/types/student";
-import { Heart, Frown, Angry, Smile, Zap, Sun } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useState, memo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { IntensityScale } from '@/components/ui/intensity-scale';
+import { TagInput } from '@/components/ui/tag-input';
+import { EmotionEntry } from '@/types/student';
+import { Heart, Frown, Angry, Smile, Zap, Sun } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 import { logger } from '@/lib/logger';
 
 interface EmotionTrackerProps {
@@ -31,7 +31,7 @@ const subEmotions: Record<string, string[]> = {
   excited: ['energetic', 'enthusiastic', 'thrilled', 'eager', 'animated'],
   sad: ['disappointed', 'lonely', 'grieving', 'melancholy', 'dejected'],
   anxious: ['worried', 'nervous', 'fearful', 'stressed', 'panicked'],
-  angry: ['frustrated', 'irritated', 'furious', 'annoyed', 'resentful']
+  angry: ['frustrated', 'irritated', 'furious', 'annoyed', 'resentful'],
 };
 
 /**
@@ -51,7 +51,9 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
   const [selectedSubEmotion, setSelectedSubEmotion] = useState<string>('');
   const [intensity, setIntensity] = useState<number>(3);
   const [duration, setDuration] = useState<number>(0);
-  const [escalationPattern, setEscalationPattern] = useState<'sudden' | 'gradual' | 'unknown'>('unknown');
+  const [escalationPattern, setEscalationPattern] = useState<'sudden' | 'gradual' | 'unknown'>(
+    'unknown',
+  );
   const [notes, setNotes] = useState('');
   const [triggers, setTriggers] = useState<string[]>([]);
 
@@ -85,22 +87,26 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
   return (
     <Card className="font-dyslexia bg-gradient-card border-0">
       <CardHeader>
-        <CardTitle className="text-xl text-foreground">{String(tTracking('emotions.title'))}</CardTitle>
+        <CardTitle className="text-xl text-foreground">
+          {String(tTracking('emotions.title'))}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Emotion Selection */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">{String(tTracking('emotions.selectEmotion'))}</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            {String(tTracking('emotions.selectEmotion'))}
+          </h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {emotions.map((emotion) => {
               const Icon = emotion.icon;
               return (
                 <Button
                   key={emotion.type}
-                  variant={selectedEmotion === emotion.type ? "default" : "outline"}
+                  variant={selectedEmotion === emotion.type ? 'default' : 'outline'}
                   className={`h-20 flex-col gap-2 font-dyslexia hover-lift press-scale transition-all duration-300 ${
-                    selectedEmotion === emotion.type 
-                      ? 'bg-gradient-primary shadow-glow animate-bounce-in' 
+                    selectedEmotion === emotion.type
+                      ? 'bg-gradient-primary shadow-glow animate-bounce-in'
                       : 'hover:scale-105 animate-fade-in hover:shadow-soft'
                   }`}
                   onClick={() => setSelectedEmotion(emotion.type)}
@@ -108,7 +114,9 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                   aria-pressed={selectedEmotion === emotion.type}
                 >
                   <Icon className="h-6 w-6 transform transition-transform duration-200 hover:scale-110" />
-                  <span className="text-sm">{String(tTracking(`emotions.types.${emotion.type}`))}</span>
+                  <span className="text-sm">
+                    {String(tTracking(`emotions.types.${emotion.type}`))}
+                  </span>
                 </Button>
               );
             })}
@@ -118,14 +126,18 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
         {/* Sub-emotion Selection */}
         {selectedEmotion && subEmotions[selectedEmotion] && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">Specific Feeling (Optional)</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              Specific Feeling (Optional)
+            </h3>
             <div className="flex flex-wrap gap-2">
               {subEmotions[selectedEmotion].map((subEmotion) => (
                 <Badge
                   key={subEmotion}
-                  variant={selectedSubEmotion === subEmotion ? "default" : "outline"}
+                  variant={selectedSubEmotion === subEmotion ? 'default' : 'outline'}
                   className="cursor-pointer font-dyslexia hover-lift transition-all duration-200"
-                  onClick={() => setSelectedSubEmotion(selectedSubEmotion === subEmotion ? '' : subEmotion)}
+                  onClick={() =>
+                    setSelectedSubEmotion(selectedSubEmotion === subEmotion ? '' : subEmotion)
+                  }
                   role="button"
                   tabIndex={0}
                   aria-pressed={selectedSubEmotion === subEmotion}
@@ -208,7 +220,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
             <h3 className="text-sm font-medium text-foreground mb-3">How did it develop?</h3>
             <div className="flex gap-2">
               <Button
-                variant={escalationPattern === 'sudden' ? "default" : "outline"}
+                variant={escalationPattern === 'sudden' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setEscalationPattern('sudden')}
                 className="font-dyslexia"
@@ -216,7 +228,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                 Sudden
               </Button>
               <Button
-                variant={escalationPattern === 'gradual' ? "default" : "outline"}
+                variant={escalationPattern === 'gradual' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setEscalationPattern('gradual')}
                 className="font-dyslexia"
@@ -224,7 +236,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                 Gradual
               </Button>
               <Button
-                variant={escalationPattern === 'unknown' ? "default" : "outline"}
+                variant={escalationPattern === 'unknown' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setEscalationPattern('unknown')}
                 className="font-dyslexia"
@@ -250,7 +262,9 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
 
         {/* Notes */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">{String(tTracking('emotions.notes'))}</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            {String(tTracking('emotions.notes'))}
+          </h3>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -260,7 +274,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
           />
         </div>
 
-        <Button 
+        <Button
           onClick={handleSubmit}
           disabled={!selectedEmotion}
           className="w-full font-dyslexia bg-gradient-primary hover:opacity-90 transition-all duration-200"

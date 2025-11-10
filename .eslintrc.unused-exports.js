@@ -15,13 +15,16 @@ export default [
       // Remove unused imports
       'unused-imports/no-unused-imports': 'warn',
       // Prefer plugin rule for unused vars to auto-fix unused imports refs
-      'unused-imports/no-unused-vars': ['warn', {
-        vars: 'all',
-        varsIgnorePattern: '^_',
-        args: 'after-used',
-        argsIgnorePattern: '^_',
-        ignoreRestSiblings: true,
-      }],
+      'unused-imports/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
       // Avoid duplicate noise from base
       '@typescript-eslint/no-unused-vars': 'off',
       'no-unused-vars': 'off',
@@ -39,5 +42,3 @@ export default [
     ],
   },
 ];
-
-

@@ -14,7 +14,7 @@ const emotions: EmotionEntry[] = [
     intensity: 4,
     timestamp: now,
     triggers: [],
-    notes: ''
+    notes: '',
   },
   {
     id: 'emotion-2',
@@ -23,8 +23,8 @@ const emotions: EmotionEntry[] = [
     intensity: 3,
     timestamp: new Date(now.getTime() + 60 * 60 * 1000),
     triggers: [],
-    notes: ''
-  }
+    notes: '',
+  },
 ];
 
 const sensoryInputs: SensoryEntry[] = [
@@ -35,8 +35,8 @@ const sensoryInputs: SensoryEntry[] = [
     response: 'seeking',
     intensity: 3,
     timestamp: new Date(now.getTime() + 30 * 60 * 1000),
-    notes: ''
-  }
+    notes: '',
+  },
 ];
 
 const trackingEntries: TrackingEntry[] = [
@@ -47,10 +47,10 @@ const trackingEntries: TrackingEntry[] = [
     emotions,
     sensoryInputs,
     environmentalData: {
-      notes: 'Sample classroom setting'
+      notes: 'Sample classroom setting',
     },
-    notes: ''
-  }
+    notes: '',
+  },
 ];
 
 export default function InteractiveVizTest() {
@@ -67,4 +67,3 @@ export default function InteractiveVizTest() {
     </ErrorBoundary>
   );
 }
-

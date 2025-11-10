@@ -43,13 +43,28 @@ describe('analytics.config: schema validation', () => {
     const result = thresholdSchema.safeParse(invalidThresh);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.issues.some(i => String(i.message).includes('medium must be'))).toBe(true);
+      expect(result.error.issues.some((i) => String(i.message).includes('medium must be'))).toBe(
+        true,
+      );
     }
   });
 });
 
 describe('analytics.validator: validate & merge', () => {
-  const base = makeValidConfig({ version: '1', charts: { lineWidth: 2, pointRadius: 3, animation: true, showLegend: true, theme: 'system', tooltip: {}, container: {} }, rules: [], thresholds: {} });
+  const base = makeValidConfig({
+    version: '1',
+    charts: {
+      lineWidth: 2,
+      pointRadius: 3,
+      animation: true,
+      showLegend: true,
+      theme: 'system',
+      tooltip: {},
+      container: {},
+    },
+    rules: [],
+    thresholds: {},
+  });
 
   it('merges nested overrides and validates result', () => {
     const overrides: Partial<SchemaAnalyticsConfig> = {
@@ -87,15 +102,19 @@ describe('analytics.loader: environment variable parsing and profile application
 
   beforeEach(() => {
     (import.meta as any).env = {};
+    // Clear test environment override
+    delete (globalThis as any).__analyticsTestEnv;
   });
   afterEach(() => {
     (import.meta as any).env = originalImportMeta.env;
+    delete (globalThis as any).__analyticsTestEnv;
     vi.resetModules();
     vi.clearAllMocks();
   });
 
   it('parses boolean/number env vars into schema overrides', async () => {
-    (import.meta as any).env = {
+    // Set test environment override that loader will use
+    (globalThis as any).__analyticsTestEnv = {
       VITE_ANALYTICS_CHARTS_LINE_WIDTH: '5',
       VITE_ANALYTICS_CHARTS_SHOW_LEGEND: 'true',
       VITE_ANALYTICS_WORKER_CACHE_TTL_SECONDS: '90',
@@ -132,7 +151,8 @@ describe('analytics.loader: environment variable parsing and profile application
   });
 
   it('applies VITE_USE_MOCK profile to enable correlation and shorten cache', async () => {
-    (import.meta as any).env = { VITE_USE_MOCK: 'true' };
+    // Set test environment override that loader will use
+    (globalThis as any).__analyticsTestEnv = { VITE_USE_MOCK: 'true' };
     const { loadAnalyticsConfig } = await import('@/config/loaders/analytics.loader');
 
     const runtimeModule = await import('@/config/analytics.config');
@@ -159,7 +179,10 @@ describe('analytics.config: fallback behavior when runtime overrides invalid', (
   it('uses safe defaults for invalid runtime overrides', async () => {
     // Mock analyticsConfig.getConfig() to return bad runtime overrides
     const mgr = vi.spyOn(libAnalyticsConfig.analyticsConfig, 'getConfig');
-    mgr.mockReturnValue({ ...(libAnalyticsConfig.DEFAULT_ANALYTICS_CONFIG as any), runtime: { charts: { lineWidth: -99 } } });
+    mgr.mockReturnValue({
+      ...(libAnalyticsConfig.DEFAULT_ANALYTICS_CONFIG as any),
+      runtime: { charts: { lineWidth: -99 } },
+    });
 
     const cfg = getRuntimeAnalyticsConfig();
     // Even though overrides had invalid value, schema-backed portion should be valid number within range

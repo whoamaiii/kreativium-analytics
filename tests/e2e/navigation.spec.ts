@@ -39,4 +39,3 @@ test.describe('Navigation smoke', () => {
     expect(a11y.violations.length).toBe(0);
   });
 });
-

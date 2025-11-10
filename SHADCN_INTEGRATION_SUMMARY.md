@@ -1,6 +1,7 @@
 # ShadcN/UI Integration Summary
 
 ## Quick Status
+
 - **Overall Quality**: Good (7/10)
 - **Critical Issues**: 2 (Incomplete exports)
 - **High Priority Issues**: 2 (Custom modals)
@@ -13,6 +14,7 @@
 ### Critical (Fix Immediately)
 
 #### 1. Incomplete Dropdown Menu Exports
+
 - **File**: `src/components/ui/dropdown-menu.tsx` (lines 182-189)
 - **Impact**: High - Advanced dropdown patterns cannot be used
 - **Fix Time**: 5 minutes
@@ -24,6 +26,7 @@
   - `DropdownMenuGroup`, `DropdownMenuSub`, etc.
 
 #### 2. Incomplete Select Exports
+
 - **File**: `src/components/ui/select.tsx` (lines 147-154)
 - **Impact**: High - Advanced select patterns cannot be used
 - **Fix Time**: 5 minutes
@@ -39,6 +42,7 @@
 ### High Priority (Fix This Sprint)
 
 #### 3. Custom LevelCompleteModal Using Manual Dialog
+
 - **File**: `src/components/game/LevelCompleteModal.tsx`
 - **Issue**: Reinvents modal/dialog using raw HTML and Framer Motion
 - **Problems**:
@@ -51,6 +55,7 @@
 - **Fix**: Use shadcn Dialog + Framer Motion (see SHADCN_FIXES.md)
 
 #### 4. Custom LevelUpModal Using Manual Dialog
+
 - **File**: `src/components/game/LevelUpModal.tsx`
 - **Issue**: Same as LevelCompleteModal
 - **Fix Time**: 30-45 minutes
@@ -61,6 +66,7 @@
 ### Medium Priority (Improve Code Quality)
 
 #### 5. Excessive Custom Tailwind Classes in Button Variants
+
 - **File**: `src/components/ui/button-variants.ts`
 - **Impact**: Medium - Makes components harder to maintain and port
 - **Custom Classes Used**:
@@ -72,6 +78,7 @@
 - **Fix Time**: 15-20 minutes
 
 #### 6. Card Component Customization
+
 - **File**: `src/components/ui/card.tsx` (line 12)
 - **Issue**: Hardcoded custom classes (`glass-card`, `animate-fade-in`)
 - **Impact**: Low-Medium - Makes Card component non-portable
@@ -81,6 +88,7 @@
 - **Fix Time**: 10-15 minutes
 
 #### 7. Over-Complex Dialog Registry Pattern
+
 - **File**: `src/components/ui/dialog.tsx` (lines 10-46, 86-90)
 - **Issue**: 150+ lines of complex registry code to detect Title/Description
 - **Problem**: Hard to maintain, fragile displayName matching
@@ -93,6 +101,7 @@
 ### Low Priority (Already Good)
 
 #### 8. Custom Breadcrumbs Component
+
 - **File**: `src/components/ui/Breadcrumbs.tsx`
 - **Status**: No issues - good implementation following shadcn patterns
 - **Assessment**: Keep as-is
@@ -101,16 +110,16 @@
 
 ## Files Needing Changes
 
-| File | Issue | Priority | Status |
-|------|-------|----------|--------|
-| `src/components/ui/dropdown-menu.tsx` | Incomplete exports | Critical | Not Started |
-| `src/components/ui/select.tsx` | Incomplete exports | Critical | Not Started |
-| `src/components/game/LevelCompleteModal.tsx` | Custom modal implementation | High | Not Started |
-| `src/components/game/LevelUpModal.tsx` | Custom modal implementation | High | Not Started |
-| `src/components/ui/button-variants.ts` | Custom Tailwind classes | Medium | Not Started |
-| `src/components/ui/card.tsx` | Custom Tailwind classes | Medium | Not Started |
-| `src/components/ui/dialog.tsx` | Complex registry | Medium | Not Started (Optional) |
-| `tailwind.config.js` | Document custom classes | Medium | Not Started |
+| File                                         | Issue                       | Priority | Status                 |
+| -------------------------------------------- | --------------------------- | -------- | ---------------------- |
+| `src/components/ui/dropdown-menu.tsx`        | Incomplete exports          | Critical | Not Started            |
+| `src/components/ui/select.tsx`               | Incomplete exports          | Critical | Not Started            |
+| `src/components/game/LevelCompleteModal.tsx` | Custom modal implementation | High     | Not Started            |
+| `src/components/game/LevelUpModal.tsx`       | Custom modal implementation | High     | Not Started            |
+| `src/components/ui/button-variants.ts`       | Custom Tailwind classes     | Medium   | Not Started            |
+| `src/components/ui/card.tsx`                 | Custom Tailwind classes     | Medium   | Not Started            |
+| `src/components/ui/dialog.tsx`               | Complex registry            | Medium   | Not Started (Optional) |
+| `tailwind.config.js`                         | Document custom classes     | Medium   | Not Started            |
 
 ---
 
@@ -144,6 +153,7 @@ Your project demonstrates good shadcn/ui integration in several areas:
 ## Recommended Action Plan
 
 ### Week 1 (Priority 1-2)
+
 ```
 Monday:   Fix dropdown-menu exports (5 min)
           Fix select exports (5 min)
@@ -154,6 +164,7 @@ Friday:   Testing & polish
 ```
 
 ### Week 2 (Priority 3)
+
 ```
 Monday:   Document custom Tailwind classes (15 min)
           Create/update tailwind.config.js (15 min)
@@ -210,8 +221,8 @@ After making changes:
 ## Questions?
 
 If unsure about any implementation detail:
+
 1. Check SHADCN_FIXES.md for before/after code examples
 2. Reference SHADCN_ANALYSIS.md for detailed explanations
 3. Look at working examples (ExportDialog, StudentProfileSidebar)
 4. Test in browser before committing
-
