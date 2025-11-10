@@ -503,7 +503,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                       <Switch
                         id="ml-enabled"
                         checked={modelManager.state.mlEnabled}
-                        onCheckedChange={setMlEnabled}
+                        onCheckedChange={modelManager.actions.setMlEnabled}
                       />
                     </div>
                   </CardTitle>
@@ -513,7 +513,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Loading State */}
-                  {isLoadingModels ? (
+                  {modelManager.state.isLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                       <span className="ml-2 text-muted-foreground">Loading ML models...</span>
@@ -757,7 +757,7 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
             </Button>
             
             <div className="flex gap-2">
-              {hasUnsavedChanges && (
+              {configManager.state.hasUnsavedChanges && (
                 <p className="text-sm text-yellow-600 flex items-center gap-1 mr-4">
                   <AlertTriangle className="h-4 w-4" />
                   Unsaved changes
