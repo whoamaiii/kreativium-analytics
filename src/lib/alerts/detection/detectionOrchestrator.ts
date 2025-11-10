@@ -4,40 +4,33 @@ import {
   AlertEvent,
   AlertKind,
   AlertMetadata,
-  AlertSeverity,
-  AlertSource,
   AlertStatus,
-  DetectorResult,
-  ThresholdAdjustmentTrace,
   ThresholdOverride,
-  isValidDetectorResult,
 } from '@/lib/alerts/types';
-import type { TrendPoint } from '@/lib/alerts/detectors/ewma';
-import type { BurstEvent } from '@/lib/alerts/detectors/burst';
+import { TrendPoint } from '@/lib/alerts/detectors/ewma';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
 import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } from '@/types/student';
 import { generateSparklineData } from '@/lib/chartUtils';
-import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/alerts/constants';
 import { logger } from '@/lib/logger';
-import { buildAlertId } from '@/lib/alerts/utils';
+import { buildAlertId, truncateSeries } from '@/lib/alerts/utils';
 import { computeRecencyScore, severityFromScore, rankSources } from '@/lib/alerts/scoring';
-import {
-  aggregateDetectorResults,
-  finalizeAlertEvent,
-  type AggregatedResult,
-} from '@/lib/alerts/detection';
-import { CandidateGenerator } from '@/lib/alerts/detection/candidateGenerator';
 import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';
+import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
+import {
+  CandidateGenerator,
+  AlertCandidate,
+  ApplyThresholdContext,
+  TauUDetectorFunction,
+} from './candidateGenerator';
+import { DetectorResult, isValidDetectorResult } from '../types';
 
 /**
  * Input payload for the alert detection pipeline.
- *
  * Provide raw student-centric streams and optional precomputed baseline.
- * Supplying `now` is useful in tests to stabilize recency scoring.
  */
-interface DetectionInput {
+export interface DetectionInput {
   studentId: string;
   emotions: EmotionEntry[];
   sensory: SensoryEntry[];
@@ -48,47 +41,32 @@ interface DetectionInput {
   goals?: Goal[];
 }
 
-interface AlertCandidate {
-  kind: AlertKind;
-  label: string;
-  detectors: DetectorResult[];
-  detectorTypes: string[];
-  series: TrendPoint[];
-  lastTimestamp: number;
-  tier: number;
-  metadata: AlertMetadata;
-  thresholdAdjustments?: Record<string, ThresholdAdjustmentTrace>;
-  experimentKey?: string;
-  experimentVariant?: string;
-}
-
-interface ApplyThresholdContext {
-  experimentKey: string;
-  variant: string;
-  overrides: Record<string, ThresholdOverride>;
-  thresholdTraces: Record<string, ThresholdAdjustmentTrace>;
-}
-
 /**
- * AlertDetectionEngine
+ * DetectionOrchestrator
  *
- * Orchestrates multiple statistical detectors (EWMA, CUSUM, beta-binomial, association,
- * burst, Tau-U) to produce ranked, policy-governed alert events for a given student.
+ * Orchestrates the complete alert detection pipeline:
+ * 1. Input validation
+ * 2. Baseline retrieval with fallback
+ * 3. Data series construction (emotion, sensory, association, burst)
+ * 4. Candidate generation across all detection types
+ * 5. Threshold application with A/B testing
+ * 6. Alert scoring and finalization
+ * 7. Deduplication and governance
  *
- * Scoring formula used to derive aggregate alert score:
+ * Scoring formula (aggregate alert score):
  *   0.4 * impact + 0.25 * confidence + 0.2 * recency + 0.15 * tier
  *
  * Integration points:
- * - Baselines via BaselineService (emotion/sensory/environment) with robust fallbacks
- * - A/B experimentation via ABTestingService for threshold variants
- * - Adaptive threshold learning via ThresholdLearner (overrides and adjustment tracing)
- * - Governance via AlertPolicies (deduplication and throttling handled downstream)
- * - Sparkline generation for quick UI visualization
+ * - BaselineService: Emotion/sensory/environment baselines with robust fallbacks
+ * - ABTestingService: Threshold variant experimentation
+ * - ThresholdLearner: Adaptive threshold adjustments
+ * - AlertPolicies: Deduplication and throttling
+ * - CandidateGenerator: All detector execution and candidate building
  *
- * Usage example:
- *
- * const engine = new AlertDetectionEngine();
- * const alerts = engine.runDetection({
+ * Usage:
+ * ```typescript
+ * const orchestrator = new DetectionOrchestrator();
+ * const alerts = orchestrator.orchestrateDetection({
  *   studentId,
  *   emotions,
  *   sensory,
@@ -98,78 +76,85 @@ interface ApplyThresholdContext {
  *   interventions,
  *   goals,
  * });
+ * ```
  */
-export class AlertDetectionEngine {
+export class DetectionOrchestrator {
   private readonly baselineService: BaselineService;
   private readonly policies: AlertPolicies;
-  private readonly cusumConfig: { kFactor: number; decisionInterval: number };
   private readonly learner: ThresholdLearner;
   private readonly experiments: ABTestingService;
+  private readonly candidateGenerator: CandidateGenerator;
   private readonly baselineThresholds: Record<string, number>;
   private readonly seriesLimit: number;
-  /** Optional Tau-U detector dependency; when absent, intervention analysis is skipped. */
-  private readonly tauUDetector?: (args: { intervention: Intervention; goal: Goal | null }) => DetectorResult | null;
-  private readonly generator: CandidateGenerator;
 
   constructor(opts?: {
     baselineService?: BaselineService;
     policies?: AlertPolicies;
-    cusumConfig?: { kFactor: number; decisionInterval: number };
     learner?: ThresholdLearner;
     experiments?: ABTestingService;
-    /** Optional cap applied to series lengths for performance */
+    candidateGenerator?: CandidateGenerator;
     seriesLimit?: number;
-    /** Optional Tau-U detector to decouple this engine from Tau-U implementation. */
-    tauUDetector?: (args: { intervention: Intervention; goal: Goal | null }) => DetectorResult | null;
+    tauUDetector?: TauUDetectorFunction;
   }) {
     this.baselineService = opts?.baselineService ?? new BaselineService();
     this.policies = opts?.policies ?? new AlertPolicies();
-    const configSource = opts?.cusumConfig ?? ANALYTICS_CONFIG.alerts?.cusum;
-    const cusumConfig = {
-      kFactor: configSource?.kFactor ?? 0.5,
-      decisionInterval: configSource?.decisionInterval ?? 5,
-    };
-    this.cusumConfig = cusumConfig;
     this.learner = opts?.learner ?? new ThresholdLearner();
     this.experiments = opts?.experiments ?? new ABTestingService();
-    const seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SERIES_LENGTH));
-    this.seriesLimit = seriesLimit;
     this.baselineThresholds = { ...DEFAULT_DETECTOR_THRESHOLDS };
-    this.tauUDetector = opts?.tauUDetector;
+    this.seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SERIES_LENGTH));
 
-    // Initialize CandidateGenerator with extracted configuration
-    this.generator = new CandidateGenerator({
+    // Create candidate generator with configuration
+    const cusumConfig = {
+      kFactor: ANALYTICS_CONFIG.alerts?.cusum?.kFactor ?? 0.5,
+      decisionInterval: ANALYTICS_CONFIG.alerts?.cusum?.decisionInterval ?? 5,
+    };
+
+    this.candidateGenerator = opts?.candidateGenerator ?? new CandidateGenerator({
       cusumConfig,
-      seriesLimit,
+      seriesLimit: this.seriesLimit,
       tauUDetector: opts?.tauUDetector,
-      baselineThresholds: { ...DEFAULT_DETECTOR_THRESHOLDS },
+      baselineThresholds: this.baselineThresholds,
     });
   }
 
   /**
-   * Run the full detection pipeline for a single student.
-   * - Builds series and datasets
-   * - Runs detectors with threshold application and experiment variant scaling
-   * - Scores, ranks sources, and constructs AlertEvent records
-   * - Applies governance (deduplication) and returns final events
+   * Orchestrate the full detection pipeline for a single student.
+   *
+   * Pipeline stages:
+   * 1. Validate input and retrieve baseline
+   * 2. Build time series and datasets from raw entries
+   * 3. Generate candidates via CandidateGenerator (runs all detectors)
+   * 4. Apply thresholds with A/B testing integration
+   * 5. Build and score alert events
+   * 6. Apply deduplication policies
+   * 7. Return ranked, policy-governed alerts
+   *
+   * @param input - Detection input with student data and optional baseline
+   * @returns Array of ranked, deduplicated AlertEvent records
    */
-  runDetection(input: DetectionInput): AlertEvent[] {
+  orchestrateDetection(input: DetectionInput): AlertEvent[] {
     const now = input.now ?? new Date();
     const nowTs = now.getTime();
-    if (!input.studentId) return [];
-    try { logger.debug?.('[AlertEngine] runDetection:start', { studentId: input.studentId }); } catch {}
 
+    // Stage 1: Validate input
+    if (!input.studentId) return [];
+
+    try {
+      logger.debug?.('[DetectionOrchestrator] orchestrateDetection:start', { studentId: input.studentId });
+    } catch {}
+
+    // Stage 2: Retrieve baseline and threshold overrides
     const thresholdOverrides = this.learner.getThresholdOverrides();
     const baseline = input.baseline ?? this.baselineService.getEmotionBaseline(input.studentId);
 
-    // Delegate data building to generator
-    const emotionSeries = this.generator.buildEmotionSeries(input.emotions);
-    const sensoryAgg = this.generator.buildSensoryAggregates(input.sensory);
-    const associationDataset = this.generator.buildAssociationDataset(input.tracking);
-    const burstEvents = this.generator.buildBurstEvents(input.emotions, input.sensory);
+    // Stage 3: Build data series and datasets
+    const emotionSeries = this.candidateGenerator.buildEmotionSeries(input.emotions);
+    const sensoryAgg = this.candidateGenerator.buildSensoryAggregates(input.sensory);
+    const associationDataset = this.candidateGenerator.buildAssociationDataset(input.tracking);
+    const burstEvents = this.candidateGenerator.buildBurstEvents(input.emotions, input.sensory);
 
-    // Delegate candidate building to generator with method injection
-    const emotionCandidates = this.generator.buildEmotionCandidates({
+    // Stage 4: Generate candidates across all detection types
+    const emotionCandidates = this.candidateGenerator.buildEmotionCandidates({
       emotionSeries,
       baseline,
       studentId: input.studentId,
@@ -179,7 +164,7 @@ export class AlertDetectionEngine {
       createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const sensoryCandidates = this.generator.buildSensoryCandidates({
+    const sensoryCandidates = this.candidateGenerator.buildSensoryCandidates({
       sensoryAggregates: sensoryAgg,
       baseline,
       studentId: input.studentId,
@@ -189,7 +174,7 @@ export class AlertDetectionEngine {
       createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const associationCandidates = this.generator.buildAssociationCandidates({
+    const associationCandidates = this.candidateGenerator.buildAssociationCandidates({
       dataset: associationDataset,
       studentId: input.studentId,
       thresholdOverrides,
@@ -198,7 +183,7 @@ export class AlertDetectionEngine {
       createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const burstCandidates = this.generator.buildBurstCandidates({
+    const burstCandidates = this.candidateGenerator.buildBurstCandidates({
       burstEvents,
       studentId: input.studentId,
       thresholdOverrides,
@@ -207,7 +192,7 @@ export class AlertDetectionEngine {
       createThresholdContext: this.createThresholdContext.bind(this),
     });
 
-    const tauCandidates = this.generator.detectInterventionOutcomes({
+    const tauCandidates = this.candidateGenerator.detectInterventionOutcomes({
       interventions: input.interventions ?? [],
       goals: input.goals ?? [],
       studentId: input.studentId,
@@ -217,6 +202,7 @@ export class AlertDetectionEngine {
       createThresholdContext: this.createThresholdContext.bind(this),
     });
 
+    // Stage 5: Aggregate all candidates
     const candidates: AlertCandidate[] = [
       ...emotionCandidates,
       ...sensoryCandidates,
@@ -225,16 +211,28 @@ export class AlertDetectionEngine {
       ...tauCandidates,
     ];
 
+    // Stage 6: Build alert events from candidates
     const alerts = candidates.map((candidate) => this.buildAlert(candidate, input.studentId, nowTs));
 
+    // Stage 7: Apply deduplication and return final alerts
     const deduped = this.policies
       .deduplicateAlerts(alerts)
       .map(({ governance, ...event }) => ({ ...event }));
 
-    try { logger.debug?.('[AlertEngine] runDetection:end', { studentId: input.studentId, alerts: deduped.length }); } catch {}
+    try {
+      logger.debug?.('[DetectionOrchestrator] orchestrateDetection:end', {
+        studentId: input.studentId,
+        alerts: deduped.length
+      });
+    } catch {}
+
     return deduped;
   }
 
+  /**
+   * Resolve experiment key based on alert kind.
+   * Maps alert types to their corresponding A/B testing experiment keys.
+   */
   private resolveExperimentKey(kind: AlertKind): string {
     switch (kind) {
       case AlertKind.BehaviorSpike:
@@ -251,6 +249,10 @@ export class AlertDetectionEngine {
     }
   }
 
+  /**
+   * Create threshold application context with experiment tracking.
+   * Assigns student to experiment variant and records assignment if new.
+   */
   private createThresholdContext(
     kind: AlertKind,
     studentId: string,
@@ -275,6 +277,22 @@ export class AlertDetectionEngine {
     };
   }
 
+  /**
+   * Apply threshold with A/B testing and adaptive learning.
+   *
+   * Threshold application pipeline:
+   * 1. Retrieve default baseline threshold
+   * 2. Apply learner adjustment (threshold override)
+   * 3. Scale threshold based on experiment variant
+   * 4. Normalize detector score relative to adjusted threshold
+   * 5. Record adjustment trace for diagnostics
+   *
+   * @param detectorType - Type of detector (ewma, cusum, beta, etc.)
+   * @param result - Raw detector result before threshold application
+   * @param context - Threshold context with experiment info and overrides
+   * @param baselineOverride - Optional baseline threshold override
+   * @returns Adjusted detector result or null if below threshold
+   */
   private applyThreshold(
     detectorType: string,
     result: DetectorResult | null | undefined,
@@ -282,10 +300,14 @@ export class AlertDetectionEngine {
     baselineOverride?: number,
   ): DetectorResult | null {
     if (!result) return null;
+
+    // Determine base threshold
     const defaultBaseline = getDefaultDetectorThreshold(detectorType);
     const baseFromEngine = (typeof baselineOverride === 'number' && baselineOverride > 0)
       ? baselineOverride
       : (this.baselineThresholds[detectorType] ?? defaultBaseline);
+
+    // Apply learner override
     const override = context.overrides[detectorType];
     const baselineFromOverride = override?.baselineThreshold && override.baselineThreshold > 0
       ? override.baselineThreshold
@@ -293,6 +315,8 @@ export class AlertDetectionEngine {
     const learnerAdjusted = override
       ? baselineFromOverride * (1 + override.adjustmentValue)
       : baseFromEngine;
+
+    // Apply experiment variant scaling
     const applied = this.experiments.getThresholdForVariant(
       context.experimentKey,
       context.variant,
@@ -300,18 +324,22 @@ export class AlertDetectionEngine {
       override,
       defaultBaseline,
     );
+
+    // Compute normalized score
     const baseForScale = baselineFromOverride > 0 ? baselineFromOverride : defaultBaseline;
     const safeBase = baseForScale > 0 ? baseForScale : defaultBaseline;
     const safeApplied = applied > 0 ? applied : defaultBaseline;
     const scale = safeBase > 0 ? safeApplied / safeBase : 1;
     const adjustedScore = safeBase > 0 ? Math.min(1, Math.max(0, result.score / scale)) : result.score;
 
+    // Record threshold trace
     context.thresholdTraces[detectorType] = {
       adjustment: safeBase > 0 ? (safeApplied - safeBase) / safeBase : 0,
       appliedThreshold: safeApplied,
       baselineThreshold: safeBase,
     };
 
+    // Enrich analysis with experiment context
     const analysis = {
       ...(result.analysis ?? {}),
       detectorType,
@@ -325,29 +353,92 @@ export class AlertDetectionEngine {
       thresholdApplied: applied,
       analysis,
     };
+
     if (!isValidDetectorResult(adjusted)) return null;
     return adjusted;
   }
 
+  /**
+   * Build alert event from candidate.
+   *
+   * Alert construction stages:
+   * 1. Extract detector scores (impact, confidence)
+   * 2. Compute recency score from last timestamp
+   * 3. Calculate aggregate score using weighted formula
+   * 4. Determine severity tier
+   * 5. Generate sparkline for UI visualization
+   * 6. Rank and attribute sources
+   * 7. Construct final AlertEvent with metadata
+   *
+   * Scoring formula:
+   *   0.4 * impact + 0.25 * confidence + 0.2 * recency + 0.15 * tier
+   */
   private buildAlert(candidate: AlertCandidate, studentId: string, nowTs: number): AlertEvent {
-    // Step 1: Aggregate detector results using weighted formula
-    const aggregated = aggregateDetectorResults(
-      candidate.detectors,
-      candidate.lastTimestamp,
-      candidate.tier,
-      nowTs,
+    const detectors = candidate.detectors;
+    const impact = Math.max(...detectors.map((d) => d.score ?? 0), 0);
+    const confidence = Math.max(...detectors.map((d) => d.confidence ?? 0), 0);
+    const recency = computeRecencyScore(candidate.lastTimestamp, nowTs);
+    const tierScore = Math.max(0, Math.min(1, candidate.tier));
+    const aggregateScore = Math.min(
+      1,
+      (0.4 * impact) + (0.25 * confidence) + (0.2 * recency) + (0.15 * tierScore),
     );
 
-    // Step 2: Finalize alert event with metadata enrichment and policies
-    return finalizeAlertEvent(
-      candidate,
-      aggregated,
+    const severity = severityFromScore(aggregateScore);
+    const id = buildAlertId(studentId, candidate.kind, candidate.label, candidate.lastTimestamp);
+    const sparkline = generateSparklineData(truncateSeries(candidate.series, this.seriesLimit));
+
+    const topSources = rankSources(detectors);
+
+    const thresholdOverridesRecord = candidate.thresholdAdjustments
+      ? Object.fromEntries(
+        Object.entries(candidate.thresholdAdjustments).map(([detectorType, trace]) => [detectorType, trace.adjustment]),
+      )
+      : undefined;
+
+    const metadata: AlertMetadata = {
+      label: candidate.label,
+      contextKey: candidate.label,
+      ...candidate.metadata,
+      sparkValues: sparkline.values,
+      sparkTimestamps: sparkline.timestamps,
+      score: aggregateScore,
+      recency,
+      tier: candidate.tier,
+      impact,
+      summary: candidate.detectors[0]?.impactHint ?? candidate.label,
+      sourceRanks: topSources.map((s) => (s.details as Record<string, unknown>)?.rank ?? null).filter(Boolean),
+      thresholdOverrides: thresholdOverridesRecord,
+      experimentKey: candidate.experimentKey,
+      experimentVariant: candidate.experimentVariant,
+      detectorTypes: candidate.detectorTypes,
+      thresholdTrace: candidate.thresholdAdjustments,
+      detectionScoreBreakdown: { impact, confidence, recency, tier: tierScore },
+      seriesStats: this.computeSeriesStats(candidate.series),
+    };
+
+    return {
+      id,
       studentId,
-      {
-        seriesLimit: this.seriesLimit,
-        policies: this.policies,
-      },
-    );
+      kind: candidate.kind,
+      severity,
+      confidence,
+      createdAt: new Date(candidate.lastTimestamp || nowTs).toISOString(),
+      status: AlertStatus.New,
+      dedupeKey: this.policies.calculateDedupeKey({
+        id,
+        studentId,
+        kind: candidate.kind,
+        severity,
+        confidence,
+        createdAt: new Date(candidate.lastTimestamp || nowTs).toISOString(),
+        status: AlertStatus.New,
+        sources: topSources,
+        metadata,
+      } as AlertEvent),
+      sources: topSources,
+      metadata,
+    };
   }
 
   /**
@@ -378,8 +469,11 @@ export class AlertDetectionEngine {
     const variance = n > 1 ? acc / (n - 1) : 0;
     if (!Number.isFinite(min)) min = 0;
     if (!Number.isFinite(max)) max = 0;
-    return { min, max, mean: Number.isFinite(mean) ? mean : 0, variance: Number.isFinite(variance) ? variance : 0 };
+    return {
+      min,
+      max,
+      mean: Number.isFinite(mean) ? mean : 0,
+      variance: Number.isFinite(variance) ? variance : 0
+    };
   }
 }
-
-export default AlertDetectionEngine;

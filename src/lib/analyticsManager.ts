@@ -1,22 +1,35 @@
 import { Student } from "@/types/student";
-import { computeInsights, type ComputeInsightsInputs } from "@/lib/insights/unified";
 import { dataStorage, IDataStorage } from "@/lib/dataStorage";
 import { ANALYTICS_CONFIG, DEFAULT_ANALYTICS_CONFIG, analyticsConfig, STORAGE_KEYS } from "@/lib/analyticsConfig";
 import { logger } from "@/lib/logger";
 import type { AnalyticsResults } from "@/types/analytics";
-import { HeuristicAnalysisEngine, LLMAnalysisEngine } from "@/lib/analysis";
 import type { AnalysisEngine } from "@/lib/analysis";
 
 import { AnalyticsRunner } from "@/lib/analytics/runner";
 import type { AnalyticsResultsCompat } from "@/lib/analytics/types";
-import { loadAiConfig } from "@/lib/aiConfig";
 import { getProfileMap, initializeStudentProfile, saveProfiles } from "@/lib/analyticsProfiles";
 import { analyticsCoordinator } from "@/lib/analyticsCoordinator";
 import type { StudentAnalyticsProfile } from "@/lib/analyticsProfiles";
-// New orchestrator-style helpers and types
-import { buildInsightsCacheKey as _buildInsightsCacheKey, buildInsightsTask as _buildInsightsTask } from "@/lib/insights/task";
+// Legacy task builders (to be deprecated)
 export { createInsightsTask as buildTask, createInsightsCacheKey as buildCacheKey } from '@/lib/analyticsTasks';
-import type { InsightsOptions, AnalyticsResult } from "@/types/insights";
+
+// Extracted modules (Phase 2a refactoring)
+import { createAnalysisEngine } from '@/lib/analytics/engine';
+import { calculateHealthScore } from '@/lib/analytics/health';
+import {
+  clearAllCaches,
+  clearStudentCaches,
+  clearManagerCache,
+  notifyWorkers,
+  isManagerTtlCacheDisabled
+} from '@/lib/analytics/cache';
+
+// Extracted bulk operations (Phase 2b refactoring)
+import {
+  triggerAnalyticsForAll,
+  getStatusForAll,
+  type StudentAnalyticsStatus,
+} from '@/lib/analytics/orchestration';
 
 // #region Type Definitions
 
@@ -183,7 +196,7 @@ class AnalyticsManagerService {
     this.analyticsProfiles = profiles;
     this.analyticsRunner = new AnalyticsRunner({
       storage: this.storage,
-      createAnalysisEngine: this.createAnalysisEngine.bind(this),
+      createAnalysisEngine,
     });
   }
 
@@ -390,48 +403,10 @@ class AnalyticsManagerService {
    * @param {AnalyticsResultsCompat} results - The results from an analytics run.
    * @returns {number} A score from 0 to 100.
    */
+  // Delegated to extracted module (Phase 2a refactoring)
   private calculateHealthScore(results: AnalyticsResultsCompat): number {
     const liveCfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
-    const { WEIGHTS } = (liveCfg?.healthScore ?? ANALYTICS_CONFIG.healthScore);
-    let score = 0;
-
-    if (results.patterns.length > 0) score += WEIGHTS.PATTERNS;
-    if (results.correlations.length > 0) score += WEIGHTS.CORRELATIONS;
-    if (results.predictiveInsights.length > 0) score += WEIGHTS.PREDICTIONS;
-    if (results.anomalies.length > 0) score += WEIGHTS.ANOMALIES;
-
-    // Use optional metadata if provided; otherwise infer minimum data presence and default confidence
-    const extended = results as AnalyticsResultsCompat & { hasMinimumData?: boolean; confidence?: number };
-    const hasMinimumData = extended.hasMinimumData ?? (results.patterns.length > 0 || results.correlations.length > 0);
-    if (hasMinimumData) score += WEIGHTS.MINIMUM_DATA;
-    // Prefer AI confidence when available
-    const aiConfidence = typeof results.ai?.confidence?.overall === 'number' ? results.ai?.confidence?.overall : undefined;
-    const confidence = typeof aiConfidence === 'number'
-      ? aiConfidence
-      : (typeof extended.confidence === 'number' ? extended.confidence : 1);
-
-    // Base score scaled by confidence
-    let finalScore = Math.round(score * confidence);
-
-    // AI metadata bonuses: small additive boosts for high-quality AI runs
-    if (results.ai) {
-      const caveats = results.ai.caveats || [];
-      const usedFallback = caveats.some(c => /fallback/i.test(c));
-      const heuristicOnly = (results.ai.provider || '').toLowerCase() === 'heuristic';
-      // Bonus for successful AI (non-heuristic, no fallback)
-      if (!heuristicOnly && !usedFallback) {
-        finalScore += 5;
-      } else if (!heuristicOnly && usedFallback) {
-        finalScore += 2; // partial credit for attempted AI with safe fallback
-      }
-      // Data lineage quality: modest boost based on presence/coverage
-      const lineageCount = results.ai.dataLineage?.length ?? 0;
-      if (lineageCount >= 3) finalScore += 3;
-      else if (lineageCount === 2) finalScore += 2;
-      else if (lineageCount === 1) finalScore += 1;
-    }
-
-    return Math.max(0, Math.min(100, finalScore));
+    return calculateHealthScore(results, liveCfg ?? undefined);
   }
 
   /**
@@ -456,204 +431,76 @@ class AnalyticsManagerService {
   /**
    * Triggers an analytics refresh for all students in the system.
    * Uses Promise.allSettled to ensure that one failed analysis does not stop others.
+   *
+   * @deprecated This method is now a thin wrapper. Consider using triggerAnalyticsForAll directly.
+   *
+   * Delegated to extracted module (Phase 2b refactoring)
    */
   public async triggerAnalyticsForAllStudents(): Promise<void> {
     const students = this.storage.getStudents();
-    
-    const analyticsPromises = students.map(student => {
-      this.initializeStudentAnalytics(student.id);
-      return this.triggerAnalyticsForStudent(student);
-    });
-
-    const settledResults = await Promise.allSettled(analyticsPromises);
-
-    settledResults.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        logger.error(`Failed to process analytics for student ${students[index].id}:`, result.reason);
-      }
-    });
+    await triggerAnalyticsForAll(students, this.storage, this);
   }
 
   /**
    * Gets the current analytics status for all students, including health scores and last analysis time.
    * This is useful for displaying a high-level dashboard of the system's state.
-   * @returns {Array<object>} An array of status objects for each student.
+   * @returns {StudentAnalyticsStatus[]} An array of status objects for each student.
+   *
+   * @deprecated This method is now a thin wrapper. Consider using getStatusForAll directly.
+   *
+   * Delegated to extracted module (Phase 2b refactoring)
    */
-  public getAnalyticsStatus() {
+  public getAnalyticsStatus(): StudentAnalyticsStatus[] {
     const students = this.storage.getStudents();
-    return students.map(student => {
-      const profile = this.analyticsProfiles.get(student.id);
-      const cached = this.analyticsCache.get(student.id);
-      
-      return {
-        studentId: student.id,
-        studentName: student.name,
-        isInitialized: profile?.isInitialized ?? false,
-        lastAnalyzed: profile?.lastAnalyzedAt ?? null,
-        healthScore: profile?.analyticsHealthScore ?? 0,
-        hasMinimumData: cached?.results.hasMinimumData ?? false,
-      };
-    });
+    return getStatusForAll(students, this.analyticsProfiles, this.analyticsCache);
   }
 
   /**
    * Clears the analytics cache.
    * @param {string} [studentId] - If provided, clears the cache for only that student.
    * Otherwise, clears the entire analytics cache.
+   *
+   * Delegated to extracted module (Phase 2a refactoring)
    */
   public clearCache(studentId?: string): void {
-    try {
-      logger.warn('[analyticsManager] clearCache called on deprecated manager TTL cache. Prefer broadcasting via analyticsCoordinator and relying on hook-level caching.');
-    } catch { /* noop */ }
-    if (studentId) {
-      this.analyticsCache.delete(studentId);
-    } else {
-      this.analyticsCache.clear();
-    }
+    clearManagerCache(this.analyticsCache, studentId);
   }
 
   /**
    * Notify workers and hooks to clear caches via global events
+   *
+   * Delegated to extracted module (Phase 2a refactoring)
    */
   private notifyWorkerCacheClear(studentId?: string): void {
-    try {
-      analyticsCoordinator.broadcastCacheClear(studentId);
-    } catch (e) {
-      logger.warn('[analyticsManager] notifyWorkerCacheClear failed', e as Error);
-    }
+    notifyWorkers(studentId);
   }
 
   /**
    * Clear known analytics localStorage caches (profiles and others via helpers)
+   *
+   * Delegated to extracted module (Phase 2a refactoring)
    */
   private clearLocalStorageCaches(): { keysCleared: string[] } {
-    const keysCleared: string[] = [];
-    
-    if (typeof localStorage === 'undefined') {
-      return { keysCleared };
-    }
-
-    try {
-      // Gather relevant storage identifiers
-      const relevantPrefixes = [
-        STORAGE_KEYS.cachePrefix,
-        STORAGE_KEYS.performancePrefix
-      ];
-      const exactKeys = [
-        STORAGE_KEYS.analyticsConfig,
-        STORAGE_KEYS.analyticsProfiles,
-        'kreativium_ai_metrics_v1' // AI metrics key from @/lib/ai/metrics
-      ];
-
-      // Iterate over localStorage keys and collect matching ones
-      const keysToRemove: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key) continue;
-
-        // Check if key contains any of the prefixes
-        const hasRelevantPrefix = relevantPrefixes.some(prefix => key.includes(prefix));
-        // Check if key exactly matches any of the exact keys
-        const isExactMatch = exactKeys.includes(key);
-
-        if (hasRelevantPrefix || isExactMatch) {
-          keysToRemove.push(key);
-        }
-      }
-
-      // Remove collected keys
-      keysToRemove.forEach(key => {
-        try {
-          localStorage.removeItem(key);
-          keysCleared.push(key);
-        } catch (e) {
-          logger.warn(`[analyticsManager] Failed to remove localStorage key: ${key}`, e as Error);
-        }
-      });
-    } catch (e) {
-      logger.warn('[analyticsManager] clearLocalStorageCaches encountered issues', e as Error);
-    }
-    
-    return { keysCleared };
+    const { clearAnalyticsLocalStorage } = require('@/lib/analytics/cache');
+    return clearAnalyticsLocalStorage();
   }
 
   /**
    * Clear all analytics-related caches across systems and return a summary
+   *
+   * Delegated to extracted module (Phase 2a refactoring)
    */
   public async clearAllAnalyticsCaches(broadcast = true): Promise<{ ok: boolean; summary: Record<string, unknown> }> {
-    const summary: Record<string, unknown> = {};
-    try {
-      // Manager TTL cache
-      try {
-        logger.warn('[analyticsManager] Clearing deprecated manager TTL cache as part of global cache clear.');
-      } catch { /* noop */ }
-      this.clearCache();
-      summary.managerCacheCleared = true;
-
-      // Profiles
-      try {
-        const { clearAllProfiles, getProfileCacheStats } = await import('@/lib/analyticsProfiles');
-        const before = getProfileCacheStats().count;
-        const cleared = clearAllProfiles();
-        summary.profilesBefore = before;
-        summary.profilesCleared = cleared;
-      } catch (e) {
-        logger.warn('[analyticsManager] Profile clearing failed', e as Error);
-      }
-
-      // AI metrics (localStorage)
-      try {
-        const { aiMetrics } = await import('@/lib/ai/metrics');
-        aiMetrics.reset();
-        summary.aiMetricsReset = true;
-      } catch (e) {
-        logger.warn('[analyticsManager] aiMetrics reset failed', e as Error);
-      }
-
-      // Precomputation caches broadcast (listeners clear if applicable) - only if broadcast is true
-      if (broadcast) {
-        this.notifyWorkerCacheClear();
-      }
-
-      // LocalStorage keys - now actually removes keys and returns accurate summary
-      const localStorageResult = this.clearLocalStorageCaches();
-      summary.localStorage = localStorageResult;
-
-      logger.info('[analyticsManager] Cleared all analytics caches', summary);
-      return { ok: true, summary };
-    } catch (e) {
-      logger.error('[analyticsManager] clearAllAnalyticsCaches failed', e as Error);
-      return { ok: false, summary };
-    }
+    return clearAllCaches(this.analyticsCache, broadcast);
   }
 
   /**
    * Clear caches for a specific student across systems
+   *
+   * Delegated to extracted module (Phase 2a refactoring)
    */
   public async clearStudentCaches(studentId: string): Promise<{ ok: boolean; studentId: string }> {
-    try {
-      if (!studentId) return { ok: false, studentId };
-      // Manager-level
-      try { logger.warn('[analyticsManager] Clearing deprecated manager TTL cache for student', { studentId }); } catch { /* noop */ }
-      this.clearCache(studentId);
-
-      // Profiles
-      try {
-        const { clearStudentProfile } = await import('@/lib/analyticsProfiles');
-        clearStudentProfile(studentId);
-      } catch (e) {
-        logger.warn('[analyticsManager] clearStudentProfile failed', e as Error);
-      }
-
-      // Worker/hook broadcast
-      this.notifyWorkerCacheClear(studentId);
-
-      logger.info('[analyticsManager] Cleared student caches', { studentId });
-      return { ok: true, studentId };
-    } catch (e) {
-      logger.error('[analyticsManager] clearStudentCaches failed', e as Error);
-      return { ok: false, studentId };
-    }
+    return clearStudentCaches(studentId, this.analyticsCache);
   }
 
   /**
@@ -668,85 +515,14 @@ class AnalyticsManagerService {
   /**
    * Engine factory: selects analysis engine based on priority
    * runtime useAI > analytics config > environment default/availability.
+   *
+   * Delegated to extracted module (Phase 2a refactoring)
+   * NOTE: This method is no longer used since constructor was updated to use
+   * the imported createAnalysisEngine function directly. Keeping for reference.
+   * @deprecated Use imported createAnalysisEngine from @/lib/analytics/engine instead
    */
   private createAnalysisEngine(useAI?: boolean): AnalysisEngine {
-    // Explicit runtime override: when useAI is explicitly false, always use heuristic.
-    // This takes precedence over config flags and environment/API availability.
-    if (useAI === false) {
-      try {
-        logger.debug('[analyticsManager] Engine selection override: runtime useAI=false -> HeuristicAnalysisEngine', {
-          requestedAI: useAI,
-        });
-      } catch {
-        /* ignore logging errors */
-      }
-      return new HeuristicAnalysisEngine();
-    }
-    const aiEnv = loadAiConfig();
-    const liveCfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
-    const cfgFlag = liveCfg?.features?.aiAnalysisEnabled;
-
-    // Read live Vite env to avoid stale module-level defaults
-    const env: Record<string, unknown> = (import.meta as any)?.env ?? {};
-    const toBool = (v: unknown) => {
-      const s = (v ?? '').toString().toLowerCase();
-      return s === '1' || s === 'true' || s === 'yes';
-    };
-    const liveEnabled = toBool(env.VITE_AI_ANALYSIS_ENABLED);
-    const liveModel = typeof env.VITE_AI_MODEL_NAME === 'string' && (env.VITE_AI_MODEL_NAME as string).trim().length > 0
-      ? (env.VITE_AI_MODEL_NAME as string)
-      : aiEnv.modelName;
-    const liveKey = typeof env.VITE_OPENROUTER_API_KEY === 'string' && (env.VITE_OPENROUTER_API_KEY as string).trim().length > 0
-      ? (env.VITE_OPENROUTER_API_KEY as string)
-      : (aiEnv.apiKey || '');
-
-    const resolved = typeof useAI === 'boolean' ? useAI : (typeof cfgFlag === 'boolean' ? cfgFlag : liveEnabled);
-
-    // Validate model against allowed models (case-insensitive)
-    let resolvedModel = liveModel;
-    try {
-      const allowedLc = new Set((aiEnv.allowedModels || []).map(m => m.toLowerCase()));
-      const modelLc = (resolvedModel || '').toLowerCase();
-      if (!allowedLc.has(modelLc)) {
-        const fallback = aiEnv.allowedModels[0] || 'gpt-5';
-        logger.warn('[analyticsManager] Disallowed model in env; falling back', {
-          requested: resolvedModel,
-          allowed: aiEnv.allowedModels,
-          fallback,
-        });
-        resolvedModel = fallback;
-      }
-    } catch (e) {
-      logger.warn('[analyticsManager] Model validation failed, using as-is:', e);
-      // fail-soft: use original model name when validation fails
-    }
-
-    // Availability check using live env first. Note: explicit useAI=false is handled above and will never reach here.
-    const shouldUseAi = resolved && !!liveKey && !!resolvedModel;
-
-    // Low-noise debug log for engine selection and model resolution
-    try {
-      const nowMinute = new Date().getMinutes();
-      if (__lastFacadeLogMinute !== nowMinute) {
-        logger.debug('[analyticsManager] Engine selection', {
-          requestedAI: useAI,
-          resolvedAI: resolved,
-          model: resolvedModel,
-          configModel: aiEnv.modelName,
-          apiKeyPresent: !!liveKey,
-          allowedModels: aiEnv.allowedModels,
-          runtimeOverride: typeof useAI === 'boolean',
-          overrideDisabled: useAI === false,
-        });
-        __lastFacadeLogMinute = nowMinute;
-      }
-      } catch (e) {
-        // Log engine selection debug failure, but don't let it crash the app
-        logger.warn('[analyticsManager] Engine selection debug logging failed', e as Error);
-      }
-
-    if (shouldUseAi) return new LLMAnalysisEngine();
-    return new HeuristicAnalysisEngine();
+    return createAnalysisEngine(useAI);
   }
 
   /**
@@ -754,19 +530,11 @@ class AnalyticsManagerService {
    * Sources:
    * - analyticsConfig.cache.disableManagerTTLCache or analyticsConfig.cache.disableManagerTTL
    * - VITE_DISABLE_MANAGER_TTL_CACHE env ("1" | "true" | "yes")
+   *
+   * Delegated to extracted module (Phase 2a refactoring)
    */
   private isManagerTtlCacheDisabled(): boolean {
-    try {
-      const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
-      const cfgFlag = (cfg?.cache as any)?.disableManagerTTLCache === true || (cfg?.cache as any)?.disableManagerTTL === true;
-      if (cfgFlag) return true;
-    } catch { /* ignore */ }
-    try {
-      const env: Record<string, unknown> = (import.meta as any)?.env ?? {};
-      const raw = (env.VITE_DISABLE_MANAGER_TTL_CACHE ?? '').toString().toLowerCase();
-      return raw === '1' || raw === 'true' || raw === 'yes';
-    } catch { /* ignore */ }
-    return false;
+    return isManagerTtlCacheDisabled();
   }
 }
 
@@ -783,79 +551,7 @@ export const analyticsManager = AnalyticsManagerService.getInstance();
  * constructing worker tasks, and retrieving summarized insights in a stable
  * shape for consumers like hooks or UI. They coexist with the legacy singleton
  * for backward compatibility and will become the primary API.
- */
-
-/**
- * Build a deterministic insights cache key from inputs and options.
- * Delegates to the centralized cache-key utilities.
- */
-export const buildInsightsCacheKey = _buildInsightsCacheKey;
-
-/**
- * Build a typed worker task envelope for Insights computation.
- * Suitable for posting to the analytics web worker.
- */
-export const buildInsightsTask = _buildInsightsTask;
-
-/**
- * Compute insights and return a minimal, stable AnalyticsResult summary.
- * This does not perform internal caching; callers should use the cache key
- * and their caching layer of choice.
  *
- * @example
- * const inputs = { entries, emotions, sensoryInputs, goals };
- * const result = await getInsights(inputs, { ttlSeconds: 600, tags: ["student-123"] });
+ * Extracted to @/lib/analytics/insights module (Phase 2b refactoring)
  */
-export async function getInsights(
-  inputs: ComputeInsightsInputs,
-  options?: InsightsOptions
-): Promise<AnalyticsResult> {
-  try {
-    const cacheKey = _buildInsightsCacheKey(inputs, options);
-    const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return DEFAULT_ANALYTICS_CONFIG; } })() || DEFAULT_ANALYTICS_CONFIG;
-    const ttlMs = cfg?.cache?.ttl ?? DEFAULT_ANALYTICS_CONFIG.cache.ttl;
-    const ttlSeconds = typeof options?.ttlSeconds === 'number' ? options.ttlSeconds : Math.max(1, Math.floor(ttlMs / 1000));
-    const tags = Array.from(new Set(["insights", "v2", ...(options?.tags ?? [])]));
-
-    const fullCfg = options?.config ? { config: (options.config as any) } : { config: cfg as any };
-    const detailed = await computeInsights(inputs, fullCfg as any);
-
-    // Summarize for stable payloads (avoid large arrays in summary field)
-    const summary = {
-      patternsCount: detailed.patterns?.length ?? 0,
-      correlationsCount: detailed.correlations?.length ?? 0,
-      environmentalCorrelationsCount: detailed.environmentalCorrelations?.length ?? 0,
-      predictiveInsightsCount: detailed.predictiveInsights?.length ?? 0,
-      anomaliesCount: detailed.anomalies?.length ?? 0,
-      insightsCount: detailed.insights?.length ?? 0,
-      confidence: (detailed as any).confidence,
-      hasMinimumData: (detailed as any).hasMinimumData,
-    } as Record<string, unknown>;
-
-    return {
-      cacheKey,
-      computedAt: new Date().toISOString(),
-      ttlSeconds,
-      tags,
-      summary,
-      diagnostics: {
-        entries: inputs.entries?.length ?? 0,
-        emotions: inputs.emotions?.length ?? 0,
-        sensoryInputs: inputs.sensoryInputs?.length ?? 0,
-        goals: inputs.goals?.length ?? 0,
-      },
-    };
-  } catch (error) {
-    logger.error('[analyticsManager.orchestrator] getInsights failed', { error });
-    const cacheKey = _buildInsightsCacheKey(inputs, options);
-    const ttlSeconds = typeof options?.ttlSeconds === 'number' ? options.ttlSeconds : 300;
-    const tags = Array.from(new Set(["insights", "v2", ...(options?.tags ?? [])]));
-    return {
-      cacheKey,
-      computedAt: new Date().toISOString(),
-      ttlSeconds,
-      tags,
-      summary: { error: 'INSIGHTS_COMPUTE_FAILED' },
-    };
-  }
-}
+export { getInsights, buildInsightsCacheKey, buildInsightsTask } from '@/lib/analytics/insights';

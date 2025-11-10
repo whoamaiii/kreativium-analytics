@@ -33,9 +33,8 @@ import { useCelebrations } from '@/hooks/useCelebrations';
 import { recordGameEvent, streamSessionSummary } from '@/lib/game/telemetry';
 import { adaptDifficulty, refineDifficultyForEmotion } from '@/lib/game/difficultyAdapter';
 import { resolveParams } from '@/lib/adaptive/rules';
-import type { HintsState } from '@/lib/game/hints';
-import { loadHints, useHint as consumeHint } from '@/lib/game/hints';
 import { ConfidencePrompt } from '@/components/game/ConfidencePrompt';
+import { useEmotionGameState } from '@/hooks/useEmotionGameState';
 import { RoundSummaryCard } from '@/components/game/RoundSummaryCard';
 import { CalibrationErrorSparkline } from '@/components/game/CalibrationErrorSparkline';
 import { MatchMeter } from '@/components/game/MatchMeter';
@@ -65,6 +64,11 @@ const loadStoredPractice = (): PracticeMode => {
 export default function EmotionGame() {
   const { tCommon } = useTranslation();
   const { results: _analyticsResults } = useAnalyticsWorker({ precomputeOnIdle: false });
+
+  // Game state machine
+  const gameState = useEmotionGameState();
+
+  // Configuration state (not part of state machine)
   const [worldIndex, setWorldIndex] = useState<number>(() => {
     try { return Math.max(0, Math.min(DEFAULT_WORLDS.length - 1, Number(localStorage.getItem('emotion.worldIndex') || '0'))); } catch {
       /* noop */
@@ -73,23 +77,7 @@ export default function EmotionGame() {
   });
   const baseWorld = DEFAULT_WORLDS[worldIndex] ?? DEFAULT_WORLDS[0];
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [cameraActive, setCameraActive] = useState<boolean>(false);
-  const [usedHint, setUsedHint] = useState<boolean>(false);
-  const [combo, setCombo] = useState<number>(1);
-  const [roundTimerMs, setRoundTimerMs] = useState<number>(0);
-  const [timerActive, setTimerActive] = useState<boolean>(false);
-  const [hints, setHints] = useState<HintsState>(() => loadHints(5));
-  const [fpsBuckets, setFpsBuckets] = useState<Record<string, number>>({});
   const fpsBucketsRef = useRef<Record<string, number>>({});
-  const [showTutorial, setShowTutorial] = useState<boolean>(() => {
-    try { return localStorage.getItem('emotion.tutorialSeen') !== '1'; } catch {
-      /* noop */
-      return true;
-    }
-  });
-  const [showCalibration, setShowCalibration] = useState<boolean>(() => !loadCalibration());
-  const [showLevelComplete, setShowLevelComplete] = useState<boolean>(false);
-  const [showStickerBook, setShowStickerBook] = useState<boolean>(false);
   const [themeId, setThemeId] = useState<'regnbueland' | 'rom'>(() => {
     try { return (localStorage.getItem('emotion.themeId') as 'regnbueland' | 'rom') || 'regnbueland'; } catch {
       /* noop */
@@ -97,7 +85,6 @@ export default function EmotionGame() {
     }
   });
   const theme = getTheme(themeId);
-  const [showWorldBanner, setShowWorldBanner] = useState<boolean>(false);
   const [mode, setMode] = useState<GameMode>(() => {
     try { return (localStorage.getItem('emotion.gameMode') as GameMode) || 'classic'; } catch {
       /* noop */
@@ -149,19 +136,18 @@ export default function EmotionGame() {
   const lastLevelRef = useRef<number>(0);
   const metrics = useRef(createMetricsAccumulator((loadCalibration()?.threshold ?? 0.6)));
 
+  // UI/Effect state (not part of state machine)
   const [effectParams, setEffectParams] = useState<EffectParams>({ particleCount: EFFECT_CONFIG.DEFAULT_PARTICLE_COUNT, colorSaturation: EFFECT_CONFIG.DEFAULT_COLOR_SATURATION, glowStrength: EFFECT_CONFIG.DEFAULT_GLOW_STRENGTH, sfxGain: EFFECT_CONFIG.DEFAULT_SFX_GAIN });
   const [lastPerfect, setLastPerfect] = useState<boolean>(false);
-  const [showConfidencePrompt, setShowConfidencePrompt] = useState<boolean>(false);
   const [confidenceValue, setConfidenceValue] = useState<number>(0.7);
   const [showSummary, setShowSummary] = useState<{ visible: boolean; timeMs: number; stabilityMs?: number; intensity?: number; actualProb?: number } | null>(null);
   const [particleMin] = useState<number>(() => { try { return Number(localStorage.getItem('emotion.effects.particles.min') || String(EFFECT_CONFIG.PARTICLE_MIN)); } catch { return EFFECT_CONFIG.PARTICLE_MIN; } });
   const [particleMax] = useState<number>(() => { try { return Number(localStorage.getItem('emotion.effects.particles.max') || String(EFFECT_CONFIG.PARTICLE_MAX)); } catch { return EFFECT_CONFIG.PARTICLE_MAX; } });
 
-  const [difficulty, setDifficulty] = useState({ threshold: (loadCalibration()?.threshold ?? GAME_DIFFICULTY.DEFAULT_THRESHOLD), holdMs: (loadCalibration()?.holdMs ?? GAME_DIFFICULTY.DEFAULT_HOLD_MS), streak: 0 });
   // Destructure stable pieces to avoid object identity changing in deps
   const { state: holdState, update: updateHold, reset: resetHold } = useHoldTimer({
-    threshold: difficulty.threshold ?? (loadCalibration()?.threshold ?? round?.threshold) ?? GAME_DIFFICULTY.DEFAULT_THRESHOLD,
-    holdMs: difficulty.holdMs ?? (loadCalibration()?.holdMs ?? round?.holdMs) ?? GAME_DIFFICULTY.DEFAULT_HOLD_MS,
+    threshold: gameState.state.round.difficulty.threshold ?? (loadCalibration()?.threshold ?? round?.threshold) ?? GAME_DIFFICULTY.DEFAULT_THRESHOLD,
+    holdMs: gameState.state.round.difficulty.holdMs ?? (loadCalibration()?.holdMs ?? round?.holdMs) ?? GAME_DIFFICULTY.DEFAULT_HOLD_MS,
   });
 
   useEffect(() => {
@@ -188,10 +174,8 @@ export default function EmotionGame() {
           /* noop */
         }
       }
-    } else if (e.key.toLowerCase() === 'h' && hints.remaining > 0) {
-      setUsedHint(true);
-      const updatedHints = consumeHint();
-      setHints(updatedHints);
+    } else if (e.key.toLowerCase() === 'h' && gameState.canUseHint) {
+      gameState.useHint();
       try {
         recordGameEvent({
           ts: Date.now(),
@@ -203,7 +187,7 @@ export default function EmotionGame() {
         /* noop */
       }
     }
-  }, [phase, setGamePhase, hints.remaining, roundIndex, round, tCommon]);
+  }, [phase, setGamePhase, gameState, roundIndex, round, tCommon]);
 
   useEffect(() => {
     // eslint-disable-next-line no-restricted-syntax
@@ -275,14 +259,14 @@ export default function EmotionGame() {
 
   // Transition from prompt -> detecting when vi er klare
   useEffect(() => {
-    if (phase === 'prompt' && cameraActive && detector.ready && round) {
+    if (phase === 'prompt' && gameState.state.detector.cameraActive && detector.ready && round) {
       resetHold();
       try {
         metrics.current.reset();
       } catch {
         /* noop */
       }
-      setUsedHint(false);
+      gameState.resetHintFlag();
       setGamePhase('detecting');
       recordGameEvent({
         ts: Date.now(),
@@ -297,9 +281,7 @@ export default function EmotionGame() {
       const timeAttackDuration = Math.max(GAME_TIMING.TIME_ATTACK_ROUND_MIN_DURATION_MS, Math.floor(baseMs * GAME_TIMING.TIME_ATTACK_ROUND_DURATION_MULTIPLIER)); // slightly tighter
       const mirrorDuration = Math.max(GAME_TIMING.MIRROR_ROUND_MIN_DURATION_MS, Math.floor(baseMs * GAME_TIMING.MIRROR_ROUND_DURATION_MULTIPLIER)); // give more time to mimic
       const duration = mode === 'time_attack' ? timeAttackDuration : mode === 'mirror' ? mirrorDuration : classicDuration;
-      setRoundTimerMs(duration);
-      setTimerActive(true);
-      setCombo((c) => Math.max(1, c));
+      gameState.startRound(duration);
       try {
         const live = document.getElementById('round-live');
         if (live) live.textContent = String(tCommon('game.announcements.roundStart'));
@@ -307,61 +289,60 @@ export default function EmotionGame() {
         /* noop */
       }
     }
-  }, [phase, cameraActive, detector.ready, round, resetHold, setGamePhase, mode, roundIndex, tCommon]);
+  }, [phase, gameState, detector.ready, round, resetHold, setGamePhase, mode, roundIndex, tCommon]);
 
   // Countdown effect for timed rounds
   useEffect(() => {
-    if (!timerActive || phase !== 'detecting') return;
+    if (!gameState.state.round.timerActive || phase !== 'detecting') return;
     let timeoutId: number | undefined;
 
     const tick = () => {
-      setRoundTimerMs((current) => {
-        const step = mode === 'time_attack'
-          ? GAME_TIMING.TIME_ATTACK_STEP_MS
-          : mode === 'mirror'
-            ? GAME_TIMING.MIRROR_STEP_MS
-            : GAME_TIMING.CLASSIC_STEP_MS;
-        const nextValue = Math.max(0, current - step);
-        if (nextValue === 0) {
-          try {
-            recordGameEvent({
-              ts: Date.now(),
-              kind: 'round_fail',
-              roundIndex,
-              target: round?.target ?? 'neutral',
-              reason: 'timeout',
-              fpsBuckets
-            });
-          } catch {
-            /* noop */
-          }
-          setTimerActive(false);
-          setCombo(1);
-          try {
-            registerFail();
-          } catch {
-            /* noop */
-          }
-          setGamePhase('paused');
-          const resumeId = window.setTimeout(() => {
-            try {
-              advanceRound();
-            } catch {
-              /* noop */
-            }
-          }, 600);
-          timeoutId = resumeId as unknown as number;
+      const step = mode === 'time_attack'
+        ? GAME_TIMING.TIME_ATTACK_STEP_MS
+        : mode === 'mirror'
+          ? GAME_TIMING.MIRROR_STEP_MS
+          : GAME_TIMING.CLASSIC_STEP_MS;
+
+      gameState.tickTimer(step);
+
+      if (gameState.state.round.roundTimerMs - step <= 0) {
+        try {
+          recordGameEvent({
+            ts: Date.now(),
+            kind: 'round_fail',
+            roundIndex,
+            target: round?.target ?? 'neutral',
+            reason: 'timeout',
+            fpsBuckets: gameState.state.detector.fpsBuckets
+          });
+        } catch {
+          /* noop */
         }
-        return nextValue;
-      });
-      timeoutId = window.setTimeout(tick, GAME_TIMING.ROUND_COUNTDOWN_TICK_MS) as unknown as number;
+        gameState.registerFail();
+        try {
+          registerFail();
+        } catch {
+          /* noop */
+        }
+        setGamePhase('paused');
+        const resumeId = window.setTimeout(() => {
+          try {
+            advanceRound();
+          } catch {
+            /* noop */
+          }
+        }, 600);
+        timeoutId = resumeId as unknown as number;
+      } else {
+        timeoutId = window.setTimeout(tick, GAME_TIMING.ROUND_COUNTDOWN_TICK_MS) as unknown as number;
+      }
     };
 
     timeoutId = window.setTimeout(tick, GAME_TIMING.ROUND_COUNTDOWN_TICK_MS) as unknown as number;
     return () => {
       if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, [timerActive, phase, roundIndex, round, fpsBuckets, registerFail, advanceRound, mode, setGamePhase]);
+  }, [gameState, phase, roundIndex, round, registerFail, advanceRound, mode, setGamePhase]);
 
   // Oppdater hold basert på sannsynlighet for måluttrykket
   useEffect(() => {
@@ -403,7 +384,7 @@ export default function EmotionGame() {
         (round.threshold ?? GAME_DIFFICULTY.DEFAULT_THRESHOLD) + GAME_SCORING.PERFECT_THRESHOLD_ADDITION
       );
       setLastPerfect(perfect);
-      registerScore(timeToSuccess, usedHint, { combo, perfect });
+      registerScore(timeToSuccess, gameState.state.round.usedHint, { combo: gameState.state.round.combo, perfect });
       try {
         setEffectParams(
           mapEffects({
@@ -415,31 +396,34 @@ export default function EmotionGame() {
       } catch {
         /* noop */
       }
-      setCombo((c) => Math.min(GAME_SCORING.COMBO_MAX, c + 1));
-      setTimerActive(false);
+      gameState.registerSuccess(true);
       try {
         const params = resolveParams(
           timeToSuccess,
           snapshot.longestStabilityMs / Math.max(1, timeToSuccess),
           snapshot.intensityScore
         );
-        setDifficulty((d) =>
-          refineDifficultyForEmotion(
+        const adaptedDifficulty = refineDifficultyForEmotion(
+          adaptDifficulty(
             {
-              ...d,
+              threshold: gameState.state.round.difficulty.threshold,
               holdMs: params.holdDurationMs,
-              threshold: Math.max(
-                GAME_DIFFICULTY.MIN_ADAPTIVE_THRESHOLD,
-                Math.min(GAME_DIFFICULTY.MAX_ADAPTIVE_THRESHOLD, d.threshold ?? GAME_DIFFICULTY.DEFAULT_THRESHOLD)
-              )
+              streak: gameState.state.round.difficulty.streak
             },
-            targetExpression
-          )
+            { kind: 'success' }
+          ),
+          targetExpression
+        );
+        gameState.updateDifficulty(
+          Math.max(
+            GAME_DIFFICULTY.MIN_ADAPTIVE_THRESHOLD,
+            Math.min(GAME_DIFFICULTY.MAX_ADAPTIVE_THRESHOLD, adaptedDifficulty.threshold ?? GAME_DIFFICULTY.DEFAULT_THRESHOLD)
+          ),
+          adaptedDifficulty.holdMs
         );
       } catch {
         /* noop */
       }
-      setDifficulty((d) => refineDifficultyForEmotion(adaptDifficulty(d, { kind: 'success' }), targetExpression));
       recordGameEvent({
         ts: Date.now(),
         kind: 'round_success',
@@ -448,7 +432,7 @@ export default function EmotionGame() {
         timeMs: timeToSuccess,
         stars: metricsSnapshot.stars || 1,
         streak: metricsSnapshot.streak,
-        fpsBuckets,
+        fpsBuckets: gameState.state.detector.fpsBuckets,
         stabilityMs: snapshot.longestStabilityMs,
         intensity: snapshot.intensityScore
       });
@@ -460,7 +444,7 @@ export default function EmotionGame() {
           intensity: snapshot.intensityScore,
           actualProb: targetProb
         });
-        setShowConfidencePrompt(true);
+        gameState.showModal('showConfidencePrompt');
       }
     }
   }, [
@@ -471,11 +455,9 @@ export default function EmotionGame() {
     updateHold,
     setGamePhase,
     registerScore,
-    usedHint,
-    combo,
+    gameState,
     mode,
     roundIndex,
-    fpsBuckets,
     metricsSnapshot.stars,
     metricsSnapshot.streak
   ]);
@@ -484,18 +466,19 @@ export default function EmotionGame() {
     const id = window.setInterval(() => {
       const next = fpsBucketsRef.current;
       if (!next) return;
-      setFpsBuckets((prev) => {
-        const hasChange = Object.keys(next).some((key) => prev[key] !== next[key]);
-        return hasChange ? { ...next } : prev;
-      });
+      const prev = gameState.state.detector.fpsBuckets;
+      const hasChange = Object.keys(next).some((key) => prev[key] !== next[key]);
+      if (hasChange) {
+        gameState.updateFpsBuckets({ ...next });
+      }
     }, 800);
     return () => window.clearInterval(id);
-  }, []);
+  }, [gameState]);
 
   // Fast‑pass: if the top label matches target with high confidence for a few frames, accept immediately
   // Run ONLY while detecting to prevent setState loops across phases
   useEffect(() => {
-    if (phase !== 'detecting' || !round || !cameraActive || !detector.ready) return;
+    if (phase !== 'detecting' || !round || !gameState.state.detector.cameraActive || !detector.ready) return;
     const probabilities = detector.probabilities as Record<string, number>;
     const targetExpression: ExpressionKey = round.target;
     const prob = probabilities[targetExpression] ?? 0;
@@ -512,9 +495,20 @@ export default function EmotionGame() {
     if (fastPassFramesRef.current >= GAME_DIFFICULTY.FAST_PASS_FRAMES) {
       setGamePhase('success');
       const timeToSuccess = round.holdMs;
-      registerScore(timeToSuccess, usedHint, { combo, perfect: false });
-      setCombo((c) => Math.min(10, c + 1));
-      setDifficulty((d) => refineDifficultyForEmotion(adaptDifficulty(d, { kind: 'success' }), targetExpression));
+      registerScore(timeToSuccess, gameState.state.round.usedHint, { combo: gameState.state.round.combo, perfect: false });
+      gameState.registerSuccess(true);
+      const adaptedDifficulty = refineDifficultyForEmotion(
+        adaptDifficulty(
+          {
+            threshold: gameState.state.round.difficulty.threshold,
+            holdMs: gameState.state.round.difficulty.holdMs,
+            streak: gameState.state.round.difficulty.streak
+          },
+          { kind: 'success' }
+        ),
+        targetExpression
+      );
+      gameState.updateDifficulty(adaptedDifficulty.threshold, adaptedDifficulty.holdMs);
       recordGameEvent({
         ts: Date.now(),
         kind: 'round_success',
@@ -523,30 +517,26 @@ export default function EmotionGame() {
         timeMs: timeToSuccess,
         stars: metricsSnapshot.stars || 1,
         streak: metricsSnapshot.streak,
-        fpsBuckets
+        fpsBuckets: gameState.state.detector.fpsBuckets
       });
       if (mode === 'confidence') {
-        setTimerActive(false);
         const actualProb = probabilities[targetExpression] ?? 0;
         setShowSummary({ visible: false, timeMs: timeToSuccess, actualProb });
-        setShowConfidencePrompt(true);
+        gameState.showModal('showConfidencePrompt');
       }
     }
   }, [
     phase,
     round,
-    cameraActive,
+    gameState,
     detector.ready,
     detector.topLabel,
     detector.probabilities,
     registerScore,
-    usedHint,
-    combo,
     mode,
     roundIndex,
     metricsSnapshot.stars,
     metricsSnapshot.streak,
-    fpsBuckets,
     setGamePhase
   ]);
 
@@ -585,9 +575,9 @@ export default function EmotionGame() {
   // Show level complete modal when world rounds are done
   useEffect(() => {
     if (phase === 'completed') {
-      setShowLevelComplete(true);
+      gameState.showModal('showLevelComplete');
     }
-  }, [phase]);
+  }, [phase, gameState]);
 
   // Persist world index when it changes (affects mixed mode)
   useEffect(() => { try { localStorage.setItem('emotion.worldIndex', String(worldIndex)); } catch {
@@ -622,11 +612,11 @@ export default function EmotionGame() {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-        setCameraActive(true);
+        gameState.setCamera(true);
         setGamePhase('prompt');
       }
     } catch {
-      setCameraActive(false);
+      gameState.setCamera(false);
     }
   }
 
@@ -635,7 +625,7 @@ export default function EmotionGame() {
     const stream = (video?.srcObject as MediaStream | null) ?? null;
     for (const track of stream?.getTracks() ?? []) track.stop();
     if (video) { video.srcObject = null; video.pause(); }
-    setCameraActive(false);
+    gameState.setCamera(false);
     resetHold();
   }
 
@@ -660,7 +650,7 @@ export default function EmotionGame() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">{String(tCommon('game.title', { defaultValue: 'Følelsesspill' }))}</h1>
           <div className="flex items-center gap-2">
-            {cameraActive ? (
+            {gameState.state.detector.cameraActive ? (
               <Button variant="destructive" onClick={stopCamera}>{String(tCommon('tegn.cameraDisable'))}</Button>
             ) : (
               <Button variant="default" onClick={startCamera}>{String(tCommon('tegn.cameraEnable'))}</Button>
@@ -676,8 +666,8 @@ export default function EmotionGame() {
                 }
               }}
             />
-            <Button variant="outline" onClick={() => { setShowTutorial(true); }}>{String(tCommon('buttons.help', { defaultValue: 'Help' }))}</Button>
-            <Button variant="outline" onClick={() => { setDifficulty(d => ({ ...d, streak: 0 })); }}>{String(tCommon('game.streakReset', { defaultValue: 'Reset streak' }))}</Button>
+            <Button variant="outline" onClick={() => { gameState.showModal('showTutorial'); }}>{String(tCommon('buttons.help', { defaultValue: 'Help' }))}</Button>
+            <Button variant="outline" onClick={() => { gameState.resetDifficultyStreak(); }}>{String(tCommon('game.streakReset', { defaultValue: 'Reset streak' }))}</Button>
             {mode === 'confidence' && (
               <>
                 <CalibrationErrorSparkline />
@@ -721,12 +711,10 @@ export default function EmotionGame() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  disabled={hints.remaining <= 0}
+                  disabled={!gameState.canUseHint}
                   onClick={() => {
-                    if (hints.remaining <= 0) return;
-                    setUsedHint(true);
-                    const updatedHints = consumeHint();
-                    setHints(updatedHints);
+                    if (!gameState.canUseHint) return;
+                    gameState.useHint();
                     try {
                       recordGameEvent({
                         ts: Date.now(),
@@ -739,14 +727,14 @@ export default function EmotionGame() {
                     }
                   }}
                 >
-                  {String(tCommon('game.hintCount', { count: hints.remaining }))}
+                  {String(tCommon('game.hintCount', { count: gameState.state.round.hints.remaining }))}
                 </Button>
                 <Button variant="outline" onClick={() => setGamePhase('paused')}>{String(tCommon('game.pause'))}</Button>
                 <Button variant="outline" onClick={() => advanceRound()}>{String(tCommon('game.skip'))}</Button>
               </div>
               {/* Timer and combo display */}
               <div className="text-sm text-foreground/70">
-                {timerActive && <span>{String(tCommon('roundSummary.time'))}: {Math.ceil(roundTimerMs / 1000)}{String(tCommon('game.secondsShort'))}</span>} {combo > 1 && <span className="ml-3">{String(tCommon('game.comboLabel', { count: combo }))}</span>}
+                {gameState.state.round.timerActive && <span>{String(tCommon('roundSummary.time'))}: {Math.ceil(gameState.state.round.roundTimerMs / 1000)}{String(tCommon('game.secondsShort'))}</span>} {gameState.state.round.combo > 1 && <span className="ml-3">{String(tCommon('game.comboLabel', { count: gameState.state.round.combo }))}</span>}
               </div>
               <div id="round-live" className="sr-only" aria-live="polite" />
             </div>
@@ -803,13 +791,13 @@ export default function EmotionGame() {
         <SessionSummary startTs={modeStartRef.current} />
         <LevelUpModal visible={levelUpVisible} level={metricsSnapshot.level} onClose={() => setLevelUpVisible(false)} />
       </div>
-      <StickerBook visible={showStickerBook} />
+      <StickerBook visible={gameState.state.modals.showStickerBook} />
       <ConfidencePrompt
-        visible={showConfidencePrompt && mode === 'confidence'}
+        visible={gameState.state.modals.showConfidencePrompt && mode === 'confidence'}
         value={confidenceValue}
         onChange={setConfidenceValue}
         onSubmit={() => {
-          setShowConfidencePrompt(false);
+          gameState.hideModal('showConfidencePrompt');
           // Compute calibration error vs last actual probability
           const actualProb = showSummary?.actualProb ?? 0;
           const calibrationError = Math.abs(confidenceValue - actualProb);
@@ -842,10 +830,10 @@ export default function EmotionGame() {
           setGamePhase('reward');
         }}
       />
-      <TutorialOverlay visible={showTutorial} onClose={() => { try { localStorage.setItem('emotion.tutorialSeen', '1'); } catch {
+      <TutorialOverlay visible={gameState.state.modals.showTutorial} onClose={() => { try { localStorage.setItem('emotion.tutorialSeen', '1'); } catch {
     /* noop */
-  }; setShowTutorial(false); }} />
-      <CalibrationOverlay visible={showCalibration} neutralProb={(detector.probabilities as Record<string, number>)['neutral'] ?? 0} onClose={() => setShowCalibration(false)} />
+  }; gameState.hideModal('showTutorial'); }} />
+      <CalibrationOverlay visible={gameState.state.modals.showCalibration} neutralProb={(detector.probabilities as Record<string, number>)['neutral'] ?? 0} onClose={() => gameState.hideModal('showCalibration')} />
       {/* Full-screen success confetti overlay */}
       {/* Guard with reduced motion and only render once mounted to avoid strict-mode dev issues */}
       {celebration.confetti && (
@@ -873,16 +861,16 @@ export default function EmotionGame() {
         />
       )}
       <LevelCompleteModal
-        visible={showLevelComplete}
-        onClose={() => setShowLevelComplete(false)}
+        visible={gameState.state.modals.showLevelComplete}
+        onClose={() => gameState.hideModal('showLevelComplete')}
         onNext={() => {
-          setShowLevelComplete(false);
+          gameState.hideModal('showLevelComplete');
           setWorldIndex((i) => Math.min(DEFAULT_WORLDS.length - 1, i + 1));
-          setShowWorldBanner(true);
+          gameState.showModal('showWorldBanner');
           startGame();
         }}
-        onReplay={() => { setShowLevelComplete(false); startGame(); }}
-        onFreePlay={() => { setShowLevelComplete(false); setShowStickerBook(true); }}
+        onReplay={() => { gameState.hideModal('showLevelComplete'); startGame(); }}
+        onFreePlay={() => { gameState.hideModal('showLevelComplete'); gameState.showModal('showStickerBook'); }}
         onPayout={(stickerId) => {
           try {
             const raw = localStorage.getItem('emotion.stickers.v1');
@@ -895,10 +883,10 @@ export default function EmotionGame() {
         }}
       />
       <WorldBanner
-        visible={showWorldBanner}
+        visible={gameState.state.modals.showWorldBanner}
         worldName={String(tCommon(effectiveWorld.nameKey))}
         colors={theme.colors}
-        onClose={() => setShowWorldBanner(false)}
+        onClose={() => gameState.hideModal('showWorldBanner')}
       />
     </div>
   );
