@@ -43,23 +43,11 @@ import { PracticeSelector } from '@/components/game/PracticeSelector';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { SessionSummary } from '@/components/game/SessionSummary';
 import { PRACTICE_MODE_CONFIG, GAME_TIMING, GAME_DIFFICULTY, GAME_SCORING, EFFECT_CONFIG, SOUND_CONFIG, STICKER_CONFIG } from '@/config/gameConfig';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 type PracticeMode = 'mixed' | 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised';
 const PRACTICE_OPTIONS: PracticeMode[] = ['mixed', 'neutral', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised'];
-
-const PRACTICE_STORAGE_KEY = 'emotion.practice';
-
-const loadStoredPractice = (): PracticeMode => {
-  try {
-    const stored = localStorage.getItem(PRACTICE_STORAGE_KEY);
-    if (stored && PRACTICE_OPTIONS.includes(stored as PracticeMode)) {
-      return stored as PracticeMode;
-    }
-  } catch {
-    /* noop */
-  }
-  return 'mixed';
-};
 
 export default function EmotionGame() {
   const { tCommon } = useTranslation();
@@ -68,40 +56,58 @@ export default function EmotionGame() {
   // Game state machine
   const gameState = useEmotionGameState();
 
-  // Configuration state (not part of state machine)
-  const [worldIndex, setWorldIndex] = useState<number>(() => {
-    try { return Math.max(0, Math.min(DEFAULT_WORLDS.length - 1, Number(localStorage.getItem('emotion.worldIndex') || '0'))); } catch {
-      /* noop */
-      return 0;
+  // Configuration state (not part of state machine) - now using storage hooks
+  const [worldIndex, setWorldIndex] = useStorageState(
+    STORAGE_KEYS.EMOTION_WORLD_INDEX,
+    0,
+    {
+      deserialize: (value) => {
+        const parsed = Number(JSON.parse(value));
+        return Math.max(0, Math.min(DEFAULT_WORLDS.length - 1, parsed));
+      },
     }
-  });
+  );
   const baseWorld = DEFAULT_WORLDS[worldIndex] ?? DEFAULT_WORLDS[0];
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fpsBucketsRef = useRef<Record<string, number>>({});
-  const [themeId, setThemeId] = useState<'regnbueland' | 'rom'>(() => {
-    try { return (localStorage.getItem('emotion.themeId') as 'regnbueland' | 'rom') || 'regnbueland'; } catch {
-      /* noop */
-      return 'regnbueland';
+
+  const [themeId, setThemeId] = useStorageState<'regnbueland' | 'rom'>(
+    STORAGE_KEYS.EMOTION_THEME_ID,
+    'regnbueland',
+    {
+      deserialize: (value) => {
+        const parsed = JSON.parse(value);
+        return ['regnbueland', 'rom'].includes(parsed) ? parsed : 'regnbueland';
+      },
     }
-  });
+  );
   const theme = getTheme(themeId);
-  const [mode, setMode] = useState<GameMode>(() => {
-    try { return (localStorage.getItem('emotion.gameMode') as GameMode) || 'classic'; } catch {
-      /* noop */
-      return 'classic';
-    }
-  });
+
+  const [mode, setMode] = useStorageState<GameMode>(
+    STORAGE_KEYS.EMOTION_GAME_MODE,
+    'classic'
+  );
   const modeStartRef = useRef<number | null>(null);
-  const [practice, setPractice] = useState<PracticeMode>(loadStoredPractice);
+
+  const [practice, setPractice] = useStorageState<PracticeMode>(
+    STORAGE_KEYS.EMOTION_PRACTICE_MODE,
+    'mixed',
+    {
+      deserialize: (value) => {
+        const parsed = JSON.parse(value);
+        return PRACTICE_OPTIONS.includes(parsed) ? parsed : 'mixed';
+      },
+    }
+  );
+
   // Capture studentId from URL if provided and persist for scoping progress (run once)
+  const [, setCurrentStudentId] = useStorageState(STORAGE_KEYS.CURRENT_STUDENT_ID, '');
   useEffect(() => {
-    try {
-      const sid = new URLSearchParams(window.location.search).get('studentId');
-      if (sid) localStorage.setItem('current.studentId', sid);
-    } catch {
-    /* noop */
-  }
-  }, []);
+    const sid = new URLSearchParams(window.location.search).get('studentId');
+    if (sid) {
+      setCurrentStudentId(sid);
+    }
+  }, [setCurrentStudentId]);
 
 
 
@@ -197,11 +203,7 @@ export default function EmotionGame() {
 
   // Track mode start/end in telemetry
   useEffect(() => {
-    try {
-      localStorage.setItem('emotion.gameMode', mode);
-    } catch {
-      /* noop */
-    }
+    // Note: mode is automatically persisted via useStorageState
     if (modeStartRef.current != null) {
       try {
         const duration = Date.now() - modeStartRef.current;
@@ -580,17 +582,11 @@ export default function EmotionGame() {
   }, [phase, gameState]);
 
   // Persist world index when it changes (affects mixed mode)
-  useEffect(() => { try { localStorage.setItem('emotion.worldIndex', String(worldIndex)); } catch {
-    /* noop */
-  } }, [worldIndex]);
+  // Note: worldIndex is automatically persisted via useStorageState
 
   // Restart when practice mode changes for predictable rounds
   useEffect(() => {
-    try {
-      localStorage.setItem(PRACTICE_STORAGE_KEY, practice);
-    } catch {
-      /* noop */
-    }
+    // Note: practice is automatically persisted via useStorageState
     startGame();
   }, [practice, startGame]);
 
@@ -658,12 +654,8 @@ export default function EmotionGame() {
             <ThemeSwitch
               themeId={themeId}
               onChange={(id) => {
+                // Note: theme is automatically persisted via useStorageState
                 setThemeId(id);
-                try {
-                  localStorage.setItem('emotion.themeId', id);
-                } catch {
-                  /* noop */
-                }
               }}
             />
             <Button variant="outline" onClick={() => { gameState.showModal('showTutorial'); }}>{String(tCommon('buttons.help', { defaultValue: 'Help' }))}</Button>
