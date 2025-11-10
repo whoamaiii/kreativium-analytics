@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 interface PinGateProps {
   children: React.ReactNode;
@@ -15,44 +17,39 @@ interface PinGateProps {
  * - Stores a hashed-ish PIN in localStorage (not secure, but sufficient as a soft guard)
  * - Maintains an ephemeral verified session for a limited time (default 15 minutes)
  */
-export function PinGate({ children, storageKey = 'adult.pin', sessionMinutes = 15 }: PinGateProps): JSX.Element {
+export function PinGate({ children, storageKey = STORAGE_KEYS.ADULT_PIN, sessionMinutes = 15 }: PinGateProps): JSX.Element {
   const [entered, setEntered] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [verified, setVerified] = useState<boolean>(false);
 
   const sessionKey = useMemo(() => `${storageKey}.verifiedUntil`, [storageKey]);
 
-  useEffect(() => {
-    try {
-      const untilRaw = localStorage.getItem(sessionKey);
-      const until = untilRaw ? Number(untilRaw) : 0;
-      if (Number.isFinite(until) && until > Date.now()) {
-        setVerified(true);
-      }
-    } catch {}
-  }, [sessionKey]);
+  // Use storage hook for PIN
+  const [storedPin] = useStorageState<string>(storageKey, '1234');
 
-  const storedPin = useMemo(() => {
-    try {
-      // Default PIN is 1234 if none set
-      return localStorage.getItem(storageKey) || '1234';
-    } catch {
-      return '1234';
+  // Use storage hook for session expiry
+  const [sessionExpiry, setSessionExpiry] = useStorageState<number>(sessionKey, 0, {
+    serialize: (value) => String(value),
+    deserialize: (value) => Number(JSON.parse(value)) || 0,
+  });
+
+  // Check if session is still valid on mount
+  useEffect(() => {
+    if (Number.isFinite(sessionExpiry) && sessionExpiry > Date.now()) {
+      setVerified(true);
     }
-  }, [storageKey]);
+  }, [sessionExpiry]);
 
   const verify = useCallback(() => {
     if (entered.trim() === storedPin) {
       setError('');
       setVerified(true);
-      try {
-        const until = Date.now() + Math.max(1, sessionMinutes) * 60_000;
-        localStorage.setItem(sessionKey, String(until));
-      } catch {}
+      const until = Date.now() + Math.max(1, sessionMinutes) * 60_000;
+      setSessionExpiry(until);
     } else {
       setError('Feil PIN');
     }
-  }, [entered, storedPin, sessionKey, sessionMinutes]);
+  }, [entered, storedPin, sessionMinutes, setSessionExpiry]);
 
   if (verified) return <>{children}</>;
 

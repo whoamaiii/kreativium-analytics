@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { useStorageState, useStorageFlag } from '@/lib/storage/useStorageState';
 
 export interface ResizableSplitLayoutProps {
   left: React.ReactNode;
@@ -23,7 +24,7 @@ export interface ResizableSplitLayoutProps {
  * - Keyboard: focus the separator and use ArrowLeft/Right (Shift = larger step)
  * - Pointer: drag the handle (requestAnimationFrame throttled)
  * - Double-click on the handle resets to defaultRatio
- * - State persistence using localStorage via storageKey
+ * - State persistence using storage abstraction hooks
  */
 export function ResizableSplitLayout({
   left,
@@ -39,28 +40,35 @@ export function ResizableSplitLayout({
   className,
 }: ResizableSplitLayoutProps): React.ReactElement {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const [ratio, setRatio] = React.useState<number>(() => {
-    try { const v = localStorage.getItem(`${storageKey}:ratio`); return v ? Math.min(0.9, Math.max(0.1, parseFloat(v))) : defaultRatio; } catch { return defaultRatio; }
-  });
-  const [collapsedRight, setCollapsedRight] = React.useState<boolean>(() => {
-    if (typeof collapsedRightProp === 'boolean') return collapsedRightProp;
-    try { const v = localStorage.getItem(`${storageKey}:collapsedRight`); return v === '1'; } catch { return false; }
-  });
+
+  // Use storage hooks for automatic persistence
+  const [ratio, setRatio] = useStorageState<number>(
+    `${storageKey}:ratio`,
+    defaultRatio,
+    {
+      deserialize: (v) => {
+        const parsed = parseFloat(JSON.parse(v));
+        return Math.min(0.9, Math.max(0.1, parsed));
+      },
+    }
+  );
+
+  const [collapsedRight, setCollapsedRightInternal] = useStorageFlag(
+    `${storageKey}:collapsedRight`,
+    false
+  );
+
+  // Allow prop to override stored value
+  const effectiveCollapsedRight = typeof collapsedRightProp === 'boolean' ? collapsedRightProp : collapsedRight;
 
   React.useEffect(() => {
-    if (typeof collapsedRightProp === 'boolean') setCollapsedRight(collapsedRightProp);
-  }, [collapsedRightProp]);
-
-  const persist = (nextRatio: number, nextCollapsed: boolean | null = null) => {
-    try { localStorage.setItem(`${storageKey}:ratio`, String(nextRatio)); } catch {}
-    if (nextCollapsed !== null) {
-      try { localStorage.setItem(`${storageKey}:collapsedRight`, nextCollapsed ? '1' : '0'); } catch {}
+    if (typeof collapsedRightProp === 'boolean' && collapsedRightProp !== collapsedRight) {
+      setCollapsedRightInternal(collapsedRightProp);
     }
-  };
+  }, [collapsedRightProp, collapsedRight, setCollapsedRightInternal]);
 
   const setCollapsed = (v: boolean) => {
-    setCollapsedRight(v);
-    persist(ratio, v);
+    setCollapsedRightInternal(v);
     try { onCollapsedChange?.(v); logger.info('[UI] split.collapse.change', { collapsed: v }); } catch {}
   };
 
@@ -95,7 +103,7 @@ export function ResizableSplitLayout({
     };
     const onPointerUp = () => {
       try { onResizeEnd?.(ratio); logger.info('[UI] split.drag.end', { ratio }); } catch {}
-      persist(ratio);
+      // No need to persist - storage hook handles it automatically
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
     };
@@ -110,22 +118,22 @@ export function ResizableSplitLayout({
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
       const next = clampRatio(ratio - step, containerWidth);
-      setRatio(next); persist(next);
+      setRatio(next); // Storage hook handles persistence
     } else if (e.key === 'ArrowRight') {
       e.preventDefault();
       const next = clampRatio(ratio + step, containerWidth);
-      setRatio(next); persist(next);
+      setRatio(next); // Storage hook handles persistence
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      setCollapsed(!collapsedRight);
+      setCollapsed(!effectiveCollapsedRight);
     }
   };
 
   const onDoubleClick: React.MouseEventHandler<HTMLDivElement> = () => {
-    setRatio(defaultRatio); persist(defaultRatio);
+    setRatio(defaultRatio); // Storage hook handles persistence
   };
 
-  const gridTemplate = collapsedRight
+  const gridTemplate = effectiveCollapsedRight
     ? '1fr var(--split-handle) 0px'
     : `${Math.round(ratio * 100)}% var(--split-handle) 1fr`;
 
