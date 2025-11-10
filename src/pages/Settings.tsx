@@ -6,49 +6,43 @@ import { useNavigate } from 'react-router-dom';
 import { FileText } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Switch } from '@/components/ui/switch';
+import { useStorageState, useStorageFlag, useStorageRemove } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 const Settings = (): JSX.Element => {
   const { tSettings, tCommon } = useTranslation();
   const navigate = useNavigate();
-  const [motionReduced, setMotionReduced] = React.useState<boolean>(() => {
-    try { return localStorage.getItem('emotion.motionReduced') === '1'; } catch { return false; }
-  });
-  const [soundVolume, setSoundVolume] = React.useState<number>(() => {
-    try { return Number(localStorage.getItem('emotion.soundVolume') ?? '0.16'); } catch { return 0.16; }
-  });
-  const [hintsEnabled, setHintsEnabled] = React.useState<boolean>(() => {
-    try { return localStorage.getItem('emotion.hintsEnabled') !== '0'; } catch { return true; }
-  });
-  const [highContrast, setHighContrast] = React.useState<boolean>(() => {
-    try { return localStorage.getItem('emotion.highContrast') === '1'; } catch { return false; }
-  });
-  const [detectorType, setDetectorType] = React.useState<string>(() => {
-    try { return localStorage.getItem('emotion.detectorType') || 'faceapi-worker'; } catch { return 'faceapi-worker'; }
-  });
-  const [quietRewards, setQuietRewards] = React.useState<boolean>(() => {
-    try { return localStorage.getItem('emotion.quietRewards') === '1'; } catch { return false; }
-  });
-  const [adultPin, setAdultPin] = React.useState<string>(() => {
-    try { return localStorage.getItem('adult.pin') || '1234'; } catch { return '1234'; }
-  });
-  const [verifiedUntil, setVerifiedUntil] = React.useState<number | null>(() => {
-    try {
-      const raw = localStorage.getItem('adult.pin.verifiedUntil');
-      const n = raw ? Number(raw) : NaN;
-      return Number.isFinite(n) ? n : null;
-    } catch { return null; }
-  });
 
-  function persist() {
-    try {
-      localStorage.setItem('emotion.motionReduced', motionReduced ? '1' : '0');
-      localStorage.setItem('emotion.soundVolume', String(soundVolume));
-      localStorage.setItem('emotion.hintsEnabled', hintsEnabled ? '1' : '0');
-      localStorage.setItem('emotion.detectorType', detectorType);
-      localStorage.setItem('emotion.quietRewards', quietRewards ? '1' : '0');
-      localStorage.setItem('emotion.highContrast', highContrast ? '1' : '0');
-    } catch {}
-  }
+  // Accessibility settings - using storage hooks for automatic persistence
+  const [motionReduced, setMotionReduced] = useStorageFlag(STORAGE_KEYS.MOTION_REDUCED, false);
+  const [soundVolume, setSoundVolume] = useStorageState(STORAGE_KEYS.SOUND_VOLUME, 0.16);
+  const [hintsEnabled, setHintsEnabled] = useStorageFlag(STORAGE_KEYS.HINTS_ENABLED, true);
+  const [highContrast, setHighContrast] = useStorageFlag(STORAGE_KEYS.HIGH_CONTRAST, false);
+  const [quietRewards, setQuietRewards] = useStorageFlag(STORAGE_KEYS.QUIET_REWARDS, false);
+
+  // Detector configuration
+  const [detectorType, setDetectorType] = useStorageState(
+    STORAGE_KEYS.EMOTION_DETECTOR_TYPE,
+    'faceapi-worker'
+  );
+
+  // Adult mode PIN
+  const [adultPin, setAdultPin] = useStorageState(STORAGE_KEYS.ADULT_PIN, '1234');
+  const [verifiedUntil, setVerifiedUntil] = useStorageState<number | null>(
+    STORAGE_KEYS.ADULT_PIN_VERIFIED_UNTIL,
+    null,
+    {
+      deserialize: (value) => {
+        const n = Number(JSON.parse(value));
+        return Number.isFinite(n) ? n : null;
+      },
+    }
+  );
+
+  // Note: persist() function removed - all state automatically persists via useStorageState
+
+  // Utility for removing calibration data
+  const removeCalibration = useStorageRemove(STORAGE_KEYS.EMOTION_CALIBRATION);
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -140,7 +134,7 @@ const Settings = (): JSX.Element => {
                     <div className="font-medium">{String(tCommon('settings.calibration', { defaultValue: 'Calibration' }))}</div>
                     <div className="text-sm text-muted-foreground">{String(tCommon('settings.calibrationDesc', { defaultValue: 'Reset and re-run calibration flow' }))}</div>
                   </div>
-                  <Button variant="outline" onClick={() => { try { localStorage.removeItem('emotion.calibration.v1'); } catch {}; }}>{String(tCommon('settings.resetCalibration', { defaultValue: 'Reset' }))}</Button>
+                  <Button variant="outline" onClick={removeCalibration}>{String(tCommon('settings.resetCalibration', { defaultValue: 'Reset' }))}</Button>
                 </div>
               </CardContent>
             </Card>
@@ -166,9 +160,9 @@ const Settings = (): JSX.Element => {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => { try { localStorage.setItem('adult.pin', adultPin || '1234'); } catch {} }}>{String(tCommon('buttons.save', { defaultValue: 'Save' }))}</Button>
-                  <Button variant="outline" onClick={() => { try { localStorage.removeItem('adult.pin.verifiedUntil'); setVerifiedUntil(null); } catch {} }}>{String(tCommon('settings.resetVerification', { defaultValue: 'Reset verification' }))}</Button>
-                  <Button variant="outline" onClick={() => { setAdultPin('1234'); try { localStorage.setItem('adult.pin', '1234'); } catch {} }}>{String(tCommon('settings.setDefaultPin', { defaultValue: 'Set 1234' }))}</Button>
+                  <Button onClick={() => { /* PIN automatically saved via useStorageState */ }}>{String(tCommon('buttons.save', { defaultValue: 'Save' }))}</Button>
+                  <Button variant="outline" onClick={() => { setVerifiedUntil(null); }}>{String(tCommon('settings.resetVerification', { defaultValue: 'Reset verification' }))}</Button>
+                  <Button variant="outline" onClick={() => { setAdultPin('1234'); }}>{String(tCommon('settings.setDefaultPin', { defaultValue: 'Set 1234' }))}</Button>
                 </div>
               </CardContent>
             </Card>

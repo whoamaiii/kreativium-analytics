@@ -10,6 +10,8 @@ import type { SourceItem } from '@/types/analytics';
 import { buildCitationList, type CitationListItem } from './citation-utils';
 import { sanitizePlainNorwegian, type AllowedContexts } from '@/lib/evidence/evidenceBuilder';
 import { EntryDetailsDrawer } from './EntryDetailsDrawer';
+import { useSessionState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export interface ExplanationChatProps {
   aiEnabled: boolean;
@@ -88,23 +90,33 @@ export function ExplanationChat({
     }
   };
 
-  // Persisted UI state for sources panel (per session)
-  const STORAGE_KEYS = React.useMemo(() => ({
-    collapsed: 'explanationChat.sourcesCollapsed',
-    showAll: 'explanationChat.showAllSources'
-  }), []);
-  const [showAllSources, setShowAllSources] = React.useState<boolean>(() => {
-    try { const v = sessionStorage.getItem('explanationChat.showAllSources'); return v ? v === '1' : false; } catch { return false; }
-  });
-  const [sourcesCollapsed, setSourcesCollapsed] = React.useState<boolean>(() => {
-    try { const v = sessionStorage.getItem('explanationChat.sourcesCollapsed'); return v ? v === '1' : false; } catch { return false; }
-  });
+  // Persisted UI state for sources panel (per session) - using session storage hooks
+  const [showAllSources, setShowAllSources] = useSessionState(
+    STORAGE_KEYS.SESSION_EXPLANATION_SHOW_ALL_SOURCES,
+    false,
+    {
+      serialize: (value) => value ? '1' : '0',
+      deserialize: (value) => value === '1',
+    }
+  );
+  const [sourcesCollapsed, setSourcesCollapsed] = useSessionState(
+    STORAGE_KEYS.SESSION_EXPLANATION_SOURCES_COLLAPSED,
+    false,
+    {
+      serialize: (value) => value ? '1' : '0',
+      deserialize: (value) => value === '1',
+    }
+  );
+
+  // Global event handlers for collapse/expand all
   React.useEffect(() => {
     function handleCollapseAll() {
-      try { setSourcesCollapsed(true); setShowAllSources(false); } catch {}
+      setSourcesCollapsed(true);
+      setShowAllSources(false);
     }
     function handleExpandAll() {
-      try { setSourcesCollapsed(false); setShowAllSources(true); } catch {}
+      setSourcesCollapsed(false);
+      setShowAllSources(true);
     }
     window.addEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
     window.addEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
@@ -112,13 +124,7 @@ export function ExplanationChat({
       window.removeEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
       window.removeEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
     };
-  }, []);
-  React.useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEYS.showAll, showAllSources ? '1' : '0'); } catch {}
-  }, [showAllSources, STORAGE_KEYS.showAll]);
-  React.useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEYS.collapsed, sourcesCollapsed ? '1' : '0'); } catch {}
-  }, [sourcesCollapsed, STORAGE_KEYS.collapsed]);
+  }, [setSourcesCollapsed, setShowAllSources]);
   const sList = React.useMemo<CitationListItem[]>(() => buildCitationList(sourcesRich), [sourcesRich]);
 
   const usedCitationKeys = React.useMemo(() => {
