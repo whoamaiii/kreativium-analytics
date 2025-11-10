@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, memo } from 'react';
 import type { AnalyticsResultsAI } from "@/lib/analysis/analysisEngine";
 import { diffSummary, diffPatterns, diffCorrelations, diffInterventions, diffKeyFindings } from "@/lib/analysis/compareUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -621,3 +621,5 @@ export default ComparisonSummary;
 
 
 
+
+export const ComparisonSummary = memo(ComparisonSummaryComponent);

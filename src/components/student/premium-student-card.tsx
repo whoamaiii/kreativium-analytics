@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { dataStorage } from '@/lib/dataStorage';
 import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 import { toast } from '@/hooks/use-toast';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, memo } from 'react';
 
 interface PremiumStudentCardProps {
   student: Student;
@@ -21,7 +21,7 @@ interface PremiumStudentCardProps {
   index: number;
 }
 
-export const PremiumStudentCard = ({ 
+const PremiumStudentCardComponent = ({ 
   student, 
   onView, 
   onTrack, 
@@ -268,3 +268,4 @@ export const PremiumStudentCard = ({
     </motion.div>
   );
 };
+export const PremiumStudentCard = memo(PremiumStudentCardComponent);

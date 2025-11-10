@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useState, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -23,7 +23,7 @@ interface EnvironmentalTrackerProps {
   studentId: string;
 }
 
-export const EnvironmentalTracker = ({ onEnvironmentalAdd, studentId }: EnvironmentalTrackerProps) => {
+const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd, studentId }: EnvironmentalTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const specialEventInputId = useId();
   const [roomTemperature, setRoomTemperature] = useState<number>(22);
@@ -267,3 +267,5 @@ export const EnvironmentalTracker = ({ onEnvironmentalAdd, studentId }: Environm
     </Card>
   );
 };
+
+export const EnvironmentalTracker = memo(EnvironmentalTrackerComponent);

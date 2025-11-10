@@ -40,7 +40,7 @@ const emotionTypes = ["happy", "sad", "angry", "anxious", "calm", "frustrated", 
 const sensoryTypes = ["visual", "auditory", "tactile", "vestibular", "proprioceptive"];
 const goalStatuses = ["active", "achieved", "paused", "discontinued"];
 
-export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
+const AdvancedSearchComponent: React.FC<AdvancedSearchProps> = ({
   students,
   trackingEntries,
   emotions,
@@ -503,3 +503,5 @@ export const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
     </Card>
   );
 };
+
+export const AdvancedSearch = memo(AdvancedSearchComponent);

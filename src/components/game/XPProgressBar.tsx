@@ -72,3 +72,5 @@ export function XPProgressBar({ progress, xp, xpToNext, level, streak, pendingDe
 export default XPProgressBar;
 
 
+
+export const XPProgressBar = memo(XPProgressBarComponent);

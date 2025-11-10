@@ -7,7 +7,7 @@
  * @module components/GoalManager
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +43,7 @@ interface GoalManagerProps {
  * @param {Student} props.student - The student whose goals are being managed
  * @param {Function} [props.onGoalUpdate] - Callback when goals are updated
  */
-export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
+const GoalManagerComponent = ({ student, onGoalUpdate }: GoalManagerProps) => {
   const { tCommon } = useTranslation();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -534,3 +534,5 @@ export const GoalManager = ({ student, onGoalUpdate }: GoalManagerProps) => {
     </div>
   );
 };
+
+export const GoalManager = memo(GoalManagerComponent);

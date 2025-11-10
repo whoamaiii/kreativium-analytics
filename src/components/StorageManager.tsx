@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
  * @component
  * @returns {React.ReactElement} Rendered storage management interface
  */
-export const StorageManager = () => {
+const StorageManagerComponent = () => {
   const { tCommon } = useTranslation();
   const [storageInfo, setStorageInfo] = useState(storageUtils.getStorageInfo());
   const [stats, setStats] = useState(dataStorage.getStorageStats());
@@ -185,3 +185,5 @@ export const StorageManager = () => {
     </Card>
   );
 };
+
+export const StorageManager = memo(StorageManagerComponent);

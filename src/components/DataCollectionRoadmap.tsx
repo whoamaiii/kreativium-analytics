@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -28,7 +28,7 @@ interface Milestone {
   color: string;
 }
 
-export const DataCollectionRoadmap = ({ 
+const DataCollectionRoadmapComponent = ({ 
   emotions, 
   sensoryInputs, 
   entries, 
@@ -278,3 +278,4 @@ export const DataCollectionRoadmap = ({
     </Card>
   );
 };
+export const DataCollectionRoadmap = memo(DataCollectionRoadmapComponent);

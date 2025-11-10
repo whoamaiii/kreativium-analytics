@@ -11,7 +11,7 @@ interface ConfidenceIndicatorProps {
   className?: string;
 }
 
-export const ConfidenceIndicator = memo<ConfidenceIndicatorProps>(({
+const ConfidenceIndicatorComponent = memo<ConfidenceIndicatorProps>(({
   confidence,
   dataPoints = 0,
   timeSpanDays = 0,
@@ -116,3 +116,5 @@ export const ConfidenceIndicator = memo<ConfidenceIndicatorProps>(({
 });
 
 ConfidenceIndicator.displayName = 'ConfidenceIndicator';
+
+export const ConfidenceIndicator = memo(ConfidenceIndicatorComponent);
