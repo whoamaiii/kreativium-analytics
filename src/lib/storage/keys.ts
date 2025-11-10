@@ -47,6 +47,9 @@ export const TRACKING_KEYS = {
   /** Alert history */
   ALERTS: 'sensoryTracker_alerts',
 
+  /** Pinned alerts for quick access */
+  PINNED_ALERTS: 'sensoryTracker_pinnedAlerts',
+
   /** Current active student ID */
   CURRENT_STUDENT_ID: 'current.studentId',
 } as const
