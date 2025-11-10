@@ -27,6 +27,8 @@ import { analyticsManager } from "@/lib/analyticsManager";
 import { logger } from "@/lib/logger";
 import { dataStorage } from "@/lib/dataStorage";
 import { seedMinimalDemoData } from "@/lib/mockData";
+import { useStorageState } from "@/lib/storage/useStorageState";
+import { STORAGE_KEYS } from "@/lib/storage/keys";
 
 // Centralized className constants to satisfy react/jsx-no-literals for attribute strings
 const fullScreenCenterCls = "h-screen w-full flex items-center justify-center";
@@ -96,17 +98,14 @@ const StudentProfile = () => {
     reloadGoals,
     reloadData,
   } = useStudentData(studentId);
+
   // Persist selected studentId for global modules (games) to scope progress writes
+  const [, setPersistedStudentId] = useStorageState(STORAGE_KEYS.CURRENT_STUDENT_ID, '');
   useEffect(() => {
-    try {
-      if (studentId) {
-        localStorage.setItem('current.studentId', studentId);
-      }
-    } catch (error) {
-      // localStorage can fail in private mode or when quota is exceeded
-      logger.warn('Failed to persist current studentId to localStorage', { error, studentId });
+    if (studentId) {
+      setPersistedStudentId(studentId);
     }
-  }, [studentId]);
+  }, [studentId, setPersistedStudentId]);
 
   // DIAGNOSTIC: After data hook
   if (import.meta.env.DEV) {

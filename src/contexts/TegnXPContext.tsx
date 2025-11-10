@@ -1,4 +1,6 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo } from 'react';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 interface TegnXPContextValue {
   xp: number;
@@ -8,25 +10,15 @@ interface TegnXPContextValue {
 
 const TegnXPContext = createContext<TegnXPContextValue | null>(null);
 
-const STORAGE_KEY = 'tegn_xp_total';
-
 export const TegnXPProvider = ({ children }: { children: React.ReactNode }) => {
-  const [xp, setXp] = useState<number>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? Math.max(0, parseInt(raw, 10) || 0) : 0;
-    } catch {
-      return 0;
+  const [xp, setXp] = useStorageState(
+    STORAGE_KEYS.TEGN_XP_TOTAL,
+    0,
+    {
+      serialize: (value) => String(Math.max(0, value)),
+      deserialize: (value) => Math.max(0, parseInt(value, 10) || 0),
     }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, String(xp));
-    } catch {
-      // ignore persistence errors
-    }
-  }, [xp]);
+  );
 
   const addXP = useCallback((amount: number) => {
     if (!Number.isFinite(amount) || amount <= 0) return;

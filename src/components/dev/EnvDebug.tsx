@@ -5,11 +5,16 @@ import { loadAiConfig } from '@/lib/aiConfig';
 import { AI_ANALYSIS_ENABLED, AI_MODEL_NAME, OPENROUTER_API_KEY, AI_BASE_URL, AI_LOCAL_ONLY } from '@/lib/env';
 import { getRuntimeEnv } from '@/lib/runtimeEnv';
 import { aiMetrics } from '@/lib/ai/metrics';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export function EnvDebug(): JSX.Element | null {
   if (!import.meta.env.DEV) return null;
   const ai = loadAiConfig();
   const env = getRuntimeEnv();
+  const [lsKeyOld] = useStorageState(STORAGE_KEYS.OPENROUTER_API_KEY, '');
+  const [lsKeyNew] = useStorageState(STORAGE_KEYS.VITE_OPENROUTER_API_KEY, '');
+  const lsKey = lsKeyOld || lsKeyNew;
   const masked = (s?: string) => (typeof s === 'string' && s.length > 8 ? s.slice(0, 4) + '…' + s.slice(-4) : s || '');
   const toBool = (v: unknown) => (v ?? '').toString().toLowerCase() === '1' || (v ?? '').toString().toLowerCase() === 'true' || (v ?? '').toString().toLowerCase() === 'yes';
   // Derive runtime values directly from live env for sanity-checking
@@ -20,8 +25,6 @@ export function EnvDebug(): JSX.Element | null {
     baseUrl: typeof env.VITE_AI_BASE_URL === 'string' && (env.VITE_AI_BASE_URL as string).trim().length > 0 ? (env.VITE_AI_BASE_URL as string) : 'https://openrouter.ai/api/v1',
     localOnly: toBool(env.VITE_AI_LOCAL_ONLY),
   };
-  const getLS = (k: string) => { try { return typeof localStorage !== 'undefined' ? localStorage.getItem(k) || '' : ''; } catch { return ''; } };
-  const lsKey = getLS('OPENROUTER_API_KEY') || getLS('VITE_OPENROUTER_API_KEY');
 
   return (
     <Card className="bg-gradient-card border-0 shadow-soft">

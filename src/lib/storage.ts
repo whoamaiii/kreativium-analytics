@@ -11,8 +11,6 @@ export function safeGet(key: string): string | null {
 export function safeSet(key: string, value: string): void {
   try {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(key, value);
-    } else {
       storageUtils.safeSetItem(key, value);
     }
   } catch {

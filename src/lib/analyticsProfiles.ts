@@ -1,5 +1,6 @@
 import { STORAGE_KEYS } from '@/lib/analyticsConfig';
 import { logger } from '@/lib/logger';
+import { storageGet, storageSet, storageRemove } from '@/lib/storage/storageHelpers';
 
 export interface StudentAnalyticsProfile {
   studentId: string;
@@ -25,9 +26,22 @@ let profiles: Map<string, StudentAnalyticsProfile> | null = null;
 function loadProfilesFromStorage(): Map<string, StudentAnalyticsProfile> {
   const map = new Map<string, StudentAnalyticsProfile>();
   try {
-    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.analyticsProfiles) : null;
-    if (!raw) return map;
-    const obj = JSON.parse(raw) as Record<string, any>;
+    const obj = storageGet<Record<string, any> | null>(
+      STORAGE_KEYS.analyticsProfiles,
+      null,
+      {
+        deserialize: (value) => {
+          try {
+            return JSON.parse(value) as Record<string, any>;
+          } catch {
+            return null;
+          }
+        }
+      }
+    );
+
+    if (!obj) return map;
+
     for (const [studentId, profile] of Object.entries(obj)) {
       if (profile && typeof (profile as any).studentId === 'string') {
         map.set(studentId, {
@@ -55,9 +69,7 @@ export function saveProfiles(): void {
   ensureProfilesLoaded();
   try {
     const data = Object.fromEntries((profiles as Map<string, StudentAnalyticsProfile>).entries());
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.analyticsProfiles, JSON.stringify(data));
-    }
+    storageSet(STORAGE_KEYS.analyticsProfiles, data);
   } catch (error) {
     logger.error('[analyticsProfiles] Failed to save profiles', { error });
   }
@@ -98,9 +110,7 @@ export function clearAllProfiles(): number {
   const count = (profiles as Map<string, StudentAnalyticsProfile>).size;
   try {
     (profiles as Map<string, StudentAnalyticsProfile>).clear();
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(STORAGE_KEYS.analyticsProfiles);
-    }
+    storageRemove(STORAGE_KEYS.analyticsProfiles);
     logger.info('[analyticsProfiles] Cleared all profiles', { count });
   } catch (error) {
     logger.error('[analyticsProfiles] Failed to clear all profiles', { error });

@@ -7,6 +7,7 @@ import { validateSession as runSessionValidation } from '@/lib/tracking/validati
 import { logger } from '@/lib/logger';
 import type { QualityAssessmentResult } from '@/lib/tracking/dataQuality';
 import type { TrackingValidationRules, ValidationResult } from '@/lib/tracking/validation';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 /**
  * Session metadata for tracking and recovery
@@ -316,8 +317,8 @@ export class SessionManager {
    */
   recoverSessions(): SessionRecoveryData[] {
     const recovered: SessionRecoveryData[] = [];
-    const keys = Object.keys(localStorage).filter(k => 
-      k.startsWith('sensoryTracker_session_')
+    const keys = Object.keys(localStorage).filter(k =>
+      k.startsWith(STORAGE_KEYS.SESSION_PREFIX)
     );
 
     for (const key of keys) {
@@ -450,12 +451,12 @@ export class SessionManager {
    */
   private persistSession(session: SessionRecoveryData): void {
     try {
-      const key = `sensoryTracker_session_${session.sessionId}`;
+      const key = `${STORAGE_KEYS.SESSION_PREFIX}${session.sessionId}`;
       localStorage.setItem(key, JSON.stringify(session));
     } catch (error) {
-      logger.error('[SessionManager] Failed to persist session', { 
-        sessionId: session.sessionId, 
-        error 
+      logger.error('[SessionManager] Failed to persist session', {
+        sessionId: session.sessionId,
+        error
       });
     }
   }
@@ -464,7 +465,7 @@ export class SessionManager {
    * Clear persisted session
    */
   private clearPersistedSession(sessionId: string): void {
-    const key = `sensoryTracker_session_${sessionId}`;
+    const key = `${STORAGE_KEYS.SESSION_PREFIX}${sessionId}`;
     localStorage.removeItem(key);
   }
 
@@ -473,7 +474,7 @@ export class SessionManager {
    */
   private loadSessionHistory(): void {
     try {
-      const data = localStorage.getItem('sensoryTracker_sessionHistory');
+      const data = localStorage.getItem(STORAGE_KEYS.SESSION_HISTORY);
       if (data) {
         this.sessionHistory = JSON.parse(data).map((s: any) => ({
           ...s,
@@ -492,7 +493,7 @@ export class SessionManager {
    */
   private saveSessionHistory(): void {
     try {
-      localStorage.setItem('sensoryTracker_sessionHistory', JSON.stringify(this.sessionHistory));
+      localStorage.setItem(STORAGE_KEYS.SESSION_HISTORY, JSON.stringify(this.sessionHistory));
     } catch (error) {
       logger.error('[SessionManager] Failed to save session history', { error });
     }
@@ -546,11 +547,11 @@ export class SessionManager {
   clearAllSessions(): void {
     this.activeSessions.clear();
     this.sessionHistory = [];
-    
+
     // Clear from localStorage
-    const keys = Object.keys(localStorage).filter(k => 
-      k.startsWith('sensoryTracker_session_') || 
-      k === 'sensoryTracker_sessionHistory'
+    const keys = Object.keys(localStorage).filter(k =>
+      k.startsWith(STORAGE_KEYS.SESSION_PREFIX) ||
+      k === STORAGE_KEYS.SESSION_HISTORY
     );
     keys.forEach(key => localStorage.removeItem(key));
 

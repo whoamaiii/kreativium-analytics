@@ -211,13 +211,8 @@ class AnalyticsManagerService {
     profiles?: AnalyticsProfileMap
   ): AnalyticsManagerService {
     if (!AnalyticsManagerService.instance) {
-      let stored: string | null = null;
-      try {
-        stored = typeof localStorage !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.analyticsProfiles) : null;
-      } catch (e) {
-        // environment without localStorage (SSR/tests)
-      }
-      const initialProfiles = profiles ?? loadProfilesFromStorage(stored);
+      // Load profiles from the analyticsProfiles module which handles storage
+      const initialProfiles = profiles ?? loadProfilesFromStorage(null);
       AnalyticsManagerService.instance = new AnalyticsManagerService(storage, initialProfiles);
     }
     return AnalyticsManagerService.instance;

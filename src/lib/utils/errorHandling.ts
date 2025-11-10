@@ -76,28 +76,35 @@ export function safeJsonStringify<T>(
 }
 
 /**
- * Safely access localStorage with fallback and logging
+ * Safely access storage with fallback and logging
  *
  * @param key - Storage key
  * @param fallback - Fallback value if access fails
  * @param context - Context string for logging
+ * @param storage - Storage backend (defaults to localStorage if available)
  * @returns Stored value or fallback
  *
  * @example
  * ```ts
  * const theme = safeLocalStorageGet('theme', 'light', 'ThemeSettings');
+ * // or with custom storage
+ * const temp = safeLocalStorageGet('temp', 'default', 'TempData', sessionStorage);
  * ```
  */
 export function safeLocalStorageGet(
   key: string,
   fallback: string,
-  context: string
+  context: string,
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
 ): string {
   try {
-    const value = localStorage.getItem(key);
+    if (!storage || typeof storage.getItem !== 'function') {
+      return fallback;
+    }
+    const value = storage.getItem(key);
     return value ?? fallback;
   } catch (error) {
-    logger.warn(`[${context}] localStorage.getItem failed`, {
+    logger.warn(`[${context}] storage.getItem failed`, {
       key,
       error: error instanceof Error ? error.message : String(error),
     });
@@ -106,23 +113,36 @@ export function safeLocalStorageGet(
 }
 
 /**
- * Safely set localStorage with logging
+ * Safely set storage with logging
  *
  * @param key - Storage key
  * @param value - Value to store
  * @param context - Context string for logging
+ * @param storage - Storage backend (defaults to localStorage if available)
  * @returns true if successful, false otherwise
+ *
+ * @example
+ * ```ts
+ * safeLocalStorageSet('theme', 'dark', 'ThemeSettings');
+ * // or with custom storage
+ * safeLocalStorageSet('temp', 'data', 'TempData', sessionStorage);
+ * ```
  */
 export function safeLocalStorageSet(
   key: string,
   value: string,
-  context: string
+  context: string,
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
 ): boolean {
   try {
-    localStorage.setItem(key, value);
+    if (!storage || typeof storage.setItem !== 'function') {
+      logger.warn(`[${context}] storage.setItem not available`, { key });
+      return false;
+    }
+    storage.setItem(key, value);
     return true;
   } catch (error) {
-    logger.error(`[${context}] localStorage.setItem failed`, {
+    logger.error(`[${context}] storage.setItem failed`, {
       key,
       error: error instanceof Error ? error.message : String(error),
       valueLength: value.length,
@@ -132,21 +152,34 @@ export function safeLocalStorageSet(
 }
 
 /**
- * Safely remove localStorage item with logging
+ * Safely remove storage item with logging
  *
  * @param key - Storage key
  * @param context - Context string for logging
+ * @param storage - Storage backend (defaults to localStorage if available)
  * @returns true if successful, false otherwise
+ *
+ * @example
+ * ```ts
+ * safeLocalStorageRemove('theme', 'ThemeSettings');
+ * // or with custom storage
+ * safeLocalStorageRemove('temp', 'TempData', sessionStorage);
+ * ```
  */
 export function safeLocalStorageRemove(
   key: string,
-  context: string
+  context: string,
+  storage: Storage = typeof window !== 'undefined' ? window.localStorage : ({} as Storage)
 ): boolean {
   try {
-    localStorage.removeItem(key);
+    if (!storage || typeof storage.removeItem !== 'function') {
+      logger.warn(`[${context}] storage.removeItem not available`, { key });
+      return false;
+    }
+    storage.removeItem(key);
     return true;
   } catch (error) {
-    logger.error(`[${context}] localStorage.removeItem failed`, {
+    logger.error(`[${context}] storage.removeItem failed`, {
       key,
       error: error instanceof Error ? error.message : String(error),
     });

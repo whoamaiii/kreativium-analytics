@@ -8,6 +8,7 @@ import { i18n, initI18n } from './i18n'
 import { I18nextProvider } from 'react-i18next'
 import { validateStartupConfiguration } from '@/lib/startupValidation'
 import { WeeklyAlertMetrics, scheduleWeeklyTask } from '@/lib/monitoring/weeklyAlertMetrics'
+import { STORAGE_KEYS } from '@/lib/storage/keys'
 
 // Seed a stable runtime env snapshot for all modules/routes
 setRuntimeEnvFromVite();
@@ -20,15 +21,15 @@ if (import.meta.env.DEV) {
     const ls = (k: string) => {
       try { return localStorage.getItem(k) || ''; } catch { return ''; }
     };
-    if (!ls('OPENROUTER_API_KEY') && typeof key === 'string' && key.trim().length > 0) {
-      localStorage.setItem('OPENROUTER_API_KEY', key.trim());
+    if (!ls(STORAGE_KEYS.OPENROUTER_API_KEY) && typeof key === 'string' && key.trim().length > 0) {
+      localStorage.setItem(STORAGE_KEYS.OPENROUTER_API_KEY, key.trim());
     }
-    if (!ls('VITE_OPENROUTER_API_KEY') && typeof key === 'string' && key.trim().length > 0) {
-      localStorage.setItem('VITE_OPENROUTER_API_KEY', key.trim());
+    if (!ls(STORAGE_KEYS.VITE_OPENROUTER_API_KEY) && typeof key === 'string' && key.trim().length > 0) {
+      localStorage.setItem(STORAGE_KEYS.VITE_OPENROUTER_API_KEY, key.trim());
     }
     const m = (typeof model === 'string' && model.trim().length > 0) ? model.trim() : 'openai/gpt-4o-mini';
-    if (!ls('VITE_AI_MODEL_NAME')) {
-      localStorage.setItem('VITE_AI_MODEL_NAME', m);
+    if (!ls(STORAGE_KEYS.AI_MODEL_NAME)) {
+      localStorage.setItem(STORAGE_KEYS.AI_MODEL_NAME, m);
     }
   } catch {
     // ignore

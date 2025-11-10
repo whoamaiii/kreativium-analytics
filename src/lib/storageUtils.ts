@@ -3,6 +3,7 @@
  */
 import { logger } from '@/lib/logger';
 import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export const storageUtils = {
   /**
@@ -30,7 +31,7 @@ export const storageUtils = {
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
       // Clear old tracking entries
-      const entriesKey = 'sensoryTracker_entries';
+      const entriesKey = STORAGE_KEYS.ENTRIES;
       const entriesData = localStorage.getItem(entriesKey);
       if (entriesData) {
         const entries = JSON.parse(entriesData);
@@ -42,7 +43,7 @@ export const storageUtils = {
       }
 
       // Clear old alerts
-      const alertsKey = 'sensoryTracker_alerts';
+      const alertsKey = STORAGE_KEYS.ALERTS;
       const alertsData = localStorage.getItem(alertsKey);
       if (alertsData) {
         const alerts = JSON.parse(alertsData);
@@ -99,14 +100,14 @@ export const storageUtils = {
    */
   clearNonEssentialData(): void {
     const essentialKeys = [
-      'sensoryTracker_students',
-      'sensoryTracker_goals',
-      'sensoryTracker_dataVersion'
+      STORAGE_KEYS.STUDENTS,
+      STORAGE_KEYS.GOALS,
+      STORAGE_KEYS.DATA_VERSION
     ];
 
     for (const key in localStorage) {
-      if (localStorage.hasOwnProperty(key) && 
-          key.startsWith('sensoryTracker_') && 
+      if (localStorage.hasOwnProperty(key) &&
+          key.startsWith('sensoryTracker_') &&
           !essentialKeys.includes(key)) {
         localStorage.removeItem(key);
       }

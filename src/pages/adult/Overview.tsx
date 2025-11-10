@@ -4,10 +4,12 @@ import { useTranslation } from '@/hooks/useTranslation';
 import PinGate from '@/components/auth/PinGate';
 import { computeEmotionTrends } from '@/lib/game/telemetry';
 import SparkMini from '@/components/mini/SparkMini';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export default function AdultOverview() {
   const { tCommon } = useTranslation();
-  const sid = (() => { try { return localStorage.getItem('current.studentId') || 'anonymous'; } catch { return 'anonymous'; } })();
+  const [sid] = useStorageState(STORAGE_KEYS.CURRENT_STUDENT_ID, 'anonymous');
   const progress = loadStudentProgress(sid);
   const days = Object.values(progress).sort((a, b) => b.date.localeCompare(a.date));
 

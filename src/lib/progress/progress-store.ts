@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '@/lib/storage/keys';
+
 export type StickerId = 'hold-master' | 'name-hero' | 'streak-star';
 
 export interface DailyProgress {
@@ -17,22 +19,19 @@ function todayKey(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-const STORAGE_KEY = 'emotion.dailyProgress'; // legacy global
-const STUDENT_PREFIX = 'progress:'; // progress:<studentId>
-
 function storageKeyForStudent(studentId: string): string {
-  return `${STUDENT_PREFIX}${studentId}`;
+  return `${STORAGE_KEYS.PROGRESS_PREFIX}${studentId}`;
 }
 
 function getCurrentStudentId(): string {
-  try { return localStorage.getItem('current.studentId') || 'anonymous'; } catch { return 'anonymous'; }
+  try { return localStorage.getItem(STORAGE_KEYS.CURRENT_STUDENT_ID) || 'anonymous'; } catch { return 'anonymous'; }
 }
 
 function migrateGlobalToStudentOnce(studentId: string): void {
   try {
-    const marker = `progress.migratedFor:${studentId}`;
+    const marker = `${STORAGE_KEYS.PROGRESS_MIGRATION_PREFIX}${studentId}`;
     if (localStorage.getItem(marker) === '1') return;
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.PROGRESS_DAILY);
     if (!raw) return;
     const legacy = JSON.parse(raw) as Record<string, DailyProgress>;
     const existingRaw = localStorage.getItem(storageKeyForStudent(studentId));

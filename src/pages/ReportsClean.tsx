@@ -13,8 +13,8 @@ import { useReportsWorker } from '@/hooks/useReportsWorker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-
-const EXPORT_PREFS_KEY = 'sensory-tracker_export_prefs_v1';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 type DatePreset = '7d' | '30d' | '90d' | 'qtd' | 'all' | 'custom';
 
@@ -25,33 +25,54 @@ const Reports = () => {
   const { run } = useReportsWorker();
   const navigate = useNavigate();
 
-  const [preset, setPreset] = useState<DatePreset>('all');
-  const [customStart, setCustomStart] = useState<string>('');
-  const [customEnd, setCustomEnd] = useState<string>('');
-  const [anonymize, setAnonymize] = useState<boolean>(false);
-  const [backupUseFilters, setBackupUseFilters] = useState<boolean>(false);
+  type ExportPreferences = {
+    preset: DatePreset;
+    customStart?: string;
+    customEnd?: string;
+    anonymize?: boolean;
+    backupUseFilters?: boolean;
+  };
+
+  const [exportPrefs, setExportPrefs] = useStorageState<ExportPreferences>(
+    STORAGE_KEYS.EXPORT_PREFERENCES,
+    { preset: 'all' },
+    {
+      deserialize: (value) => {
+        try {
+          const parsed = JSON.parse(value);
+          return {
+            preset: parsed.preset ?? 'all',
+            customStart: parsed.customStart ?? '',
+            customEnd: parsed.customEnd ?? '',
+            anonymize: !!parsed.anonymize,
+            backupUseFilters: !!parsed.backupUseFilters,
+          };
+        } catch {
+          return { preset: 'all' };
+        }
+      },
+    }
+  );
+
+  const preset = exportPrefs.preset;
+  const customStart = exportPrefs.customStart ?? '';
+  const customEnd = exportPrefs.customEnd ?? '';
+  const anonymize = exportPrefs.anonymize ?? false;
+  const backupUseFilters = exportPrefs.backupUseFilters ?? false;
+
+  const setPreset = (value: DatePreset) =>
+    setExportPrefs(prev => ({ ...prev, preset: value }));
+  const setCustomStart = (value: string) =>
+    setExportPrefs(prev => ({ ...prev, customStart: value }));
+  const setCustomEnd = (value: string) =>
+    setExportPrefs(prev => ({ ...prev, customEnd: value }));
+  const setAnonymize = (value: boolean) =>
+    setExportPrefs(prev => ({ ...prev, anonymize: value }));
+  const setBackupUseFilters = (value: boolean) =>
+    setExportPrefs(prev => ({ ...prev, backupUseFilters: value }));
+
   const customStartId = useId();
   const customEndId = useId();
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(EXPORT_PREFS_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as { preset: DatePreset; customStart?: string; customEnd?: string; anonymize?: boolean; backupUseFilters?: boolean };
-        setPreset(saved.preset ?? 'all');
-        setCustomStart(saved.customStart ?? '');
-        setCustomEnd(saved.customEnd ?? '');
-        setAnonymize(!!saved.anonymize);
-        setBackupUseFilters(!!saved.backupUseFilters);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(EXPORT_PREFS_KEY, JSON.stringify({ preset, customStart, customEnd, anonymize, backupUseFilters }));
-    } catch {}
-  }, [preset, customStart, customEnd, anonymize, backupUseFilters]);
 
   const computedDateRange = useMemo(() => {
     if (preset === 'all') return undefined;

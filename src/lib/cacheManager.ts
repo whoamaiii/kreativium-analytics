@@ -12,6 +12,7 @@
 
 import { logger } from '@/lib/logger';
 import { analyticsManager } from '@/lib/analyticsManager';
+import { storageSet } from '@/lib/storage/storageHelpers';
 
 export interface CacheManagerResult {
   ok: boolean;
@@ -73,9 +74,9 @@ class CacheManagerService {
 
       // Fallback cross-tab signal via localStorage
       try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('analytics:cache:signal', Date.now().toString());
-        }
+        storageSet('analytics:cache:signal', Date.now().toString(), {
+          serialize: (value) => value
+        });
       } catch (e) {
         logger.warn('[cacheManager] Failed to set localStorage signal', e as Error);
       }
@@ -143,9 +144,7 @@ class CacheManagerService {
 
       // Fallback cross-tab signal via localStorage
       try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('analytics:cache:signal:student', JSON.stringify({ studentId, timestamp: Date.now() }));
-        }
+        storageSet('analytics:cache:signal:student', { studentId, timestamp: Date.now() });
       } catch (e) {
         logger.warn('[cacheManager] Failed to set localStorage student signal', e as Error);
       }

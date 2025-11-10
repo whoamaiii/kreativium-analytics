@@ -10,6 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import { loadAiConfig } from '@/lib/aiConfig';
 import { getRuntimeEnv } from '@/lib/runtimeEnv';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 /**
  * @interface AnalyticsSectionProps
@@ -45,6 +47,11 @@ export function AnalyticsSection({
   isLoadingInsights,
 }: AnalyticsSectionProps) {
 const { tAnalytics } = useTranslation();
+  // Storage-based defaults for API keys
+  const [lsModelName] = useStorageState(STORAGE_KEYS.AI_MODEL_NAME, '');
+  const [lsApiKeyOld] = useStorageState(STORAGE_KEYS.OPENROUTER_API_KEY, '');
+  const [lsApiKeyNew] = useStorageState(STORAGE_KEYS.VITE_OPENROUTER_API_KEY, '');
+
   // Resolve defaults and availability for AI analysis
   const defaults = useMemo(() => {
     const cfg = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
@@ -55,19 +62,16 @@ const { tAnalytics } = useTranslation();
       return s === '1' || s === 'true' || s === 'yes';
     };
     const enabledByConfig = cfg?.features?.aiAnalysisEnabled === true || toBool(env.VITE_AI_ANALYSIS_ENABLED);
-    const getLS = (k: string) => {
-      try { return typeof localStorage !== 'undefined' ? (localStorage.getItem(k) || '') : ''; } catch { return ''; }
-    };
     const model = typeof env.VITE_AI_MODEL_NAME === 'string' && (env.VITE_AI_MODEL_NAME as string).trim().length > 0
       ? (env.VITE_AI_MODEL_NAME as string)
-      : (getLS('VITE_AI_MODEL_NAME') || loadAiConfig().modelName);
+      : (lsModelName || loadAiConfig().modelName);
     const apiKey = typeof env.VITE_OPENROUTER_API_KEY === 'string' && (env.VITE_OPENROUTER_API_KEY as string).trim().length > 0
       ? (env.VITE_OPENROUTER_API_KEY as string)
-      : (getLS('OPENROUTER_API_KEY') || getLS('VITE_OPENROUTER_API_KEY') || (loadAiConfig().apiKey || ''));
+      : (lsApiKeyOld || lsApiKeyNew || (loadAiConfig().apiKey || ''));
     const available = !!apiKey && !!model; // availability only depends on key + model
     try { logger.debug('[AnalyticsSection.defaults]', { envAi: env.VITE_AI_ANALYSIS_ENABLED, envModel: env.VITE_AI_MODEL_NAME, hasKey: !!apiKey, enabledByConfig, available }); } catch {}
     return { enabledByConfig, available };
-  }, []);
+  }, [lsModelName, lsApiKeyOld, lsApiKeyNew]);
 
   const [useAI, setUseAI] = useState<boolean>(() => defaults.enabledByConfig && defaults.available);
 

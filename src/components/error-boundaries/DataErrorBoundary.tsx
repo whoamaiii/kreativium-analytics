@@ -22,6 +22,7 @@ import { AlertTriangle, RefreshCw, Wifi, WifiOff, HardDrive, Clock } from 'lucid
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { classifyError, getErrorSuggestions, logErrorForReporting } from '@/lib/errorRecovery';
+import { clearStorageKeys } from '@/lib/storage/useStorageState';
 
 interface Props {
   children: ReactNode;
@@ -182,7 +183,7 @@ export class DataErrorBoundary extends Component<Props, State> {
           window.indexedDB.deleteDatabase(db.name);
         }
       }
-      localStorage.clear();
+      clearStorageKeys('');  // Clear all keys with empty prefix
 
       this.setState({ hasError: false, retryCount: 0 });
       toast.success('Storage cleared. Please refresh the page.');

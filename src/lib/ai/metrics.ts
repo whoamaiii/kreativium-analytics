@@ -1,4 +1,6 @@
 import { logger } from '@/lib/logger';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
+
 /**
  * Lightweight AI telemetry stored in localStorage for dev/exploration.
  * Tracks JSON validity rate, request outcomes, retries, and latency.
@@ -19,14 +21,13 @@ export interface AiMetricsData {
   lastUpdated: string;
 }
 
-const KEY = 'kreativium_ai_metrics_v1';
 const MAX_LAT = 50;
 
 function clamp(n: number, min: number, max: number) { return Math.max(min, Math.min(max, n)); }
 
 function load(): AiMetricsData {
   try {
-    const raw = (typeof localStorage !== 'undefined') ? localStorage.getItem(KEY) : null;
+    const raw = (typeof localStorage !== 'undefined') ? localStorage.getItem(STORAGE_KEYS.AI_METRICS) : null;
     if (raw) {
       const parsed = JSON.parse(raw) as AiMetricsData;
       if (parsed && typeof parsed.version === 'number') return parsed;
@@ -42,7 +43,7 @@ function load(): AiMetricsData {
 
 function save(d: AiMetricsData) {
   try {
-    if (typeof localStorage !== 'undefined') localStorage.setItem(KEY, JSON.stringify(d));
+    if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEYS.AI_METRICS, JSON.stringify(d));
   } catch (e) { try { logger.warn('[aiMetrics] Failed to save metrics to localStorage', e as Error); } catch {} }
 }
 

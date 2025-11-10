@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { STORAGE_KEYS } from './storage/keys';
 
 // Type extension for Chrome performance memory API
 interface PerformanceMemory {
@@ -56,7 +57,7 @@ class DiagnosticLogger {
     if (typeof window !== 'undefined') {
       try {
         const urlFlag = new URLSearchParams(window.location.search).get('diag') === '1';
-        const lsFlag = (window.localStorage.getItem('diagnostics') || '').toLowerCase() === 'on';
+        const lsFlag = (window.localStorage.getItem(STORAGE_KEYS.DIAGNOSTICS_MODE) || '').toLowerCase() === 'on';
         this.diagnosticMode = Boolean(urlFlag || lsFlag);
       } catch {
         this.diagnosticMode = false;

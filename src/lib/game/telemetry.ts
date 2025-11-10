@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '@/lib/storage/keys';
+
 export type GameEventKind = 'round_start' | 'round_success' | 'round_fail' | 'hint_used' | 'prob_sample' | 'mode_start' | 'mode_end' | 'confidence_reported';
 
 export interface GameEventBase {
@@ -19,16 +21,14 @@ export interface ConfidenceReportedEvent extends GameEventBase { kind: 'confiden
 
 export type GameEvent = RoundStartEvent | RoundSuccessEvent | RoundFailEvent | HintUsedEvent | ProbSampleEvent | ModeStartEvent | ModeEndEvent | ConfidenceReportedEvent;
 
-const STORAGE_KEY = 'emotion.telemetry.v1';
-
 export function recordGameEvent(event: GameEvent): void {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.EMOTION_TELEMETRY);
     const arr: GameEvent[] = raw ? JSON.parse(raw) : [];
     arr.push(event);
     // Cap to last 1000 events to avoid unbounded growth
     const trimmed = arr.slice(Math.max(0, arr.length - 1000));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    localStorage.setItem(STORAGE_KEYS.EMOTION_TELEMETRY, JSON.stringify(trimmed));
   } catch {}
   // Stream to analytics worker if available (fire-and-forget)
   try {
@@ -44,7 +44,7 @@ export function recordGameEvent(event: GameEvent): void {
 
 export function readGameTelemetry(): GameEvent[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.EMOTION_TELEMETRY);
     return raw ? (JSON.parse(raw) as GameEvent[]) : [];
   } catch {
     return [];
@@ -52,7 +52,7 @@ export function readGameTelemetry(): GameEvent[] {
 }
 
 export function clearGameTelemetry(): void {
-  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  try { localStorage.removeItem(STORAGE_KEYS.EMOTION_TELEMETRY); } catch {}
 }
 
 export function computeEmotionTrends():

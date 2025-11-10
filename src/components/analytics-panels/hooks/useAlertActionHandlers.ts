@@ -16,6 +16,7 @@ import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { AlertWithGovernance } from '@/lib/alerts/types';
 import InterventionTemplateManager from '@/lib/interventions/templateManager';
+import { useStorageState } from '@/lib/storage/useStorageState';
 
 /**
  * Action handlers for alert operations
@@ -61,8 +62,20 @@ export interface AlertActionHandlers {
  * />
  */
 export function useAlertActionHandlers(
-  onCreateGoal: (alert: AlertWithGovernance) => void
+  onCreateGoal: (alert: AlertWithGovernance) => void,
+  studentId?: string
 ): AlertActionHandlers {
+  const reportDraftKey = studentId ? `reports:drafts:${studentId}` : 'reports:drafts:unknown';
+  const [reportDraft, setReportDraft] = useStorageState<any[]>(reportDraftKey, [], {
+    deserialize: (v) => {
+      try {
+        return JSON.parse(v) as any[];
+      } catch {
+        return [];
+      }
+    },
+    serialize: (v) => JSON.stringify(v)
+  });
   /**
    * Handle create goal action
    * Opens dialog instead of immediately creating goal
@@ -119,14 +132,11 @@ export function useAlertActionHandlers(
 
   /**
    * Handle add to report action
-   * Appends alert to report draft in localStorage
+   * Appends alert to report draft in storage
    */
   const handleAddToReport = useCallback((alert: AlertWithGovernance) => {
     try {
-      const key = `reports:drafts:${alert.studentId}`;
-      const raw = localStorage.getItem(key);
-      const list = raw ? (JSON.parse(raw) as any[]) : [];
-
+      const list = [...reportDraft];
       list.push({
         type: 'alert',
         id: alert.id,
@@ -135,13 +145,13 @@ export function useAlertActionHandlers(
       });
 
       // Keep only last 200 entries
-      localStorage.setItem(key, JSON.stringify(list.slice(-200)));
+      setReportDraft(list.slice(-200));
       toast.success('Added to report draft');
     } catch (error) {
       logger.error('Failed to add to report', error);
       toast.error('Failed to add to report');
     }
-  }, []);
+  }, [reportDraft, setReportDraft]);
 
   /**
    * Handle notify team action

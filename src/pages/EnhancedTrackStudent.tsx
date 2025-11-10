@@ -31,52 +31,35 @@ const EnhancedTrackStudent = () => {
   useEffect(() => {
     if (!studentId) return;
 
-    // Load student data
-    const storedStudents = localStorage.getItem('sensoryTracker_students');
-    if (storedStudents) {
-      const students = JSON.parse(storedStudents);
-      const foundStudent = students.find((s: Student) => s.id === studentId);
+    try {
+      // Load student data using dataStorage API
+      const foundStudent = dataStorage.getStudentById(studentId);
       if (foundStudent) {
-        setStudent({
-          ...foundStudent,
-          createdAt: new Date(foundStudent.createdAt)
-        });
+        setStudent(foundStudent);
       } else {
         toast.error(String(tCommon('student_not_found')));
         navigate('/');
         return;
       }
-    }
 
-    // Load recent data for smart suggestions
-    const storedEntries = localStorage.getItem('sensoryTracker_entries');
-    if (storedEntries) {
-      const entries: TrackingEntry[] = JSON.parse(storedEntries);
+      // Load recent data for smart suggestions
+      const entries = dataStorage.getEntriesForStudent(studentId) || [];
       const studentEntries = entries
-        .filter(entry => entry.studentId === studentId)
-        .map(entry => ({
-          ...entry,
-          timestamp: new Date(entry.timestamp),
-          emotions: entry.emotions.map(e => ({
-            ...e,
-            timestamp: new Date(e.timestamp)
-          })),
-          sensoryInputs: entry.sensoryInputs.map(s => ({
-            ...s,
-            timestamp: new Date(s.timestamp)
-          }))
-        }))
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .slice(0, 10); // Get last 10 sessions
 
       // Flatten recent emotions and sensory inputs
       const recentEmotions = studentEntries.flatMap(entry => entry.emotions);
       const recentSensoryInputs = studentEntries.flatMap(entry => entry.sensoryInputs);
-      
+
       setRecentData({
         emotions: recentEmotions,
         sensoryInputs: recentSensoryInputs
       });
+    } catch (error) {
+      logger.error('Failed to load student data', { error });
+      toast.error(String(tCommon('student_not_found')));
+      navigate('/');
     }
   }, [studentId, navigate, tCommon]);
 

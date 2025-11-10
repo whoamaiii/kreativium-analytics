@@ -2,10 +2,12 @@ import React, { useMemo } from 'react';
 import { loadStudentProgress, type StickerId } from '@/lib/progress/progress-store';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Card } from '@/components/ui/card';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export default function Achievements() {
   const { tCommon } = useTranslation();
-  const sid = (() => { try { return localStorage.getItem('current.studentId') || 'anonymous'; } catch { return 'anonymous'; } })();
+  const [sid] = useStorageState(STORAGE_KEYS.CURRENT_STUDENT_ID, 'anonymous');
   const progress = loadStudentProgress(sid);
   const today = Object.values(progress).sort((a, b) => b.date.localeCompare(a.date))[0];
   const stickers = today?.stickers ?? [];

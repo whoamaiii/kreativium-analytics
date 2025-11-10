@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { AI_ANALYSIS_ENABLED, EXPLANATION_V2_ENABLED } from '@/lib/env';
+import { storageGet, storageSet, storageRemove, isStorageAvailable } from '@/lib/storage/storageHelpers';
 import {
   CORRELATION_THRESHOLDS,
   CORRELATION_SIGNIFICANCE,
@@ -561,17 +562,25 @@ export class AnalyticsConfigManager {
 
   private loadConfig(): AnalyticsConfiguration {
     try {
-      if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      if (!isStorageAvailable()) {
         // Non-browser environment (SSR/tests/workers)
         return { ...DEFAULT_ANALYTICS_CONFIG };
       }
-      const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (this.validateConfig(parsed)) {
-          // Merge stored over defaults so new defaults (incl. env-driven flags) apply
-          return this.deepMerge(DEFAULT_ANALYTICS_CONFIG, parsed);
+
+      const stored = storageGet<AnalyticsConfiguration | null>(
+        this.storageKey,
+        null,
+        {
+          deserialize: (value) => {
+            const parsed = JSON.parse(value);
+            return this.validateConfig(parsed) ? parsed : null;
+          }
         }
+      );
+
+      if (stored) {
+        // Merge stored over defaults so new defaults (incl. env-driven flags) apply
+        return this.deepMerge(DEFAULT_ANALYTICS_CONFIG, stored);
       }
     } catch (error) {
       logger.error('Failed to load analytics configuration:', error);
@@ -581,18 +590,17 @@ export class AnalyticsConfigManager {
 
   private saveConfig(): void {
     try {
-      if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-        // Guard against quota exceeded. If it happens, clear only our key (fail-soft)
-        try {
-          localStorage.setItem(this.storageKey, JSON.stringify(this.config));
-        } catch (err) {
-          try { 
-            localStorage.removeItem(this.storageKey); 
-          } catch {
-            // Silent fail if unable to remove key
-          }
-          logger.error('Failed to save analytics configuration:', err);
-        }
+      if (!isStorageAvailable()) {
+        return;
+      }
+
+      // Guard against quota exceeded. If it happens, clear only our key (fail-soft)
+      const success = storageSet(this.storageKey, this.config);
+
+      if (!success) {
+        // If save failed, try to remove the key to free up space
+        storageRemove(this.storageKey);
+        logger.error('Failed to save analytics configuration: storage quota may be exceeded');
       }
     } catch (error) {
       logger.error('Failed to save analytics configuration:', error);

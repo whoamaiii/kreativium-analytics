@@ -9,10 +9,10 @@
 import { logger } from '@/lib/logger';
 import { openRouterClient, OpenRouterClient } from '@/lib/ai/openrouterClient';
 import { storageUtils } from '@/lib/storageUtils';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 import { z } from 'zod';
 import { ValidationResult } from '@/lib/validationTypes';
 
-const CACHE_KEY = 'kreativium_ai_conn_cache_v1';
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 function hashString(s: string): string {
@@ -26,7 +26,7 @@ function hashString(s: string): string {
 
 function readCache(): Record<string, { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }> {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.AI_CONNECTIVITY_CACHE);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
     if (typeof parsed !== 'object' || !parsed) return {};
@@ -69,7 +69,7 @@ function readCache(): Record<string, { ok: boolean; ts: number; warnings?: strin
 
 function writeCache(map: Record<string, { ok: boolean; ts: number; warnings?: string[]; errors?: string[] }>) {
   try {
-    storageUtils.safeSetItem(CACHE_KEY, JSON.stringify(map));
+    storageUtils.safeSetItem(STORAGE_KEYS.AI_CONNECTIVITY_CACHE, JSON.stringify(map));
   } catch {
     // ignore cache write failures
   }

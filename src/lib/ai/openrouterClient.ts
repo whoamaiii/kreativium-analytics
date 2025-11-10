@@ -1,6 +1,7 @@
 import { logger } from '@/lib/logger';
 import { errorHandler } from '@/lib/errorHandler';
 import { loadAiConfig, type AiConfig } from '@/lib/aiConfig';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 import {
   SensoryCompassError,
   ErrorType,
@@ -62,15 +63,15 @@ export class OpenRouterClient {
     // Precedence: explicit overrides > validated ai.modelName > env/localStorage > default
     let liveModel = overrides?.modelName ?? ai.modelName;
     if (!liveModel || liveModel.trim().length === 0) {
-      liveModel = pickFirstNonEmpty(envAny.VITE_AI_MODEL_NAME, getLS('VITE_AI_MODEL_NAME')) || ai.modelName;
+      liveModel = pickFirstNonEmpty(envAny.VITE_AI_MODEL_NAME, getLS(STORAGE_KEYS.AI_MODEL_NAME)) || ai.modelName;
     }
 
     const liveKey = pickFirstNonEmpty(
       overrides?.apiKey,
       ai.apiKey,
       envAny.VITE_OPENROUTER_API_KEY,
-      getLS('OPENROUTER_API_KEY'),
-      getLS('VITE_OPENROUTER_API_KEY'),
+      getLS(STORAGE_KEYS.OPENROUTER_API_KEY),
+      getLS(STORAGE_KEYS.VITE_OPENROUTER_API_KEY),
     );
 
     this.config = {

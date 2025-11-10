@@ -109,6 +109,47 @@ export default function EmotionGame() {
     }
   }, [setCurrentStudentId]);
 
+  // Detector type preference
+  const [detectorType] = useStorageState(
+    STORAGE_KEYS.EMOTION_DETECTOR_TYPE,
+    'faceapi-worker',
+    {
+      deserialize: (value) => {
+        const parsed = JSON.parse(value);
+        return typeof parsed === 'string' ? parsed : 'faceapi-worker';
+      },
+    }
+  );
+
+  // Tutorial seen flag
+  const [, setTutorialSeen] = useStorageState(STORAGE_KEYS.EMOTION_TUTORIAL_SEEN, false, {
+    serialize: (value) => JSON.stringify(value ? '1' : '0'),
+    deserialize: (value) => {
+      try {
+        const parsed = JSON.parse(value);
+        return parsed === '1' || parsed === true;
+      } catch {
+        return false;
+      }
+    },
+  });
+
+  // Stickers collection
+  const [stickers, setStickers] = useStorageState<Array<{ id: string; x: number; y: number }>>(
+    STORAGE_KEYS.EMOTION_STICKERS,
+    [],
+    {
+      deserialize: (value) => {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      },
+    }
+  );
+
 
 
  
@@ -384,13 +425,7 @@ export default function EmotionGame() {
       target: targetExpression,
       prob: targetProb,
       fps,
-      detector: (() => {
-        try {
-          return localStorage.getItem(STORAGE_KEYS.EMOTION_DETECTOR_TYPE) || 'faceapi-worker';
-        } catch {
-          return 'faceapi-worker';
-        }
-      })()
+      detector: detectorType
     });
     const bucket = fps < 12 ? '<12' : fps < 16 ? '12-16' : fps < 20 ? '16-20' : fps < 24 ? '20-24' : '24+';
     fpsBucketsRef.current[bucket] = (fpsBucketsRef.current[bucket] ?? 0) + 1;
@@ -833,9 +868,7 @@ export default function EmotionGame() {
           setGamePhase('reward');
         }}
       />
-      <TutorialOverlay visible={gameState.state.modals.showTutorial} onClose={() => { try { localStorage.setItem(STORAGE_KEYS.EMOTION_TUTORIAL_SEEN, '1'); } catch {
-    /* noop */
-  }; gameState.hideModal('showTutorial'); }} />
+      <TutorialOverlay visible={gameState.state.modals.showTutorial} onClose={() => { setTutorialSeen(true); gameState.hideModal('showTutorial'); }} />
       <CalibrationOverlay visible={gameState.state.modals.showCalibration} neutralProb={(detector.probabilities as Record<string, number>)['neutral'] ?? 0} onClose={() => gameState.hideModal('showCalibration')} />
       {/* Full-screen success confetti overlay */}
       {/* Guard with reduced motion and only render once mounted to avoid strict-mode dev issues */}
@@ -875,14 +908,7 @@ export default function EmotionGame() {
         onReplay={() => { gameState.hideModal('showLevelComplete'); startGame(); }}
         onFreePlay={() => { gameState.hideModal('showLevelComplete'); gameState.showModal('showStickerBook'); }}
         onPayout={(stickerId) => {
-          try {
-            const raw = localStorage.getItem(STORAGE_KEYS.EMOTION_STICKERS);
-            const list = raw ? JSON.parse(raw) : [];
-            list.push({ id: stickerId, x: Math.random() * STICKER_CONFIG.RANDOM_X_RANGE + STICKER_CONFIG.RANDOM_X_OFFSET, y: Math.random() * STICKER_CONFIG.RANDOM_Y_RANGE + STICKER_CONFIG.RANDOM_Y_OFFSET });
-            localStorage.setItem(STORAGE_KEYS.EMOTION_STICKERS, JSON.stringify(list));
-          } catch {
-    /* noop */
-  }
+          setStickers(prev => [...prev, { id: stickerId, x: Math.random() * STICKER_CONFIG.RANDOM_X_RANGE + STICKER_CONFIG.RANDOM_X_OFFSET, y: Math.random() * STICKER_CONFIG.RANDOM_Y_RANGE + STICKER_CONFIG.RANDOM_Y_OFFSET }]);
         }}
       />
       <WorldBanner

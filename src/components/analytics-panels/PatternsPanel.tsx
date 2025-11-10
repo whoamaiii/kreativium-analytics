@@ -1,4 +1,4 @@
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,8 @@ import type { SourceItem } from '@/types/analytics';
 import { ResizableSplitLayout } from '@/components/layouts/ResizableSplitLayout';
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import { useSyncedPatternParams } from '@/hooks/useSyncedPatternParams';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export interface PatternsPanelProps {
   filteredData: {
@@ -76,17 +78,13 @@ export const PatternsPanel = memo(function PatternsPanel({ filteredData, useAI =
   }, []);
   // Determine AI availability (guard explanation feature when key is missing)
   const aiConfig = loadAiConfig();
+  const [lsKeyOld] = useStorageState(STORAGE_KEYS.OPENROUTER_API_KEY, '');
+  const [lsKeyNew] = useStorageState(STORAGE_KEYS.VITE_OPENROUTER_API_KEY, '');
   const aiKeyPresent = React.useMemo(() => {
     if (aiConfig?.apiKey && String(aiConfig.apiKey).trim().length > 0) return true;
-    try {
-      const ls = (typeof localStorage !== 'undefined')
-        ? ((localStorage.getItem('OPENROUTER_API_KEY') || localStorage.getItem('VITE_OPENROUTER_API_KEY') || '').trim())
-        : '';
-      return ls.length > 0;
-    } catch {
-      return false;
-    }
-  }, [aiConfig?.apiKey]);
+    const ls = (lsKeyOld || lsKeyNew || '').trim();
+    return ls.length > 0;
+  }, [aiConfig?.apiKey, lsKeyOld, lsKeyNew]);
 
   useEffect(() => {
     runAnalysis(filteredData, { useAI, student });

@@ -7,6 +7,8 @@ import { logger } from '@/lib/logger';
 import { toast } from '@/hooks/use-toast';
 import { validateTrackingEntry } from '@/lib/tracking/validation';
 import { assessEntryQuality } from '@/lib/tracking/dataQuality';
+import { getStorageKeys } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 /**
  * Session state for tracking data collection
@@ -96,6 +98,91 @@ const DEFAULT_SESSION_CONFIG: SessionConfig = {
   enableQualityChecks: true,
 };
 
+/**
+ * Helper functions for session storage operations
+ * Uses storage abstraction to avoid direct localStorage calls
+ */
+const SessionStorage = {
+  /**
+   * Get session storage key for a student
+   */
+  getKey(studentId: string): string {
+    return `${STORAGE_KEYS.ACTIVE_SESSION_PREFIX}${studentId}`;
+  },
+
+  /**
+   * Save session to storage
+   */
+  save(studentId: string, session: SessionState): void {
+    try {
+      const key = this.getKey(studentId);
+      const serialized = JSON.stringify(session);
+      localStorage.setItem(key, serialized);
+    } catch (error) {
+      logger.error('[TrackingContext] Failed to save session to storage', { studentId, error });
+    }
+  },
+
+  /**
+   * Load session from storage
+   */
+  load(studentId: string): SessionState | null {
+    try {
+      const key = this.getKey(studentId);
+      const stored = localStorage.getItem(key);
+      if (!stored) return null;
+      return JSON.parse(stored);
+    } catch (error) {
+      logger.error('[TrackingContext] Failed to load session from storage', { studentId, error });
+      return null;
+    }
+  },
+
+  /**
+   * Remove session from storage
+   */
+  remove(studentId: string): void {
+    try {
+      const key = this.getKey(studentId);
+      localStorage.removeItem(key);
+    } catch (error) {
+      logger.error('[TrackingContext] Failed to remove session from storage', { studentId, error });
+    }
+  },
+
+  /**
+   * Get all recoverable session keys
+   */
+  getAllKeys(): string[] {
+    return getStorageKeys(STORAGE_KEYS.ACTIVE_SESSION_PREFIX);
+  },
+
+  /**
+   * Load all recoverable sessions
+   */
+  loadAll(): SessionState[] {
+    const keys = this.getAllKeys();
+    return keys
+      .map((key) => {
+        try {
+          const stored = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
+          if (!stored) return null;
+          const parsed = JSON.parse(stored) as SessionState;
+          // Convert date strings back to Date objects
+          return {
+            ...parsed,
+            startTime: new Date(parsed.startTime),
+            lastActivity: new Date(parsed.lastActivity),
+          };
+        } catch (error) {
+          logger.warn('[TrackingContext] Failed to parse session from storage', { key, error });
+          return null;
+        }
+      })
+      .filter((session): session is SessionState => session !== null);
+  },
+};
+
 const TrackingContext = createContext<TrackingContextValue | undefined>(undefined);
 
 /**
@@ -180,10 +267,10 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
 
     setCurrentSession(newSession);
     setSessions(prev => [...prev, newSession]);
-    
-    // Save to localStorage for recovery
+
+    // Save to storage for recovery
     if (newConfig.enableRecovery) {
-      localStorage.setItem(`sensoryTracker_activeSession_${studentId}`, JSON.stringify(newSession));
+      SessionStorage.save(studentId, newSession);
     }
 
     // Setup auto-save
@@ -229,7 +316,7 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
     }
 
     // Clear recovery data
-    localStorage.removeItem(`sensoryTracker_activeSession_${currentSession.studentId}`);
+    SessionStorage.remove(currentSession.studentId);
 
     setCurrentSession(null);
     logger.info('[TrackingContext] Ended session', { sessionId: currentSession.id });
@@ -295,12 +382,12 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
         lastActivity: new Date(),
       };
       updated.dataQuality = calculateDataQuality(updated);
-      
+
       // Update recovery data
       if (sessionConfig.enableRecovery) {
-        localStorage.setItem(`sensoryTracker_activeSession_${prev.studentId}`, JSON.stringify(updated));
+        SessionStorage.save(prev.studentId, updated);
       }
-      
+
       return updated;
     });
 
@@ -347,12 +434,12 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
         lastActivity: new Date(),
       };
       updated.dataQuality = calculateDataQuality(updated);
-      
+
       // Update recovery data
       if (sessionConfig.enableRecovery) {
-        localStorage.setItem(`sensoryTracker_activeSession_${prev.studentId}`, JSON.stringify(updated));
+        SessionStorage.save(prev.studentId, updated);
       }
-      
+
       return updated;
     });
 
@@ -399,12 +486,12 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
         lastActivity: new Date(),
       };
       updated.dataQuality = calculateDataQuality(updated);
-      
+
       // Update recovery data
       if (sessionConfig.enableRecovery) {
-        localStorage.setItem(`sensoryTracker_activeSession_${prev.studentId}`, JSON.stringify(updated));
+        SessionStorage.save(prev.studentId, updated);
       }
-      
+
       return updated;
     });
   }, [currentSession, sessionConfig, calculateDataQuality]);
@@ -423,12 +510,12 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
         lastActivity: new Date(),
       };
       updated.dataQuality = calculateDataQuality(updated);
-      
+
       // Update recovery data
       if (sessionConfig.enableRecovery) {
-        localStorage.setItem(`sensoryTracker_activeSession_${prev.studentId}`, JSON.stringify(updated));
+        SessionStorage.save(prev.studentId, updated);
       }
-      
+
       return updated;
     });
   }, [currentSession, sessionConfig, calculateDataQuality]);
@@ -537,7 +624,7 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
     if (!currentSession) return;
 
     // Clear recovery data
-    localStorage.removeItem(`sensoryTracker_activeSession_${currentSession.studentId}`);
+    SessionStorage.remove(currentSession.studentId);
 
     setCurrentSession(null);
     toast.info('Session discarded');
@@ -588,28 +675,11 @@ export const TrackingProvider = ({ children }: { children: React.ReactNode }) =>
    */
   useEffect(() => {
     const checkRecoverableSessions = () => {
-      const keys = Object.keys(localStorage).filter(k => 
-        k.startsWith('sensoryTracker_activeSession_')
-      );
+      const recoverableSessions = SessionStorage.loadAll();
 
-      if (keys.length > 0) {
-        const recoverableSessionsData = keys.map(key => {
-          try {
-            return JSON.parse(localStorage.getItem(key) || '{}');
-          } catch {
-            return null;
-          }
-        }).filter(Boolean);
-
-        if (recoverableSessionsData.length > 0) {
-          setSessions(recoverableSessionsData.map(data => ({
-            ...data,
-            startTime: new Date(data.startTime),
-            lastActivity: new Date(data.lastActivity),
-          })));
-
-          toast.info(`Found ${recoverableSessionsData.length} recoverable session(s)`);
-        }
+      if (recoverableSessions.length > 0) {
+        setSessions(recoverableSessions);
+        toast.info(`Found ${recoverableSessions.length} recoverable session(s)`);
       }
     };
 

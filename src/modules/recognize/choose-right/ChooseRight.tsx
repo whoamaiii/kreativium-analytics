@@ -5,6 +5,8 @@ import { EmotionCard } from '@/components/emotion/EmotionCard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { playSuccessChime } from '@/lib/sound';
 import { incCorrectChoice } from '@/lib/progress/progress-store';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 function pickOptions(all: EmotionDefinition[], count: number): EmotionDefinition[] {
   const shuffled = [...all].sort(() => Math.random() - 0.5);
@@ -13,9 +15,18 @@ function pickOptions(all: EmotionDefinition[], count: number): EmotionDefinition
 
 export default function ChooseRight() {
   const { tCommon, tTracking, currentLanguage } = useTranslation();
-  const soundVolume = useMemo(() => {
-    try { return Number(localStorage.getItem('emotion.soundVolume') ?? '0.16'); } catch { return 0.16; }
-  }, []);
+  const [soundVolume] = useStorageState(STORAGE_KEYS.SOUND_VOLUME, 0.16, {
+    deserialize: (value) => {
+      const parsed = Number(value);
+      return isNaN(parsed) ? 0.16 : parsed;
+    },
+  });
+  const [hintsEnabled] = useStorageState(STORAGE_KEYS.HINTS_ENABLED, true, {
+    deserialize: (value) => value !== '0',
+  });
+  const [quietRewards] = useStorageState(STORAGE_KEYS.QUIET_REWARDS, false, {
+    deserialize: (value) => value === '1',
+  });
 
   const emotions = useMemo(() => listPlayableEmotions(), []);
   const [round, setRound] = useState(1);
@@ -44,15 +55,13 @@ export default function ChooseRight() {
   function onChoose(choice: EmotionDefinition) {
     if (disabled) return;
     const rt = performance.now() - startRef.current;
-    const hintsEnabled = (() => { try { return localStorage.getItem('emotion.hintsEnabled') !== '0'; } catch { return true; } })();
     const isCorrect = choice.id === target.id;
     if (isCorrect) {
       setDisabled(true);
       setFeedback('correct');
       try { incCorrectChoice(); } catch {}
       // Respect quiet rewards
-      const quiet = (() => { try { return localStorage.getItem('emotion.quietRewards') === '1'; } catch { return false; } })();
-      playSuccessChime(quiet ? 0 : soundVolume);
+      playSuccessChime(quietRewards ? 0 : soundVolume);
       setTimeout(() => nextRound(), 700);
     } else if (hintsEnabled) {
       setFeedback('hint');

@@ -2,10 +2,12 @@ import React from 'react';
 import { loadStudentProgress } from '@/lib/progress/progress-store';
 import { useTranslation } from '@/hooks/useTranslation';
 import PinGate from '@/components/auth/PinGate';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export default function AdultReports() {
   const { tCommon } = useTranslation();
-  const sid = (() => { try { return localStorage.getItem('current.studentId') || 'anonymous'; } catch { return 'anonymous'; } })();
+  const [sid] = useStorageState(STORAGE_KEYS.CURRENT_STUDENT_ID, 'anonymous');
   const progress = loadStudentProgress(sid);
   const rows = Object.values(progress);
 

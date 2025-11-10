@@ -1,5 +1,6 @@
 import { analyticsConfig, STORAGE_KEYS } from './analyticsConfig';
 import { logger } from './logger';
+import { storageKeys, storageClearKeys } from '@/lib/storage/storageHelpers';
 
 /**
  * Temporary override to make analytics more sensitive for development/testing
@@ -10,13 +11,17 @@ export function applyDevelopmentAnalyticsConfig() {
   
   // Clear analytics cache first to avoid localStorage quota issues before writing config
   try {
-    const cacheKeys = Object.keys(localStorage).filter(key => 
-      key.includes(STORAGE_KEYS.cachePrefix) || 
+    // Get all keys from storage and filter for analytics-related keys
+    const allKeys = storageKeys();
+    const cacheKeys = allKeys.filter(key =>
+      key.includes(STORAGE_KEYS.cachePrefix) ||
       key.includes(STORAGE_KEYS.performancePrefix) ||
       key.includes(STORAGE_KEYS.analyticsConfig)
     );
-    cacheKeys.forEach(key => localStorage.removeItem(key));
-    logger.info(`Cleared ${cacheKeys.length} analytics cache entries`);
+
+    // Clear the collected keys
+    const removed = storageClearKeys(cacheKeys);
+    logger.info(`Cleared ${removed.length} analytics cache entries`);
   } catch (error) {
     logger.warn('Failed to clear analytics cache:', error);
   }

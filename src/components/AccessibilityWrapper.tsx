@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { useStorageFlag } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 interface AccessibilityWrapperProps {
   children: React.ReactNode;
@@ -13,25 +15,17 @@ export const AccessibilityWrapper = ({
   announceChanges = true
 }: AccessibilityWrapperProps) => {
   const { tCommon } = useTranslation();
+  const [highContrast] = useStorageFlag(STORAGE_KEYS.HIGH_CONTRAST, false);
+  const [motionReduced] = useStorageFlag(STORAGE_KEYS.MOTION_REDUCED, false);
 
   useEffect(() => {
     const root = document.documentElement;
     function applyFromStorage() {
-      try {
-        const hc = localStorage.getItem('emotion.highContrast') === '1';
-        const rm = localStorage.getItem('emotion.motionReduced') === '1';
-        root.classList.toggle('hc', hc);
-        root.setAttribute('data-reduce-motion', rm ? '1' : '0');
-      } catch {}
+      root.classList.toggle('hc', highContrast);
+      root.setAttribute('data-reduce-motion', motionReduced ? '1' : '0');
     }
     applyFromStorage();
-    const onStorage = (e: StorageEvent) => {
-      if (!e.key) { applyFromStorage(); return; }
-      if (e.key.startsWith('emotion.')) applyFromStorage();
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  }, [highContrast, motionReduced]);
 
   const handleSkip = useCallback((e: React.MouseEvent<HTMLAnchorElement>): void => {
     e.preventDefault();

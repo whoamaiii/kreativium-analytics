@@ -2,6 +2,7 @@ import { Student, TrackingEntry, Goal, Intervention, Alert, CorrelationData, Dat
 import { logger } from './logger';
 import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 import { storageUtils } from './storageUtils';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 /**
  * @interface IDataStorage
@@ -15,19 +16,6 @@ export interface IDataStorage {
   saveTrackingEntry(entry: TrackingEntry): void;
   getGoals(): Goal[];
 }
-
-// Storage keys
-const STORAGE_KEYS = {
-  STUDENTS: 'sensoryTracker_students',
-  TRACKING_ENTRIES: 'sensoryTracker_entries',
-  GOALS: 'sensoryTracker_goals',
-  INTERVENTIONS: 'sensoryTracker_interventions',
-  ALERTS: 'sensoryTracker_alerts',
-  CORRELATIONS: 'sensoryTracker_correlations',
-  DATA_VERSION: 'sensoryTracker_dataVersion',
-  STORAGE_INDEX: 'sensoryTracker_index',
-  PREFERENCES: 'sensoryTracker_preferences'
-} as const;
 
 // Current data version
 const CURRENT_DATA_VERSION = 1;
@@ -146,13 +134,13 @@ export class DataStorageManager implements IDataStorage {
     this.saveAll(STORAGE_KEYS.STUDENTS, students);
 
     // Update tracking entries
-    const entries = this.getAll<TrackingEntry>(STORAGE_KEYS.TRACKING_ENTRIES);
+    const entries = this.getAll<TrackingEntry>(STORAGE_KEYS.ENTRIES);
     entries.forEach(entry => {
       if (!entry.version) {
         entry.version = 1;
       }
     });
-    this.saveAll(STORAGE_KEYS.TRACKING_ENTRIES, entries);
+    this.saveAll(STORAGE_KEYS.ENTRIES, entries);
   }
 
   /**
@@ -392,7 +380,7 @@ export class DataStorageManager implements IDataStorage {
    * @returns {TrackingEntry[]} An array of tracking entry objects.
    */
   public getTrackingEntries(): TrackingEntry[] {
-    return this.getAll<TrackingEntry>(STORAGE_KEYS.TRACKING_ENTRIES, validateTrackingEntry);
+    return this.getAll<TrackingEntry>(STORAGE_KEYS.ENTRIES, validateTrackingEntry);
   }
 
   /**
@@ -451,8 +439,8 @@ export class DataStorageManager implements IDataStorage {
     } else {
       entries.push(entry);
     }
-    
-    this.saveAll(STORAGE_KEYS.TRACKING_ENTRIES, entries);
+
+    this.saveAll(STORAGE_KEYS.ENTRIES, entries);
     this.storageIndex.trackingEntries[entry.id] = entry.timestamp;
     this.saveStorageIndex();
 
@@ -661,7 +649,7 @@ export class DataStorageManager implements IDataStorage {
       
       // Import each data type
       this.saveAll(STORAGE_KEYS.STUDENTS, data.students || []);
-      this.saveAll(STORAGE_KEYS.TRACKING_ENTRIES, data.trackingEntries || []);
+      this.saveAll(STORAGE_KEYS.ENTRIES, data.trackingEntries || []);
       this.saveAll(STORAGE_KEYS.GOALS, data.goals || []);
       this.saveAll(STORAGE_KEYS.INTERVENTIONS, data.interventions || []);
       this.saveAll(STORAGE_KEYS.ALERTS, data.alerts || []);
@@ -748,7 +736,7 @@ export class DataStorageManager implements IDataStorage {
       
       // Remove all tracking entries for this student
       const entries = this.getTrackingEntries().filter(e => e.studentId !== studentId);
-      this.saveAll(STORAGE_KEYS.TRACKING_ENTRIES, entries);
+      this.saveAll(STORAGE_KEYS.ENTRIES, entries);
       
       // Remove goals for this student
       const goals = this.getGoals().filter(g => g.studentId !== studentId);

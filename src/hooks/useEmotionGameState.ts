@@ -23,6 +23,7 @@ import type { HintsState } from '@/lib/game/hints';
 import { loadHints, useHint as consumeHintFromLibrary } from '@/lib/game/hints';
 import { loadCalibration } from '@/hooks/useCalibration';
 import { GAME_DIFFICULTY } from '@/config/gameConfig';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 // ============================================================================
 // STATE DEFINITION
@@ -153,7 +154,7 @@ function createInitialModalState(): ModalState {
   // Check if tutorial has been seen
   let tutorialSeen = false;
   try {
-    tutorialSeen = localStorage.getItem('emotion.tutorialSeen') === '1';
+    tutorialSeen = localStorage.getItem(STORAGE_KEYS.EMOTION_TUTORIAL_SEEN) === '1';
   } catch {
     /* noop */
   }
