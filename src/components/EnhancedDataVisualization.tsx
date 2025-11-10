@@ -45,7 +45,7 @@ const processChartData = (entries: (EmotionEntry | SensoryEntry)[], type: 'emoti
     return Array.from(dataMap.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
-export const EnhancedDataVisualization: React.FC<EnhancedDataVisualizationProps> = ({ emotions, sensoryInputs, studentName }) => {
+export const EnhancedDataVisualization = ({ emotions, sensoryInputs, studentName }: EnhancedDataVisualizationProps) => {
     const [dataType, setDataType] = useState<'emotions' | 'sensory'>('emotions');
 
     const emotionData = useMemo(() => processChartData(emotions, 'emotions'), [emotions]);

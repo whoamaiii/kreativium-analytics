@@ -30,7 +30,7 @@ interface FiltersDrawerProps {
   initialFilters?: Partial<FilterCriteria>;
 }
 
-export const FiltersDrawer: React.FC<FiltersDrawerProps> = ({ open, onOpenChange, onFiltersApply, initialFilters }) => {
+export const FiltersDrawer = ({ open, onOpenChange, onFiltersApply, initialFilters }: FiltersDrawerProps) => {
   const { tAnalytics } = useTranslation();
   const { draft, setDraft, applyFilters, resetFilters, activeCounts, modifiedSinceApply } = useAdvancedFilters(initialFilters);
 

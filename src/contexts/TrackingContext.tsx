@@ -104,7 +104,7 @@ const TrackingContext = createContext<TrackingContextValue | undefined>(undefine
  *
  * @deprecated Use `sessionManager` from `src/lib/sessionManager.ts`. This provider is no longer used in the app.
  */
-export const TrackingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const TrackingProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentSession, setCurrentSession] = useState<SessionState | null>(null);
   const [sessions, setSessions] = useState<SessionState[]>([]);
   const [sessionConfig, setSessionConfig] = useState<SessionConfig>(DEFAULT_SESSION_CONFIG);

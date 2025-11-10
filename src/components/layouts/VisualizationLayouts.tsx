@@ -11,7 +11,7 @@ interface GridLayoutProps extends LayoutProps {
   selectedVisualizations: VisualizationType[];
 }
 
-export const GridLayout: React.FC<GridLayoutProps> = ({ selectedVisualizations, renderVisualization }) => {
+export const GridLayout = ({ selectedVisualizations, renderVisualization }: GridLayoutProps) => {
   if (selectedVisualizations.length === 0) {
     return (
       <Card className="col-span-full">
@@ -39,7 +39,7 @@ interface FocusLayoutProps extends LayoutProps {
   focusedVisualization: VisualizationType | null;
 }
 
-export const FocusLayout: React.FC<FocusLayoutProps> = ({ focusedVisualization, renderVisualization }) => {
+export const FocusLayout = ({ focusedVisualization, renderVisualization }: FocusLayoutProps) => {
   if (!focusedVisualization) {
     return (
       <Card>

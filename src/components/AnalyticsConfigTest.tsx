@@ -13,7 +13,7 @@ interface TestResult {
   message: string;
 }
 
-const AnalyticsConfigTest: React.FC = () => {
+const AnalyticsConfigTest = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [currentConfig, setCurrentConfig] = useState(analyticsConfig.getConfig());
   const { cacheSize, clearCache } = useAnalyticsWorker();

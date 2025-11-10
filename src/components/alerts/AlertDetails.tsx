@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { AlertEvent, AlertSeverity, ThresholdAdjustmentTrace, TauUResult } from '@/lib/alerts/types';
 import { getInterventionsByAlertKind } from '@/lib/interventions/library';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ type Props = {
   onSubmitFeedback?: (alertId: string, feedback: { relevant?: boolean; comment?: string; rating?: number }) => void;
 };
 
-const WideSparkline: React.FC<{ data: SparklineData | null; color: string; label: string; interactive?: boolean }> = ({ data, color, label, interactive }) => {
+const WideSparkline = ({ data, color, label, interactive }: { data: SparklineData | null; color: string; label: string; interactive?: boolean }) => {
   if (!data || data.values.length < 2) {
     return (
       <div className="flex h-32 w-full items-center justify-center rounded bg-slate-100 text-sm text-slate-500">
@@ -124,7 +124,7 @@ function renderMetadata(alert: AlertEvent): Array<{ label: string; value: string
   return entries;
 }
 
-export const AlertDetails: React.FC<Props> = ({ alert, onCreateGoal, onAddInterventionTemplate, onScheduleCheckIn, onAddToReport, onNotifyTeam, onSubmitFeedback }) => {
+const AlertDetailsComponent = ({ alert, onCreateGoal, onAddInterventionTemplate, onScheduleCheckIn, onAddToReport, onNotifyTeam, onSubmitFeedback }: Props) => {
   const interventions = getInterventionsByAlertKind(alert.kind);
   const color = severityColors[alert.severity] ?? '#1f2937';
   const sparklineData = useMemo(() => {
@@ -389,4 +389,5 @@ export const AlertDetails: React.FC<Props> = ({ alert, onCreateGoal, onAddInterv
   );
 };
 
+export const AlertDetails = memo(AlertDetailsComponent);
 export default AlertDetails;

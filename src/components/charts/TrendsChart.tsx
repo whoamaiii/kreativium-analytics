@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 const EChartContainer = React.lazy(() => import('./EChartContainer').then(m => ({ default: m.EChartContainer })));
 import { buildEmotionTrendsOption, buildAreaOption, buildScatterOption, buildComposedOption, TrendRow as ChartKitTrendRow } from './ChartKit';
@@ -26,7 +26,7 @@ interface TrendsChartProps {
   selectedChartType: ChartType;
 }
 
-export const TrendsChart: React.FC<TrendsChartProps> = ({ chartData, selectedChartType }) => {
+const TrendsChartComponent = ({ chartData, selectedChartType }: TrendsChartProps) => {
   const { tAnalytics } = useTranslation();
   try {
     if (chartData.length === 0) {
@@ -98,3 +98,5 @@ export const TrendsChart: React.FC<TrendsChartProps> = ({ chartData, selectedCha
     );
   }
 };
+
+export const TrendsChart = memo(TrendsChartComponent);

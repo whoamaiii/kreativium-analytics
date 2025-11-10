@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -40,7 +40,7 @@ interface PatternAnalysisViewProps {
   };
 }
 
-export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
+const PatternAnalysisViewComponent = ({
   patterns,
   predictiveInsights,
   anomalies,
@@ -48,7 +48,7 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
   highlightState,
   handleHighlight,
   filteredData,
-}) => {
+}: PatternAnalysisViewProps) => {
   if (!DEV_VIZ_ENABLED) {
     return (
       <div className="p-4 border rounded-md text-muted-foreground" role="note" aria-live="polite">
@@ -265,3 +265,5 @@ export const PatternAnalysisView: React.FC<PatternAnalysisViewProps> = ({
     </div>
   );
 };
+
+export const PatternAnalysisView = memo(PatternAnalysisViewComponent);

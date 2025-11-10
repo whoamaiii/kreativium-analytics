@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -13,7 +13,7 @@ interface BreadcrumbsProps {
   className?: string;
 }
 
-export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className }) => {
+const BreadcrumbsComponent = ({ items, className }: BreadcrumbsProps) => {
   if (!items || items.length === 0) return null;
   return (
     <nav aria-label="Breadcrumb" className={cn('text-xs text-muted-foreground', className)}>
@@ -40,3 +40,5 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items, className }) =>
     </nav>
   );
 };
+
+export const Breadcrumbs = memo(BreadcrumbsComponent);

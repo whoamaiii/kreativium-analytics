@@ -43,11 +43,11 @@ const DefaultErrorFallback = () => (
   </Card>
 );
 
-export const LazyLoadWrapper: React.FC<LazyLoadWrapperProps> = ({
+export const LazyLoadWrapper = ({
   fallback = <DefaultFallback />,
   errorFallback = <DefaultErrorFallback />,
   children
-}) => {
+}: LazyLoadWrapperProps) => {
   return (
     <ErrorBoundary fallback={errorFallback}>
       <Suspense fallback={fallback}>

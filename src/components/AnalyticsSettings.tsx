@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import {
   Settings,
   Save,
@@ -39,10 +39,10 @@ interface AnalyticsSettingsProps {
   onClose?: () => void;
 }
 
-export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
+const AnalyticsSettingsComponent = ({
   onConfigChange,
   onClose
-}) => {
+}: AnalyticsSettingsProps) => {
   const { tAnalytics } = useTranslation();
 
   // Configuration management (extracted hook)
@@ -786,3 +786,5 @@ export const AnalyticsSettings: React.FC<AnalyticsSettingsProps> = ({
     </Dialog>
   );
 };
+
+export const AnalyticsSettings = memo(AnalyticsSettingsComponent);

@@ -43,7 +43,7 @@ interface TooltipProps {
 }
 
 // Tooltip component for data points
-const Tooltip3D: React.FC<TooltipProps> = ({ point, onClose }) => {
+const Tooltip3D = ({ point, onClose }: TooltipProps) => {
   const { tAnalytics } = useTranslation();
   
   return (
@@ -73,7 +73,7 @@ const Tooltip3D: React.FC<TooltipProps> = ({ point, onClose }) => {
 };
 
 // Data point component
-const DataPoint: React.FC<{
+const DataPoint = ({ position, color, size, point, onHover, isHighlighted, reducedMotion = false }: {
   position: [number, number, number];
   color: string;
   size: number;
@@ -81,7 +81,7 @@ const DataPoint: React.FC<{
   onHover: (point: DataPoint3D | null) => void;
   isHighlighted: boolean;
   reducedMotion?: boolean;
-}> = ({ position, color, size, point, onHover, isHighlighted, reducedMotion = false }) => {
+}) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -132,11 +132,11 @@ const DataPoint: React.FC<{
 };
 
 // Axis labels
-const AxisLabels: React.FC<{ xLabel: string; yLabel: string; zLabel: string }> = ({ 
+const AxisLabels = ({ 
   xLabel, 
   yLabel, 
   zLabel 
-}) => {
+}: { xLabel: string; yLabel: string; zLabel: string }) => {
   const size = 5;
   
   return (
@@ -187,7 +187,7 @@ const AxisLabels: React.FC<{ xLabel: string; yLabel: string; zLabel: string }> =
 };
 
 // Camera controls component (rendered as DOM overlay via <Html/>)
-const CameraControls: React.FC<{ onReset: () => void }> = ({ onReset }) => {
+const CameraControls = ({ onReset }: { onReset: () => void }) => {
   const { camera } = useThree();
   return (
     <Html fullscreen>
@@ -208,12 +208,12 @@ const CameraControls: React.FC<{ onReset: () => void }> = ({ onReset }) => {
   );
 };
 
-export const Visualization3D: React.FC<Visualization3DProps> = ({
+export const Visualization3D = ({
   emotions,
   sensoryInputs,
   trackingEntries,
   correlationData
-}) => {
+}: Visualization3DProps) => {
   const prefersReducedMotion = useReducedMotion();
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint3D | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<DataPoint3D | null>(null);

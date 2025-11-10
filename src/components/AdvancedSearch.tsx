@@ -40,14 +40,14 @@ const emotionTypes = ["happy", "sad", "angry", "anxious", "calm", "frustrated", 
 const sensoryTypes = ["visual", "auditory", "tactile", "vestibular", "proprioceptive"];
 const goalStatuses = ["active", "achieved", "paused", "discontinued"];
 
-const AdvancedSearchComponent: React.FC<AdvancedSearchProps> = ({
+const AdvancedSearchComponent = ({
   students,
   trackingEntries,
   emotions,
   sensoryInputs,
   goals,
   onResultsChange
-}) => {
+}: AdvancedSearchProps) => {
   const { tAnalytics, tCommon } = useTranslation();
   const [filters, setFilters] = useState<SearchFilters>({
     query: "",

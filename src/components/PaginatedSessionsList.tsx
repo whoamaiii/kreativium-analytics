@@ -25,10 +25,10 @@ interface PaginatedSessionsListProps {
  * @param {string} [props.title="Sessions in Selected Period"] - Title for the sessions list
  * @returns {React.ReactElement} Rendered component
  */
-export const PaginatedSessionsList: React.FC<PaginatedSessionsListProps> = memo(({
+export const PaginatedSessionsList = memo(({
   sessions,
   title = "Sessions in Selected Period"
-}) => {
+}: PaginatedSessionsListProps) => {
   const {
     paginatedData,
     currentPage,

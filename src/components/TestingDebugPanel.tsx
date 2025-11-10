@@ -44,7 +44,7 @@ interface TestData {
 type TestStatus = TestResult['status'];
 
 
-export const TestingDebugPanel: React.FC<TestingDebugPanelProps> = ({ className = "" }) => {
+export const TestingDebugPanel = ({ className = "" }: TestingDebugPanelProps) => {
   const [isRunningTests, setIsRunningTests] = useState(false);
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   

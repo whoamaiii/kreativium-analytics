@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Badge } from '@/components/ui/badge';
 
-export const POCBadge: React.FC = () => {
+const POCBadgeComponent = () => {
   return (
     <Badge variant="outline" className="uppercase tracking-wider text-xs">POC Mode</Badge>
   );
 };
+
+export const POCBadge = memo(POCBadgeComponent);
 
 

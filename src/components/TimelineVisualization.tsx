@@ -56,14 +56,14 @@ interface DataStream {
   yScale: [number, number];
 }
 
-export const TimelineVisualization: React.FC<TimelineVisualizationProps> = ({
+export const TimelineVisualization = ({
   emotions,
   sensoryInputs,
   trackingEntries,
   anomalies = [],
   onTimeRangeChange,
   realtime = false
-}) => {
+}: TimelineVisualizationProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 400 });

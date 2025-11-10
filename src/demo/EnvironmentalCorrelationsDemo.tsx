@@ -114,7 +114,7 @@ const generateCorrelatedData = (student: Student, days: number = 30): Student =>
   };
 };
 
-export const EnvironmentalCorrelationsDemo: React.FC = () => {
+export const EnvironmentalCorrelationsDemo = () => {
   const baseStudent: Student = {
     id: 'demo-student-1',
     name: 'Demo Student',

@@ -13,11 +13,11 @@ interface CorrelationHeatmapProps {
   onShowAllTime: () => void;
 }
 
-const BaseCorrelationHeatmap: React.FC<CorrelationHeatmapProps> = ({
+const BaseCorrelationHeatmap = ({
   correlationMatrix,
   onRetry,
   onShowAllTime,
-}) => {
+}: CorrelationHeatmapProps) => {
   const { tAnalytics } = useTranslation();
   if (!correlationMatrix) {
     return (

@@ -13,7 +13,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-export const CreateGoalFromAlertDialog: React.FC<Props> = ({ open, alert, onOpenChange }) => {
+export const CreateGoalFromAlertDialog = ({ open, alert, onOpenChange }: Props) => {
   const now = new Date();
   const defaultTitle = useMemo(() => (alert ? `Goal: ${alert.kind.replace('_', ' ')}` : ''), [alert]);
   const [title, setTitle] = useState<string>('');
