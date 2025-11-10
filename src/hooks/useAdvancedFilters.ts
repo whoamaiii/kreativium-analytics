@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FilterCriteria } from '@/lib/filterUtils';
-
-// Local storage key for persistence
-const STORAGE_KEY = 'analytics_advanced_filters';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 // Default values for all criteria. Time range excluded from UI but kept in state.
 const defaultCriteria: FilterCriteria = {
@@ -36,27 +35,6 @@ export interface UseAdvancedFiltersReturn {
     total: number;
   };
   modifiedSinceApply: boolean;
-}
-
-function safeLoadFromStorage(): Partial<FilterCriteria> | null {
-  try {
-    if (typeof window === 'undefined') return null;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function safeSaveToStorage(criteria: FilterCriteria): void {
-  try {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(criteria));
-  } catch {
-    // ignore persistence errors
-  }
 }
 
 function mergeWithDefaults(partial: Partial<FilterCriteria> | null | undefined): FilterCriteria {
@@ -137,11 +115,23 @@ function countActive(criteria: FilterCriteria): {
 
 export function useAdvancedFilters(initial?: Partial<FilterCriteria>): UseAdvancedFiltersReturn {
   const initialLoaded = useRef<boolean>(false);
-  const [applied, setApplied] = useState<FilterCriteria>(() => {
-    const fromStorage = safeLoadFromStorage();
-    const merged = mergeWithDefaults(fromStorage ?? initial);
-    return merged;
-  });
+
+  // Use storage hook for automatic persistence
+  const [applied, setApplied] = useStorageState<FilterCriteria>(
+    STORAGE_KEYS.ANALYTICS_ADVANCED_FILTERS,
+    mergeWithDefaults(initial),
+    {
+      deserialize: (value) => {
+        try {
+          const parsed = JSON.parse(value);
+          return mergeWithDefaults(parsed && typeof parsed === 'object' ? parsed : null);
+        } catch {
+          return mergeWithDefaults(null);
+        }
+      },
+    }
+  );
+
   const [draft, setDraftState] = useState<FilterCriteria>(() => applied);
 
   useEffect(() => {
@@ -153,25 +143,20 @@ export function useAdvancedFilters(initial?: Partial<FilterCriteria>): UseAdvanc
       setApplied(merged);
       setDraftState(merged);
     }
-  }, [initial]);
+  }, [initial, applied, setApplied]);
 
   const setDraft = useCallback((updater: (prev: FilterCriteria) => FilterCriteria) => {
     setDraftState(prev => updater(prev));
   }, []);
 
   const applyFilters = useCallback(() => {
-    setApplied(prev => {
-      const next = { ...draft };
-      safeSaveToStorage(next);
-      return next;
-    });
-  }, [draft]);
+    setApplied({ ...draft }); // Storage hook handles persistence automatically
+  }, [draft, setApplied]);
 
   const resetFilters = useCallback(() => {
     setApplied(defaultCriteria);
     setDraftState(defaultCriteria);
-    safeSaveToStorage(defaultCriteria);
-  }, []);
+  }, [setApplied]);
 
   const activeCounts = useMemo(() => countActive(draft), [draft]);
   const hasActiveFilters = activeCounts.total > 0;

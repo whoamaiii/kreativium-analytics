@@ -1,6 +1,7 @@
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { useCallback, useMemo } from 'react';
 import { logger } from '@/lib/logger';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 const namespace = 'common';
 const missingTranslationKeysLogged = new Set<string>();
@@ -43,7 +44,7 @@ export const useTranslation = (): TranslationHookReturn => {
 
   const changeLanguage = useCallback((lng: 'nb' | 'en') => {
     i18n.changeLanguage(lng);
-    localStorage.setItem('sensoryTracker_language', lng);
+    localStorage.setItem(STORAGE_KEYS.LANGUAGE, lng);
   }, [i18n]);
 
   const currentLanguage = (i18n.language as 'nb' | 'en') || 'nb';

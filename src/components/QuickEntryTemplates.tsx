@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useStorageState } from '@/lib/storage/useStorageState';
 
 interface QuickTemplate {
   id: string;
@@ -125,50 +126,55 @@ const QuickEntryTemplatesComponent = ({
   studentId,
   onApplyTemplate
 }: QuickEntryTemplatesProps) => {
+  // Generate storage key per student
+  const storageKey = useMemo(() => `quickTemplates_${studentId}`, [studentId]);
+
   /**
-   * Initialize templates from localStorage with error handling.
-   * Falls back to default templates if parsing fails or data is corrupted.
+   * Initialize templates from storage with validation.
+   * Uses storage hook with custom deserializer for validation.
    */
-  const [templates, setTemplates] = useState<QuickTemplate[]>(() => {
-    try {
-      const saved = localStorage.getItem(`quickTemplates_${studentId}`);
-      if (!saved) return defaultTemplates;
-      
-      // Attempt to parse saved templates
-      const parsed = JSON.parse(saved);
-      
-      // Validate that parsed data is an array
-      if (!Array.isArray(parsed)) {
-        logger.warn('Invalid template data in localStorage, using defaults', { studentId });
-        return defaultTemplates;
-      }
-      
-      // Basic validation of template structure
-      const isValidTemplate = (t: unknown): t is QuickTemplate => {
-        return t && 
-               typeof t.id === 'string' && 
-               typeof t.name === 'string' &&
-               Array.isArray(t.emotions) &&
-               Array.isArray(t.sensoryInputs);
-      };
-      
-      // Filter out invalid templates
-      const validTemplates = parsed.filter(isValidTemplate);
-      
-      // If no valid templates found, return defaults
-      if (validTemplates.length === 0) {
-        logger.warn('No valid templates found in localStorage, using defaults', { studentId });
-        return defaultTemplates;
-      }
-      
-      return validTemplates;
-    } catch (error) {
-      // Log error and fall back to defaults
-      logger.error('Failed to parse saved templates, using defaults', error);
-      return defaultTemplates;
+  const [templates, setTemplates] = useStorageState<QuickTemplate[]>(
+    storageKey,
+    defaultTemplates,
+    {
+      deserialize: (value) => {
+        try {
+          const parsed = JSON.parse(value);
+
+          // Validate that parsed data is an array
+          if (!Array.isArray(parsed)) {
+            logger.warn('Invalid template data in storage, using defaults', { studentId });
+            return defaultTemplates;
+          }
+
+          // Basic validation of template structure
+          const isValidTemplate = (t: unknown): t is QuickTemplate => {
+            return t &&
+                   typeof (t as any).id === 'string' &&
+                   typeof (t as any).name === 'string' &&
+                   Array.isArray((t as any).emotions) &&
+                   Array.isArray((t as any).sensoryInputs);
+          };
+
+          // Filter out invalid templates
+          const validTemplates = parsed.filter(isValidTemplate);
+
+          // If no valid templates found, return defaults
+          if (validTemplates.length === 0) {
+            logger.warn('No valid templates found in storage, using defaults', { studentId });
+            return defaultTemplates;
+          }
+
+          return validTemplates;
+        } catch (error) {
+          // Log error and fall back to defaults
+          logger.error('Failed to parse saved templates, using defaults', error);
+          return defaultTemplates;
+        }
+      },
     }
-  });
-  
+  );
+
   const [isCreating, setIsCreating] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<QuickTemplate | null>(null);
   const [newTemplate, setNewTemplate] = useState<Partial<QuickTemplate>>({
@@ -187,20 +193,13 @@ const QuickEntryTemplatesComponent = ({
   const templateCategoryLabelId = React.useId();
 
   /**
-   * Save templates to localStorage with error handling.
-   * Logs errors but doesn't crash the application if saving fails.
-   * 
+   * Save templates - now handled automatically by storage hook.
+   * Just update state and persistence happens automatically.
+   *
    * @param {QuickTemplate[]} updatedTemplates - Templates to save
    */
   const saveTemplates = (updatedTemplates: QuickTemplate[]) => {
-    setTemplates(updatedTemplates);
-    try {
-      localStorage.setItem(`quickTemplates_${studentId}`, JSON.stringify(updatedTemplates));
-    } catch (error) {
-      // Handle quota exceeded or other storage errors
-      logger.error('Failed to save templates to localStorage', error);
-      toast.error('Failed to save template changes. Storage may be full.');
-    }
+    setTemplates(updatedTemplates); // Storage hook handles persistence automatically
   };
 
   const applyTemplate = (template: QuickTemplate) => {

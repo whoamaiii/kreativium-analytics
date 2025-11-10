@@ -29,6 +29,9 @@ export const ANALYTICS_KEYS = {
   /** Analytics profiles for different configurations */
   PROFILES: 'sensoryTracker_analyticsProfiles',
 
+  /** Advanced filters for analytics view */
+  ADVANCED_FILTERS: 'analytics_advanced_filters',
+
   /** Cache prefix for analytics results */
   CACHE_PREFIX: 'analytics-cache',
 
@@ -114,6 +117,9 @@ export const SETTINGS_KEYS = {
 
   /** Quiet rewards mode (fewer sound effects) */
   QUIET_REWARDS: 'emotion.quietRewards',
+
+  /** Language preference ('nb' or 'en') */
+  LANGUAGE: 'sensoryTracker_language',
 } as const
 
 // =============================================================================
@@ -199,6 +205,7 @@ export const STORAGE_KEYS = {
   // Analytics
   ANALYTICS_CONFIG: ANALYTICS_KEYS.CONFIG,
   ANALYTICS_PROFILES: ANALYTICS_KEYS.PROFILES,
+  ANALYTICS_ADVANCED_FILTERS: ANALYTICS_KEYS.ADVANCED_FILTERS,
   ANALYTICS_CACHE_PREFIX: ANALYTICS_KEYS.CACHE_PREFIX,
   ANALYTICS_PERFORMANCE_PREFIX: ANALYTICS_KEYS.PERFORMANCE_PREFIX,
 
@@ -206,6 +213,7 @@ export const STORAGE_KEYS = {
   STUDENTS: TRACKING_KEYS.STUDENTS,
   ENTRIES: TRACKING_KEYS.ENTRIES,
   ALERTS: TRACKING_KEYS.ALERTS,
+  PINNED_ALERTS: TRACKING_KEYS.PINNED_ALERTS,
   CURRENT_STUDENT_ID: TRACKING_KEYS.CURRENT_STUDENT_ID,
 
   // Emotion Game
@@ -228,6 +236,7 @@ export const STORAGE_KEYS = {
   HINTS_ENABLED: SETTINGS_KEYS.HINTS_ENABLED,
   HIGH_CONTRAST: SETTINGS_KEYS.HIGH_CONTRAST,
   QUIET_REWARDS: SETTINGS_KEYS.QUIET_REWARDS,
+  LANGUAGE: SETTINGS_KEYS.LANGUAGE,
 
   // Adult
   ADULT_PIN: ADULT_KEYS.PIN,
