@@ -21,6 +21,7 @@ import {
   safeGetArrayMetadata,
   safeGetObjectMetadata,
 } from '@/lib/utils/config-accessors';
+import { ALERT_LIMITS } from '@/constants/analyticsThresholds';
 
 export interface CacheStore {
   get: (key: string) => unknown;
@@ -48,8 +49,6 @@ export interface WorkerMessageHandlers {
   onMessage: (event: MessageEvent<AnalyticsWorkerMessage>) => void;
   onMessageError: (event: MessageEvent) => void;
 }
-
-const MAX_ALERTS_TO_STORE = 200;
 
 type LoggerInstance = typeof logger;
 
@@ -129,7 +128,7 @@ const handleAlertsMessage = (
     }
   });
 
-  writeStoredAlerts(targetStudentId, deduped.slice(0, MAX_ALERTS_TO_STORE));
+  writeStoredAlerts(targetStudentId, deduped.slice(0, ALERT_LIMITS.MAX_STORED));
   if (!payload.prewarm && typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(ALERTS_UPDATED_EVENT, { detail: { studentId: targetStudentId } }));
   }

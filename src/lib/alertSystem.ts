@@ -3,6 +3,7 @@ import { EmotionEntry, SensoryEntry, TrackingEntry, Student } from '@/types/stud
 import { patternAnalysis } from './patternAnalysis';
 import { logger } from './logger';
 import { safeGet, safeSet } from '@/lib/storage';
+import { ALERT_LIMITS } from '@/constants/analyticsThresholds';
 
 function persistOrThrow(key: string, value: string): void {
   safeSet(key, value);
@@ -147,19 +148,18 @@ class AlertSystemManager {
       }));
 
       const updatedHistory = [...existingHistory, ...newHistoryEntries];
-      
+
       // Automatically cleanup old alerts if we have too many
-      const MAX_ALERTS = 500; // Reasonable limit to prevent storage issues
       let historyToSave = updatedHistory;
-      
-      if (updatedHistory.length > MAX_ALERTS) {
+
+      if (updatedHistory.length > ALERT_LIMITS.MAX_DISPLAY) {
         // First try to remove old resolved alerts
         const unresolvedAlerts = updatedHistory.filter(entry => !entry.resolved);
         const resolvedAlerts = updatedHistory.filter(entry => entry.resolved)
           .sort((a, b) => new Date(b.alert.timestamp).getTime() - new Date(a.alert.timestamp).getTime())
-          .slice(0, MAX_ALERTS - unresolvedAlerts.length);
-        
-        historyToSave = [...unresolvedAlerts, ...resolvedAlerts].slice(-MAX_ALERTS);
+          .slice(0, ALERT_LIMITS.MAX_DISPLAY - unresolvedAlerts.length);
+
+        historyToSave = [...unresolvedAlerts, ...resolvedAlerts].slice(-ALERT_LIMITS.MAX_DISPLAY);
         logger.info(`Alert storage limit reached. Cleaned up ${updatedHistory.length - historyToSave.length} old alerts.`);
       }
       
@@ -175,7 +175,7 @@ class AlertSystemManager {
       
       // Try one more time with just the new alerts
       try {
-        const minimalHistory = this.getAllAlerts().slice(-100); // Keep only last 100
+        const minimalHistory = this.getAllAlerts().slice(-ALERT_LIMITS.HISTORY_LIMIT);
         const newHistoryEntries: AlertHistoryEntry[] = alerts.map(alert => ({
           alert,
           viewed: false,
@@ -384,9 +384,9 @@ class AlertSystemManager {
   /**
    * Cleans up old, resolved alerts from the history.
    *
-   * @param daysToKeep - The number of days to keep resolved alerts. Defaults to 90.
+   * @param daysToKeep - The number of days to keep resolved alerts. Defaults to CLEANUP_DAYS.
    */
-  cleanupOldAlerts(daysToKeep: number = 90): void {
+  cleanupOldAlerts(daysToKeep: number = ALERT_LIMITS.CLEANUP_DAYS): void {
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
