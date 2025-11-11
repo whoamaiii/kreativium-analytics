@@ -20,15 +20,19 @@ const BreadcrumbsComponent = ({ items, className }: BreadcrumbsProps) => {
       <ol className="flex items-center gap-1">
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;
-          const content = item.href && !item.current && !isLast ? (
-            <Link to={item.href} className="hover:underline">
-              {item.label}
-            </Link>
-          ) : (
-            <span className={cn(item.current || isLast ? 'text-foreground' : undefined)} aria-current={item.current || isLast ? 'page' : undefined}>
-              {item.label}
-            </span>
-          );
+          const content =
+            item.href && !item.current && !isLast ? (
+              <Link to={item.href} className="hover:underline">
+                {item.label}
+              </Link>
+            ) : (
+              <span
+                className={cn(item.current || isLast ? 'text-foreground' : undefined)}
+                aria-current={item.current || isLast ? 'page' : undefined}
+              >
+                {item.label}
+              </span>
+            );
           return (
             <li key={`${item.label}-${idx}`} className="flex items-center gap-1">
               {content}

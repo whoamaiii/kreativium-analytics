@@ -7,9 +7,9 @@
   meta: {
     env: {
       PROD: false,
-      DEV: true
-    }
-  }
+      DEV: true,
+    },
+  },
 };
 
 import { analyticsWorkerFallback } from '../src/lib/analyticsWorkerFallback';
@@ -32,7 +32,7 @@ const generateMockData = (): AnalyticsData => {
       emotion: ['happy', 'sad', 'anxious', 'calm'][i % 4],
       intensity: Math.floor(Math.random() * 5) + 1,
       triggers: [],
-      notes: ''
+      notes: '',
     });
   }
 
@@ -45,7 +45,7 @@ const generateMockData = (): AnalyticsData => {
       type: ['visual', 'auditory', 'tactile', 'vestibular'][i % 4],
       response: ['seeking', 'avoiding', 'neutral'][i % 3],
       intensity: Math.floor(Math.random() * 5) + 1,
-      notes: ''
+      notes: '',
     });
   }
 
@@ -66,10 +66,10 @@ const generateMockData = (): AnalyticsData => {
           lighting: 'bright',
           noiseLevel: 3,
           temperature: 22,
-          crowdedness: 2
+          crowdedness: 2,
         },
-        distractions: []
-      }
+        distractions: [],
+      },
     });
   }
 
@@ -89,35 +89,39 @@ const testFallbackMode = async () => {
   try {
     console.log('Processing analytics...');
     const startTime = Date.now();
-    
+
     const results = await analyticsWorkerFallback.processAnalytics(mockData);
-    
+
     const processingTime = Date.now() - startTime;
     console.log(`\nProcessing completed in ${processingTime}ms\n`);
 
     console.log('Results:');
     console.log(`- Patterns found: ${results.patterns.length}`);
-    results.patterns.forEach(pattern => {
-      console.log(`  • ${pattern.pattern} (${pattern.description}) - Confidence: ${(pattern.confidence * 100).toFixed(1)}%`);
+    results.patterns.forEach((pattern) => {
+      console.log(
+        `  • ${pattern.pattern} (${pattern.description}) - Confidence: ${(pattern.confidence * 100).toFixed(1)}%`,
+      );
     });
 
     console.log(`\n- Correlations found: ${results.correlations.length}`);
-    results.correlations.forEach(corr => {
+    results.correlations.forEach((corr) => {
       console.log(`  • ${corr.description} - Significance: ${corr.significance}`);
     });
 
     console.log(`\n- Predictive insights: ${results.predictiveInsights.length}`);
-    results.predictiveInsights.forEach(insight => {
+    results.predictiveInsights.forEach((insight) => {
       console.log(`  • ${insight.type}: ${insight.description}`);
     });
 
     console.log(`\n- Anomalies detected: ${results.anomalies.length}`);
-    results.anomalies.forEach(anomaly => {
-      console.log(`  • ${anomaly.type} anomaly: ${anomaly.description} - Severity: ${anomaly.severity}`);
+    results.anomalies.forEach((anomaly) => {
+      console.log(
+        `  • ${anomaly.type} anomaly: ${anomaly.description} - Severity: ${anomaly.severity}`,
+      );
     });
 
     console.log(`\n- Insights:`);
-    results.insights.forEach(insight => {
+    results.insights.forEach((insight) => {
       console.log(`  • ${insight}`);
     });
 

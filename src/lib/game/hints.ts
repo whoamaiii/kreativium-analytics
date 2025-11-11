@@ -1,4 +1,4 @@
-const HINTS_KEY = 'emotion.hints.daily';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export interface HintsState {
   date: string; // YYYY-MM-DD
@@ -15,7 +15,7 @@ function today(): string {
 
 export function loadHints(defaultPerDay: number = 5): HintsState {
   try {
-    const raw = localStorage.getItem(HINTS_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.EMOTION_HINTS_DAILY);
     const t = today();
     if (!raw) return { date: t, remaining: defaultPerDay };
     const parsed: HintsState = JSON.parse(raw);
@@ -29,16 +29,16 @@ export function loadHints(defaultPerDay: number = 5): HintsState {
 export function useHint(): HintsState {
   const current = loadHints();
   const next = { date: current.date, remaining: Math.max(0, current.remaining - 1) };
-  try { localStorage.setItem(HINTS_KEY, JSON.stringify(next)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEYS.EMOTION_HINTS_DAILY, JSON.stringify(next));
+  } catch {}
   return next;
 }
 
 export function resetHints(defaultPerDay: number = 5): HintsState {
   const next = { date: today(), remaining: defaultPerDay };
-  try { localStorage.setItem(HINTS_KEY, JSON.stringify(next)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEYS.EMOTION_HINTS_DAILY, JSON.stringify(next));
+  } catch {}
   return next;
 }
-
-
-
-

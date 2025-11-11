@@ -3,6 +3,7 @@
 ## Executive Summary
 
 Successfully consolidated 3 duplicate URL-syncing hooks (70% identical, 460 lines) into:
+
 - **1 generic reusable hook** (`useUrlSync<T>`) - 146 lines
 - **3 simplified domain-specific hooks** - 468 lines combined
 - **No breaking changes** - all APIs remain identical
@@ -27,16 +28,8 @@ export interface UseUrlSyncOptions<T> {
   loggerName?: string;
 }
 
-export function useUrlSync<T>(
-  options: UseUrlSyncOptions<T>
-): [T, Dispatch<SetStateAction<T>>] {
-  const {
-    read,
-    write,
-    defaultValue,
-    debounceMs = 150,
-    loggerName = 'useUrlSync',
-  } = options;
+export function useUrlSync<T>(options: UseUrlSyncOptions<T>): [T, Dispatch<SetStateAction<T>>] {
+  const { read, write, defaultValue, debounceMs = 150, loggerName = 'useUrlSync' } = options;
 
   const getFromLocation = useCallback((): T => {
     try {
@@ -89,7 +82,7 @@ export function useUrlSync<T>(
       }
       debounceTimer.current = window.setTimeout(doWrite, debounceMs);
     },
-    [debounceMs, write, loggerName]
+    [debounceMs, write, loggerName],
   );
 
   // When value changes (from UI), write to URL
@@ -117,7 +110,8 @@ export function useUrlSync<T>(
 
 1. **Reading**: On mount and after popstate, reads the value from URL via the `read` function
 2. **State Management**: Maintains state that matches the URL
-3. **Writing**: When state changes, debounces writes via the `write` function and `history.replaceState`
+3. **Writing**: When state changes, debounces writes via the `write` function and
+   `history.replaceState`
 4. **Navigation Sync**: Listens to `popstate` to sync when user uses browser back/forward
 5. **Cleanup**: Cancels any pending debounced writes on unmount
 
@@ -128,28 +122,36 @@ export function useUrlSync<T>(
 **File**: `/home/user/kreativium-analytics/src/hooks/useSyncedTabParam.ts` (167 lines)
 
 **Key Changes**:
+
 - Removed: 74 lines of boilerplate (state, effects, debounce management)
 - Kept: 93 lines of validation/normalization logic
 - Added: 42-line `read` callback that encapsulates validation + legacy redirect handling
 - Added: 6-line `write` callback
 
 **Pattern**:
+
 ```typescript
-const read = useCallback((params: URLSearchParams): TabKey => {
-  const urlValue = params.get(paramKey);
-  const normalized = normalizeTab(urlValue, defaultTab);
-  const tab = normalized.tab || defaultTab;
+const read = useCallback(
+  (params: URLSearchParams): TabKey => {
+    const urlValue = params.get(paramKey);
+    const normalized = normalizeTab(urlValue, defaultTab);
+    const tab = normalized.tab || defaultTab;
 
-  // Legacy redirect handling
-  if (normalized.legacyFrom) {
-    // ... history state injection + callback
-  }
-  return tab;
-}, [paramKey, defaultTab, onLegacyRedirect]);
+    // Legacy redirect handling
+    if (normalized.legacyFrom) {
+      // ... history state injection + callback
+    }
+    return tab;
+  },
+  [paramKey, defaultTab, onLegacyRedirect],
+);
 
-const write = useCallback((tab: TabKey, params: URLSearchParams) => {
-  params.set(paramKey, tab);
-}, [paramKey]);
+const write = useCallback(
+  (tab: TabKey, params: URLSearchParams) => {
+    params.set(paramKey, tab);
+  },
+  [paramKey],
+);
 
 return useUrlSync({ read, write, defaultValue: defaultTab, debounceMs, loggerName });
 ```
@@ -159,32 +161,40 @@ return useUrlSync({ read, write, defaultValue: defaultTab, debounceMs, loggerNam
 **File**: `/home/user/kreativium-analytics/src/hooks/useSyncedExplorePreset.ts` (177 lines)
 
 **Key Changes**:
+
 - Removed: 74 lines of boilerplate
 - Kept: 103 lines of validation/normalization logic
 - Added: 51-line `read` callback with history state inspection + tab inference
 
 **Pattern**:
+
 ```typescript
-const read = useCallback((params: URLSearchParams): ExplorePreset => {
-  const urlValue = params.get(paramKey);
+const read = useCallback(
+  (params: URLSearchParams): ExplorePreset => {
+    const urlValue = params.get(paramKey);
 
-  // Check history state for legacy redirects
-  let suggestedFromLegacy: ExplorePreset | undefined;
-  try {
-    const state: any = window.history.state || {};
-    const legacy = state?.legacyRedirect;
-    if (legacy?.toTab === 'explore' && legacy?.suggestedPreset) {
-      suggestedFromLegacy = legacy.suggestedPreset;
-    }
-  } catch {}
+    // Check history state for legacy redirects
+    let suggestedFromLegacy: ExplorePreset | undefined;
+    try {
+      const state: any = window.history.state || {};
+      const legacy = state?.legacyRedirect;
+      if (legacy?.toTab === 'explore' && legacy?.suggestedPreset) {
+        suggestedFromLegacy = legacy.suggestedPreset;
+      }
+    } catch {}
 
-  // ... rest of logic
-  return preset;
-}, [paramKey, tabParamKey, defaultPreset, currentTab]);
+    // ... rest of logic
+    return preset;
+  },
+  [paramKey, tabParamKey, defaultPreset, currentTab],
+);
 
-const write = useCallback((preset: ExplorePreset, params: URLSearchParams) => {
-  params.set(paramKey, preset);
-}, [paramKey]);
+const write = useCallback(
+  (preset: ExplorePreset, params: URLSearchParams) => {
+    params.set(paramKey, preset);
+  },
+  [paramKey],
+);
 
 return useUrlSync({ read, write, defaultValue: defaultPreset, debounceMs, loggerName });
 ```
@@ -194,44 +204,58 @@ return useUrlSync({ read, write, defaultValue: defaultPreset, debounceMs, logger
 **File**: `/home/user/kreativium-analytics/src/hooks/useSyncedPatternParams.ts` (124 lines)
 
 **Key Changes**:
+
 - Removed: 74 lines of boilerplate
 - Kept: 50 lines of validation logic
 - Reduced: Overall size from 129 → 124 lines (5 line savings)
 - Handles: Multiple parameters (patternId + explain)
 
 **Pattern**:
+
 ```typescript
 interface PatternParams {
   id: string | null;
   explain: boolean;
 }
 
-const read = useCallback((params: URLSearchParams): PatternParams => {
-  const id = normalizePatternId(params.get(patternIdKey));
-  const explain = readBoolean(params.get(explainKey));
-  return { id, explain };
-}, [patternIdKey, explainKey]);
+const read = useCallback(
+  (params: URLSearchParams): PatternParams => {
+    const id = normalizePatternId(params.get(patternIdKey));
+    const explain = readBoolean(params.get(explainKey));
+    return { id, explain };
+  },
+  [patternIdKey, explainKey],
+);
 
-const write = useCallback((value: PatternParams, params: URLSearchParams) => {
-  if (value.id) params.set(patternIdKey, value.id);
-  else params.delete(patternIdKey);
+const write = useCallback(
+  (value: PatternParams, params: URLSearchParams) => {
+    if (value.id) params.set(patternIdKey, value.id);
+    else params.delete(patternIdKey);
 
-  if (value.explain) params.set(explainKey, '1');
-  else params.delete(explainKey);
-}, [patternIdKey, explainKey]);
+    if (value.explain) params.set(explainKey, '1');
+    else params.delete(explainKey);
+  },
+  [patternIdKey, explainKey],
+);
 
 const [patternParams, setPatternParams] = useUrlSync({
-  read, write, defaultValue: { id: null, explain: false }, debounceMs
+  read,
+  write,
+  defaultValue: { id: null, explain: false },
+  debounceMs,
 });
 
 // Custom wrappers maintain existing API
-const setPatternId = useCallback((next: string | null) => {
-  const normalized = normalizePatternId(next);
-  setPatternParams({
-    id: normalized,
-    explain: patternParams.explain && !!normalized,
-  });
-}, [patternParams.explain, setPatternParams]);
+const setPatternId = useCallback(
+  (next: string | null) => {
+    const normalized = normalizePatternId(next);
+    setPatternParams({
+      id: normalized,
+      explain: patternParams.explain && !!normalized,
+    });
+  },
+  [patternParams.explain, setPatternParams],
+);
 ```
 
 ## Before & After Comparison
@@ -239,6 +263,7 @@ const setPatternId = useCallback((next: string | null) => {
 ### Boilerplate Eliminated (per hook)
 
 **Before** - Raw boilerplate in each hook:
+
 ```typescript
 // State initialization (~2 lines)
 const [value, setValue] = useState<T>(() => getValue());
@@ -255,15 +280,18 @@ useEffect(() => {
 
 // Debounce timer setup (~20 lines)
 const debounceTimer = useRef<number | undefined>(undefined);
-const writeToUrl = useCallback((nextValue: T) => {
-  const doWrite = () => {
-    const url = new URL(window.location.href);
-    // ... write logic
-    window.history.replaceState(window.history.state, '', url.toString());
-  };
-  if (debounceTimer.current) window.clearTimeout(debounceTimer.current);
-  debounceTimer.current = window.setTimeout(doWrite, debounceMs);
-}, [debounceMs, paramKey]);
+const writeToUrl = useCallback(
+  (nextValue: T) => {
+    const doWrite = () => {
+      const url = new URL(window.location.href);
+      // ... write logic
+      window.history.replaceState(window.history.state, '', url.toString());
+    };
+    if (debounceTimer.current) window.clearTimeout(debounceTimer.current);
+    debounceTimer.current = window.setTimeout(doWrite, debounceMs);
+  },
+  [debounceMs, paramKey],
+);
 
 // Write effect (~4 lines)
 useEffect(() => {
@@ -274,7 +302,9 @@ useEffect(() => {
 useEffect(() => {
   return () => {
     if (debounceTimer.current) {
-      try { window.clearTimeout(debounceTimer.current); } catch {}
+      try {
+        window.clearTimeout(debounceTimer.current);
+      } catch {}
       debounceTimer.current = undefined;
     }
   };
@@ -282,6 +312,7 @@ useEffect(() => {
 ```
 
 **After** - All consolidated in useUrlSync:
+
 ```typescript
 // Single line to use generic hook
 return useUrlSync({ read, write, defaultValue, debounceMs, loggerName });
@@ -289,24 +320,24 @@ return useUrlSync({ read, write, defaultValue, debounceMs, loggerName });
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| Boilerplate per hook | 41 lines |
-| Total duplication (3 hooks) | 123 lines |
-| Generic hook size | 146 lines |
-| Reusability gain | 100% (can use for new hooks) |
-| API breaking changes | 0 |
-| TypeScript validation | ✓ Passed |
+| Metric                      | Value                        |
+| --------------------------- | ---------------------------- |
+| Boilerplate per hook        | 41 lines                     |
+| Total duplication (3 hooks) | 123 lines                    |
+| Generic hook size           | 146 lines                    |
+| Reusability gain            | 100% (can use for new hooks) |
+| API breaking changes        | 0                            |
+| TypeScript validation       | ✓ Passed                     |
 
 ### Line Count Summary
 
-| Component | Original | Refactored | Notes |
-|-----------|----------|-----------|-------|
-| useSyncedTabParam | 163 | 167 | +4 (explicit read callback) |
-| useSyncedExplorePreset | 168 | 177 | +9 (explicit read callback) |
-| useSyncedPatternParams | 129 | 124 | -5 (removed boilerplate) |
-| useUrlSync (new) | — | 146 | Reusable for future hooks |
-| **Total** | **460** | **614** | +154 total, but -123 duplication |
+| Component              | Original | Refactored | Notes                            |
+| ---------------------- | -------- | ---------- | -------------------------------- |
+| useSyncedTabParam      | 163      | 167        | +4 (explicit read callback)      |
+| useSyncedExplorePreset | 168      | 177        | +9 (explicit read callback)      |
+| useSyncedPatternParams | 129      | 124        | -5 (removed boilerplate)         |
+| useUrlSync (new)       | —        | 146        | Reusable for future hooks        |
+| **Total**              | **460**  | **614**    | +154 total, but -123 duplication |
 
 ## Usage Examples for New Hooks
 
@@ -318,17 +349,26 @@ import { useUrlSync } from './useUrlSync';
 export function useSyncedSort(options = {}) {
   const { paramKey = 'sort', defaultSort = 'name' } = options;
 
-  const read = useCallback((params: URLSearchParams) => {
-    const value = params.get(paramKey) || defaultSort;
-    return ['name', 'date', 'relevance'].includes(value) ? value : defaultSort;
-  }, [paramKey, defaultSort]);
+  const read = useCallback(
+    (params: URLSearchParams) => {
+      const value = params.get(paramKey) || defaultSort;
+      return ['name', 'date', 'relevance'].includes(value) ? value : defaultSort;
+    },
+    [paramKey, defaultSort],
+  );
 
-  const write = useCallback((sort: string, params: URLSearchParams) => {
-    params.set(paramKey, sort);
-  }, [paramKey]);
+  const write = useCallback(
+    (sort: string, params: URLSearchParams) => {
+      params.set(paramKey, sort);
+    },
+    [paramKey],
+  );
 
   return useUrlSync({
-    read, write, defaultValue: defaultSort, loggerName: 'useSyncedSort'
+    read,
+    write,
+    defaultValue: defaultSort,
+    loggerName: 'useSyncedSort',
   });
 }
 ```
@@ -339,21 +379,30 @@ export function useSyncedSort(options = {}) {
 export function useSyncedFilter(options = {}) {
   const { paramKey = 'filters', defaultFilters = {} } = options;
 
-  const read = useCallback((params: URLSearchParams) => {
-    const json = params.get(paramKey);
-    try {
-      return json ? JSON.parse(json) : defaultFilters;
-    } catch {
-      return defaultFilters;
-    }
-  }, [paramKey, defaultFilters]);
+  const read = useCallback(
+    (params: URLSearchParams) => {
+      const json = params.get(paramKey);
+      try {
+        return json ? JSON.parse(json) : defaultFilters;
+      } catch {
+        return defaultFilters;
+      }
+    },
+    [paramKey, defaultFilters],
+  );
 
-  const write = useCallback((filters: any, params: URLSearchParams) => {
-    params.set(paramKey, JSON.stringify(filters));
-  }, [paramKey]);
+  const write = useCallback(
+    (filters: any, params: URLSearchParams) => {
+      params.set(paramKey, JSON.stringify(filters));
+    },
+    [paramKey],
+  );
 
   return useUrlSync({
-    read, write, defaultValue: defaultFilters, loggerName: 'useSyncedFilter'
+    read,
+    write,
+    defaultValue: defaultFilters,
+    loggerName: 'useSyncedFilter',
   });
 }
 ```
@@ -366,17 +415,26 @@ type ViewMode = 'grid' | 'list' | 'table';
 export function useSyncedViewMode(options = {}) {
   const { paramKey = 'view', defaultView = 'grid' as ViewMode } = options;
 
-  const read = useCallback((params: URLSearchParams): ViewMode => {
-    const value = params.get(paramKey) || defaultView;
-    return (['grid', 'list', 'table'].includes(value) ? value : defaultView) as ViewMode;
-  }, [paramKey, defaultView]);
+  const read = useCallback(
+    (params: URLSearchParams): ViewMode => {
+      const value = params.get(paramKey) || defaultView;
+      return (['grid', 'list', 'table'].includes(value) ? value : defaultView) as ViewMode;
+    },
+    [paramKey, defaultView],
+  );
 
-  const write = useCallback((view: ViewMode, params: URLSearchParams) => {
-    params.set(paramKey, view);
-  }, [paramKey]);
+  const write = useCallback(
+    (view: ViewMode, params: URLSearchParams) => {
+      params.set(paramKey, view);
+    },
+    [paramKey],
+  );
 
   return useUrlSync({
-    read, write, defaultValue: defaultView, loggerName: 'useSyncedViewMode'
+    read,
+    write,
+    defaultValue: defaultView,
+    loggerName: 'useSyncedViewMode',
   });
 }
 ```
@@ -386,11 +444,13 @@ export function useSyncedViewMode(options = {}) {
 ### Creating a new URL-synced hook
 
 1. **Define your type**:
+
    ```typescript
    type MyValue = 'option1' | 'option2';
    ```
 
 2. **Write validation helpers** (if needed):
+
    ```typescript
    function validateMyValue(value: string): MyValue {
      return ['option1', 'option2'].includes(value) ? value : 'option1';
@@ -398,14 +458,21 @@ export function useSyncedViewMode(options = {}) {
    ```
 
 3. **Implement read and write functions**:
-   ```typescript
-   const read = useCallback((params: URLSearchParams): MyValue => {
-     return validateMyValue(params.get(paramKey) || defaultValue);
-   }, [paramKey, defaultValue]);
 
-   const write = useCallback((value: MyValue, params: URLSearchParams) => {
-     params.set(paramKey, value);
-   }, [paramKey]);
+   ```typescript
+   const read = useCallback(
+     (params: URLSearchParams): MyValue => {
+       return validateMyValue(params.get(paramKey) || defaultValue);
+     },
+     [paramKey, defaultValue],
+   );
+
+   const write = useCallback(
+     (value: MyValue, params: URLSearchParams) => {
+       params.set(paramKey, value);
+     },
+     [paramKey],
+   );
    ```
 
 4. **Use the generic hook**:
@@ -423,6 +490,7 @@ export function useSyncedViewMode(options = {}) {
 ## Future Opportunities
 
 With this foundation, you can now easily create:
+
 - `useSyncedSearch` - Search query in URL
 - `useSyncedFilter` - Complex filter objects
 - `useSyncedSort` - Sort parameter
@@ -434,8 +502,7 @@ All will follow the exact same pattern and benefit from centralized URL sync log
 
 ## Conclusion
 
-✓ **Duplication eliminated**: 70% → 10% (kept only domain-specific logic)
-✓ **Maintainability improved**: Single source of truth for URL syncing
-✓ **Reusability gained**: Generic hook available for 6+ future use cases
-✓ **Zero breaking changes**: All existing code works without modification
-✓ **Type safety maintained**: Full TypeScript validation passes
+✓ **Duplication eliminated**: 70% → 10% (kept only domain-specific logic) ✓ **Maintainability
+improved**: Single source of truth for URL syncing ✓ **Reusability gained**: Generic hook available
+for 6+ future use cases ✓ **Zero breaking changes**: All existing code works without modification ✓
+**Type safety maintained**: Full TypeScript validation passes

@@ -2,9 +2,11 @@
 
 ## Quick Overview
 
-**Goal**: Integrate CandidateGenerator module into AlertDetectionEngine to eliminate code duplication
+**Goal**: Integrate CandidateGenerator module into AlertDetectionEngine to eliminate code
+duplication
 
 **Files Modified**: 2 files
+
 - `/home/user/kreativium-analytics/src/lib/alerts/engine.ts` (832 → ~380 lines, -54%)
 - `/home/user/kreativium-analytics/src/lib/alerts/__tests__/engine.test.ts` (remove lines 252-338)
 
@@ -18,13 +20,13 @@
 
 ### 1. Implementation Comparison
 
-✓ **CandidateGenerator methods are nearly identical** to engine methods
-✓ **Same logic, same algorithms, same outputs**
-✓ **Only architectural difference**: Dependency injection pattern
+✓ **CandidateGenerator methods are nearly identical** to engine methods ✓ **Same logic, same
+algorithms, same outputs** ✓ **Only architectural difference**: Dependency injection pattern
 
 ### 2. Architectural Pattern
 
 **Engine Current Approach:**
+
 ```typescript
 private buildEmotionCandidates(...) {
   const context = this.createThresholdContext(...);  // Direct call
@@ -33,6 +35,7 @@ private buildEmotionCandidates(...) {
 ```
 
 **CandidateGenerator Approach:**
+
 ```typescript
 buildEmotionCandidates({
   applyThreshold: Function,      // Injected dependency
@@ -71,6 +74,7 @@ const candidates = this.generator.buildEmotionCandidates({
 ## What Gets Removed
 
 ### Candidate Building Methods (274 lines)
+
 - ✗ `buildEmotionCandidates()` - 68 lines
 - ✗ `buildSensoryCandidates()` - 54 lines
 - ✗ `buildAssociationCandidates()` - 37 lines
@@ -78,12 +82,14 @@ const candidates = this.generator.buildEmotionCandidates({
 - ✗ `detectInterventionOutcomes()` - 81 lines
 
 ### Data Building Methods (136 lines)
+
 - ✗ `buildEmotionSeries()` - 19 lines
 - ✗ `buildSensoryAggregates()` - 27 lines
 - ✗ `buildAssociationDataset()` - 56 lines
 - ✗ `buildBurstEvents()` - 34 lines
 
 ### Helper Methods (42 lines)
+
 - ✗ `computeDetectionQuality()` - 9 lines
 - ✗ `safeDetect()` - 8 lines
 - ✗ `lookupEmotionBaseline()` - 11 lines
@@ -96,17 +102,15 @@ const candidates = this.generator.buildEmotionCandidates({
 ## What Stays in Engine
 
 ### Methods that depend on engine state
-✓ `resolveExperimentKey()` - Uses AlertKind enum
-✓ `createThresholdContext()` - Uses this.experiments
-✓ `applyThreshold()` - Uses this.experiments, this.baselineThresholds
-✓ `buildAlert()` - Uses this.seriesLimit, this.policies
-✓ `computeSeriesStats()` - Not in CandidateGenerator
+
+✓ `resolveExperimentKey()` - Uses AlertKind enum ✓ `createThresholdContext()` - Uses
+this.experiments ✓ `applyThreshold()` - Uses this.experiments, this.baselineThresholds ✓
+`buildAlert()` - Uses this.seriesLimit, this.policies ✓ `computeSeriesStats()` - Not in
+CandidateGenerator
 
 ### All interfaces and types
-✓ `DetectionInput`
-✓ `AlertCandidate`
-✓ `AssociationDataset`
-✓ `ApplyThresholdContext`
+
+✓ `DetectionInput` ✓ `AlertCandidate` ✓ `AssociationDataset` ✓ `ApplyThresholdContext`
 
 ---
 
@@ -117,6 +121,7 @@ const candidates = this.generator.buildEmotionCandidates({
 **Action**: DELETE lines 252-338 (private method tests)
 
 **Reason**: Tests call private methods that will be removed:
+
 - `buildEmotionSeries()` ✗
 - `buildEmotionCandidates()` ✗
 - `buildSensoryCandidates()` ✗
@@ -127,6 +132,7 @@ const candidates = this.generator.buildEmotionCandidates({
 - `buildBurstEvents()` ✗
 
 **Safe to delete because:**
+
 - Lines 71-250 already test full pipeline via public API
 - Testing private implementation is fragile
 - CandidateGenerator should have its own tests
@@ -136,36 +142,44 @@ const candidates = this.generator.buildEmotionCandidates({
 ## Implementation Checklist
 
 ### Phase 1: Add Generator
+
 - [ ] Import `CandidateGenerator` from `@/lib/alerts/detection/candidateGenerator`
 - [ ] Import `MAX_ALERT_SERIES_LENGTH` from `@/constants/analytics`
 - [ ] Add `private readonly generator: CandidateGenerator;` field
 
 ### Phase 2: Initialize Generator
+
 - [ ] Extract cusumConfig to local variable in constructor
 - [ ] Extract seriesLimit to local variable in constructor
 - [ ] Initialize `this.generator = new CandidateGenerator({ ... })`
 
 ### Phase 3: Update runDetection
+
 - [ ] Delegate data building: `this.generator.buildEmotionSeries(...)`
-- [ ] Delegate candidates with binding: `this.generator.buildEmotionCandidates({ ..., applyThreshold: this.applyThreshold.bind(this), ... })`
+- [ ] Delegate candidates with binding:
+      `this.generator.buildEmotionCandidates({ ..., applyThreshold: this.applyThreshold.bind(this), ... })`
 - [ ] Repeat for all 5 candidate types
 
 ### Phase 4: Remove Methods
+
 - [ ] Delete 5 candidate building methods
 - [ ] Delete 4 data building methods
 - [ ] Delete 4 helper methods
 - [ ] Total: 13 methods removed
 
 ### Phase 5: Clean Imports
+
 - [ ] Remove detector function imports (detectEWMATrend, detectCUSUMShift, etc.)
 - [ ] Keep type-only imports (TrendPoint, BurstEvent, etc.)
 - [ ] Remove utils: `normalizeTimestamp`, `truncateSeries`
 - [ ] Keep: `buildAlertId`
 
 ### Phase 6: Update Tests
+
 - [ ] Delete lines 252-338 from `engine.test.ts`
 
 ### Phase 7: Verify
+
 - [ ] Run `npm run typecheck` - should pass
 - [ ] Run `npm test` - existing tests should pass
 - [ ] Run `npm run lint` - should pass
@@ -175,17 +189,17 @@ const candidates = this.generator.buildEmotionCandidates({
 ## Risk Mitigation
 
 ### Low Risk Items
-✓ Identical logic - byte-for-byte same algorithms
-✓ Type safety - TypeScript catches signature mismatches
-✓ No behavior change - pure refactoring
-✓ Existing tests validate behavior
+
+✓ Identical logic - byte-for-byte same algorithms ✓ Type safety - TypeScript catches signature
+mismatches ✓ No behavior change - pure refactoring ✓ Existing tests validate behavior
 
 ### Potential Issues
-⚠ `.bind(this)` overhead - Negligible (once per detection run)
-⚠ Interface duplication - Intentional for module independence
-⚠ Missing imports - Use `import type { ... }` for types
+
+⚠ `.bind(this)` overhead - Negligible (once per detection run) ⚠ Interface duplication -
+Intentional for module independence ⚠ Missing imports - Use `import type { ... }` for types
 
 ### Rollback Strategy
+
 ```bash
 git revert <commit-hash>  # Single command rollback
 ```
@@ -195,6 +209,7 @@ git revert <commit-hash>  # Single command rollback
 ## Performance Impact
 
 **Expected**: Negligible
+
 - Generator instantiation: Once per engine instance
 - `.bind()` calls: 10 per detection run (minimal)
 - Method delegation: No overhead vs direct calls
@@ -203,18 +218,15 @@ git revert <commit-hash>  # Single command rollback
 
 ## Success Metrics
 
-✓ TypeScript compilation succeeds
-✓ All tests pass (after removing lines 252-338)
-✓ No ESLint errors
-✓ ~450 lines removed from engine.ts
-✓ No runtime errors
-✓ No performance degradation
+✓ TypeScript compilation succeeds ✓ All tests pass (after removing lines 252-338) ✓ No ESLint errors
+✓ ~450 lines removed from engine.ts ✓ No runtime errors ✓ No performance degradation
 
 ---
 
 ## Before/After Comparison
 
 ### Before
+
 ```typescript
 // Engine does everything itself
 constructor(opts) {
@@ -241,6 +253,7 @@ private buildEmotionCandidates(...) { /* 68 lines */ }
 ```
 
 ### After
+
 ```typescript
 // Engine delegates to generator
 constructor(opts) {
@@ -278,16 +291,19 @@ runDetection(input) {
 **Full Documentation**: See `INTEGRATION_PLAN_CandidateGenerator.md`
 
 **Key Files**:
+
 - Source: `/home/user/kreativium-analytics/src/lib/alerts/engine.ts`
 - Module: `/home/user/kreativium-analytics/src/lib/alerts/detection/candidateGenerator.ts`
 - Tests: `/home/user/kreativium-analytics/src/lib/alerts/__tests__/engine.test.ts`
 
 **Line Counts**:
+
 - Current: 832 lines
 - Target: ~380 lines
 - Reduction: 452 lines (54%)
 
 **Methods**:
+
 - Remove: 13 methods
 - Keep: 5 methods
 - Add: 1 field (generator)

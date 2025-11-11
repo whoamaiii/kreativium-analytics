@@ -28,8 +28,13 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function detectCUSUMShift(series: TrendPoint[], options: CUSUMDetectorOptions = {}): DetectorResult | null {
-  const minPoints = Number.isFinite(options.minPoints) ? Math.max(5, Math.floor(options.minPoints as number)) : 6;
+export function detectCUSUMShift(
+  series: TrendPoint[],
+  options: CUSUMDetectorOptions = {},
+): DetectorResult | null {
+  const minPoints = Number.isFinite(options.minPoints)
+    ? Math.max(5, Math.floor(options.minPoints as number))
+    : 6;
   if (!Array.isArray(series) || series.length < minPoints) {
     return null;
   }
@@ -37,7 +42,8 @@ export function detectCUSUMShift(series: TrendPoint[], options: CUSUMDetectorOpt
   // Build finite-filtered values and use NaN sentinel for non-finite
   const rawValues = series.map((p) => p.value);
   const valuesFinite: number[] = [];
-  for (let i = 0; i < rawValues.length; i++) if (Number.isFinite(rawValues[i])) valuesFinite.push(rawValues[i] as number);
+  for (let i = 0; i < rawValues.length; i++)
+    if (Number.isFinite(rawValues[i])) valuesFinite.push(rawValues[i] as number);
   const values = rawValues.map((v) => (Number.isFinite(v) ? (v as number) : NaN));
   if (valuesFinite.length === 0 || valuesFinite.every((v) => v === valuesFinite[0])) {
     return null;
@@ -46,17 +52,22 @@ export function detectCUSUMShift(series: TrendPoint[], options: CUSUMDetectorOpt
   const baselineMean = Number.isFinite(options.baselineMean)
     ? (options.baselineMean as number)
     : median(valuesFinite);
-  const sigma = Number.isFinite(options.baselineSigma) && (options.baselineSigma as number) > 0
-    ? Math.max(options.baselineSigma as number, 1e-6)
-    : Math.max(mad(valuesFinite, 'normal'), 1e-6);
+  const sigma =
+    Number.isFinite(options.baselineSigma) && (options.baselineSigma as number) > 0
+      ? Math.max(options.baselineSigma as number, 1e-6)
+      : Math.max(mad(valuesFinite, 'normal'), 1e-6);
 
-  const kFactor = Number.isFinite(options.kFactor) ? Math.max(0.1, Math.min(options.kFactor as number, 1)) : 0.5;
+  const kFactor = Number.isFinite(options.kFactor)
+    ? Math.max(0.1, Math.min(options.kFactor as number, 1))
+    : 0.5;
   const k = kFactor * sigma;
   const hMultiplier = Number.isFinite(options.decisionInterval)
     ? Math.max(1, options.decisionInterval as number)
     : computeCusumDecisionIntervalMultiplier(kFactor, options.targetFalseAlertsPerN ?? 336);
   const qa = options.baselineQualityScore;
-  const adjHMultiplier = Number.isFinite(qa) ? adjustMultiplierByBaselineQuality(hMultiplier, qa) : hMultiplier;
+  const adjHMultiplier = Number.isFinite(qa)
+    ? adjustMultiplierByBaselineQuality(hMultiplier, qa)
+    : hMultiplier;
   const h = adjHMultiplier * sigma;
 
   // Sidedness handling
@@ -79,7 +90,7 @@ export function detectCUSUMShift(series: TrendPoint[], options: CUSUMDetectorOpt
       }
     }
     if (sided === 'lower' || sided === 'both') {
-      cusumL = Math.max(0, cusumL + ((baselineMean - k) - (x as number)));
+      cusumL = Math.max(0, cusumL + (baselineMean - k - (x as number)));
       if (cusumL > maxCusumL) {
         maxCusumL = cusumL;
         exceedIndexL = i;

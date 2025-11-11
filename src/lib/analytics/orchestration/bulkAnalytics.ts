@@ -128,7 +128,7 @@ function applyFilters(students: Student[], options?: BulkAnalyticsOptions): Stud
   // Filter by student IDs if specified
   if (options?.studentIds && options.studentIds.length > 0) {
     const idSet = new Set(options.studentIds);
-    filtered = filtered.filter(s => idSet.has(s.id));
+    filtered = filtered.filter((s) => idSet.has(s.id));
   }
 
   // Apply pagination
@@ -198,7 +198,7 @@ export async function triggerAnalyticsForAll(
   students: Student[],
   storage: IDataStorage,
   trigger: IAnalyticsTrigger,
-  options?: BulkAnalyticsOptions
+  options?: BulkAnalyticsOptions,
 ): Promise<BulkAnalyticsResult> {
   const startTime = Date.now();
 
@@ -214,7 +214,7 @@ export async function triggerAnalyticsForAll(
     });
 
     // Initialize profiles for all students
-    filteredStudents.forEach(student => {
+    filteredStudents.forEach((student) => {
       trigger.initializeStudentAnalytics(student.id);
     });
 
@@ -282,7 +282,10 @@ export async function triggerAnalyticsForAll(
       succeeded,
       failed,
       durationMs,
-      successRate: filteredStudents.length > 0 ? (succeeded / filteredStudents.length * 100).toFixed(2) + '%' : 'N/A',
+      successRate:
+        filteredStudents.length > 0
+          ? ((succeeded / filteredStudents.length) * 100).toFixed(2) + '%'
+          : 'N/A',
     });
 
     return {
@@ -301,11 +304,13 @@ export async function triggerAnalyticsForAll(
       processed: 0,
       succeeded: 0,
       failed: students.length,
-      errors: [{
-        studentId: 'SYSTEM',
-        studentName: 'SYSTEM',
-        error,
-      }],
+      errors: [
+        {
+          studentId: 'SYSTEM',
+          studentName: 'SYSTEM',
+          error,
+        },
+      ],
       durationMs,
     };
   }
@@ -369,7 +374,7 @@ export function getStatusForAll(
   students: Student[],
   profiles: Map<string, StudentAnalyticsProfile>,
   cache?: AnalyticsCache,
-  options?: BulkAnalyticsOptions
+  options?: BulkAnalyticsOptions,
 ): StudentAnalyticsStatus[] {
   try {
     // Apply filters
@@ -380,7 +385,7 @@ export function getStatusForAll(
       filteredStudents: filteredStudents.length,
     });
 
-    const statuses = filteredStudents.map(student => {
+    const statuses = filteredStudents.map((student) => {
       const profile = profiles.get(student.id);
       const cached = cache?.get(student.id);
 
@@ -400,16 +405,16 @@ export function getStatusForAll(
     let filtered = statuses;
 
     if (options?.minHealthScore !== undefined) {
-      filtered = filtered.filter(s => s.healthScore >= options.minHealthScore!);
+      filtered = filtered.filter((s) => s.healthScore >= options.minHealthScore!);
     }
 
     if (options?.maxHealthScore !== undefined) {
-      filtered = filtered.filter(s => s.healthScore <= options.maxHealthScore!);
+      filtered = filtered.filter((s) => s.healthScore <= options.maxHealthScore!);
     }
 
     // Apply lastAnalyzed filter if specified
     if (options?.notAnalyzedSince) {
-      filtered = filtered.filter(s => {
+      filtered = filtered.filter((s) => {
         if (!s.lastAnalyzed) return true; // Include never-analyzed students
         return s.lastAnalyzed < options.notAnalyzedSince!;
       });
@@ -418,11 +423,12 @@ export function getStatusForAll(
     logger.info('[bulkAnalytics] Status report complete', {
       totalStatuses: statuses.length,
       filteredStatuses: filtered.length,
-      initialized: filtered.filter(s => s.isInitialized).length,
-      withData: filtered.filter(s => s.hasMinimumData).length,
-      avgHealthScore: filtered.length > 0
-        ? (filtered.reduce((sum, s) => sum + s.healthScore, 0) / filtered.length).toFixed(2)
-        : 'N/A',
+      initialized: filtered.filter((s) => s.isInitialized).length,
+      withData: filtered.filter((s) => s.hasMinimumData).length,
+      avgHealthScore:
+        filtered.length > 0
+          ? (filtered.reduce((sum, s) => sum + s.healthScore, 0) / filtered.length).toFixed(2)
+          : 'N/A',
     });
 
     return filtered;
@@ -459,26 +465,26 @@ export function getStatusForAll(
 export function partitionStudentsByStatus(statuses: StudentAnalyticsStatus[]) {
   return {
     /** Students with health score >= 80 */
-    highHealth: statuses.filter(s => s.healthScore >= 80),
+    highHealth: statuses.filter((s) => s.healthScore >= 80),
 
     /** Students with health score 50-79 */
-    mediumHealth: statuses.filter(s => s.healthScore >= 50 && s.healthScore < 80),
+    mediumHealth: statuses.filter((s) => s.healthScore >= 50 && s.healthScore < 80),
 
     /** Students with health score < 50 */
-    lowHealth: statuses.filter(s => s.healthScore < 50),
+    lowHealth: statuses.filter((s) => s.healthScore < 50),
 
     /** Students never analyzed */
-    neverAnalyzed: statuses.filter(s => !s.lastAnalyzed),
+    neverAnalyzed: statuses.filter((s) => !s.lastAnalyzed),
 
     /** Students without minimum data */
-    insufficientData: statuses.filter(s => !s.hasMinimumData),
+    insufficientData: statuses.filter((s) => !s.hasMinimumData),
 
     /** Students not initialized */
-    notInitialized: statuses.filter(s => !s.isInitialized),
+    notInitialized: statuses.filter((s) => !s.isInitialized),
 
     /** Students needing attention (low health or insufficient data) */
-    needsAnalysis: statuses.filter(s =>
-      s.healthScore < 50 || !s.hasMinimumData || !s.isInitialized
+    needsAnalysis: statuses.filter(
+      (s) => s.healthScore < 50 || !s.hasMinimumData || !s.isInitialized,
     ),
   };
 }

@@ -5,10 +5,10 @@
  * Orchestrates content building and HTML formatting.
  */
 
-import type { Student } from "@/types/student";
-import type { ReportDataCollection, PDFReportOptions } from "./types";
-import { buildReportContent } from "./reportBuilder";
-import { generateHTMLReport } from "./htmlFormatter";
+import type { Student } from '@/types/student';
+import type { ReportDataCollection, PDFReportOptions } from './types';
+import { buildReportContent } from './reportBuilder';
+import { generateHTMLReport } from './htmlFormatter';
 
 /**
  * Progress callback for streaming support
@@ -65,7 +65,7 @@ export interface PDFGenerationResult {
 export async function generatePDFReport(
   student: Student,
   data: ReportDataCollection,
-  options: PDFGenerationOptions = {}
+  options: PDFGenerationOptions = {},
 ): Promise<Blob> {
   const { onProgress } = options;
 
@@ -84,7 +84,6 @@ export async function generatePDFReport(
 
     onProgress?.('Complete', 100);
     return blob;
-
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     throw new Error(`PDF generation failed: ${message}`);
@@ -104,7 +103,7 @@ export async function generatePDFReport(
 export async function generatePDFReportWithMetadata(
   student: Student,
   data: ReportDataCollection,
-  options: PDFGenerationOptions = {}
+  options: PDFGenerationOptions = {},
 ): Promise<PDFGenerationResult> {
   const blob = await generatePDFReport(student, data, options);
 
@@ -118,8 +117,8 @@ export async function generatePDFReportWithMetadata(
       student: student.name,
       dateRange,
       generatedAt: new Date(),
-      pageCount: 1 // Estimated, actual page count depends on print settings
-    }
+      pageCount: 1, // Estimated, actual page count depends on print settings
+    },
   };
 }
 
@@ -132,7 +131,7 @@ export async function generatePDFReportWithMetadata(
  */
 export function validateReportData(
   student: Student,
-  data: ReportDataCollection
+  data: ReportDataCollection,
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
 
@@ -163,6 +162,6 @@ export function validateReportData(
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   };
 }

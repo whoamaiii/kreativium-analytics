@@ -1,16 +1,22 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Search, Filter, X, ChevronDown, Calendar } from "lucide-react";
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
-import { format, isWithinInterval } from "date-fns";
-import { useTranslation } from "@/hooks/useTranslation";
+import React, { useState, useMemo, useCallback } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Search, Filter, X, ChevronDown, Calendar } from 'lucide-react';
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
+import { format, isWithinInterval } from 'date-fns';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface SearchFilters {
   query: string;
@@ -36,9 +42,18 @@ interface AdvancedSearchProps {
   }) => void;
 }
 
-const emotionTypes = ["happy", "sad", "angry", "anxious", "calm", "frustrated", "excited", "confused"];
-const sensoryTypes = ["visual", "auditory", "tactile", "vestibular", "proprioceptive"];
-const goalStatuses = ["active", "achieved", "paused", "discontinued"];
+const emotionTypes = [
+  'happy',
+  'sad',
+  'angry',
+  'anxious',
+  'calm',
+  'frustrated',
+  'excited',
+  'confused',
+];
+const sensoryTypes = ['visual', 'auditory', 'tactile', 'vestibular', 'proprioceptive'];
+const goalStatuses = ['active', 'achieved', 'paused', 'discontinued'];
 
 const AdvancedSearchComponent = ({
   students,
@@ -46,18 +61,18 @@ const AdvancedSearchComponent = ({
   emotions,
   sensoryInputs,
   goals,
-  onResultsChange
+  onResultsChange,
 }: AdvancedSearchProps) => {
   const { tAnalytics, tCommon } = useTranslation();
   const [filters, setFilters] = useState<SearchFilters>({
-    query: "",
+    query: '',
     emotions: [],
     sensoryTypes: [],
     dateRange: undefined,
     goalStatus: [],
-    intensityRange: { min: 1, max: 5 }
+    intensityRange: { min: 1, max: 5 },
   });
-  
+
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
@@ -72,93 +87,97 @@ const AdvancedSearchComponent = ({
     if (filters.query.trim()) {
       const query = filters.query.toLowerCase();
       const studentIds = new Set<string>();
-      
+
       // Filter students and collect IDs in a single pass
-      filteredStudents = filteredStudents.filter(student => {
-        const matches = student.name.toLowerCase().includes(query) ||
-                        student.notes?.toLowerCase().includes(query);
+      filteredStudents = filteredStudents.filter((student) => {
+        const matches =
+          student.name.toLowerCase().includes(query) ||
+          student.notes?.toLowerCase().includes(query);
         if (matches) {
           studentIds.add(student.id);
         }
         return matches;
       });
-      
+
       // Use pre-built Set for filtering related data
-      filteredEntries = filteredEntries.filter(entry => studentIds.has(entry.studentId));
-      filteredEmotions = filteredEmotions.filter(emotion => studentIds.has(emotion.studentId));
-      filteredSensoryInputs = filteredSensoryInputs.filter(sensory => studentIds.has(sensory.studentId));
-      filteredGoals = filteredGoals.filter(goal => studentIds.has(goal.studentId));
+      filteredEntries = filteredEntries.filter((entry) => studentIds.has(entry.studentId));
+      filteredEmotions = filteredEmotions.filter((emotion) => studentIds.has(emotion.studentId));
+      filteredSensoryInputs = filteredSensoryInputs.filter((sensory) =>
+        studentIds.has(sensory.studentId),
+      );
+      filteredGoals = filteredGoals.filter((goal) => studentIds.has(goal.studentId));
     }
 
     // Date range filter
     if (filters.dateRange?.from && filters.dateRange?.to) {
       const dateInterval = { start: filters.dateRange.from, end: filters.dateRange.to };
-      filteredEntries = filteredEntries.filter(entry =>
-        isWithinInterval(entry.timestamp, dateInterval)
+      filteredEntries = filteredEntries.filter((entry) =>
+        isWithinInterval(entry.timestamp, dateInterval),
       );
-      filteredEmotions = filteredEmotions.filter(emotion =>
-        isWithinInterval(emotion.timestamp, dateInterval)
+      filteredEmotions = filteredEmotions.filter((emotion) =>
+        isWithinInterval(emotion.timestamp, dateInterval),
       );
-      filteredSensoryInputs = filteredSensoryInputs.filter(sensory =>
-        isWithinInterval(sensory.timestamp, dateInterval)
+      filteredSensoryInputs = filteredSensoryInputs.filter((sensory) =>
+        isWithinInterval(sensory.timestamp, dateInterval),
       );
     }
 
     // Emotion type filter - optimized to build Set during filtering
     if (filters.emotions.length > 0) {
       const emotionStudentIds = new Set<string>();
-      
+
       // Filter emotions and collect student IDs in a single pass
-      filteredEmotions = filteredEmotions.filter(emotion => {
+      filteredEmotions = filteredEmotions.filter((emotion) => {
         const matches = filters.emotions.includes(emotion.emotion);
         if (matches && emotion.studentId) {
           emotionStudentIds.add(emotion.studentId);
         }
         return matches;
       });
-      
-      filteredStudents = filteredStudents.filter(student => emotionStudentIds.has(student.id));
+
+      filteredStudents = filteredStudents.filter((student) => emotionStudentIds.has(student.id));
     }
 
     // Sensory type filter - optimized to build Set during filtering
     if (filters.sensoryTypes.length > 0) {
       const sensoryStudentIds = new Set<string>();
-      
+
       // Filter sensory inputs and collect student IDs in a single pass
-      filteredSensoryInputs = filteredSensoryInputs.filter(sensory => {
+      filteredSensoryInputs = filteredSensoryInputs.filter((sensory) => {
         const matches = filters.sensoryTypes.includes(sensory.sensoryType);
         if (matches && sensory.studentId) {
           sensoryStudentIds.add(sensory.studentId);
         }
         return matches;
       });
-      
+
       if (filters.emotions.length === 0) {
-        filteredStudents = filteredStudents.filter(student => sensoryStudentIds.has(student.id));
+        filteredStudents = filteredStudents.filter((student) => sensoryStudentIds.has(student.id));
       }
     }
 
     // Intensity range filter
-    filteredEmotions = filteredEmotions.filter(emotion =>
-      emotion.intensity >= filters.intensityRange.min &&
-      emotion.intensity <= filters.intensityRange.max
+    filteredEmotions = filteredEmotions.filter(
+      (emotion) =>
+        emotion.intensity >= filters.intensityRange.min &&
+        emotion.intensity <= filters.intensityRange.max,
     );
 
     // Goal status filter - optimized to build Set during filtering
     if (filters.goalStatus.length > 0) {
       const goalStudentIds = new Set<string>();
-      
+
       // Filter goals and collect student IDs in a single pass
-      filteredGoals = filteredGoals.filter(goal => {
+      filteredGoals = filteredGoals.filter((goal) => {
         const matches = filters.goalStatus.includes(goal.status);
         if (matches && goal.studentId) {
           goalStudentIds.add(goal.studentId);
         }
         return matches;
       });
-      
+
       if (filters.emotions.length === 0 && filters.sensoryTypes.length === 0) {
-        filteredStudents = filteredStudents.filter(student => goalStudentIds.has(student.id));
+        filteredStudents = filteredStudents.filter((student) => goalStudentIds.has(student.id));
       }
     }
 
@@ -167,7 +186,7 @@ const AdvancedSearchComponent = ({
       entries: filteredEntries,
       emotions: filteredEmotions,
       sensoryInputs: filteredSensoryInputs,
-      goals: filteredGoals
+      goals: filteredGoals,
     };
   }, [students, trackingEntries, emotions, sensoryInputs, goals, filters]);
 
@@ -190,67 +209,81 @@ const AdvancedSearchComponent = ({
 
   const clearAllFilters = () => {
     setFilters({
-      query: "",
+      query: '',
       emotions: [],
       sensoryTypes: [],
       dateRange: undefined,
       goalStatus: [],
-      intensityRange: { min: 1, max: 5 }
+      intensityRange: { min: 1, max: 5 },
     });
   };
 
-  const formatFilterTag = useCallback((labelKey: string, value: string, options?: { quoted?: boolean }) => {
-    const label = String(tCommon(labelKey));
-    return options?.quoted
-      ? tCommon('interface.filterTagQuoted', { label, value })
-      : tCommon('interface.filterTag', { label, value });
-  }, [tCommon]);
+  const formatFilterTag = useCallback(
+    (labelKey: string, value: string, options?: { quoted?: boolean }) => {
+      const label = String(tCommon(labelKey));
+      return options?.quoted
+        ? tCommon('interface.filterTagQuoted', { label, value })
+        : tCommon('interface.filterTag', { label, value });
+    },
+    [tCommon],
+  );
 
-  const formatDateRangeTag = useCallback((from: Date, to: Date) => {
-    return tCommon('interface.dateRangeTag', {
-      start: format(from, 'MMM dd'),
-      end: format(to, 'MMM dd')
-    });
-  }, [tCommon]);
+  const formatDateRangeTag = useCallback(
+    (from: Date, to: Date) => {
+      return tCommon('interface.dateRangeTag', {
+        start: format(from, 'MMM dd'),
+        end: format(to, 'MMM dd'),
+      });
+    },
+    [tCommon],
+  );
 
-  const resultsSummary = useMemo(() => (
-    tCommon('interface.resultsSummary', {
-      resultsLabel: tCommon('interface.results'),
-      students: filteredResults.students.length,
-      studentsLabel: tCommon('interface.studentsLabel'),
-      emotions: filteredResults.emotions.length,
-      emotionsLabel: tCommon('interface.emotionsLabel'),
-      sensory: filteredResults.sensoryInputs.length,
-      sensoryLabel: tCommon('interface.sensoryInputsLabel'),
-      goals: filteredResults.goals.length,
-      goalsLabel: tCommon('interface.goalsLabel')
-    })
-  ), [filteredResults.students.length, filteredResults.emotions.length, filteredResults.sensoryInputs.length, filteredResults.goals.length, tCommon]);
+  const resultsSummary = useMemo(
+    () =>
+      tCommon('interface.resultsSummary', {
+        resultsLabel: tCommon('interface.results'),
+        students: filteredResults.students.length,
+        studentsLabel: tCommon('interface.studentsLabel'),
+        emotions: filteredResults.emotions.length,
+        emotionsLabel: tCommon('interface.emotionsLabel'),
+        sensory: filteredResults.sensoryInputs.length,
+        sensoryLabel: tCommon('interface.sensoryInputsLabel'),
+        goals: filteredResults.goals.length,
+        goalsLabel: tCommon('interface.goalsLabel'),
+      }),
+    [
+      filteredResults.students.length,
+      filteredResults.emotions.length,
+      filteredResults.sensoryInputs.length,
+      filteredResults.goals.length,
+      tCommon,
+    ],
+  );
 
   const removeFilter = (type: string, value?: string) => {
     switch (type) {
-      case "query":
-        setFilters(prev => ({ ...prev, query: "" }));
+      case 'query':
+        setFilters((prev) => ({ ...prev, query: '' }));
         break;
-      case "emotion":
-        setFilters(prev => ({
+      case 'emotion':
+        setFilters((prev) => ({
           ...prev,
-          emotions: prev.emotions.filter(e => e !== value)
+          emotions: prev.emotions.filter((e) => e !== value),
         }));
         break;
-      case "sensory":
-        setFilters(prev => ({
+      case 'sensory':
+        setFilters((prev) => ({
           ...prev,
-          sensoryTypes: prev.sensoryTypes.filter(s => s !== value)
+          sensoryTypes: prev.sensoryTypes.filter((s) => s !== value),
         }));
         break;
-      case "date":
-        setFilters(prev => ({ ...prev, dateRange: undefined }));
+      case 'date':
+        setFilters((prev) => ({ ...prev, dateRange: undefined }));
         break;
-      case "goal":
-        setFilters(prev => ({
+      case 'goal':
+        setFilters((prev) => ({
           ...prev,
-          goalStatus: prev.goalStatus.filter(g => g !== value)
+          goalStatus: prev.goalStatus.filter((g) => g !== value),
         }));
         break;
     }
@@ -279,13 +312,13 @@ const AdvancedSearchComponent = ({
             </CollapsibleTrigger>
           </Collapsible>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground" />
           <Input
             placeholder={`${String(tCommon('interface.search'))}...`}
             value={filters.query}
-            onChange={(e) => setFilters(prev => ({ ...prev, query: e.target.value }))}
+            onChange={(e) => setFilters((prev) => ({ ...prev, query: e.target.value }))}
             className="flex-1"
           />
         </div>
@@ -296,27 +329,24 @@ const AdvancedSearchComponent = ({
             {filters.query && (
               <Badge variant="secondary" className="flex items-center gap-1">
                 {formatFilterTag('interface.search', filters.query, { quoted: true })}
-                <X
-                  className="h-3 w-3 cursor-pointer"
-                  onClick={() => removeFilter("query")}
-                />
+                <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('query')} />
               </Badge>
             )}
-            {filters.emotions.map(emotion => (
+            {filters.emotions.map((emotion) => (
               <Badge key={emotion} variant="secondary" className="flex items-center gap-1">
                 {formatFilterTag('interface.emotion', emotion)}
                 <X
                   className="h-3 w-3 cursor-pointer"
-                  onClick={() => removeFilter("emotion", emotion)}
+                  onClick={() => removeFilter('emotion', emotion)}
                 />
               </Badge>
             ))}
-            {filters.sensoryTypes.map(sensory => (
+            {filters.sensoryTypes.map((sensory) => (
               <Badge key={sensory} variant="secondary" className="flex items-center gap-1">
                 {formatFilterTag('interface.sensory', sensory)}
                 <X
                   className="h-3 w-3 cursor-pointer"
-                  onClick={() => removeFilter("sensory", sensory)}
+                  onClick={() => removeFilter('sensory', sensory)}
                 />
               </Badge>
             ))}
@@ -324,18 +354,15 @@ const AdvancedSearchComponent = ({
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 {formatDateRangeTag(filters.dateRange.from, filters.dateRange.to)}
-                <X
-                  className="h-3 w-3 cursor-pointer"
-                  onClick={() => removeFilter("date")}
-                />
+                <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('date')} />
               </Badge>
             )}
-            {filters.goalStatus.map(status => (
+            {filters.goalStatus.map((status) => (
               <Badge key={status} variant="secondary" className="flex items-center gap-1">
                 {formatFilterTag('interface.goal', status)}
                 <X
                   className="h-3 w-3 cursor-pointer"
-                  onClick={() => removeFilter("goal", status)}
+                  onClick={() => removeFilter('goal', status)}
                 />
               </Badge>
             ))}
@@ -357,16 +384,20 @@ const AdvancedSearchComponent = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Date Range Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{String(tCommon('interface.dateRange'))}</label>
+                <label className="text-sm font-medium">
+                  {String(tCommon('interface.dateRange'))}
+                </label>
                 <DatePickerWithRange
                   value={filters.dateRange}
-                  onChange={(range) => setFilters(prev => ({ ...prev, dateRange: range }))}
+                  onChange={(range) => setFilters((prev) => ({ ...prev, dateRange: range }))}
                 />
               </div>
 
               {/* Emotion Types Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{String(tCommon('interface.emotionTypes'))}</label>
+                <label className="text-sm font-medium">
+                  {String(tCommon('interface.emotionTypes'))}
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   {emotionTypes.map((emotion) => (
                     <div key={emotion} className="flex items-center space-x-2">
@@ -375,9 +406,15 @@ const AdvancedSearchComponent = ({
                         checked={filters.emotions.includes(emotion)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setFilters(prev => ({ ...prev, emotions: [...prev.emotions, emotion] }));
+                            setFilters((prev) => ({
+                              ...prev,
+                              emotions: [...prev.emotions, emotion],
+                            }));
                           } else {
-                            setFilters(prev => ({ ...prev, emotions: prev.emotions.filter(e => e !== emotion) }));
+                            setFilters((prev) => ({
+                              ...prev,
+                              emotions: prev.emotions.filter((e) => e !== emotion),
+                            }));
                           }
                         }}
                       />
@@ -391,7 +428,9 @@ const AdvancedSearchComponent = ({
 
               {/* Sensory Types Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{String(tCommon('interface.sensoryTypes'))}</label>
+                <label className="text-sm font-medium">
+                  {String(tCommon('interface.sensoryTypes'))}
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   {sensoryTypes.map((sensory) => (
                     <div key={sensory} className="flex items-center space-x-2">
@@ -400,9 +439,15 @@ const AdvancedSearchComponent = ({
                         checked={filters.sensoryTypes.includes(sensory)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setFilters(prev => ({ ...prev, sensoryTypes: [...prev.sensoryTypes, sensory] }));
+                            setFilters((prev) => ({
+                              ...prev,
+                              sensoryTypes: [...prev.sensoryTypes, sensory],
+                            }));
                           } else {
-                            setFilters(prev => ({ ...prev, sensoryTypes: prev.sensoryTypes.filter(s => s !== sensory) }));
+                            setFilters((prev) => ({
+                              ...prev,
+                              sensoryTypes: prev.sensoryTypes.filter((s) => s !== sensory),
+                            }));
                           }
                         }}
                       />
@@ -416,7 +461,9 @@ const AdvancedSearchComponent = ({
 
               {/* Goal Status Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{String(tCommon('interface.goalStatus'))}</label>
+                <label className="text-sm font-medium">
+                  {String(tCommon('interface.goalStatus'))}
+                </label>
                 <div className="grid grid-cols-2 gap-2">
                   {goalStatuses.map((status) => (
                     <div key={status} className="flex items-center space-x-2">
@@ -425,9 +472,15 @@ const AdvancedSearchComponent = ({
                         checked={filters.goalStatus.includes(status)}
                         onCheckedChange={(checked) => {
                           if (checked) {
-                            setFilters(prev => ({ ...prev, goalStatus: [...prev.goalStatus, status] }));
+                            setFilters((prev) => ({
+                              ...prev,
+                              goalStatus: [...prev.goalStatus, status],
+                            }));
                           } else {
-                            setFilters(prev => ({ ...prev, goalStatus: prev.goalStatus.filter(g => g !== status) }));
+                            setFilters((prev) => ({
+                              ...prev,
+                              goalStatus: prev.goalStatus.filter((g) => g !== status),
+                            }));
                           }
                         }}
                       />
@@ -441,14 +494,16 @@ const AdvancedSearchComponent = ({
 
               {/* Intensity Range Filter */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">{String(tCommon('interface.emotionIntensityRange'))}</label>
+                <label className="text-sm font-medium">
+                  {String(tCommon('interface.emotionIntensityRange'))}
+                </label>
                 <div className="flex items-center space-x-2">
                   <Select
                     value={filters.intensityRange.min.toString()}
-                    onValueChange={(value) => 
-                      setFilters(prev => ({ 
-                        ...prev, 
-                        intensityRange: { ...prev.intensityRange, min: parseInt(value) }
+                    onValueChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        intensityRange: { ...prev.intensityRange, min: parseInt(value) },
                       }))
                     }
                   >
@@ -456,18 +511,22 @@ const AdvancedSearchComponent = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1, 2, 3, 4, 5].map(num => (
-                        <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <span className="text-sm text-muted-foreground">{String(tCommon('interface.to'))}</span>
+                  <span className="text-sm text-muted-foreground">
+                    {String(tCommon('interface.to'))}
+                  </span>
                   <Select
                     value={filters.intensityRange.max.toString()}
-                    onValueChange={(value) => 
-                      setFilters(prev => ({ 
-                        ...prev, 
-                        intensityRange: { ...prev.intensityRange, max: parseInt(value) }
+                    onValueChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        intensityRange: { ...prev.intensityRange, max: parseInt(value) },
                       }))
                     }
                   >
@@ -475,8 +534,10 @@ const AdvancedSearchComponent = ({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {[1, 2, 3, 4, 5].map(num => (
-                        <SelectItem key={num} value={num.toString()}>{num}</SelectItem>
+                      {[1, 2, 3, 4, 5].map((num) => (
+                        <SelectItem key={num} value={num.toString()}>
+                          {num}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -487,9 +548,7 @@ const AdvancedSearchComponent = ({
             {/* Results Summary */}
             <div className="pt-4 border-t border-border/50">
               <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span>
-                {String(resultsSummary)}
-              </span>
+                <span>{String(resultsSummary)}</span>
                 {activeFiltersCount > 0 && (
                   <Button variant="ghost" size="sm" onClick={clearAllFilters}>
                     {String(tCommon('interface.clearAllFilters'))}

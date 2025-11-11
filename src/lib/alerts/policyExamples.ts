@@ -27,7 +27,10 @@ export function exampleSnoozePlannedIntervention(studentId: string, dedupeKey: s
   policies.snooze(studentId, dedupeKey, 24);
 }
 
-export function exampleEngineIntegration(alerts: AlertEvent[], settings: AlertSettings): AlertEvent[] {
+export function exampleEngineIntegration(
+  alerts: AlertEvent[],
+  settings: AlertSettings,
+): AlertEvent[] {
   const policies = new AlertPolicies();
   const gated: AlertEvent[] = [];
   alerts.forEach((alert) => {
@@ -37,7 +40,12 @@ export function exampleEngineIntegration(alerts: AlertEvent[], settings: AlertSe
   return gated;
 }
 
-export function exampleAlertFactory(studentId: string, time: Date, contextKey: string, severity: AlertSeverity): AlertEvent {
+export function exampleAlertFactory(
+  studentId: string,
+  time: Date,
+  contextKey: string,
+  severity: AlertSeverity,
+): AlertEvent {
   return {
     id: 'ex-' + Math.random().toString(36).slice(2),
     studentId,
@@ -49,5 +57,3 @@ export function exampleAlertFactory(studentId: string, time: Date, contextKey: s
     metadata: { contextKey },
   };
 }
-
-

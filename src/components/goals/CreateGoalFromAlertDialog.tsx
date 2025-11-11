@@ -15,7 +15,10 @@ type Props = {
 
 export const CreateGoalFromAlertDialog = ({ open, alert, onOpenChange }: Props) => {
   const now = new Date();
-  const defaultTitle = useMemo(() => (alert ? `Goal: ${alert.kind.replace('_', ' ')}` : ''), [alert]);
+  const defaultTitle = useMemo(
+    () => (alert ? `Goal: ${alert.kind.replace('_', ' ')}` : ''),
+    [alert],
+  );
   const [title, setTitle] = useState<string>('');
   const [objective, setObjective] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
@@ -67,18 +70,34 @@ export const CreateGoalFromAlertDialog = ({ open, alert, onOpenChange }: Props) 
         <div className="space-y-3">
           <div>
             <label className="text-sm">Title</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={defaultTitle} />
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={defaultTitle}
+            />
           </div>
           <div>
             <label className="text-sm">Measurable Objective</label>
-            <Textarea rows={3} value={objective} onChange={(e) => setObjective(e.target.value)} placeholder="Describe the measurable objective" />
+            <Textarea
+              rows={3}
+              value={objective}
+              onChange={(e) => setObjective(e.target.value)}
+              placeholder="Describe the measurable objective"
+            />
           </div>
           <div>
             <label className="text-sm">Notes</label>
-            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional notes" />
+            <Textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Optional notes"
+            />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
             <Button onClick={handleCreate}>Create Goal</Button>
           </div>
         </div>
@@ -88,5 +107,3 @@ export const CreateGoalFromAlertDialog = ({ open, alert, onOpenChange }: Props) 
 };
 
 export default CreateGoalFromAlertDialog;
-
-

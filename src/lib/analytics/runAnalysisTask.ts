@@ -23,10 +23,25 @@ export interface RunAnalysisDeps {
   setError: Dispatch<SetStateAction<string | null>>;
   setIsAnalyzing: Dispatch<SetStateAction<boolean>>;
   createCacheKey: (data: AnalyticsData, goals?: Goal[]) => string;
-  buildCacheTags: (args: { data: AnalyticsData | AnalyticsResults; goals?: Goal[]; studentId?: string | number; includeAiTag?: boolean }) => string[];
+  buildCacheTags: (args: {
+    data: AnalyticsData | AnalyticsResults;
+    goals?: Goal[];
+    studentId?: string | number;
+    includeAiTag?: boolean;
+  }) => string[];
   getGoalsForStudent: (studentId: string) => Goal[] | undefined;
-  analyticsManager: { getStudentAnalytics: (student: Student, options: { useAI: boolean }) => Promise<AnalyticsResults | AnalyticsResultsAI>; };
-  analyticsWorkerFallback: { processAnalytics: (data: AnalyticsData, options: { useAI?: boolean; student?: Student }) => Promise<AnalyticsResults>; };
+  analyticsManager: {
+    getStudentAnalytics: (
+      student: Student,
+      options: { useAI: boolean },
+    ) => Promise<AnalyticsResults | AnalyticsResultsAI>;
+  };
+  analyticsWorkerFallback: {
+    processAnalytics: (
+      data: AnalyticsData,
+      options: { useAI?: boolean; student?: Student },
+    ) => Promise<AnalyticsResults>;
+  };
   getValidatedConfig: () => any;
   buildInsightsTask: (inputs: Record<string, unknown>, options: Record<string, unknown>) => any;
   queuePendingTask: (task: unknown) => void;
@@ -34,7 +49,11 @@ export interface RunAnalysisDeps {
   isWorkerReady: () => boolean;
   isCircuitOpen: () => boolean;
   workerDisabled: boolean;
-  logger: { debug: (...args: any[]) => void; error: (...args: any[]) => void; warn: (...args: any[]) => void; };
+  logger: {
+    debug: (...args: any[]) => void;
+    error: (...args: any[]) => void;
+    warn: (...args: any[]) => void;
+  };
   diagnostics: { logWorkerTimeout: (worker: string, timeout: number) => void };
 }
 
@@ -68,14 +87,18 @@ const ensureStudent = (data: AnalyticsData, explicit?: Student): Student | undef
 };
 
 const setMinimalResults = (setResults: Dispatch<SetStateAction<AnalyticsResultsAI | null>>) => {
-  setResults((prev) => prev ?? ({
-    patterns: [],
-    correlations: [],
-    environmentalCorrelations: [],
-    predictiveInsights: [],
-    anomalies: [],
-    insights: ['Analytics temporarily unavailable.']
-  } as AnalyticsResultsAI));
+  setResults(
+    (prev) =>
+      prev ??
+      ({
+        patterns: [],
+        correlations: [],
+        environmentalCorrelations: [],
+        predictiveInsights: [],
+        anomalies: [],
+        insights: ['Analytics temporarily unavailable.'],
+      } as AnalyticsResultsAI),
+  );
 };
 
 export const createRunAnalysis = (deps: RunAnalysisDeps) => {
@@ -109,12 +132,16 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
     const aiRequested = options?.useAI === true;
     const resolvedStudentId = (() => {
       if (options?.student?.id) return options.student.id;
-      return (data.entries?.[0]?.studentId)
-        || (data.emotions?.[0]?.studentId as string | undefined)
-        || ((data.sensoryInputs?.[0] as Record<string, unknown> | undefined)?.studentId as string | undefined);
+      return (
+        data.entries?.[0]?.studentId ||
+        (data.emotions?.[0]?.studentId as string | undefined) ||
+        ((data.sensoryInputs?.[0] as Record<string, unknown> | undefined)?.studentId as
+          | string
+          | undefined)
+      );
     })();
 
-    const goals = resolvedStudentId ? getGoalsForStudent(resolvedStudentId) ?? [] : undefined;
+    const goals = resolvedStudentId ? (getGoalsForStudent(resolvedStudentId) ?? []) : undefined;
     const cacheKey = `${createCacheKey({ ...data, goals } as AnalyticsData, goals)}|ai=${aiRequested ? '1' : '0'}`;
     if (!prewarm) {
       activeCacheKeyRef.current = cacheKey;
@@ -135,7 +162,12 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
       return;
     }
 
-    const cacheTags = buildCacheTags({ data, goals, studentId: resolvedStudentId, includeAiTag: aiRequested });
+    const cacheTags = buildCacheTags({
+      data,
+      goals,
+      studentId: resolvedStudentId,
+      includeAiTag: aiRequested,
+    });
 
     if (aiRequested) {
       setIsAnalyzing(true);
@@ -152,7 +184,10 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
         logger.error('[useAnalyticsWorker] AI analysis path failed', err);
         setError('AI analysis failed. Falling back to standard analytics.');
         try {
-          const res = await analyticsWorkerFallback.processAnalytics({ ...(data as any), goals } as any, { useAI: false, student: options?.student });
+          const res = await analyticsWorkerFallback.processAnalytics(
+            { ...(data as any), goals } as any,
+            { useAI: false, student: options?.student },
+          );
           if (!prewarm) setResults(res as AnalyticsResultsAI);
           cache.set(cacheKey, res as AnalyticsResultsAI, cacheTags);
         } catch (fallbackError) {
@@ -175,7 +210,10 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
       if (!prewarm) setIsAnalyzing(true);
       setError(null);
       try {
-        const results = await analyticsWorkerFallback.processAnalytics({ ...(data as any), goals } as any, { useAI: options?.useAI, student: options?.student });
+        const results = await analyticsWorkerFallback.processAnalytics(
+          { ...(data as any), goals } as any,
+          { useAI: options?.useAI, student: options?.student },
+        );
         if (!prewarm) setResults(results as AnalyticsResultsAI);
         cache.set(cacheKey, results as AnalyticsResultsAI, cacheTags);
         cacheTagsRef.current.delete(cacheKey);
@@ -205,7 +243,9 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
     const timeoutMs = Math.min(20000, Math.max(5000, hint));
     watchdogRef.current = setTimeout(async () => {
       try {
-        logger.error('[useAnalyticsWorker] watchdog timeout: worker did not respond, attempting fallback');
+        logger.error(
+          '[useAnalyticsWorker] watchdog timeout: worker did not respond, attempting fallback',
+        );
       } catch {
         /* noop */
       }
@@ -217,7 +257,10 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
       }
 
       try {
-        const fallbackResults = await analyticsWorkerFallback.processAnalytics({ ...data, goals } as AnalyticsData, { useAI: options?.useAI, student: options?.student });
+        const fallbackResults = await analyticsWorkerFallback.processAnalytics(
+          { ...data, goals } as AnalyticsData,
+          { useAI: options?.useAI, student: options?.student },
+        );
         if (!prewarm) setResults(fallbackResults as AnalyticsResultsAI);
         cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, cacheTags);
         cacheTagsRef.current.delete(cacheKey);
@@ -237,7 +280,10 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
     const logKey = `_logged_worker_post_${new Date().getMinutes()}`;
     if (!cache.get(logKey)) {
       try {
-        logger.debug('[useAnalyticsWorker] posting to worker (runAnalysis)', { hasConfig: !!config, cacheKey });
+        logger.debug('[useAnalyticsWorker] posting to worker (runAnalysis)', {
+          hasConfig: !!config,
+          cacheKey,
+        });
         cache.set(logKey, true, ['logging'], 60000);
       } catch {
         /* noop */
@@ -265,7 +311,7 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
           tagCount: task.tags?.length ?? 0,
           emotionsCount: data.emotions?.length || 0,
           sensoryInputsCount: data.sensoryInputs?.length || 0,
-          entriesCount: data.entries?.length || 0
+          entriesCount: data.entries?.length || 0,
         });
         cache.set(workerLogKey, true, ['logging'], 60000);
       }
@@ -286,20 +332,28 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
         throw new Error('Worker reference missing');
       }
     } catch (postErr) {
-      logger.error('[WORKER_MESSAGE] Failed to post message to worker, falling back to sync', { error: postErr });
+      logger.error('[WORKER_MESSAGE] Failed to post message to worker, falling back to sync', {
+        error: postErr,
+      });
       if (watchdogRef.current) {
         clearTimeout(watchdogRef.current);
         watchdogRef.current = null;
       }
 
       try {
-        const fallbackResults = await analyticsWorkerFallback.processAnalytics({ ...data, goals } as AnalyticsData, { useAI: options?.useAI, student: options?.student });
+        const fallbackResults = await analyticsWorkerFallback.processAnalytics(
+          { ...data, goals } as AnalyticsData,
+          { useAI: options?.useAI, student: options?.student },
+        );
         if (!prewarm) setResults(fallbackResults as AnalyticsResultsAI);
         cache.set(cacheKey, fallbackResults as AnalyticsResultsAI, cacheTags);
         cacheTagsRef.current.delete(cacheKey);
         setError(null);
       } catch (fallbackError) {
-        logger.error('[useAnalyticsWorker] Fallback processing failed after worker post error', fallbackError);
+        logger.error(
+          '[useAnalyticsWorker] Fallback processing failed after worker post error',
+          fallbackError,
+        );
         setError('Analytics processing failed.');
       } finally {
         if (!prewarm) setIsAnalyzing(false);

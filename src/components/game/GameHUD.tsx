@@ -12,7 +12,7 @@ interface GameHUDProps {
   xpToNext: number;
 }
 
-export function GameHUD({ roundIndex, totalRounds, streak, xp, level, xpToNext }: GameHUDProps) {
+function GameHUDComponent({ roundIndex, totalRounds, streak, xp, level, xpToNext }: GameHUDProps) {
   const { delta, leveledUp } = useXPGainEffects(xp, level);
   const progress = xpToNext > 0 ? Math.max(0, Math.min(1, xp / xpToNext)) : 0;
   // On extremely low FPS, disable particle orbs for stability.
@@ -63,8 +63,5 @@ function AnimatedCount({ value }: { value: number }) {
     </AnimatePresence>
   );
 }
-
-
-
 
 export const GameHUD = memo(GameHUDComponent);

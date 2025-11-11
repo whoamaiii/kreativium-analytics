@@ -8,7 +8,9 @@ import resourcesToBackend from 'i18next-resources-to-backend';
 const namespaces = ['common', 'dashboard', 'student', 'tracking', 'analytics', 'settings'] as const;
 
 // Use @ alias per project rules
-const backend = resourcesToBackend((lng: string, ns: string) => import(`@/locales/${lng}/${ns}.json`));
+const backend = resourcesToBackend(
+  (lng: string, ns: string) => import(`@/locales/${lng}/${ns}.json`),
+);
 
 // Export the instance separately from the async initializer
 export const i18n = i18next;

@@ -18,7 +18,3 @@ export function ScanSweep({ active }: ScanSweepProps) {
     </div>
   );
 }
-
-
-
-

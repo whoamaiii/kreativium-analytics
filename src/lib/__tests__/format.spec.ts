@@ -14,7 +14,8 @@ describe('format helpers', () => {
 
   it('handles non-finite inputs safely', () => {
     expect(() => formatPercent(Number.NaN, 0, 'en-US')).not.toThrow();
-    expect(() => formatFixed(Number.POSITIVE_INFINITY as unknown as number, 2, 'en-US')).not.toThrow();
+    expect(() =>
+      formatFixed(Number.POSITIVE_INFINITY as unknown as number, 2, 'en-US'),
+    ).not.toThrow();
   });
 });
-

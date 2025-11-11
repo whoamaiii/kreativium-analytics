@@ -131,7 +131,8 @@ AnalyticsConfiguration {
 }
 ```
 
-Note: Workers receive `ttlSeconds`, derived from `cache.ttl` (ms). See `docs/analytics.md` for details.
+Note: Workers receive `ttlSeconds`, derived from `cache.ttl` (ms). See `docs/analytics.md` for
+details.
 
 Default values (summary) The defaults are defined in DEFAULT_ANALYTICS_CONFIG. Highlights:
 
@@ -143,16 +144,9 @@ Default values (summary) The defaults are defined in DEFAULT_ANALYTICS_CONFIG. H
 - alertSensitivity: { level: 'medium', emotionIntensityMultiplier: 1.0, frequencyMultiplier: 1.0,
   anomalyMultiplier: 1.0 }
 - cache: { ttl: 600000, maxSize: 50, invalidateOnConfigChange: true }
-- charts: {
-  emotionThreshold: 0.5,
-  sensoryThreshold: 0.5,
-  movingAverageWindow: 5,
-  correlationLabelThreshold: 0.4,
-  yAxisMax: 5,
-  yAxisInterval: 1,
-  dataZoomMinSpan: 10,
-  lineWidths: { baseline: 1, emotion: 2, sensory: 2, trend: 2, anomaly: 2, prediction: 2, correlation: 1 }
-}
+- charts: { emotionThreshold: 0.5, sensoryThreshold: 0.5, movingAverageWindow: 5,
+  correlationLabelThreshold: 0.4, yAxisMax: 5, yAxisInterval: 1, dataZoomMinSpan: 10, lineWidths: {
+  baseline: 1, emotion: 2, sensory: 2, trend: 2, anomaly: 2, prediction: 2, correlation: 1 } }
 - insights: { MIN*SESSIONS_FOR_FULL_ANALYTICS: 5, HIGH_CONFIDENCE_PATTERN_THRESHOLD: 0.6,
   MAX*\*\_TO_SHOW: 2, RECENT_EMOTION_COUNT: 7, POSITIVE_EMOTION_TREND_THRESHOLD: 0.6,
   NEGATIVE_EMOTION_TREND_THRESHOLD: 0.3 }
@@ -165,24 +159,11 @@ Default values (summary) The defaults are defined in DEFAULT_ANALYTICS_CONFIG. H
 - taxonomy.positiveEmotions: [ 'happy', 'calm', 'excited', 'content', 'peaceful', 'cheerful',
   'relaxed', 'optimistic' ]
 
-- precomputation: {
-  enabled: false,
-  enableOnBattery: false,
-  enableOnSlowNetwork: false,
-  maxQueueSize: 50,
-  batchSize: 5,
-  idleTimeout: 10000,
-  respectBatteryLevel: true,
-  respectCPUUsage: true,
-  respectNetworkConditions: true,
-  commonTimeframes: [7, 30],
-  prioritizeRecentStudents: true,
-  maxConcurrentTasks: 2,
-  taskStaggerDelay: 500,
-  maxPrecomputeTime: 30000,
-  precomputeOnlyWhenIdle: true,
-  pauseOnUserActivity: true,
-}
+- precomputation: { enabled: false, enableOnBattery: false, enableOnSlowNetwork: false,
+  maxQueueSize: 50, batchSize: 5, idleTimeout: 10000, respectBatteryLevel: true, respectCPUUsage:
+  true, respectNetworkConditions: true, commonTimeframes: [7, 30], prioritizeRecentStudents: true,
+  maxConcurrentTasks: 2, taskStaggerDelay: 500, maxPrecomputeTime: 30000, precomputeOnlyWhenIdle:
+  true, pauseOnUserActivity: true, }
 
 Presets
 
@@ -195,7 +176,8 @@ Accessing and updating config
 - Read: const cfg = analyticsConfig.getConfig();
 - Update partial: analyticsConfig.updateConfig({ patternAnalysis: { minDataPoints: 5 } });
   - Charts example: analyticsConfig.updateConfig({ charts: { yAxisMax: 5, dataZoomMinSpan: 8 } });
-  - Precomputation example: analyticsConfig.updateConfig({ precomputation: { enabled: true, maxConcurrentTasks: 2 } });
+  - Precomputation example: analyticsConfig.updateConfig({ precomputation: { enabled: true,
+    maxConcurrentTasks: 2 } });
 - Preset: analyticsConfig.setPreset('conservative' | 'balanced' | 'sensitive');
 - Reset: analyticsConfig.resetToDefaults();
 - Export/Import JSON: analyticsConfig.exportConfig(); analyticsConfig.importConfig(jsonString);
@@ -208,20 +190,27 @@ Notes
 
 UI conventions (source-of-truth locations)
 
-- Toasts: import from `@/hooks/use-toast` only; `<Toaster />` lives in `src/components/ui/sonner-toaster.tsx`.
-- Analytics panels live under `src/components/analytics-panels/` and are code-split via `src/components/lazy/*` wrappers.
-- Analytics tab keys are defined in `src/config/analyticsTabs.ts`. Do not re-export from other locations.
-- Date range selection composes `DateRangeSelector` with `ui/date-range-picker` for consistent behavior and accessibility.
+- Toasts: import from `@/hooks/use-toast` only; `<Toaster />` lives in
+  `src/components/ui/sonner-toaster.tsx`.
+- Analytics panels live under `src/components/analytics-panels/` and are code-split via
+  `src/components/lazy/*` wrappers.
+- Analytics tab keys are defined in `src/config/analyticsTabs.ts`. Do not re-export from other
+  locations.
+- Date range selection composes `DateRangeSelector` with `ui/date-range-picker` for consistent
+  behavior and accessibility.
 - UI primitives live in `src/components/ui/` and are presentation-only.
 
 ---
 
 Schema version
 
-- This project does not track a formal schema version. The source of truth is `src/lib/analyticsConfig.ts`. Migration notes below explain additions such as `charts` and `precomputation`.
+- This project does not track a formal schema version. The source of truth is
+  `src/lib/analyticsConfig.ts`. Migration notes below explain additions such as `charts` and
+  `precomputation`.
 - Migration considerations:
   - New sections will be filled with defaults on load if missing.
-  - If you previously hardcoded chart constants, remove them and read from `analyticsConfig.getConfig().charts` instead.
+  - If you previously hardcoded chart constants, remove them and read from
+    `analyticsConfig.getConfig().charts` instead.
   - Background precomputation is opt-in by default. Enable and tune per device profile.
 
 Configuration examples
@@ -237,9 +226,17 @@ analyticsConfig.updateConfig({
     yAxisMax: 6,
     yAxisInterval: 1,
     dataZoomMinSpan: 6,
-    lineWidths: { baseline: 1, emotion: 2, sensory: 2, trend: 2, anomaly: 2, prediction: 2, correlation: 1 }
-  }
-})
+    lineWidths: {
+      baseline: 1,
+      emotion: 2,
+      sensory: 2,
+      trend: 2,
+      anomaly: 2,
+      prediction: 2,
+      correlation: 1,
+    },
+  },
+});
 
 // Precomputation tuned for laptops on AC power
 analyticsConfig.updateConfig({
@@ -257,10 +254,11 @@ analyticsConfig.updateConfig({
     maxPrecomputeTime: 60000,
     precomputeOnlyWhenIdle: true,
     pauseOnUserActivity: true,
-  }
-})
+  },
+});
 ```
 
 Validation notes
 
-- The new sections are included in the runtime configuration validation and shape checks. If keys are missing or have incompatible types, defaults are merged and a warning is logged.
+- The new sections are included in the runtime configuration validation and shape checks. If keys
+  are missing or have incompatible types, defaults are merged and a warning is logged.

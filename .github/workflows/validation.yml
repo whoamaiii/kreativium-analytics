@@ -43,11 +43,11 @@ jobs:
 
       # Future tests - currently commented out
       # These will be implemented as part of the Advanced Validation System
-      
+
       # Step 6: Run performance tests (placeholder)
       # - name: Run performance tests
       #   run: npm run test:performance
-      
+
       # Step 7: Run bias detection tests (placeholder)
       # - name: Run bias tests
       #   run: npm run test:bias

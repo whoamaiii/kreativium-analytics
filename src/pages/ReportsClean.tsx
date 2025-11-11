@@ -10,11 +10,17 @@ import { toast } from '@/hooks/use-toast';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useNavigate } from 'react-router-dom';
 import { useReportsWorker } from '@/hooks/useReportsWorker';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-
-const EXPORT_PREFS_KEY = 'sensory-tracker_export_prefs_v1';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 type DatePreset = '7d' | '30d' | '90d' | 'qtd' | 'all' | 'custom';
 
@@ -25,33 +31,52 @@ const Reports = () => {
   const { run } = useReportsWorker();
   const navigate = useNavigate();
 
-  const [preset, setPreset] = useState<DatePreset>('all');
-  const [customStart, setCustomStart] = useState<string>('');
-  const [customEnd, setCustomEnd] = useState<string>('');
-  const [anonymize, setAnonymize] = useState<boolean>(false);
-  const [backupUseFilters, setBackupUseFilters] = useState<boolean>(false);
+  type ExportPreferences = {
+    preset: DatePreset;
+    customStart?: string;
+    customEnd?: string;
+    anonymize?: boolean;
+    backupUseFilters?: boolean;
+  };
+
+  const [exportPrefs, setExportPrefs] = useStorageState<ExportPreferences>(
+    STORAGE_KEYS.EXPORT_PREFERENCES,
+    { preset: 'all' },
+    {
+      deserialize: (value) => {
+        try {
+          const parsed = JSON.parse(value);
+          return {
+            preset: parsed.preset ?? 'all',
+            customStart: parsed.customStart ?? '',
+            customEnd: parsed.customEnd ?? '',
+            anonymize: !!parsed.anonymize,
+            backupUseFilters: !!parsed.backupUseFilters,
+          };
+        } catch {
+          return { preset: 'all' };
+        }
+      },
+    },
+  );
+
+  const preset = exportPrefs.preset;
+  const customStart = exportPrefs.customStart ?? '';
+  const customEnd = exportPrefs.customEnd ?? '';
+  const anonymize = exportPrefs.anonymize ?? false;
+  const backupUseFilters = exportPrefs.backupUseFilters ?? false;
+
+  const setPreset = (value: DatePreset) => setExportPrefs((prev) => ({ ...prev, preset: value }));
+  const setCustomStart = (value: string) =>
+    setExportPrefs((prev) => ({ ...prev, customStart: value }));
+  const setCustomEnd = (value: string) => setExportPrefs((prev) => ({ ...prev, customEnd: value }));
+  const setAnonymize = (value: boolean) =>
+    setExportPrefs((prev) => ({ ...prev, anonymize: value }));
+  const setBackupUseFilters = (value: boolean) =>
+    setExportPrefs((prev) => ({ ...prev, backupUseFilters: value }));
+
   const customStartId = useId();
   const customEndId = useId();
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(EXPORT_PREFS_KEY);
-      if (raw) {
-        const saved = JSON.parse(raw) as { preset: DatePreset; customStart?: string; customEnd?: string; anonymize?: boolean; backupUseFilters?: boolean };
-        setPreset(saved.preset ?? 'all');
-        setCustomStart(saved.customStart ?? '');
-        setCustomEnd(saved.customEnd ?? '');
-        setAnonymize(!!saved.anonymize);
-        setBackupUseFilters(!!saved.backupUseFilters);
-      }
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(EXPORT_PREFS_KEY, JSON.stringify({ preset, customStart, customEnd, anonymize, backupUseFilters }));
-    } catch {}
-  }, [preset, customStart, customEnd, anonymize, backupUseFilters]);
 
   const computedDateRange = useMemo(() => {
     if (preset === 'all') return undefined;
@@ -86,7 +111,7 @@ const Reports = () => {
     return isNaN(start.getTime()) || isNaN(end.getTime()) || start > end;
   }, [preset, customStart, customEnd]);
 
-  const [pdfStudentId, setPdfStudentId] = useState<string>("");
+  const [pdfStudentId, setPdfStudentId] = useState<string>('');
 
   const loadAllData = useCallback(() => {
     try {
@@ -110,12 +135,12 @@ const Reports = () => {
         students,
         allData: {
           trackingEntries,
-          emotions: trackingEntries.flatMap(e => e.emotions),
-          sensoryInputs: trackingEntries.flatMap(e => e.sensoryInputs),
+          emotions: trackingEntries.flatMap((e) => e.emotions),
+          sensoryInputs: trackingEntries.flatMap((e) => e.sensoryInputs),
           goals,
         },
         options: {
-          includeFields: ['emotions','sensoryInputs','goals','trackingEntries'],
+          includeFields: ['emotions', 'sensoryInputs', 'goals', 'trackingEntries'],
           dateRange: computedDateRange,
           anonymize,
         },
@@ -143,12 +168,12 @@ const Reports = () => {
         students,
         allData: {
           trackingEntries,
-          emotions: trackingEntries.flatMap(e => e.emotions),
-          sensoryInputs: trackingEntries.flatMap(e => e.sensoryInputs),
+          emotions: trackingEntries.flatMap((e) => e.emotions),
+          sensoryInputs: trackingEntries.flatMap((e) => e.sensoryInputs),
           goals,
         },
         options: {
-          includeFields: ['students','trackingEntries','emotions','sensoryInputs','goals'],
+          includeFields: ['students', 'trackingEntries', 'emotions', 'sensoryInputs', 'goals'],
           dateRange: computedDateRange,
           anonymize,
         },
@@ -172,13 +197,13 @@ const Reports = () => {
       const { students, trackingEntries, goals } = loadAllData();
       const { exportSystem } = await import('@/lib/exportSystem');
       let entries = trackingEntries;
-      let emotions = trackingEntries.flatMap(e => e.emotions);
-      let sensoryInputs = trackingEntries.flatMap(e => e.sensoryInputs);
+      let emotions = trackingEntries.flatMap((e) => e.emotions);
+      let sensoryInputs = trackingEntries.flatMap((e) => e.sensoryInputs);
       if (backupUseFilters && computedDateRange) {
         const { start, end } = computedDateRange;
-        entries = entries.filter(e => e.timestamp >= start && e.timestamp <= end);
-        emotions = emotions.filter(e => e.timestamp >= start && e.timestamp <= end);
-        sensoryInputs = sensoryInputs.filter(s => s.timestamp >= start && s.timestamp <= end);
+        entries = entries.filter((e) => e.timestamp >= start && e.timestamp <= end);
+        emotions = emotions.filter((e) => e.timestamp >= start && e.timestamp <= end);
+        sensoryInputs = sensoryInputs.filter((s) => s.timestamp >= start && s.timestamp <= end);
       }
       const backup = exportSystem.createFullBackup(students, {
         trackingEntries: entries,
@@ -223,19 +248,33 @@ const Reports = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{tCommon('reports.exportFilters.presets.all')}</SelectItem>
-                    <SelectItem value="7d">{tCommon('reports.exportFilters.presets.last7')}</SelectItem>
-                    <SelectItem value="30d">{tCommon('reports.exportFilters.presets.last30')}</SelectItem>
-                    <SelectItem value="90d">{tCommon('reports.exportFilters.presets.last90')}</SelectItem>
-                    <SelectItem value="qtd">{tCommon('reports.exportFilters.presets.qtd')}</SelectItem>
-                    <SelectItem value="custom">{tCommon('reports.exportFilters.presets.custom')}</SelectItem>
+                    <SelectItem value="all">
+                      {tCommon('reports.exportFilters.presets.all')}
+                    </SelectItem>
+                    <SelectItem value="7d">
+                      {tCommon('reports.exportFilters.presets.last7')}
+                    </SelectItem>
+                    <SelectItem value="30d">
+                      {tCommon('reports.exportFilters.presets.last30')}
+                    </SelectItem>
+                    <SelectItem value="90d">
+                      {tCommon('reports.exportFilters.presets.last90')}
+                    </SelectItem>
+                    <SelectItem value="qtd">
+                      {tCommon('reports.exportFilters.presets.qtd')}
+                    </SelectItem>
+                    <SelectItem value="custom">
+                      {tCommon('reports.exportFilters.presets.custom')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               {preset === 'custom' && (
                 <div className="grid grid-cols-2 gap-2 md:col-span-2">
                   <div>
-                    <label className="text-sm" htmlFor={customStartId}>{tCommon('reports.exportFilters.start')}</label>
+                    <label className="text-sm" htmlFor={customStartId}>
+                      {tCommon('reports.exportFilters.start')}
+                    </label>
                     <input
                       id={customStartId}
                       className={`w-full h-9 rounded-md border bg-background px-3 text-sm ${customRangeInvalid ? 'border-destructive' : ''}`}
@@ -247,7 +286,9 @@ const Reports = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-sm" htmlFor={customEndId}>{tCommon('reports.exportFilters.end')}</label>
+                    <label className="text-sm" htmlFor={customEndId}>
+                      {tCommon('reports.exportFilters.end')}
+                    </label>
                     <input
                       id={customEndId}
                       className={`w-full h-9 rounded-md border bg-background px-3 text-sm ${customRangeInvalid ? 'border-destructive' : ''}`}
@@ -266,12 +307,22 @@ const Reports = () => {
                 </div>
               )}
               <div className="flex items-center gap-2 md:col-start-3">
-                <Checkbox id="anonymize" checked={anonymize} onCheckedChange={(c) => setAnonymize(!!c)} />
+                <Checkbox
+                  id="anonymize"
+                  checked={anonymize}
+                  onCheckedChange={(c) => setAnonymize(!!c)}
+                />
                 <Label htmlFor="anonymize">{tCommon('reports.exportFilters.anonymize')}</Label>
               </div>
               <div className="flex items-center gap-2 md:col-start-3">
-                <Checkbox id="backupFilters" checked={backupUseFilters} onCheckedChange={(c) => setBackupUseFilters(!!c)} />
-                <Label htmlFor="backupFilters">{tCommon('reports.exportFilters.backupUseFilters')}</Label>
+                <Checkbox
+                  id="backupFilters"
+                  checked={backupUseFilters}
+                  onCheckedChange={(c) => setBackupUseFilters(!!c)}
+                />
+                <Label htmlFor="backupFilters">
+                  {tCommon('reports.exportFilters.backupUseFilters')}
+                </Label>
               </div>
             </div>
 
@@ -281,25 +332,54 @@ const Reports = () => {
                 const fmt = (d: Date) => d.toISOString().slice(0, 10);
                 if (computedDateRange) {
                   return anonymize
-                    ? tCommon('reports.exportFilters.summary.withRangeAnon', { start: fmt(computedDateRange.start), end: fmt(computedDateRange.end) })
-                    : tCommon('reports.exportFilters.summary.withRange', { start: fmt(computedDateRange.start), end: fmt(computedDateRange.end) });
+                    ? tCommon('reports.exportFilters.summary.withRangeAnon', {
+                        start: fmt(computedDateRange.start),
+                        end: fmt(computedDateRange.end),
+                      })
+                    : tCommon('reports.exportFilters.summary.withRange', {
+                        start: fmt(computedDateRange.start),
+                        end: fmt(computedDateRange.end),
+                      });
                 }
                 return anonymize
                   ? tCommon('reports.exportFilters.summary.allAnon')
                   : tCommon('reports.exportFilters.summary.all');
               })()}
-              {isExporting ? ` • ${tCommon('reports.exportFilters.summary.progress', { percent: progress })}` : ''}
+              {isExporting
+                ? ` • ${tCommon('reports.exportFilters.summary.progress', { percent: progress })}`
+                : ''}
             </p>
 
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline" onClick={handleExportCSV} disabled={isExporting || customRangeInvalid} aria-busy={isExporting} data-testid="export-csv">
-                <Download className="h-4 w-4 mr-2" />{tSettings('dataExport.actions.exportAllCsv')}
+              <Button
+                variant="outline"
+                onClick={handleExportCSV}
+                disabled={isExporting || customRangeInvalid}
+                aria-busy={isExporting}
+                data-testid="export-csv"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {tSettings('dataExport.actions.exportAllCsv')}
               </Button>
-              <Button variant="outline" onClick={handleExportJSON} disabled={isExporting || customRangeInvalid} aria-busy={isExporting} data-testid="export-json">
-                <FileText className="h-4 w-4 mr-2" />{tSettings('dataExport.actions.exportAllJson')}
+              <Button
+                variant="outline"
+                onClick={handleExportJSON}
+                disabled={isExporting || customRangeInvalid}
+                aria-busy={isExporting}
+                data-testid="export-json"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {tSettings('dataExport.actions.exportAllJson')}
               </Button>
-              <Button variant="outline" onClick={handleCreateBackup} disabled={isExporting} aria-busy={isExporting} data-testid="create-backup">
-                <Save className="h-4 w-4 mr-2" />{tSettings('dataExport.actions.createBackup')}
+              <Button
+                variant="outline"
+                onClick={handleCreateBackup}
+                disabled={isExporting}
+                aria-busy={isExporting}
+                data-testid="create-backup"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {tSettings('dataExport.actions.createBackup')}
               </Button>
             </div>
 
@@ -313,7 +393,9 @@ const Reports = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {loadAllData().students.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -13,9 +13,15 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {};
   return {
     getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
   };
 })();
 
@@ -28,7 +34,7 @@ vi.mock('@/lib/game/hints', () => ({
 }));
 
 vi.mock('@/hooks/useCalibration', () => ({
-  loadCalibration: vi.fn(() => ({threshold: 0.6, holdMs: 1000 })),
+  loadCalibration: vi.fn(() => ({ threshold: 0.6, holdMs: 1000 })),
 }));
 
 vi.mock('@/config/gameConfig', () => ({

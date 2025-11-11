@@ -22,10 +22,10 @@
  * const engine = createAnalysisEngine(true);
  */
 
-import { HeuristicAnalysisEngine, LLMAnalysisEngine } from "@/lib/analysis";
-import type { AnalysisEngine } from "@/lib/analysis";
-import { logger } from "@/lib/logger";
-import { resolveEngineConfig } from "./engineConfig";
+import { HeuristicAnalysisEngine, LLMAnalysisEngine } from '@/lib/analysis';
+import type { AnalysisEngine } from '@/lib/analysis';
+import { logger } from '@/lib/logger';
+import { resolveEngineConfig } from './engineConfig';
 
 /**
  * Rate-limiting state for debug logging.
@@ -91,7 +91,7 @@ export function createAnalysisEngine(useAI?: boolean): AnalysisEngine {
         '[engineFactory] Engine selection override: runtime useAI=false -> HeuristicAnalysisEngine',
         {
           requestedAI: useAI,
-        }
+        },
       );
     } catch {
       /* ignore logging errors */

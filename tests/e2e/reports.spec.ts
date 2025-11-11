@@ -42,7 +42,7 @@ test.describe('Reports export page', () => {
 
 test.describe('Reports exports', () => {
   test('Export buttons present and clickable', async ({ page }) => {
-await page.goto('/reports/export');
+    await page.goto('/reports/export');
 
     const csv = page.getByTestId('export-csv');
     const json = page.getByTestId('export-json');
@@ -66,7 +66,9 @@ await page.goto('/reports/export');
     await backup.click();
     await expect(page.getByTestId('toast-export-success-backup')).toHaveCount(1);
   });
-  test('Filters: custom invalid disables, summary updates, backup toggle visible', async ({ page }) => {
+  test('Filters: custom invalid disables, summary updates, backup toggle visible', async ({
+    page,
+  }) => {
     await page.goto('/reports/export');
 
     // Open preset select and choose custom
@@ -96,4 +98,3 @@ await page.goto('/reports/export');
     await expect(page.getByLabel(/backup|sikkerhetskopi/i)).toBeVisible();
   });
 });
-

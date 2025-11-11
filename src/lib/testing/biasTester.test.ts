@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { evaluateFairness, isWithinFairnessTolerance, type ClassificationRecord } from './biasTester';
+import {
+  evaluateFairness,
+  isWithinFairnessTolerance,
+  type ClassificationRecord,
+} from './biasTester';
 
 function buildBalancedDataset(): ClassificationRecord[] {
   const records: ClassificationRecord[] = [];

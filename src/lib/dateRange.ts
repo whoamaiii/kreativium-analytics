@@ -1,8 +1,15 @@
 export type DatePreset = '7d' | '30d' | '90d' | 'qtd' | 'all' | 'custom';
 
-export interface DateRange { start: Date; end: Date }
+export interface DateRange {
+  start: Date;
+  end: Date;
+}
 
-export function computeDateRange(preset: DatePreset, customStart?: string, customEnd?: string): DateRange | undefined {
+export function computeDateRange(
+  preset: DatePreset,
+  customStart?: string,
+  customEnd?: string,
+): DateRange | undefined {
   if (preset === 'all') return undefined;
   const now = new Date();
   if (preset === '7d' || preset === '30d' || preset === '90d') {
@@ -27,7 +34,11 @@ export function computeDateRange(preset: DatePreset, customStart?: string, custo
   return undefined;
 }
 
-export function isCustomRangeInvalid(preset: DatePreset, customStart?: string, customEnd?: string): boolean {
+export function isCustomRangeInvalid(
+  preset: DatePreset,
+  customStart?: string,
+  customEnd?: string,
+): boolean {
   if (preset !== 'custom') return false;
   if (!customStart || !customEnd) return true;
   const start = new Date(customStart);

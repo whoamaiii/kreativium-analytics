@@ -1,6 +1,6 @@
 /**
  * PreprocessingPipeline: A comprehensive data preprocessing pipeline with versioning and serialization.
- * 
+ *
  * This class provides a standardized approach to data preprocessing with the following features:
  * - **Configurable Pipeline**: Define preprocessing steps through configuration objects
  * - **Conditional Execution**: Steps can be conditionally executed based on data profiling
@@ -8,7 +8,7 @@
  * - **Training/Inference Separation**: Fit pipeline on training data, transform on inference data
  * - **Serialization**: Complete pipeline state can be serialized to JSON for reproducibility
  * - **Metadata Tracking**: Comprehensive metadata for debugging and auditing
- * 
+ *
  * @example
  * ```typescript
  * // Create pipeline configuration
@@ -17,19 +17,19 @@
  *   { name: 'scale', kind: 'scaling', method: 'standard' },
  *   { name: 'encode', kind: 'encoding', oneHotMaxCategories: 10 }
  * ];
- * 
+ *
  * // Initialize and fit pipeline
  * const pipeline = new PreprocessingPipeline(config);
  * const trainedData = pipeline.fit(trainingData);
- * 
+ *
  * // Transform new data using fitted pipeline
  * const transformedData = pipeline.transform(newData);
- * 
+ *
  * // Serialize for storage/sharing
  * const serialized = pipeline.toJSON();
  * const restored = PreprocessingPipeline.fromJSON(serialized);
  * ```
- * 
+ *
  * @version 1.0.0
  * @since 1.0.0
  */
@@ -62,7 +62,7 @@ function inferDataProfile(data: Dataset): DataProfile {
     data.reduce<Set<string>>((acc, row) => {
       Object.keys(row).forEach((k) => acc.add(k));
       return acc;
-    }, new Set())
+    }, new Set()),
   );
 
   const inferredTypes: DataProfile['inferredTypes'] = {} as any;
@@ -94,7 +94,8 @@ function inferDataProfile(data: Dataset): DataProfile {
       const t = typeof v;
       if (t === 'number') type = 'number';
       else if (t === 'string') type = type === 'number' ? 'number' : 'string';
-      else if (t === 'boolean') type = type === 'number' ? 'number' : type === 'string' ? 'string' : 'boolean';
+      else if (t === 'boolean')
+        type = type === 'number' ? 'number' : type === 'string' ? 'string' : 'boolean';
       else if (v instanceof Date) type = 'date';
     }
     missingRatioByColumn[col] = rowCount === 0 ? 0 : missing / rowCount;
@@ -102,13 +103,26 @@ function inferDataProfile(data: Dataset): DataProfile {
   }
 
   const numericColumns = columns.filter((c) => inferredTypes[c] === 'number');
-  const categoricalColumns = columns.filter((c) => inferredTypes[c] === 'string' || inferredTypes[c] === 'boolean');
+  const categoricalColumns = columns.filter(
+    (c) => inferredTypes[c] === 'string' || inferredTypes[c] === 'boolean',
+  );
 
-  return { rowCount, columns, inferredTypes, missingRatioByColumn, uniqueCountByColumn, numericColumns, categoricalColumns };
+  return {
+    rowCount,
+    columns,
+    inferredTypes,
+    missingRatioByColumn,
+    uniqueCountByColumn,
+    numericColumns,
+    categoricalColumns,
+  };
 }
 
 /** Simple cleaning: drop all-null columns, trim strings. */
-function applyCleaning(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'cleaning' }>): { data: Dataset; state: FittedStepState } {
+function applyCleaning(
+  dataset: Dataset,
+  cfg: Extract<AnyStepConfig, { kind: 'cleaning' }>,
+): { data: Dataset; state: FittedStepState } {
   const columns = new Set<string>();
   dataset.forEach((r) => Object.keys(r).forEach((k) => columns.add(k)));
 
@@ -139,12 +153,20 @@ function applyCleaning(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'cl
 
   return {
     data: out,
-    state: { name: cfg.name, kind: 'cleaning', params: { dropCols, trimStrings: !!cfg.trimStrings } },
+    state: {
+      name: cfg.name,
+      kind: 'cleaning',
+      params: { dropCols, trimStrings: !!cfg.trimStrings },
+    },
   };
 }
 
 /** Standard scaling: z = (x - mean) / std for numeric columns. */
-function fitScaling(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'scaling' }>, profile: DataProfile) {
+function fitScaling(
+  dataset: Dataset,
+  cfg: Extract<AnyStepConfig, { kind: 'scaling' }>,
+  profile: DataProfile,
+) {
   const means: Record<string, number> = {};
   const stds: Record<string, number> = {};
 
@@ -153,7 +175,9 @@ function fitScaling(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'scali
       .map((r) => (typeof (r as any)[col] === 'number' ? ((r as any)[col] as number) : NaN))
       .filter((v) => Number.isFinite(v));
     const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-    const variance = vals.length ? vals.reduce((a, b) => a + (b - mean) * (b - mean), 0) / vals.length : 0;
+    const variance = vals.length
+      ? vals.reduce((a, b) => a + (b - mean) * (b - mean), 0) / vals.length
+      : 0;
     const std = Math.sqrt(variance) || 1;
     means[col] = mean;
     stds[col] = std;
@@ -169,19 +193,29 @@ function fitScaling(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'scali
       return out;
     });
 
-  const state: FittedStepState = { name: cfg.name, kind: 'scaling', params: { means, stds, method: cfg.method ?? 'standard' } };
+  const state: FittedStepState = {
+    name: cfg.name,
+    kind: 'scaling',
+    params: { means, stds, method: cfg.method ?? 'standard' },
+  };
   return { transform, state };
 }
 
 /** One-hot encoding for categorical columns with unique count threshold. */
-function fitEncoding(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'encoding' }>, profile: DataProfile) {
+function fitEncoding(
+  dataset: Dataset,
+  cfg: Extract<AnyStepConfig, { kind: 'encoding' }>,
+  profile: DataProfile,
+) {
   const max = cfg.oneHotMaxCategories ?? 20;
   const includeBooleans = cfg.includeBooleans ?? true;
 
-  const cats = profile.columns.filter((c) =>
-    (profile.inferredTypes[c] === 'string' || (includeBooleans && profile.inferredTypes[c] === 'boolean')) &&
-    profile.uniqueCountByColumn[c] > 1 &&
-    profile.uniqueCountByColumn[c] <= max
+  const cats = profile.columns.filter(
+    (c) =>
+      (profile.inferredTypes[c] === 'string' ||
+        (includeBooleans && profile.inferredTypes[c] === 'boolean')) &&
+      profile.uniqueCountByColumn[c] > 1 &&
+      profile.uniqueCountByColumn[c] <= max,
   );
 
   const categories: Record<string, string[]> = {};
@@ -203,7 +237,8 @@ function fitEncoding(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'enco
           out[k] = v;
           continue;
         }
-        const key = typeof v === 'string' ? v : typeof v === 'boolean' ? String(v) : String(v ?? '');
+        const key =
+          typeof v === 'string' ? v : typeof v === 'boolean' ? String(v) : String(v ?? '');
         for (const cat of categories[k]) {
           out[`${k}__${cat}`] = key === cat ? 1 : 0;
         }
@@ -211,12 +246,20 @@ function fitEncoding(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'enco
       return out;
     });
 
-  const state: FittedStepState = { name: cfg.name, kind: 'encoding', params: { categories, includeBooleans, oneHotMaxCategories: max } };
+  const state: FittedStepState = {
+    name: cfg.name,
+    kind: 'encoding',
+    params: { categories, includeBooleans, oneHotMaxCategories: max },
+  };
   return { transform, state };
 }
 
 /** Simple feature engineering: squared terms for numeric columns up to degree. */
-function fitFeatureEngineering(dataset: Dataset, cfg: Extract<AnyStepConfig, { kind: 'feature_engineering' }>, profile: DataProfile) {
+function fitFeatureEngineering(
+  dataset: Dataset,
+  cfg: Extract<AnyStepConfig, { kind: 'feature_engineering' }>,
+  profile: DataProfile,
+) {
   const degree = cfg.polynomialDegree ?? 1;
   const cols = degree >= 2 ? [...profile.numericColumns] : [];
 
@@ -230,7 +273,11 @@ function fitFeatureEngineering(dataset: Dataset, cfg: Extract<AnyStepConfig, { k
       return out;
     });
 
-  const state: FittedStepState = { name: cfg.name, kind: 'feature_engineering', params: { degree, columns: cols } };
+  const state: FittedStepState = {
+    name: cfg.name,
+    kind: 'feature_engineering',
+    params: { degree, columns: cols },
+  };
   return { transform, state };
 }
 
@@ -266,7 +313,7 @@ export class PreprocessingPipeline {
    * - Fits each applicable step (e.g., calculates means/stds for scaling).
    * - Stores the fitted state for each step.
    * - Generates and stores metadata about the fitting process.
-   * 
+   *
    * @param data The training dataset, an array of records.
    * @param options Optional parameters for the fitting process.
    * @param options.notes Optional user-defined notes to store in the metadata.
@@ -316,10 +363,10 @@ export class PreprocessingPipeline {
 
   /**
    * Transforms a dataset using the previously fitted pipeline states.
-   * 
+   *
    * This method is intended for inference, applying the exact transformations
    * learned during the `fit` phase without re-learning any parameters.
-   * 
+   *
    * @param data The dataset to transform.
    * @returns The transformed dataset.
    * @throws Will not throw, but returns data as-is if the pipeline has not been fitted.
@@ -360,7 +407,8 @@ export class PreprocessingPipeline {
               out[k] = v;
               continue;
             }
-            const key = typeof v === 'string' ? v : typeof v === 'boolean' ? String(v) : String(v ?? '');
+            const key =
+              typeof v === 'string' ? v : typeof v === 'boolean' ? String(v) : String(v ?? '');
             for (const cat of categories[k]) {
               out[`${k}__${cat}`] = key === cat ? 1 : 0;
             }
@@ -386,7 +434,7 @@ export class PreprocessingPipeline {
   /**
    * Serializes the entire pipeline state to a JSON object.
    * This includes the configuration, all fitted step parameters, and metadata.
-   * 
+   *
    * @returns A `SerializedPipeline` object ready for JSON stringification.
    */
   toJSON(): SerializedPipeline {
@@ -410,7 +458,7 @@ export class PreprocessingPipeline {
   /**
    * Recreates a `PreprocessingPipeline` instance from a serialized state.
    * This allows for perfect reconstruction of a fitted pipeline for later use.
-   * 
+   *
    * @param payload The `SerializedPipeline` object.
    * @returns A new `PreprocessingPipeline` instance with its state restored.
    */
@@ -421,4 +469,3 @@ export class PreprocessingPipeline {
     return pipe;
   }
 }
-

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '../dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../dialog';
 
 describe('DialogContent accessibility fallbacks', () => {
   it('respects locally exported wrappers and avoids injecting duplicate primitives', () => {
@@ -16,7 +11,7 @@ describe('DialogContent accessibility fallbacks', () => {
           <DialogTitle>Export data</DialogTitle>
           <DialogDescription>Download a CSV of your selections.</DialogDescription>
         </DialogContent>
-      </Dialog>
+      </Dialog>,
     );
 
     const dialog = screen.getByRole('dialog');
@@ -35,7 +30,7 @@ describe('DialogContent accessibility fallbacks', () => {
         <DialogContent>
           <p>Plain body content</p>
         </DialogContent>
-      </Dialog>
+      </Dialog>,
     );
 
     const dialog = screen.getByRole('dialog');

@@ -56,12 +56,8 @@ describe('HeuristicAnalysisEngine', () => {
         id: 'e1',
         studentId: 's1',
         timestamp: now,
-        emotions: [
-          { id: 'em1', studentId: 's1', emotion: 'happy', intensity: 3, timestamp: now },
-        ],
-        sensoryInputs: [
-          { id: 'sens1', studentId: 's1', response: 'calm', timestamp: now },
-        ],
+        emotions: [{ id: 'em1', studentId: 's1', emotion: 'happy', intensity: 3, timestamp: now }],
+        sensoryInputs: [{ id: 'sens1', studentId: 's1', response: 'calm', timestamp: now }],
       },
     ]);
     dataStorageMock.getGoalsForStudent.mockReturnValue([]);
@@ -88,16 +84,35 @@ describe('HeuristicAnalysisEngine', () => {
     ]);
     dataStorageMock.getGoalsForStudent.mockReturnValue([]);
 
-    const res = await engine.analyzeStudent('s1', undefined, { profile: 'conservative', includeAiMetadata: true });
+    const res = await engine.analyzeStudent('s1', undefined, {
+      profile: 'conservative',
+      includeAiMetadata: true,
+    });
     expect(res).toBeDefined();
     expect(res.ai?.provider).toBe('heuristic');
   });
 
   it('produces heuristic interventions compatible with extended schema (empty evidence fields)', async () => {
     const parsed = ZAiReport.safeParse({
-      summary: 's', keyFindings: [], patterns: [], correlations: [], hypothesizedCauses: [], suggestedInterventions: [
-        { title: 't', description: 'd', actions: [], expectedImpact: 'low', metrics: [], sources: [] }
-      ], anomalies: [], predictiveInsights: [], dataLineage: [], confidence: { overall: 0.5 }
+      summary: 's',
+      keyFindings: [],
+      patterns: [],
+      correlations: [],
+      hypothesizedCauses: [],
+      suggestedInterventions: [
+        {
+          title: 't',
+          description: 'd',
+          actions: [],
+          expectedImpact: 'low',
+          metrics: [],
+          sources: [],
+        },
+      ],
+      anomalies: [],
+      predictiveInsights: [],
+      dataLineage: [],
+      confidence: { overall: 0.5 },
     });
     expect(parsed.success).toBe(true);
   });

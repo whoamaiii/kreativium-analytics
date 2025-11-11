@@ -1,10 +1,10 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/hooks/useTranslation";
-import { SIGN_ITEMS } from "@/lib/tegn/signData";
-import { useEffect, useMemo, useState } from "react";
-import { useTegnXP } from "@/contexts/TegnXPContext";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/hooks/useTranslation';
+import { SIGN_ITEMS } from '@/lib/tegn/signData';
+import { useEffect, useMemo, useState } from 'react';
+import { useTegnXP } from '@/contexts/TegnXPContext';
+import { cn } from '@/lib/utils';
 
 type CardType = 'sign' | 'text';
 
@@ -40,9 +40,22 @@ const SignMemoryPage = () => {
     // pick random PAIRS distinct signs
     const shuffled = [...basePool].sort(() => Math.random() - 0.5).slice(0, PAIRS);
     const newCards: MemoryCard[] = [];
-    shuffled.forEach(sign => {
-      newCards.push({ id: `${sign.id}-img`, pairKey: sign.word, type: 'sign', imageUrl: sign.imageUrl, revealed: false, matched: false });
-      newCards.push({ id: `${sign.id}-txt`, pairKey: sign.word, type: 'text', revealed: false, matched: false });
+    shuffled.forEach((sign) => {
+      newCards.push({
+        id: `${sign.id}-img`,
+        pairKey: sign.word,
+        type: 'sign',
+        imageUrl: sign.imageUrl,
+        revealed: false,
+        matched: false,
+      });
+      newCards.push({
+        id: `${sign.id}-txt`,
+        pairKey: sign.word,
+        type: 'text',
+        revealed: false,
+        matched: false,
+      });
     });
     // shuffle cards
     const mixed = newCards.sort(() => Math.random() - 0.5);
@@ -63,20 +76,20 @@ const SignMemoryPage = () => {
 
   const handleFlip = (idx: number) => {
     if (gameOver) return;
-    setCards(prev => {
+    setCards((prev) => {
       const c = prev[idx];
       if (c.revealed || c.matched) return prev;
       const next = [...prev];
       next[idx] = { ...c, revealed: true };
       return next;
     });
-    setFlippedIndexes(prev => {
+    setFlippedIndexes((prev) => {
       const next = [...prev, idx];
       if (next.length === 2) {
-        setMoves(m => m + 1);
+        setMoves((m) => m + 1);
         // check match after short delay to allow UI render
         setTimeout(() => {
-          setCards(curr => {
+          setCards((curr) => {
             const [a, b] = next;
             const ca = curr[a];
             const cb = curr[b];
@@ -85,14 +98,14 @@ const SignMemoryPage = () => {
               // match
               addXP(MATCH_XP);
               const updated = curr.map((card, i) =>
-                i === a || i === b ? { ...card, matched: true } : card
+                i === a || i === b ? { ...card, matched: true } : card,
               );
-              setPairsFound(p => p + 1);
+              setPairsFound((p) => p + 1);
               return updated;
             } else {
               // flip back
               const updated = curr.map((card, i) =>
-                i === a || i === b ? { ...card, revealed: false } : card
+                i === a || i === b ? { ...card, revealed: false } : card,
               );
               return updated;
             }
@@ -111,11 +124,15 @@ const SignMemoryPage = () => {
           <h2 className="text-xl font-semibold">{String(tCommon('tegn.memory'))}</h2>
           <p className="text-sm text-muted-foreground">{String(tCommon('tegn.memoryDesc'))}</p>
           <div className="text-sm text-muted-foreground flex gap-4">
-            <span>{String(tCommon('tegn.moves'))}: {moves}</span>
+            <span>
+              {String(tCommon('tegn.moves'))}: {moves}
+            </span>
             <span>{String(tCommon('tegn.pairsFound', { count: pairsFound }))}</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={setupGame}>{String(tCommon('tegn.resetGame'))}</Button>
+            <Button variant="outline" onClick={setupGame}>
+              {String(tCommon('tegn.resetGame'))}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -134,23 +151,32 @@ const SignMemoryPage = () => {
               onClick={() => handleFlip(idx)}
               className={cn(
                 'relative aspect-[3/4] rounded-xl border border-border overflow-hidden transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                isFaceUp ? 'bg-background' : 'bg-muted/60 hover:scale-[1.02]'
+                isFaceUp ? 'bg-background' : 'bg-muted/60 hover:scale-[1.02]',
               )}
               aria-label={aria}
             >
               {isFaceUp ? (
                 card.type === 'sign' ? (
-                  <img src={card.imageUrl} alt={card.pairKey} className="w-full h-full object-contain p-3" />
+                  <img
+                    src={card.imageUrl}
+                    alt={card.pairKey}
+                    className="w-full h-full object-contain p-3"
+                  />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-lg font-semibold text-foreground">
                     {card.pairKey}
                   </div>
                 )
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-3xl text-muted-foreground">?</div>
+                <div className="w-full h-full flex items-center justify-center text-3xl text-muted-foreground">
+                  ?
+                </div>
               )}
               {card.matched && (
-                <div className="absolute inset-0 ring-2 ring-success/70 rounded-xl pointer-events-none" aria-hidden="true" />
+                <div
+                  className="absolute inset-0 ring-2 ring-success/70 rounded-xl pointer-events-none"
+                  aria-hidden="true"
+                />
               )}
             </button>
           );
@@ -160,7 +186,9 @@ const SignMemoryPage = () => {
       {gameOver && (
         <Card className="bg-gradient-card border-0 shadow-soft">
           <CardContent className="p-6 space-y-3">
-            <div className="text-lg text-foreground">{String(tCommon('tegn.gameComplete', { bonus: BONUS_XP }))}</div>
+            <div className="text-lg text-foreground">
+              {String(tCommon('tegn.gameComplete', { bonus: BONUS_XP }))}
+            </div>
             <Button onClick={setupGame}>{String(tCommon('tegn.memoryPlayAgain'))}</Button>
           </CardContent>
         </Card>
@@ -170,5 +198,3 @@ const SignMemoryPage = () => {
 };
 
 export default SignMemoryPage;
-
-

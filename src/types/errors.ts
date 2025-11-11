@@ -7,11 +7,11 @@ export enum ErrorType {
   DATA_VALIDATION = 'DATA_VALIDATION',
   DATA_NOT_FOUND = 'DATA_NOT_FOUND',
   DATA_CORRUPTED = 'DATA_CORRUPTED',
-  
+
   // Storage errors
   STORAGE_QUOTA_EXCEEDED = 'STORAGE_QUOTA_EXCEEDED',
   STORAGE_UNAVAILABLE = 'STORAGE_UNAVAILABLE',
-  
+
   // Analytics errors
   ANALYTICS_WORKER_FAILURE = 'ANALYTICS_WORKER_FAILURE',
   ANALYTICS_PROCESSING_ERROR = 'ANALYTICS_PROCESSING_ERROR',
@@ -25,15 +25,15 @@ export enum ErrorType {
   AI_CONFIGURATION_ERROR = 'AI_CONFIGURATION_ERROR',
   AI_REFUSAL = 'AI_REFUSAL',
   AI_EMPTY_RESPONSE = 'AI_EMPTY_RESPONSE',
-  
+
   // Network errors
   NETWORK_ERROR = 'NETWORK_ERROR',
   TIMEOUT_ERROR = 'TIMEOUT_ERROR',
-  
+
   // User errors
   INVALID_INPUT = 'INVALID_INPUT',
   UNAUTHORIZED = 'UNAUTHORIZED',
-  
+
   // System errors
   UNKNOWN_ERROR = 'UNKNOWN_ERROR',
   CONFIGURATION_ERROR = 'CONFIGURATION_ERROR',
@@ -65,7 +65,7 @@ export class SensoryCompassError extends Error implements AppError {
       userMessage?: string;
       recoverable?: boolean;
       cause?: Error;
-    }
+    },
   ) {
     super(message, { cause: options?.cause });
     this.name = 'SensoryCompassError';
@@ -165,7 +165,7 @@ export class SensoryCompassError extends Error implements AppError {
 export const createValidationError = (
   field: string,
   value: unknown,
-  reason: string
+  reason: string,
 ): SensoryCompassError => {
   return new SensoryCompassError(
     ErrorType.DATA_VALIDATION,
@@ -175,14 +175,11 @@ export const createValidationError = (
       details: { field, value, reason },
       userMessage: `Invalid ${field}: ${reason}`,
       recoverable: true,
-    }
+    },
   );
 };
 
-export const createStorageError = (
-  operation: string,
-  cause?: Error
-): SensoryCompassError => {
+export const createStorageError = (operation: string, cause?: Error): SensoryCompassError => {
   const isQuotaError = cause?.name === 'QuotaExceededError';
   return new SensoryCompassError(
     isQuotaError ? ErrorType.STORAGE_QUOTA_EXCEEDED : ErrorType.STORAGE_UNAVAILABLE,
@@ -191,23 +188,16 @@ export const createStorageError = (
       code: isQuotaError ? 'QUOTA_EXCEEDED' : 'STORAGE_ERROR',
       cause,
       recoverable: isQuotaError,
-    }
+    },
   );
 };
 
-export const createAnalyticsError = (
-  message: string,
-  details?: unknown
-): SensoryCompassError => {
-  return new SensoryCompassError(
-    ErrorType.ANALYTICS_PROCESSING_ERROR,
-    message,
-    {
-      code: 'ANALYTICS_ERROR',
-      details,
-      recoverable: true,
-    }
-  );
+export const createAnalyticsError = (message: string, details?: unknown): SensoryCompassError => {
+  return new SensoryCompassError(ErrorType.ANALYTICS_PROCESSING_ERROR, message, {
+    code: 'ANALYTICS_ERROR',
+    details,
+    recoverable: true,
+  });
 };
 
 // Type guards

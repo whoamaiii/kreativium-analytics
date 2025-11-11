@@ -31,15 +31,6 @@
     "typescriptImportEqualsDeclaration",
     "typescriptTypeImport"
   ],
-  "specials": [
-    "bin",
-    "eslint",
-    "prettier",
-    "vitest",
-    "playwright",
-    "vite",
-    "tsconfig",
-    "babel"
-  ],
+  "specials": ["bin", "eslint", "prettier", "vitest", "playwright", "vite", "tsconfig", "babel"],
   "skipMissing": true
 }

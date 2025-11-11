@@ -1,7 +1,15 @@
 import React, { memo } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-const EChartContainer = React.lazy(() => import('./EChartContainer').then(m => ({ default: m.EChartContainer })));
-import { buildEmotionTrendsOption, buildAreaOption, buildScatterOption, buildComposedOption, TrendRow as ChartKitTrendRow } from './ChartKit';
+const EChartContainer = React.lazy(() =>
+  import('./EChartContainer').then((m) => ({ default: m.EChartContainer })),
+);
+import {
+  buildEmotionTrendsOption,
+  buildAreaOption,
+  buildScatterOption,
+  buildComposedOption,
+  TrendRow as ChartKitTrendRow,
+} from './ChartKit';
 import { Activity } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { analyticsConfig } from '@/lib/analyticsConfig';
@@ -41,7 +49,7 @@ const TrendsChartComponent = ({ chartData, selectedChartType }: TrendsChartProps
       );
     }
 
-    const rows: ChartKitTrendRow[] = chartData.map(d => ({
+    const rows: ChartKitTrendRow[] = chartData.map((d) => ({
       date: d.date,
       avgEmotionIntensity: Number(d.avgEmotionIntensity) || 0,
       positiveEmotions: Number(d.positiveEmotions) || 0,
@@ -65,28 +73,42 @@ const TrendsChartComponent = ({ chartData, selectedChartType }: TrendsChartProps
         const chartsCfg = analyticsConfig.getConfig().charts;
         const emotionThreshold = chartsCfg.emotionThreshold;
         const sensoryThreshold = chartsCfg.sensoryThreshold;
-        option = buildEmotionTrendsOption(rows, {
-          title: String(tAnalytics('charts.emotionTrends')),
-          showMovingAverage: true,
-          movingAverageWindow: chartsCfg.movingAverageWindow,
-          useDualYAxis: true,
-          thresholds: { emotion: emotionThreshold, sensory: sensoryThreshold },
-        }, tAnalytics);
+        option = buildEmotionTrendsOption(
+          rows,
+          {
+            title: String(tAnalytics('charts.emotionTrends')),
+            showMovingAverage: true,
+            movingAverageWindow: chartsCfg.movingAverageWindow,
+            useDualYAxis: true,
+            thresholds: { emotion: emotionThreshold, sensory: sensoryThreshold },
+          },
+          tAnalytics,
+        );
         break;
     }
 
     return (
-      <React.Suspense fallback={<div className="h-[400px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label="Loading trends" />}> 
-        <EChartContainer 
-          option={option} 
+      <React.Suspense
+        fallback={
+          <div
+            className="h-[400px] rounded-xl border bg-card motion-safe:animate-pulse"
+            aria-label="Loading trends"
+          />
+        }
+      >
+        <EChartContainer
+          option={option}
           height={400}
-          exportRegistration={{ id: 'trends-main', type: 'trends', title: String(tAnalytics('export.chartTitle')) }}
+          exportRegistration={{
+            id: 'trends-main',
+            type: 'trends',
+            title: String(tAnalytics('export.chartTitle')),
+          }}
         />
       </React.Suspense>
     );
-
   } catch (error) {
-    logger.error("TrendsChart.renderChart failed", { error });
+    logger.error('TrendsChart.renderChart failed', { error });
     return (
       <div className="flex items-center justify-center h-64 text-muted-foreground">
         <div className="text-center">

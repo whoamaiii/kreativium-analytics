@@ -5,7 +5,7 @@ import { analyticsManager } from '@/lib/analyticsManager';
 import type { AnalyticsData } from '@/types/analytics';
 
 vi.mock('@/lib/logger', () => ({
-  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 vi.mock('@/lib/patternAnalysis', () => ({
@@ -13,20 +13,27 @@ vi.mock('@/lib/patternAnalysis', () => ({
     analyzeEmotionPatterns: vi.fn(() => [{ kind: 'emotion', label: 'happy' }]),
     analyzeSensoryPatterns: vi.fn(() => [{ kind: 'sensory', label: 'calm' }]),
     analyzeEnvironmentalCorrelations: vi.fn(() => [{ variable: 'noise', strength: 0.3 }]),
-  }
+  },
 }));
 
 vi.mock('@/lib/enhancedPatternAnalysis', () => ({
   enhancedPatternAnalysis: {
     generatePredictiveInsights: vi.fn(async () => [{ title: 'Trend' }]),
     detectAnomalies: vi.fn(() => [{ id: 'a1', score: 2 }]),
-  }
+  },
 }));
 
 vi.mock('@/lib/analyticsManager', () => ({
   analyticsManager: {
     getStudentAnalytics: vi.fn(async (_student: any, opts: { useAI?: boolean }) => ({
-      patterns: [], correlations: [], environmentalCorrelations: [], predictiveInsights: [], anomalies: [], insights: [], suggestedInterventions: [], ai: opts?.useAI ? { provider: 'mock', model: 'x', latencyMs: 1 } : undefined,
+      patterns: [],
+      correlations: [],
+      environmentalCorrelations: [],
+      predictiveInsights: [],
+      anomalies: [],
+      insights: [],
+      suggestedInterventions: [],
+      ai: opts?.useAI ? { provider: 'mock', model: 'x', latencyMs: 1 } : undefined,
     })),
   },
 }));
@@ -52,15 +59,35 @@ describe('analyticsWorkerFallback.processAnalytics', () => {
   });
 
   it('handles various data scenarios without breaking result shape', async () => {
-    const results = await analyticsWorkerFallback.processAnalytics(makeData({
-      emotions: [{ id: 'e1', timestamp: new Date(), emotion: 'joy' } as any],
-      sensoryInputs: [{ id: 's1', timestamp: new Date(), response: 'seeking' } as any],
-      entries: [
-        { id: 't1', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] } as any,
-        { id: 't2', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] } as any,
-        { id: 't3', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] } as any,
-      ],
-    }));
+    const results = await analyticsWorkerFallback.processAnalytics(
+      makeData({
+        emotions: [{ id: 'e1', timestamp: new Date(), emotion: 'joy' } as any],
+        sensoryInputs: [{ id: 's1', timestamp: new Date(), response: 'seeking' } as any],
+        entries: [
+          {
+            id: 't1',
+            studentId: 's1',
+            timestamp: new Date(),
+            emotions: [],
+            sensoryInputs: [],
+          } as any,
+          {
+            id: 't2',
+            studentId: 's1',
+            timestamp: new Date(),
+            emotions: [],
+            sensoryInputs: [],
+          } as any,
+          {
+            id: 't3',
+            studentId: 's1',
+            timestamp: new Date(),
+            emotions: [],
+            sensoryInputs: [],
+          } as any,
+        ],
+      }),
+    );
     expect(Array.isArray(results.patterns)).toBe(true);
     expect(Array.isArray(results.correlations)).toBe(true);
     expect(Array.isArray(results.environmentalCorrelations)).toBe(true);
@@ -72,8 +99,12 @@ describe('analyticsWorkerFallback.processAnalytics', () => {
 
   it('preserves result shape when internal analysis throws', async () => {
     const { patternAnalysis } = await import('@/lib/patternAnalysis');
-    (patternAnalysis.analyzeEmotionPatterns as any).mockImplementationOnce(() => { throw new Error('boom'); });
-    const results = await analyticsWorkerFallback.processAnalytics(makeData({ emotions: [{ id: 'e1', timestamp: new Date(), emotion: 'joy' } as any] }));
+    (patternAnalysis.analyzeEmotionPatterns as any).mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    const results = await analyticsWorkerFallback.processAnalytics(
+      makeData({ emotions: [{ id: 'e1', timestamp: new Date(), emotion: 'joy' } as any] }),
+    );
     expect(Array.isArray(results.suggestedInterventions)).toBe(true);
   });
 
@@ -83,13 +114,25 @@ describe('analyticsWorkerFallback.processAnalytics', () => {
       emotions: [{ id: 'e1', timestamp: new Date(), emotion: 'joy' } as any],
       sensoryInputs: [{ id: 's1', timestamp: new Date(), response: 'seeking' } as any],
       entries: [
-        { id: 't1', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] } as any,
-        { id: 't2', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] } as any,
+        {
+          id: 't1',
+          studentId: 's1',
+          timestamp: new Date(),
+          emotions: [],
+          sensoryInputs: [],
+        } as any,
+        {
+          id: 't2',
+          studentId: 's1',
+          timestamp: new Date(),
+          emotions: [],
+          sensoryInputs: [],
+        } as any,
       ],
       goals: [{ id: 'g1' }] as any,
     });
     await analyticsWorkerFallback.processAnalytics(data);
-    expect((enhancedPatternAnalysis.generatePredictiveInsights as any)).toHaveBeenCalled();
+    expect(enhancedPatternAnalysis.generatePredictiveInsights as any).toHaveBeenCalled();
     const args = (enhancedPatternAnalysis.generatePredictiveInsights as any).mock.calls[0];
     expect(Array.isArray(args[3])).toBe(true);
     expect(args[3][0]).toEqual({ id: 'g1' });
@@ -98,15 +141,22 @@ describe('analyticsWorkerFallback.processAnalytics', () => {
   it('respects runtime useAI option via analyticsManager routing', async () => {
     const studentId = 'stu-1';
     const data = makeData({
-      entries: [{ id: 't1', studentId, timestamp: new Date(), emotions: [], sensoryInputs: [] } as any],
+      entries: [
+        { id: 't1', studentId, timestamp: new Date(), emotions: [], sensoryInputs: [] } as any,
+      ],
     });
     await analyticsWorkerFallback.processAnalytics(data, { useAI: true });
-    expect(analyticsManager.getStudentAnalytics).toHaveBeenCalledWith(expect.objectContaining({ id: studentId }), { useAI: true });
+    expect(analyticsManager.getStudentAnalytics).toHaveBeenCalledWith(
+      expect.objectContaining({ id: studentId }),
+      { useAI: true },
+    );
   });
 
   it('queues multiple requests and processes sequentially (async queue)', async () => {
     const p1 = analyticsWorkerFallback.processAnalytics(makeData());
-    const p2 = analyticsWorkerFallback.processAnalytics(makeData({ emotions: [{ id: 'e1', timestamp: new Date(), emotion: 'joy' } as any] }));
+    const p2 = analyticsWorkerFallback.processAnalytics(
+      makeData({ emotions: [{ id: 'e1', timestamp: new Date(), emotion: 'joy' } as any] }),
+    );
     const [r1, r2] = await Promise.all([p1, p2]);
     expect(Array.isArray(r1.patterns)).toBe(true);
     expect(Array.isArray(r2.patterns)).toBe(true);
@@ -115,11 +165,14 @@ describe('analyticsWorkerFallback.processAnalytics', () => {
   it('derives student from data when not provided to manager routing', async () => {
     const studentId = 'stu-2';
     const data = makeData({
-      entries: [{ id: 't1', studentId, timestamp: new Date(), emotions: [], sensoryInputs: [] } as any],
+      entries: [
+        { id: 't1', studentId, timestamp: new Date(), emotions: [], sensoryInputs: [] } as any,
+      ],
     });
     await analyticsWorkerFallback.processAnalytics(data, { useAI: false });
-    expect(analyticsManager.getStudentAnalytics).toHaveBeenCalledWith(expect.objectContaining({ id: studentId }), { useAI: false });
+    expect(analyticsManager.getStudentAnalytics).toHaveBeenCalledWith(
+      expect.objectContaining({ id: studentId }),
+      { useAI: false },
+    );
   });
 });
-
-

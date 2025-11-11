@@ -84,13 +84,19 @@ export const ensureWorkerInitialized = async (): Promise<Worker | null> => {
 
   try {
     const mod = await import('@/workers/analytics.worker?worker');
-    const WorkerCtor = (mod as unknown as { default: { new(): Worker } }).default;
+    const WorkerCtor = (mod as unknown as { default: { new (): Worker } }).default;
     const worker = new WorkerCtor();
 
     worker.onmessage = (event: MessageEvent<AnalyticsWorkerMessage>) => {
       const msg = event.data as AnalyticsWorkerMessage | undefined;
       if (!workerState.ready) {
-        if (!msg || msg.type === 'progress' || msg.type === 'partial' || msg.type === 'complete' || msg.type === 'error') {
+        if (
+          !msg ||
+          msg.type === 'progress' ||
+          msg.type === 'partial' ||
+          msg.type === 'complete' ||
+          msg.type === 'error'
+        ) {
           markWorkerReady();
         }
       }
@@ -108,18 +114,21 @@ export const ensureWorkerInitialized = async (): Promise<Worker | null> => {
       openCircuit(60_000);
       doOnce('analytics_worker_failure', 60_000, () => {
         try {
-          import('@/hooks/useTranslation').then(({ useTranslation }) => {
-            const { t } = useTranslation('analytics');
-            toast({
-              title: t('worker.fallbackTitle'),
-              description: t('worker.fallbackDescription'),
+          import('@/hooks/useTranslation')
+            .then(({ useTranslation }) => {
+              const { t } = useTranslation('analytics');
+              toast({
+                title: t('worker.fallbackTitle'),
+                description: t('worker.fallbackDescription'),
+              });
+            })
+            .catch(() => {
+              toast({
+                title: 'Analytics running in fallback mode',
+                description:
+                  'Background worker failed. Using safe fallback to keep the UI responsive.',
+              });
             });
-          }).catch(() => {
-            toast({
-              title: 'Analytics running in fallback mode',
-              description: 'Background worker failed. Using safe fallback to keep the UI responsive.',
-            });
-          });
         } catch {
           toast({
             title: 'Analytics running in fallback mode',

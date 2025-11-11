@@ -59,16 +59,8 @@ export interface UseUrlSyncOptions<T> {
  * });
  * ```
  */
-export function useUrlSync<T>(
-  options: UseUrlSyncOptions<T>
-): [T, Dispatch<SetStateAction<T>>] {
-  const {
-    read,
-    write,
-    defaultValue,
-    debounceMs = 150,
-    loggerName = 'useUrlSync',
-  } = options;
+export function useUrlSync<T>(options: UseUrlSyncOptions<T>): [T, Dispatch<SetStateAction<T>>] {
+  const { read, write, defaultValue, debounceMs = 150, loggerName = 'useUrlSync' } = options;
 
   // Read initial value from current URL
   const getFromLocation = useCallback((): T => {
@@ -122,7 +114,7 @@ export function useUrlSync<T>(
       }
       debounceTimer.current = window.setTimeout(doWrite, debounceMs);
     },
-    [debounceMs, write, loggerName]
+    [debounceMs, write, loggerName],
   );
 
   // When value changes (from UI), write to URL

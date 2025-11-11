@@ -2,7 +2,13 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useTranslation } from '@/hooks/useTranslation';
 import { dataStorage } from '@/lib/dataStorage';
 import { LazyReportBuilder } from '@/components/lazy/LazyReportBuilder';
@@ -14,14 +20,18 @@ const ReportBuilderPage = (): JSX.Element => {
   const template = params.get('template') ?? 'progress-summary';
 
   const students: Student[] = useMemo(() => {
-    try { return dataStorage.getStudents(); } catch { return []; }
+    try {
+      return dataStorage.getStudents();
+    } catch {
+      return [];
+    }
   }, []);
 
   const [studentId, setStudentId] = useState<string>('');
 
   const selectedStudent: Student | undefined = useMemo(
-    () => students.find(s => s.id === studentId),
-    [students, studentId]
+    () => students.find((s) => s.id === studentId),
+    [students, studentId],
   );
 
   const scopedData = useMemo(() => {
@@ -29,14 +39,16 @@ const ReportBuilderPage = (): JSX.Element => {
     let goals: Goal[] = [];
     let entries: TrackingEntry[] = [];
     try {
-      goals = (dataStorage.getGoals() as Goal[]).filter(g => g.studentId === selectedStudent.id);
-      entries = (dataStorage.getTrackingEntries() as TrackingEntry[]).filter(e => e.studentId === selectedStudent.id);
+      goals = (dataStorage.getGoals() as Goal[]).filter((g) => g.studentId === selectedStudent.id);
+      entries = (dataStorage.getTrackingEntries() as TrackingEntry[]).filter(
+        (e) => e.studentId === selectedStudent.id,
+      );
     } catch {
       goals = [];
       entries = [];
     }
-    const emotions: EmotionEntry[] = entries.flatMap(e => e.emotions);
-    const sensoryInputs: SensoryEntry[] = entries.flatMap(e => e.sensoryInputs);
+    const emotions: EmotionEntry[] = entries.flatMap((e) => e.emotions);
+    const sensoryInputs: SensoryEntry[] = entries.flatMap((e) => e.sensoryInputs);
     return { goals, entries, emotions, sensoryInputs } as const;
   }, [selectedStudent]);
 
@@ -51,20 +63,14 @@ const ReportBuilderPage = (): JSX.Element => {
               { label: tCommon('reports.builder.title'), current: true },
             ]}
           />
-          <h1 className="text-3xl font-bold text-foreground">
-            {tCommon('reports.builder.title')}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {tCommon('reports.builder.description')}
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">{tCommon('reports.builder.title')}</h1>
+          <p className="text-muted-foreground mt-2">{tCommon('reports.builder.description')}</p>
         </header>
 
         <Card className="bg-card border-0 shadow-soft">
           <CardHeader>
             <CardTitle>{tCommon('reports.builder.configure')}</CardTitle>
-            <CardDescription>
-              {tCommon('reports.builder.configureDesc')}
-            </CardDescription>
+            <CardDescription>{tCommon('reports.builder.configureDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -76,8 +82,10 @@ const ReportBuilderPage = (): JSX.Element => {
                   <SelectValue placeholder={tCommon('reports.builder.selectStudentPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {students.map(s => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  {students.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -97,7 +105,9 @@ const ReportBuilderPage = (): JSX.Element => {
         {selectedStudent && scopedData && (
           <Card className="bg-card border-0 shadow-soft">
             <CardHeader>
-              <CardTitle>{tCommon('reports.builder.previewTitle', { name: selectedStudent.name })}</CardTitle>
+              <CardTitle>
+                {tCommon('reports.builder.previewTitle', { name: selectedStudent.name })}
+              </CardTitle>
               <CardDescription>{tCommon('reports.builder.previewDesc')}</CardDescription>
             </CardHeader>
             <CardContent>

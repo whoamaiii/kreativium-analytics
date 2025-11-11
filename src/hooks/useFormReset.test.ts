@@ -36,7 +36,7 @@ describe('useFormReset', () => {
       const { result } = renderHook(() => useFormReset(initialState));
 
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           title: 'Updated',
           value: prev.value + 1,
@@ -78,7 +78,7 @@ describe('useFormReset', () => {
       const { result } = renderHook(() => useFormReset(initialState));
 
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           nested: { ...prev.nested, start: '2024-02-01' },
         }));
@@ -96,7 +96,7 @@ describe('useFormReset', () => {
       const { result } = renderHook(() => useFormReset(initialState));
 
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           items: [...prev.items, 'new item'],
         }));
@@ -126,7 +126,7 @@ describe('useFormReset', () => {
 
       // Simulate form input
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           title: 'New Goal',
           description: 'Goal description',
@@ -161,7 +161,7 @@ describe('useFormReset', () => {
 
       // Add coping strategy
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           copingStrategies: [...prev.copingStrategies, 'Deep breathing'],
           newCopingStrategy: '',
@@ -197,7 +197,7 @@ describe('useFormReset', () => {
 
       // Update nested date range
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           dateRange: {
             ...prev.dateRange,
@@ -211,7 +211,7 @@ describe('useFormReset', () => {
 
       // Add sections
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           sections: [...prev.sections, 'student-info', 'goal-progress'],
         }));
@@ -258,7 +258,7 @@ describe('useFormReset', () => {
       const { result } = renderHook(() => useFormReset(initialState));
 
       act(() => {
-        result.current.setValues(prev => ({
+        result.current.setValues((prev) => ({
           ...prev,
           optional: 'filled',
         }));

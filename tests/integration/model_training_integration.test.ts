@@ -56,7 +56,7 @@ describe.skip('Integration: preprocessing + model training worker', () => {
     (global as any).self = global;
     selfObj.postMessage = vi.fn();
     // Ensure CPU backend to avoid GPU availability flakiness in CI
-     
+
     tf.setBackend('cpu');
     // Dynamically import the worker so it registers on the prepared self
     await import('@/workers/mlTraining.worker');
@@ -88,7 +88,9 @@ describe.skip('Integration: preprocessing + model training worker', () => {
     // Assert that a completion message was posted with validation results
     expect(selfObj.postMessage).toHaveBeenCalled();
     const calls = (selfObj.postMessage as any).mock.calls;
-    const complete = calls.find((c: any[]) => c[0]?.type === 'complete' && c[0]?.modelType === 'emotion-prediction');
+    const complete = calls.find(
+      (c: any[]) => c[0]?.type === 'complete' && c[0]?.modelType === 'emotion-prediction',
+    );
     expect(complete).toBeTruthy();
     expect(complete[0].metadata).toBeDefined();
     expect(complete[0].metadata.validationResults).toBeDefined();
@@ -112,7 +114,9 @@ describe.skip('Integration: preprocessing + model training worker', () => {
 
     expect(selfObj.postMessage).toHaveBeenCalled();
     const calls = (selfObj.postMessage as any).mock.calls;
-    const complete = calls.find((c: any[]) => c[0]?.type === 'complete' && c[0]?.modelType === 'sensory-response');
+    const complete = calls.find(
+      (c: any[]) => c[0]?.type === 'complete' && c[0]?.modelType === 'sensory-response',
+    );
     expect(complete).toBeTruthy();
     expect(complete[0].metadata).toBeDefined();
     expect(complete[0].metadata.validationResults).toBeDefined();
@@ -136,10 +140,11 @@ describe.skip('Integration: preprocessing + model training worker', () => {
 
     // Inspect logs payload for loss present (indicates final fit occurred on tensors)
     const calls = (selfObj.postMessage as any).mock.calls;
-    const progresses = calls.filter((c: any[]) => c[0]?.type === 'progress' && c[0]?.modelType === 'emotion-prediction');
+    const progresses = calls.filter(
+      (c: any[]) => c[0]?.type === 'progress' && c[0]?.modelType === 'emotion-prediction',
+    );
     expect(progresses.length).toBeGreaterThan(0);
     const lastProgress = progresses[progresses.length - 1][0];
     expect(typeof lastProgress.loss).toBe('number');
   }, 30000);
 });
-

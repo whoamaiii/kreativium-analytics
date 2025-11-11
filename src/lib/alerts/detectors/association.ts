@@ -40,7 +40,12 @@ export function detectAssociation(input: AssociationDetectorInput): DetectorResu
 
   let r = 0;
   let pValue = 1;
-  if (Array.isArray(seriesX) && Array.isArray(seriesY) && seriesX.length >= 5 && seriesY.length >= 5) {
+  if (
+    Array.isArray(seriesX) &&
+    Array.isArray(seriesY) &&
+    seriesX.length >= 5 &&
+    seriesY.length >= 5
+  ) {
     const n = Math.min(seriesX.length, seriesY.length);
     const x = seriesX.slice(0, n);
     const y = seriesY.slice(0, n);
@@ -50,7 +55,11 @@ export function detectAssociation(input: AssociationDetectorInput): DetectorResu
 
   const confidenceFromCorrelation = 1 - pValue;
   const confidenceFromFisher = 1 - pValueExact;
-  const combined = Math.max(confidenceFromFisher, confidenceFromCorrelation, 1 - (1 / (1 + Math.abs(logOdds))));
+  const combined = Math.max(
+    confidenceFromFisher,
+    confidenceFromCorrelation,
+    1 - 1 / (1 + Math.abs(logOdds)),
+  );
   const confidence = clamp(combined, 0.7, 0.99);
   const score = clamp(Math.min(Math.abs(r), Math.abs(logOdds) / 2), 0, 1);
 
@@ -77,4 +86,3 @@ export function detectAssociation(input: AssociationDetectorInput): DetectorResu
     ],
   };
 }
-

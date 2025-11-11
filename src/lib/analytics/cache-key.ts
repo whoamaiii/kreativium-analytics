@@ -89,7 +89,7 @@ export interface InputStructureCounts {
 
 // Guards and predicates
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  if (Object.prototype.toString.call(value) !== "[object Object]") return false;
+  if (Object.prototype.toString.call(value) !== '[object Object]') return false;
   const proto = Object.getPrototypeOf(value as object);
   return proto === null || proto === Object.prototype;
 }
@@ -99,11 +99,11 @@ function isDate(value: unknown): value is Date {
 }
 
 function isMap(value: unknown): value is Map<unknown, unknown> {
-  return typeof Map !== "undefined" && value instanceof Map;
+  return typeof Map !== 'undefined' && value instanceof Map;
 }
 
 function isSet(value: unknown): value is Set<unknown> {
-  return typeof Set !== "undefined" && value instanceof Set;
+  return typeof Set !== 'undefined' && value instanceof Set;
 }
 
 // Stable transform and serialization
@@ -117,16 +117,16 @@ function toStableJSONSafe(value: unknown, normalizeArrays: boolean): unknown {
   // Primitives and special cases first (guard clauses)
   if (value === null || value === undefined) return value;
   const t = typeof value;
-  if (t === "string" || t === "number" || t === "boolean") return value;
-  if (t === "bigint") return { $type: "BigInt", value: (value as bigint).toString() };
-  if (t === "symbol") return { $type: "Symbol", value: String(value as symbol) };
-  if (t === "function") {
+  if (t === 'string' || t === 'number' || t === 'boolean') return value;
+  if (t === 'bigint') return { $type: 'BigInt', value: (value as bigint).toString() };
+  if (t === 'symbol') return { $type: 'Symbol', value: String(value as symbol) };
+  if (t === 'function') {
     const fn = value as (...args: unknown[]) => unknown;
-    return { $type: "Function", value: fn.name || "anonymous" };
+    return { $type: 'Function', value: fn.name || 'anonymous' };
   }
 
   if (isDate(value)) {
-    return { $type: "Date", value: value.toISOString() };
+    return { $type: 'Date', value: value.toISOString() };
   }
   if (isSet(value)) {
     const arr = Array.from(value).map((v) => toStableJSONSafe(v, normalizeArrays));
@@ -134,18 +134,18 @@ function toStableJSONSafe(value: unknown, normalizeArrays: boolean): unknown {
       .map((v) => ({ v, k: JSON.stringify(v) }))
       .sort((a, b) => (a.k < b.k ? -1 : a.k > b.k ? 1 : 0))
       .map((x) => x.v);
-    return { $type: "Set", value: sorted };
+    return { $type: 'Set', value: sorted };
   }
   if (isMap(value)) {
-    const entries = Array.from(value.entries()).map(([k, v]) => [
-      toStableJSONSafe(k, normalizeArrays),
-      toStableJSONSafe(v, normalizeArrays)
-    ] as const);
+    const entries = Array.from(value.entries()).map(
+      ([k, v]) =>
+        [toStableJSONSafe(k, normalizeArrays), toStableJSONSafe(v, normalizeArrays)] as const,
+    );
     const sorted = entries
       .map((e) => ({ e, k: JSON.stringify(e[0]) }))
       .sort((a, b) => (a.k < b.k ? -1 : a.k > b.k ? 1 : 0))
       .map((x) => x.e);
-    return { $type: "Map", value: sorted };
+    return { $type: 'Map', value: sorted };
   }
 
   if (Array.isArray(value)) {
@@ -177,7 +177,7 @@ function toStableJSONSafe(value: unknown, normalizeArrays: boolean): unknown {
   } catch {
     // ignore and fall through
   }
-  return { $type: (value as object)?.constructor?.name || "Object", value: String(value) };
+  return { $type: (value as object)?.constructor?.name || 'Object', value: String(value) };
 }
 
 /**
@@ -193,7 +193,7 @@ export function stableSerialize(value: unknown, normalizeArrayOrder: boolean = f
 
 // Hashing (FNV-1a 32-bit) over UTF-8 bytes
 function toUtf8Bytes(input: string): Uint8Array {
-  if (typeof TextEncoder !== "undefined") {
+  if (typeof TextEncoder !== 'undefined') {
     return new TextEncoder().encode(input);
   }
   // Minimal UTF-8 encoding fallback
@@ -228,7 +228,7 @@ function toUtf8Bytes(input: string): Uint8Array {
  * Note: collisions are possible as with any 32-bit hash; combine with counts or a version.
  */
 export function stableHash(value: unknown, normalizeArrayOrder: boolean = false): string {
-  const s = typeof value === "string" ? value : stableSerialize(value, normalizeArrayOrder);
+  const s = typeof value === 'string' ? value : stableSerialize(value, normalizeArrayOrder);
   const data = toUtf8Bytes(s);
   let hash = 0x811c9dc5; // FNV offset basis
   for (let i = 0; i < data.length; i++) {
@@ -237,7 +237,7 @@ export function stableHash(value: unknown, normalizeArrayOrder: boolean = false)
     hash = (hash >>> 0) * 0x01000193;
   }
   // Unsigned 32-bit hex
-  const hex = (hash >>> 0).toString(16).padStart(8, "0");
+  const hex = (hash >>> 0).toString(16).padStart(8, '0');
   return hex;
 }
 
@@ -251,7 +251,7 @@ export function summarizeCounts(value: unknown): InputStructureCounts {
     arrayItems: 0,
     objects: 0,
     keys: 0,
-    primitives: 0
+    primitives: 0,
   };
 
   const visit = (v: unknown): void => {
@@ -260,7 +260,14 @@ export function summarizeCounts(value: unknown): InputStructureCounts {
       return;
     }
     const t = typeof v;
-    if (t === "string" || t === "number" || t === "boolean" || t === "bigint" || t === "symbol" || t === "function") {
+    if (
+      t === 'string' ||
+      t === 'number' ||
+      t === 'boolean' ||
+      t === 'bigint' ||
+      t === 'symbol' ||
+      t === 'function'
+    ) {
       counts.primitives += 1;
       return;
     }
@@ -335,7 +342,7 @@ export function createCacheKey<TInput = unknown>(options: CacheKeyOptions<TInput
   const { namespace, input, version, normalizeArrayOrder = false } = options;
 
   // Guard clauses
-  if (!namespace || typeof namespace !== "string") {
+  if (!namespace || typeof namespace !== 'string') {
     throw new Error("createCacheKey: 'namespace' must be a non-empty string");
   }
 
@@ -350,9 +357,9 @@ export function createCacheKey<TInput = unknown>(options: CacheKeyOptions<TInput
     `i${counts.arrayItems}`,
     `o${counts.objects}`,
     `k${counts.keys}`,
-    `p${counts.primitives}`
+    `p${counts.primitives}`,
   );
   parts.push(hash);
 
-  return parts.join(":");
+  return parts.join(':');
 }

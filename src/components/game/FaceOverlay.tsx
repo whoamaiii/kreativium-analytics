@@ -15,7 +15,15 @@ interface FaceOverlayProps {
   sourceHeight?: number;
 }
 
-export function FaceOverlay({ box, progress, almostThere: _almostThere, hideRing, mirror = false, sourceWidth, sourceHeight }: FaceOverlayProps) {
+export function FaceOverlay({
+  box,
+  progress,
+  almostThere: _almostThere,
+  hideRing,
+  mirror = false,
+  sourceWidth,
+  sourceHeight,
+}: FaceOverlayProps) {
   if (!box) return null;
   const sw = sourceWidth ?? 0;
   const sh = sourceHeight ?? 0;
@@ -23,7 +31,7 @@ export function FaceOverlay({ box, progress, almostThere: _almostThere, hideRing
   if (sw === 0 || sh === 0) return null;
 
   // Normalize to source coordinate space → percentages; container will scale visually with the video
-  const normLeft = (mirror ? (sw - (box.x + box.width)) : box.x) / sw;
+  const normLeft = (mirror ? sw - (box.x + box.width) : box.x) / sw;
   const normTop = box.y / sh;
   const normW = box.width / sw;
   const normH = box.height / sh;
@@ -42,9 +50,19 @@ export function FaceOverlay({ box, progress, almostThere: _almostThere, hideRing
       {!hideRing && (
         <div
           className="absolute"
-          style={{ left: `calc(${centerXPct}% - ${ringSizeXPct / 2}%)`, top: `calc(${centerYPct}% - ${ringSizeYPct / 2}%)`, width: `${ringSizeXPct}%`, height: `${ringSizeYPct}%` }}
+          style={{
+            left: `calc(${centerXPct}% - ${ringSizeXPct / 2}%)`,
+            top: `calc(${centerYPct}% - ${ringSizeYPct / 2}%)`,
+            width: `${ringSizeXPct}%`,
+            height: `${ringSizeYPct}%`,
+          }}
         >
-          <AnimatedProgressRing size={120} stroke={8} progress={progress} className="w-full h-full" />
+          <AnimatedProgressRing
+            size={120}
+            stroke={8}
+            progress={progress}
+            className="w-full h-full"
+          />
         </div>
       )}
     </div>
@@ -52,6 +70,3 @@ export function FaceOverlay({ box, progress, almostThere: _almostThere, hideRing
 }
 
 export default FaceOverlay;
-
-
-

@@ -1,5 +1,9 @@
 import type { EChartsOption } from 'echarts';
-import type { CalibrationMetrics, FairnessMetric, WeeklyEvaluationReport } from '@/lib/alerts/types';
+import type {
+  CalibrationMetrics,
+  FairnessMetric,
+  WeeklyEvaluationReport,
+} from '@/lib/alerts/types';
 
 export interface SparklinePoint {
   timestamp: number;
@@ -34,7 +38,10 @@ function clampBuckets(requested: number, max: number): number {
   return Math.min(Math.max(Math.floor(requested), 2), max);
 }
 
-export function generateSparklineData(points: SparklinePoint[], opts?: { buckets?: number }): SparklineData {
+export function generateSparklineData(
+  points: SparklinePoint[],
+  opts?: { buckets?: number },
+): SparklineData {
   if (!Array.isArray(points) || points.length === 0) {
     return { timestamps: [], values: [], min: 0, max: 0 };
   }
@@ -87,7 +94,10 @@ export function createSparklineConfig(options?: SparklineConfigOptions): Sparkli
   };
 }
 
-export function formatSparklineValue(value: number, kind: 'default' | 'percentage' | 'intensity' = 'default'): string {
+export function formatSparklineValue(
+  value: number,
+  kind: 'default' | 'percentage' | 'intensity' = 'default',
+): string {
   if (!Number.isFinite(value)) return '—';
   switch (kind) {
     case 'percentage':
@@ -104,7 +114,9 @@ export function formatSparklineValue(value: number, kind: 'default' | 'percentag
   }
 }
 
-export function deriveSparklineKindFromAlert(alert: { kind?: string }): 'percentage' | 'intensity' | 'default' {
+export function deriveSparklineKindFromAlert(alert: {
+  kind?: string;
+}): 'percentage' | 'intensity' | 'default' {
   const raw = typeof alert.kind === 'string' ? alert.kind : '';
   const normalized = raw.toLowerCase().replace(/[^a-z]/g, '');
   switch (normalized) {
@@ -117,7 +129,12 @@ export function deriveSparklineKindFromAlert(alert: { kind?: string }): 'percent
   }
 }
 
-export function formatCalibrationData(calibration: CalibrationMetrics): { buckets: number[]; predicted: number[]; actual: number[]; counts: number[] } {
+export function formatCalibrationData(calibration: CalibrationMetrics): {
+  buckets: number[];
+  predicted: number[];
+  actual: number[];
+  counts: number[];
+} {
   const buckets: number[] = [];
   const predicted: number[] = [];
   const actual: number[] = [];
@@ -131,7 +148,9 @@ export function formatCalibrationData(calibration: CalibrationMetrics): { bucket
   return { buckets, predicted, actual, counts };
 }
 
-export function generateCalibrationCurve(calibration: CalibrationMetrics | null | undefined): EChartsOption | null {
+export function generateCalibrationCurve(
+  calibration: CalibrationMetrics | null | undefined,
+): EChartsOption | null {
   if (!calibration) return null;
   const { buckets, predicted, actual, counts } = formatCalibrationData(calibration);
   if (!buckets.length) return null;
@@ -158,7 +177,13 @@ export function generateCalibrationCurve(calibration: CalibrationMetrics | null 
     },
     yAxis: [
       { type: 'value', min: 0, max: 1, name: 'Probability' },
-      { type: 'value', name: 'Count', position: 'right', min: 0, axisLabel: { formatter: '{value}' } },
+      {
+        type: 'value',
+        name: 'Count',
+        position: 'right',
+        min: 0,
+        axisLabel: { formatter: '{value}' },
+      },
     ],
     series: [
       {
@@ -232,8 +257,14 @@ export function createBrierScoreChart(reports: WeeklyEvaluationReport[]): EChart
 export function generateFairnessMetricsChart(fairness: FairnessMetric[]): EChartsOption | null {
   if (!Array.isArray(fairness) || fairness.length === 0) return null;
   const categories = fairness.map((metric) => metric.groupKey);
-  const ppv = fairness.map((metric) => typeof metric.ppv === 'number' ? Number(metric.ppv.toFixed(2)) : null);
-  const fpr = fairness.map((metric) => typeof metric.falsePositiveRate === 'number' ? Number(metric.falsePositiveRate.toFixed(2)) : null);
+  const ppv = fairness.map((metric) =>
+    typeof metric.ppv === 'number' ? Number(metric.ppv.toFixed(2)) : null,
+  );
+  const fpr = fairness.map((metric) =>
+    typeof metric.falsePositiveRate === 'number'
+      ? Number(metric.falsePositiveRate.toFixed(2))
+      : null,
+  );
 
   return {
     tooltip: {
@@ -300,7 +331,9 @@ export function createThresholdTrendChart(reports: WeeklyEvaluationReport[]): EC
     tooltip: {
       trigger: 'axis',
       formatter: (params: any) => {
-        const lines = params.map((entry: any) => `${entry.seriesName}: ${(entry.data ?? 0) * 100}%`);
+        const lines = params.map(
+          (entry: any) => `${entry.seriesName}: ${(entry.data ?? 0) * 100}%`,
+        );
         return [params[0]?.axisValue, ...lines].join('<br/>');
       },
     },

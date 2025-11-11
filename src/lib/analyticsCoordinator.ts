@@ -9,7 +9,9 @@ export class AnalyticsWorkerCoordinator {
     try {
       if (typeof window === 'undefined') return;
       if (studentId) {
-        window.dispatchEvent(new CustomEvent('analytics:cache:clear:student', { detail: { studentId } }));
+        window.dispatchEvent(
+          new CustomEvent('analytics:cache:clear:student', { detail: { studentId } }),
+        );
       } else {
         window.dispatchEvent(new Event('analytics:cache:clear'));
       }
@@ -20,4 +22,3 @@ export class AnalyticsWorkerCoordinator {
 }
 
 export const analyticsCoordinator = AnalyticsWorkerCoordinator;
-

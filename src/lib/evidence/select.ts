@@ -101,7 +101,13 @@ export function inferTagsFromText(text: string): DomainTag[] {
   // AAC (require context for generic "device")
   const aacContext = t.includes('aac') || t.includes('communication');
   if (
-    contains(['aac', 'communication device', 'communication board', 'augmentative', 'speech generating']) ||
+    contains([
+      'aac',
+      'communication device',
+      'communication board',
+      'augmentative',
+      'speech generating',
+    ]) ||
     (aacContext && t.includes('device'))
   ) {
     hits.add(DomainTag.AAC);
@@ -117,7 +123,7 @@ export function scoreSources(
   tags: DomainTag[],
   keywordHits: DomainTag[],
   fallbackWeight = 0.1,
-  weights?: Map<DomainTag, number>
+  weights?: Map<DomainTag, number>,
 ): ScoredSource[] {
   const tagSet = new Set(tags);
   const kwSet = new Set(keywordHits);
@@ -127,7 +133,9 @@ export function scoreSources(
   const FALLBACK_WEIGHT_TOTAL = 0.1;
 
   const hasWeights = weights && weights.size > 0;
-  const sumInputWeights = hasWeights ? Array.from(weights!.values()).reduce((a, b) => a + (b || 0), 0) : undefined;
+  const sumInputWeights = hasWeights
+    ? Array.from(weights!.values()).reduce((a, b) => a + (b || 0), 0)
+    : undefined;
   const safeNormalize = (x: number, denom: number) => (denom > 0 ? Math.min(1, x / denom) : 0);
 
   return sources.map((s) => {
@@ -163,7 +171,7 @@ export function scoreSources(
 export function filterAndBreakTies(
   scored: ScoredSource[],
   gradeBand?: GradeBand,
-  ensureFramework = true
+  ensureFramework = true,
 ): ScoredSource[] {
   let filtered = scored;
   if (gradeBand) {
@@ -175,36 +183,43 @@ export function filterAndBreakTies(
 
   // Optional: bump UDL/HLP to ensure one framework item is likely included
   if (ensureFramework) {
-    const hasFramework = filtered.some(({ source }) => source.tags?.some((t) => t === DomainTag.UDL || t === DomainTag.HLP));
+    const hasFramework = filtered.some(({ source }) =>
+      source.tags?.some((t) => t === DomainTag.UDL || t === DomainTag.HLP),
+    );
     if (!hasFramework) {
       filtered = filtered.map((it) => {
-        const isFramework = it.source.tags?.some((t) => t === DomainTag.UDL || t === DomainTag.HLP) ?? false;
+        const isFramework =
+          it.source.tags?.some((t) => t === DomainTag.UDL || t === DomainTag.HLP) ?? false;
         return isFramework ? { ...it, score: it.score + 0.01 } : it;
       });
     }
   }
 
   const levelRank = (lvl?: EvidenceLevel) =>
-    lvl === EvidenceLevel.Strong ? 3 : lvl === EvidenceLevel.Moderate ? 2 : lvl === EvidenceLevel.Emerging ? 1 : 0;
+    lvl === EvidenceLevel.Strong
+      ? 3
+      : lvl === EvidenceLevel.Moderate
+        ? 2
+        : lvl === EvidenceLevel.Emerging
+          ? 1
+          : 0;
 
   // Sort by score desc, then evidence level, then year desc
-  return filtered
-    .slice()
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      const la = levelRank(a.source.evidenceLevel);
-      const lb = levelRank(b.source.evidenceLevel);
-      if (lb !== la) return lb - la;
-      const ya = a.source.year ?? 0;
-      const yb = b.source.year ?? 0;
-      return yb - ya;
-    });
+  return filtered.slice().sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const la = levelRank(a.source.evidenceLevel);
+    const lb = levelRank(b.source.evidenceLevel);
+    if (lb !== la) return lb - la;
+    const ya = a.source.year ?? 0;
+    const yb = b.source.year ?? 0;
+    return yb - ya;
+  });
 }
 
 export async function selectEvidence(
   domainTags: Array<string | DomainTag>,
   limit = 5,
-  opts?: { gradeBand?: GradeBand; category?: string; text?: string; enforceDiversity?: boolean }
+  opts?: { gradeBand?: GradeBand; category?: string; text?: string; enforceDiversity?: boolean },
 ): Promise<EvidenceSource[]> {
   const all = await loadEvidenceSources();
 
@@ -297,7 +312,7 @@ export async function selectEvidence(
 export async function selectEvidenceWeighted(
   tagsWithWeights: Array<{ tag: DomainTag; weight: number }>,
   limit = 5,
-  opts?: { gradeBand?: GradeBand; category?: string; text?: string; enforceDiversity?: boolean }
+  opts?: { gradeBand?: GradeBand; category?: string; text?: string; enforceDiversity?: boolean },
 ): Promise<EvidenceSource[]> {
   const all = await loadEvidenceSources();
 
@@ -306,7 +321,10 @@ export async function selectEvidenceWeighted(
   for (const { tag, weight } of tagsWithWeights || []) {
     const t = String(tag).toLowerCase() as DomainTag;
     if ((Object.values(DomainTag) as string[]).includes(t)) {
-      weights.set(t, (weights.get(t) ?? 0) + (typeof weight === 'number' ? Math.max(0, weight) : 0));
+      weights.set(
+        t,
+        (weights.get(t) ?? 0) + (typeof weight === 'number' ? Math.max(0, weight) : 0),
+      );
     }
   }
 

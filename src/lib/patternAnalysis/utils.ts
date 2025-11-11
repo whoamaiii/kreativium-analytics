@@ -6,8 +6,8 @@
  * - Data transformation and conversion helpers
  */
 
-import { SensoryEntry } from "@/types/student";
-import { format } from "date-fns";
+import { SensoryEntry } from '@/types/student';
+import { format } from 'date-fns';
 
 /**
  * Groups sensory inputs by day (yyyy-MM-dd format)
@@ -16,11 +16,14 @@ import { format } from "date-fns";
  * @returns Record mapping date strings to count of sensory inputs
  */
 export function groupSensoryByDay(sensoryInputs: SensoryEntry[]): Record<string, number> {
-  return sensoryInputs.reduce((acc, input) => {
-    const date = format(input.timestamp, 'yyyy-MM-dd');
-    acc[date] = (acc[date] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  return sensoryInputs.reduce(
+    (acc, input) => {
+      const date = format(input.timestamp, 'yyyy-MM-dd');
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 }
 
 /**
@@ -31,11 +34,11 @@ export function groupSensoryByDay(sensoryInputs: SensoryEntry[]): Record<string,
  */
 export function convertLightingToNumeric(lighting?: string): number {
   const lightingMap: Record<string, number> = {
-    'dim': 1,
-    'normal': 2,
-    'bright': 3,
-    'fluorescent': 2.5,
-    'natural': 3.5
+    dim: 1,
+    normal: 2,
+    bright: 3,
+    fluorescent: 2.5,
+    natural: 3.5,
   };
   return lightingMap[lighting?.toLowerCase() || ''] || 2;
 }

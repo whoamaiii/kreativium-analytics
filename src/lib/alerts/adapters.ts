@@ -64,7 +64,9 @@ function computeDedupeKey(trigger: LegacyTriggerAlert): string {
 
 function extractOriginalSeverityFromDescription(description?: string): AlertSeverity | undefined {
   if (!description || typeof description !== 'string') return undefined;
-  const match = description.match(/(?:^|\s\|\s)originalSeverity:\s*(critical|important|moderate|low)\b/i);
+  const match = description.match(
+    /(?:^|\s\|\s)originalSeverity:\s*(critical|important|moderate|low)\b/i,
+  );
   if (!match) return undefined;
   const value = match[1].toLowerCase();
   switch (value) {
@@ -121,7 +123,10 @@ function composeMetadata(trigger: LegacyTriggerAlert): AlertEvent['metadata'] {
 
 export function triggerAlertToAlertEvent(trigger: LegacyTriggerAlert): AlertEvent {
   const kind = legacyTypeToKindMap[trigger.type] ?? AlertKind.BehaviorSpike;
-  const severity = extractOriginalSeverityFromDescription(trigger.description) ?? (severityToDomain[trigger.severity] ?? AlertSeverity.Moderate);
+  const severity =
+    extractOriginalSeverityFromDescription(trigger.description) ??
+    severityToDomain[trigger.severity] ??
+    AlertSeverity.Moderate;
   const confidence = deriveConfidence(trigger.severity);
 
   return {
@@ -168,12 +173,16 @@ export function alertEventToTriggerAlert(event: AlertEvent): LegacyTriggerAlert 
   const severity = mapSeverityToLegacy(event.severity);
   const recommendations = Array.isArray(event.metadata?.recommendations)
     ? (event.metadata?.recommendations as string[])
-    : event.actions?.map((action) => action.label) ?? [];
+    : (event.actions?.map((action) => action.label) ?? []);
 
   const baseTitle = event.metadata?.label ?? event.metadata?.summary ?? event.kind;
   const baseDescription = event.metadata?.summary ?? event.metadata?.label ?? event.kind;
-  const hasOriginal = /(?:^|\s\|\s)originalSeverity:\s*(critical|important|moderate|low)\b/i.test(String(baseDescription));
-  const descriptionWithSeverity = hasOriginal ? String(baseDescription) : `${String(baseDescription)} | originalSeverity: ${event.severity}`;
+  const hasOriginal = /(?:^|\s\|\s)originalSeverity:\s*(critical|important|moderate|low)\b/i.test(
+    String(baseDescription),
+  );
+  const descriptionWithSeverity = hasOriginal
+    ? String(baseDescription)
+    : `${String(baseDescription)} | originalSeverity: ${event.severity}`;
 
   return {
     id: event.id,
@@ -189,16 +198,26 @@ export function alertEventToTriggerAlert(event: AlertEvent): LegacyTriggerAlert 
 }
 
 export function alertEventToAlertHistory(event: AlertEvent): LegacyAlertHistoryEntry {
-  const resolved = [AlertStatus.Resolved, AlertStatus.Dismissed, AlertStatus.Snoozed].includes(event.status);
-  const viewed = resolved || [AlertStatus.Acknowledged, AlertStatus.InProgress].includes(event.status);
+  const resolved = [AlertStatus.Resolved, AlertStatus.Dismissed, AlertStatus.Snoozed].includes(
+    event.status,
+  );
+  const viewed =
+    resolved || [AlertStatus.Acknowledged, AlertStatus.InProgress].includes(event.status);
 
   const legacy: LegacyAlertHistoryEntry = {
     alert: alertEventToTriggerAlert(event),
     viewed,
     resolved,
-    resolvedAt: typeof event.metadata?.resolvedAt === 'string' ? new Date(event.metadata.resolvedAt) : undefined,
-    resolvedBy: typeof event.metadata?.resolvedBy === 'string' ? event.metadata.resolvedBy : undefined,
-    resolvedNotes: typeof event.metadata?.resolutionNotes === 'string' ? event.metadata.resolutionNotes : undefined,
+    resolvedAt:
+      typeof event.metadata?.resolvedAt === 'string'
+        ? new Date(event.metadata.resolvedAt)
+        : undefined,
+    resolvedBy:
+      typeof event.metadata?.resolvedBy === 'string' ? event.metadata.resolvedBy : undefined,
+    resolvedNotes:
+      typeof event.metadata?.resolutionNotes === 'string'
+        ? event.metadata.resolutionNotes
+        : undefined,
   };
 
   return legacy;

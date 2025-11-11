@@ -20,7 +20,7 @@ export interface SaveTrackingResult {
  */
 export async function saveTrackingEntry(
   entry: TrackingEntry,
-  validationRules?: SaveTrackingValidationRules
+  validationRules?: SaveTrackingValidationRules,
 ): Promise<SaveTrackingResult> {
   try {
     // 1) Validate
@@ -34,7 +34,11 @@ export async function saveTrackingEntry(
       await Promise.resolve(dataStorage.saveTrackingEntry(entry));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      logger.error('[saveTrackingEntry] Failed to save entry', { error: message, entryId: entry?.id, studentId: entry?.studentId });
+      logger.error('[saveTrackingEntry] Failed to save entry', {
+        error: message,
+        entryId: entry?.id,
+        studentId: entry?.studentId,
+      });
       return { success: false, errors: ['Failed to save tracking entry'] };
     }
 
@@ -67,4 +71,3 @@ export async function saveTrackingEntry(
     return { success: false, errors: ['Unexpected error while saving entry'] };
   }
 }
-

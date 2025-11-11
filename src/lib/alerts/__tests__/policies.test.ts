@@ -4,10 +4,16 @@ const store = new Map<string, string>();
 
 vi.mock('@/lib/storage', () => ({
   safeGet: (key: string) => store.get(key) ?? null,
-  safeSet: (key: string, value: string) => { store.set(key, value); },
+  safeSet: (key: string, value: string) => {
+    store.set(key, value);
+  },
 }));
 
-import { AlertPolicies, validateAlertSettings, assertValidAlertSettings } from '@/lib/alerts/policies';
+import {
+  AlertPolicies,
+  validateAlertSettings,
+  assertValidAlertSettings,
+} from '@/lib/alerts/policies';
 import type { AlertEvent, AlertSettings } from '@/lib/alerts/types';
 import { AlertKind, AlertSeverity, AlertStatus } from '@/lib/alerts/types';
 import { DEDUPE_WINDOW_MS, MAX_THROTTLE_DELAY_MS } from '@/lib/alerts/constants';
@@ -15,7 +21,7 @@ import { DEDUPE_WINDOW_MS, MAX_THROTTLE_DELAY_MS } from '@/lib/alerts/constants'
 function baseAlert(overrides: Partial<AlertEvent> = {}): AlertEvent {
   const now = new Date();
   return {
-    id: overrides.id ?? ('a-' + Math.random().toString(36).slice(2)),
+    id: overrides.id ?? 'a-' + Math.random().toString(36).slice(2),
     studentId: overrides.studentId ?? 's1',
     kind: overrides.kind ?? AlertKind.BehaviorSpike,
     severity: overrides.severity ?? AlertSeverity.Moderate,
@@ -72,13 +78,48 @@ describe('AlertPolicies', () => {
     const studentId = 's1';
     const base = new Date();
     const alerts: AlertEvent[] = [
-      baseAlert({ id: 'c1', studentId, severity: AlertSeverity.Critical, createdAt: new Date(base.getTime() + 1).toISOString() }),
-      baseAlert({ id: 'c2', studentId, severity: AlertSeverity.Critical, createdAt: new Date(base.getTime() + 2).toISOString() }),
-      baseAlert({ id: 'm1', studentId, severity: AlertSeverity.Moderate, createdAt: new Date(base.getTime() + 3).toISOString() }),
-      baseAlert({ id: 'm2', studentId, severity: AlertSeverity.Moderate, createdAt: new Date(base.getTime() + 4).toISOString() }),
-      baseAlert({ id: 'm3', studentId, severity: AlertSeverity.Moderate, createdAt: new Date(base.getTime() + 5).toISOString() }),
-      baseAlert({ id: 'm4', studentId, severity: AlertSeverity.Moderate, createdAt: new Date(base.getTime() + 6).toISOString() }),
-      baseAlert({ id: 'm5', studentId, severity: AlertSeverity.Moderate, createdAt: new Date(base.getTime() + 7).toISOString() }),
+      baseAlert({
+        id: 'c1',
+        studentId,
+        severity: AlertSeverity.Critical,
+        createdAt: new Date(base.getTime() + 1).toISOString(),
+      }),
+      baseAlert({
+        id: 'c2',
+        studentId,
+        severity: AlertSeverity.Critical,
+        createdAt: new Date(base.getTime() + 2).toISOString(),
+      }),
+      baseAlert({
+        id: 'm1',
+        studentId,
+        severity: AlertSeverity.Moderate,
+        createdAt: new Date(base.getTime() + 3).toISOString(),
+      }),
+      baseAlert({
+        id: 'm2',
+        studentId,
+        severity: AlertSeverity.Moderate,
+        createdAt: new Date(base.getTime() + 4).toISOString(),
+      }),
+      baseAlert({
+        id: 'm3',
+        studentId,
+        severity: AlertSeverity.Moderate,
+        createdAt: new Date(base.getTime() + 5).toISOString(),
+      }),
+      baseAlert({
+        id: 'm4',
+        studentId,
+        severity: AlertSeverity.Moderate,
+        createdAt: new Date(base.getTime() + 6).toISOString(),
+      }),
+      baseAlert({
+        id: 'm5',
+        studentId,
+        severity: AlertSeverity.Moderate,
+        createdAt: new Date(base.getTime() + 7).toISOString(),
+      }),
     ];
     const withCaps = policies.enforceCapLimits(alerts, {
       studentId,
@@ -117,9 +158,27 @@ describe('AlertPolicies', () => {
     const policies = new AlertPolicies();
     const studentId = 's1';
     const t0 = Date.now();
-    const a1 = baseAlert({ id: 'x1', studentId, severity: AlertSeverity.Moderate, createdAt: new Date(t0).toISOString(), metadata: { contextKey: 'math' } });
-    const a2 = baseAlert({ id: 'x2', studentId, severity: AlertSeverity.Important, createdAt: new Date(t0 + 30 * 60 * 1000).toISOString(), metadata: { contextKey: 'math' } });
-    const a3 = baseAlert({ id: 'x3', studentId, severity: AlertSeverity.Low, createdAt: new Date(t0 + 61 * 60 * 1000).toISOString(), metadata: { contextKey: 'math' } });
+    const a1 = baseAlert({
+      id: 'x1',
+      studentId,
+      severity: AlertSeverity.Moderate,
+      createdAt: new Date(t0).toISOString(),
+      metadata: { contextKey: 'math' },
+    });
+    const a2 = baseAlert({
+      id: 'x2',
+      studentId,
+      severity: AlertSeverity.Important,
+      createdAt: new Date(t0 + 30 * 60 * 1000).toISOString(),
+      metadata: { contextKey: 'math' },
+    });
+    const a3 = baseAlert({
+      id: 'x3',
+      studentId,
+      severity: AlertSeverity.Low,
+      createdAt: new Date(t0 + 61 * 60 * 1000).toISOString(),
+      metadata: { contextKey: 'math' },
+    });
     const out = policies.deduplicateAlerts([a1, a2, a3], 60 * 60 * 1000);
     // Within first hour, only one result should remain and be the Important severity
     const firstGroup = out.find((e) => e.id === 'x2');
@@ -166,7 +225,15 @@ describe('AlertPolicies', () => {
     const baseTime = Date.parse('2024-01-01T10:00:00.000Z');
     const alerts: AlertEvent[] = [];
     for (let i = 0; i < 10; i += 1) {
-      alerts.push(baseAlert({ id: 'p' + i, studentId, severity: AlertSeverity.Low, createdAt: new Date(baseTime + i * 5 * 60 * 1000).toISOString(), metadata: { contextKey: 'ctx' } }));
+      alerts.push(
+        baseAlert({
+          id: 'p' + i,
+          studentId,
+          severity: AlertSeverity.Low,
+          createdAt: new Date(baseTime + i * 5 * 60 * 1000).toISOString(),
+          metadata: { contextKey: 'ctx' },
+        }),
+      );
     }
     const deduped = policies.deduplicateAlerts(alerts, 60 * 60 * 1000);
     // Only one for the same key in a 60-minute window
@@ -177,8 +244,20 @@ describe('AlertPolicies', () => {
     const policies = new AlertPolicies();
     const studentId = 's1';
     const t0 = Date.now();
-    const a1 = baseAlert({ id: 'd1', studentId, severity: AlertSeverity.Low, createdAt: new Date(t0).toISOString(), metadata: { contextKey: 'ctx' } });
-    const a2 = baseAlert({ id: 'd2', studentId, severity: AlertSeverity.Low, createdAt: new Date(t0 + (DEDUPE_WINDOW_MS / 2)).toISOString(), metadata: { contextKey: 'ctx' } });
+    const a1 = baseAlert({
+      id: 'd1',
+      studentId,
+      severity: AlertSeverity.Low,
+      createdAt: new Date(t0).toISOString(),
+      metadata: { contextKey: 'ctx' },
+    });
+    const a2 = baseAlert({
+      id: 'd2',
+      studentId,
+      severity: AlertSeverity.Low,
+      createdAt: new Date(t0 + DEDUPE_WINDOW_MS / 2).toISOString(),
+      metadata: { contextKey: 'ctx' },
+    });
     const out = policies.deduplicateAlerts([a1, a2]);
     expect(out.length).toBe(1);
   });
@@ -187,7 +266,10 @@ describe('AlertPolicies', () => {
     const policies = new AlertPolicies();
     const studentId = 's1';
     const alert = baseAlert({ id: 'audit-1', studentId, severity: AlertSeverity.Moderate });
-    const settings: AlertSettings = { studentId, dailyCaps: { critical: 0, important: 0, moderate: 0, low: 0 } } as any;
+    const settings: AlertSettings = {
+      studentId,
+      dailyCaps: { critical: 0, important: 0, moderate: 0, low: 0 },
+    } as any;
     const res = policies.canCreateAlert(alert, settings);
     expect(res.allowed).toBe(false);
     const trail = policies.getAuditTrail(studentId, 10);
@@ -266,7 +348,10 @@ describe('AlertPolicies', () => {
       const key = policies.calculateDedupeKey(aLow);
       for (let i = 0; i < 10; i += 1) policies.recordThrottleAttempt(studentId, key);
 
-      const settings = { studentId, throttle: { maxDelayBySeverity: { [AlertSeverity.Low]: 30_000 } } } as any;
+      const settings = {
+        studentId,
+        throttle: { maxDelayBySeverity: { [AlertSeverity.Low]: 30_000 } },
+      } as any;
       const dLow = policies.getThrottleDelayFor(aLow, settings);
       const dMod = policies.getThrottleDelayFor(aMod, settings);
       expect(dLow).toBeLessThanOrEqual(30_000);
@@ -329,5 +414,3 @@ describe('AlertPolicies', () => {
     expect(pB.getAuditTrail(studentId).length).toBe(0);
   });
 });
-
-

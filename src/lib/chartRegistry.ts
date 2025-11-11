@@ -34,11 +34,14 @@ class ChartRegistry {
   }
 
   byStudent(studentId: string) {
-    return this.all().filter(c => c.studentId === studentId);
+    return this.all().filter((c) => c.studentId === studentId);
   }
 
   /** Update metadata for a registered chart (filters/dateRange) */
-  updateMetadata(id: string, meta: Pick<ChartRegistration, 'filters' | 'dateRange' | 'title' | 'type'>) {
+  updateMetadata(
+    id: string,
+    meta: Pick<ChartRegistration, 'filters' | 'dateRange' | 'title' | 'type'>,
+  ) {
     const existing = this.charts.get(id);
     if (!existing) return;
     this.charts.set(id, { ...existing, ...meta });

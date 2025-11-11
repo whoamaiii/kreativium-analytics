@@ -71,12 +71,19 @@ describe('Worker Message Types', () => {
 
       it('returns true for cache control messages', () => {
         expect(isWorkerRequestMessage({ type: 'CACHE/CLEAR_ALL' })).toBe(true);
-        expect(isWorkerRequestMessage({ type: 'CACHE/CLEAR_STUDENT', studentId: 'test' })).toBe(true);
+        expect(isWorkerRequestMessage({ type: 'CACHE/CLEAR_STUDENT', studentId: 'test' })).toBe(
+          true,
+        );
         expect(isWorkerRequestMessage({ type: 'CACHE/CLEAR_PATTERNS' })).toBe(true);
       });
 
       it('returns true for game event messages', () => {
-        expect(isWorkerRequestMessage({ type: 'game:event', payload: { kind: 'start', ts: Date.now() } })).toBe(true);
+        expect(
+          isWorkerRequestMessage({
+            type: 'game:event',
+            payload: { kind: 'start', ts: Date.now() },
+          }),
+        ).toBe(true);
         expect(isWorkerRequestMessage({ type: 'game:session_summary', payload: {} })).toBe(true);
       });
 
@@ -133,7 +140,9 @@ describe('Worker Message Types', () => {
     describe('Cache Control Type Guards', () => {
       it('isCacheControlRequest identifies all cache messages', () => {
         expect(isCacheControlRequest({ type: 'CACHE/CLEAR_ALL' } as any)).toBe(true);
-        expect(isCacheControlRequest({ type: 'CACHE/CLEAR_STUDENT', studentId: 'test' } as any)).toBe(true);
+        expect(
+          isCacheControlRequest({ type: 'CACHE/CLEAR_STUDENT', studentId: 'test' } as any),
+        ).toBe(true);
         expect(isCacheControlRequest({ type: 'CACHE/CLEAR_PATTERNS' } as any)).toBe(true);
         expect(isCacheControlRequest({ type: 'game:event', payload: {} } as any)).toBe(false);
       });
@@ -141,17 +150,24 @@ describe('Worker Message Types', () => {
       it('isCacheClearAllRequest validates correctly', () => {
         const msg: CacheClearAllRequest = { type: 'CACHE/CLEAR_ALL' };
         expect(isCacheClearAllRequest(msg)).toBe(true);
-        expect(isCacheClearAllRequest({ type: 'CACHE/CLEAR_STUDENT', studentId: 'test' } as any)).toBe(false);
+        expect(
+          isCacheClearAllRequest({ type: 'CACHE/CLEAR_STUDENT', studentId: 'test' } as any),
+        ).toBe(false);
       });
 
       it('isCacheClearStudentRequest validates studentId', () => {
-        const validMsg: CacheClearStudentRequest = { type: 'CACHE/CLEAR_STUDENT', studentId: 'student-123' };
+        const validMsg: CacheClearStudentRequest = {
+          type: 'CACHE/CLEAR_STUDENT',
+          studentId: 'student-123',
+        };
         expect(isCacheClearStudentRequest(validMsg)).toBe(true);
 
         // Missing studentId
         expect(isCacheClearStudentRequest({ type: 'CACHE/CLEAR_STUDENT' } as any)).toBe(false);
         // Invalid studentId type
-        expect(isCacheClearStudentRequest({ type: 'CACHE/CLEAR_STUDENT', studentId: 123 } as any)).toBe(false);
+        expect(
+          isCacheClearStudentRequest({ type: 'CACHE/CLEAR_STUDENT', studentId: 123 } as any),
+        ).toBe(false);
       });
 
       it('isCacheClearPatternsRequest validates correctly', () => {
@@ -210,7 +226,13 @@ describe('Worker Message Types', () => {
         expect(isLegacyAnalyticsDataRequest({ entries: [] } as any)).toBe(false);
 
         // Non-array fields
-        expect(isLegacyAnalyticsDataRequest({ entries: 'not-array', emotions: [], sensoryInputs: [] } as any)).toBe(false);
+        expect(
+          isLegacyAnalyticsDataRequest({
+            entries: 'not-array',
+            emotions: [],
+            sensoryInputs: [],
+          } as any),
+        ).toBe(false);
       });
 
       it('allows optional fields', () => {
@@ -245,7 +267,9 @@ describe('Worker Message Types', () => {
         expect(isWorkerResponseMessage({ type: 'complete', payload: {} as any })).toBe(true);
         expect(isWorkerResponseMessage({ type: 'error', error: 'test' })).toBe(true);
         expect(isWorkerResponseMessage({ type: 'alerts', payload: { alerts: [] } })).toBe(true);
-        expect(isWorkerResponseMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'all' } })).toBe(true);
+        expect(
+          isWorkerResponseMessage({ type: 'CACHE/CLEAR_DONE', payload: { scope: 'all' } }),
+        ).toBe(true);
       });
 
       it('returns false for unknown message types', () => {
@@ -320,7 +344,9 @@ describe('Worker Message Types', () => {
           },
         };
         expect(isCacheClearDoneResponse(msg)).toBe(true);
-        expect(isCacheClearDoneResponse({ type: 'complete', payload: {} as any } as any)).toBe(false);
+        expect(isCacheClearDoneResponse({ type: 'complete', payload: {} as any } as any)).toBe(
+          false,
+        );
       });
     });
   });
@@ -384,7 +410,17 @@ describe('Worker Message Types', () => {
         const messages = [
           { type: 'progress', progress: { stage: 'test', percent: 50 } },
           { type: 'partial', payload: {} },
-          { type: 'complete', payload: { patterns: [], correlations: [], predictiveInsights: [], anomalies: [], insights: [], suggestedInterventions: [] } },
+          {
+            type: 'complete',
+            payload: {
+              patterns: [],
+              correlations: [],
+              predictiveInsights: [],
+              anomalies: [],
+              insights: [],
+              suggestedInterventions: [],
+            },
+          },
           { type: 'error', error: 'test error' },
           { type: 'alerts', payload: { alerts: [] } },
           { type: 'CACHE/CLEAR_DONE', payload: { scope: 'all' } },
@@ -419,7 +455,10 @@ describe('Worker Message Types', () => {
     });
 
     it('discriminated union works for response messages', () => {
-      const progressMsg: ProgressResponse = { type: 'progress', progress: { stage: 'start', percent: 5 } };
+      const progressMsg: ProgressResponse = {
+        type: 'progress',
+        progress: { stage: 'start', percent: 5 },
+      };
       const completeMsg: CompleteResponse = {
         type: 'complete',
         payload: {

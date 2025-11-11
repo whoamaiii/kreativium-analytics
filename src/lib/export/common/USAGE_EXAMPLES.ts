@@ -26,7 +26,7 @@ import {
   flattenNestedData,
   enrichWithComputedFields,
   GOAL_COMPUTED_FIELDS,
-  STUDENT_COMPUTED_FIELDS
+  STUDENT_COMPUTED_FIELDS,
 } from './index';
 
 import type { Student, EmotionEntry, SensoryEntry, Goal, TrackingEntry } from '@/types/student';
@@ -42,7 +42,7 @@ export async function basicValidatedExport(
     emotions: EmotionEntry[];
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
-  }
+  },
 ) {
   // 1. Define export options
   const userOptions: Partial<ExportOptions> = {
@@ -50,9 +50,9 @@ export async function basicValidatedExport(
     includeFields: ['emotions', 'sensoryInputs', 'goals'],
     dateRange: {
       start: new Date('2024-01-01'),
-      end: new Date('2024-12-31')
+      end: new Date('2024-12-31'),
     },
-    anonymize: false
+    anonymize: false,
   };
 
   // 2. Validate options
@@ -62,7 +62,7 @@ export async function basicValidatedExport(
   }
 
   if (validation.warnings.length > 0) {
-    console.warn('Export warnings:', validation.warnings);
+    // logger.warn('Export warnings:', validation.warnings);
   }
 
   // 3. Merge with defaults
@@ -73,21 +73,17 @@ export async function basicValidatedExport(
   const sizeCheck = isExportTooLarge(allData, options);
   if (sizeCheck.tooLarge) {
     const sizeMB = (sizeCheck.estimatedSize / (1024 * 1024)).toFixed(2);
-    console.warn(`Export will be large: ${sizeMB} MB`);
+    // logger.warn(`Export will be large: ${sizeMB} MB`);
   }
 
   // 5. Collect data with progress tracking
   const data = collectExportData(students, allData, options, (progress) => {
-    console.log(`[${progress.phase}] ${progress.percentage}% - ${progress.currentItem || ''}`);
+    // Collecting [${progress.phase}] ${progress.percentage}% - ${progress.currentItem || ''}
   });
 
   // 6. Calculate metadata
   const metadata = calculateExportMetadata(data);
-  console.log('Export metadata:', {
-    totalRecords: metadata.totalRecords,
-    dateRange: metadata.dateRange,
-    recordCounts: metadata.recordCounts
-  });
+  // Export metadata: totalRecords, dateRange, recordCounts
 
   return { data, metadata, options };
 }
@@ -103,12 +99,12 @@ export async function anonymizedExportForResearch(
     emotions: EmotionEntry[];
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
-  }
+  },
 ) {
   const options = mergeExportOptions({
     format: 'json',
     includeFields: ['emotions', 'sensoryInputs'],
-    anonymize: true
+    anonymize: true,
   });
 
   // Collect data
@@ -119,20 +115,15 @@ export async function anonymizedExportForResearch(
     anonymizeNames: true,
     removeDateOfBirth: true,
     truncateIds: true,
-    removeNotes: false,  // Keep notes
-    redactNotes: true    // But redact PII (emails, phones, etc.)
+    removeNotes: false, // Keep notes
+    redactNotes: true, // But redact PII (emails, phones, etc.)
   };
 
   // Apply anonymization
   const anonymizedData = anonymizeData(data, anonOptions);
 
-  console.log('Anonymized export ready:', {
-    emotions: anonymizedData.emotions.length,
-    sensoryInputs: anonymizedData.sensoryInputs.length,
-    // Verify anonymization
-    sampleName: anonymizedData.students?.[0]?.name, // Should be "Student_XXXX"
-    sampleDOB: anonymizedData.students?.[0]?.dateOfBirth // Should be undefined
-  });
+  // Anonymized export ready with emotions, sensoryInputs
+  // Verify anonymization: sampleName should be "Student_XXXX", sampleDOB should be undefined
 
   return anonymizedData;
 }
@@ -149,22 +140,22 @@ export async function streamingLargeExport(
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
   },
-  outputHandler: (chunk: { type: string; data: unknown[] }) => Promise<void>
+  outputHandler: (chunk: { type: string; data: unknown[] }) => Promise<void>,
 ) {
   const options = mergeExportOptions({
     format: 'csv',
     includeFields: ['trackingEntries', 'emotions', 'sensoryInputs', 'goals'],
-    anonymize: false
+    anonymize: false,
   });
 
   // Stream data in chunks of 500 records
   for await (const chunk of streamExportData(students, allData, options, 500)) {
-    console.log(`Streaming ${chunk.type}: ${chunk.chunk.length} records`);
+    // Streaming ${chunk.type}: ${chunk.chunk.length} records
 
     // Process chunk (e.g., write to file, send to API)
     await outputHandler({
       type: chunk.type,
-      data: chunk.chunk
+      data: chunk.chunk,
     });
   }
 }
@@ -180,11 +171,11 @@ export function groupedExportByStudent(
     emotions: EmotionEntry[];
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
-  }
+  },
 ): Map<string, { student: Student; data: ExportDataCollection }> {
   const options = mergeExportOptions({
     format: 'pdf',
-    includeFields: ['emotions', 'sensoryInputs', 'goals']
+    includeFields: ['emotions', 'sensoryInputs', 'goals'],
   });
 
   // Collect all data
@@ -202,12 +193,12 @@ export function groupedExportByStudent(
     studentExports.set(student.id, {
       student,
       data: {
-        trackingEntries: data.trackingEntries.filter(t => t.studentId === student.id),
+        trackingEntries: data.trackingEntries.filter((t) => t.studentId === student.id),
         emotions: emotionsByStudent.get(student.id) || [],
         sensoryInputs: sensoryByStudent.get(student.id) || [],
         goals: goalsByStudent.get(student.id) || [],
-        students: [student]
-      }
+        students: [student],
+      },
     });
   }
 
@@ -225,34 +216,35 @@ export function csvExportWithFlattening(
     emotions: EmotionEntry[];
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
-  }
+  },
 ): string {
   const options = mergeExportOptions({
     format: 'csv',
-    includeFields: ['goals']
+    includeFields: ['goals'],
   });
 
   const data = collectExportData(students, allData, options);
 
   // Enrich goals with computed fields
-  const enrichedGoals = data.goals.map(goal =>
-    enrichWithComputedFields(goal, GOAL_COMPUTED_FIELDS as Record<string, (obj: Goal) => unknown>)
+  const enrichedGoals = data.goals.map((goal) =>
+    enrichWithComputedFields(goal, GOAL_COMPUTED_FIELDS as Record<string, (obj: Goal) => unknown>),
   );
 
   // Flatten for CSV
-  const flattenedGoals = enrichedGoals.map(goal => flattenNestedData(goal));
+  const flattenedGoals = enrichedGoals.map((goal) => flattenNestedData(goal));
 
   // Generate CSV
   const headers = Object.keys(flattenedGoals[0] || {});
   let csv = headers.join(',') + '\n';
 
   for (const row of flattenedGoals) {
-    csv += headers.map(h => {
-      const value = row[h];
-      return typeof value === 'string' && value.includes(',')
-        ? `"${value}"`
-        : String(value);
-    }).join(',') + '\n';
+    csv +=
+      headers
+        .map((h) => {
+          const value = row[h];
+          return typeof value === 'string' && value.includes(',') ? `"${value}"` : String(value);
+        })
+        .join(',') + '\n';
   }
 
   return csv;
@@ -271,22 +263,22 @@ export function dateRangeFilteredExport(
     goals: Goal[];
   },
   startDate: Date,
-  endDate: Date
+  endDate: Date,
 ) {
   // Direct filtering (more control)
   const filteredEmotions = applyDateRangeFilter(allData.emotions, {
     start: startDate,
-    end: endDate
+    end: endDate,
   });
 
   const filteredSensory = applyDateRangeFilter(allData.sensoryInputs, {
     start: startDate,
-    end: endDate
+    end: endDate,
   });
 
   const filteredTracking = applyDateRangeFilter(allData.trackingEntries, {
     start: startDate,
-    end: endDate
+    end: endDate,
   });
 
   return {
@@ -298,8 +290,8 @@ export function dateRangeFilteredExport(
       emotionCount: filteredEmotions.length,
       sensoryCount: filteredSensory.length,
       trackingCount: filteredTracking.length,
-      dateRange: { start: startDate, end: endDate }
-    }
+      dateRange: { start: startDate, end: endDate },
+    },
   };
 }
 
@@ -319,7 +311,7 @@ export function integratedCSVExport(
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
   },
-  csvOptions: Partial<ExportOptions>
+  csvOptions: Partial<ExportOptions>,
 ): string {
   // 1. Use common validation
   const validation = validateExportOptions(csvOptions);
@@ -347,14 +339,14 @@ function formatDataAsCSV(data: ExportDataCollection, students: Student[]): strin
   // Emotions
   if (data.emotions.length > 0) {
     csv += 'Date,Student,Emotion,Intensity,Triggers,Notes\n';
-    data.emotions.forEach(e => {
-      const student = students.find(s => s.id === e.studentId);
+    data.emotions.forEach((e) => {
+      const student = students.find((s) => s.id === e.studentId);
       csv += `${e.timestamp.toISOString()},`;
       csv += `${student?.name || 'Unknown'},`;
       csv += `${e.emotion},`;
       csv += `${e.intensity},`;
       csv += `"${e.triggers?.join('; ') || ''}",`;
-      csv += `"${e.notes || '"}"\n`;
+      csv += `"${e.notes || ''}"\n`;
     });
     csv += '\n';
   }
@@ -376,11 +368,11 @@ export async function exportWithProgressUI(
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
   },
-  onProgress: (phase: string, percentage: number, message?: string) => void
+  onProgress: (phase: string, percentage: number, message?: string) => void,
 ) {
   const options = mergeExportOptions({
     format: 'json',
-    includeFields: ['emotions', 'sensoryInputs', 'goals', 'trackingEntries']
+    includeFields: ['emotions', 'sensoryInputs', 'goals', 'trackingEntries'],
   });
 
   // Collect with progress tracking
@@ -390,7 +382,7 @@ export async function exportWithProgressUI(
       progress.percentage,
       progress.currentItem
         ? `Processing ${progress.currentItem} (${progress.processedRecords}/${progress.totalRecords})`
-        : undefined
+        : undefined,
     );
   });
 
@@ -421,8 +413,10 @@ export function validateAndPrepareExport(
     sensoryInputs: SensoryEntry[];
     goals: Goal[];
   },
-  userOptions: Partial<ExportOptions>
-): { success: true; data: ExportDataCollection; metadata: any } | { success: false; errors: string[] } {
+  userOptions: Partial<ExportOptions>,
+):
+  | { success: true; data: ExportDataCollection; metadata: any }
+  | { success: false; errors: string[] } {
   // Validate options
   const optionValidation = validateExportOptions(userOptions);
   if (!optionValidation.valid) {
@@ -437,7 +431,9 @@ export function validateAndPrepareExport(
     const sizeMB = (sizeCheck.estimatedSize / (1024 * 1024)).toFixed(2);
     return {
       success: false,
-      errors: [`Export too large: ${sizeMB} MB (limit: 50 MB). Please narrow date range or reduce fields.`]
+      errors: [
+        `Export too large: ${sizeMB} MB (limit: 50 MB). Please narrow date range or reduce fields.`,
+      ],
     };
   }
 

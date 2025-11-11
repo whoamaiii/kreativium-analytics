@@ -22,7 +22,8 @@ function makeValidData(): EvidenceSource[] {
       id: 'UDL-GUIDELINES-CAST',
       title: 'UDL Guidelines by CAST',
       url: 'https://udlguidelines.cast.org',
-      shortExcerpt: 'Universal Design for Learning guidelines and checkpoints for flexible learning.',
+      shortExcerpt:
+        'Universal Design for Learning guidelines and checkpoints for flexible learning.',
       tags: ['udl'],
       gradeBands: ['k-3', '4-6'],
       year: 2018,
@@ -33,7 +34,8 @@ function makeValidData(): EvidenceSource[] {
       id: 'WWC-READ-PHONICS-2016',
       title: 'WWC Foundational Skills to Support Reading',
       url: 'https://ies.ed.gov/ncee/wwc/PracticeGuide/21',
-      shortExcerpt: 'Phonics and foundational reading skills evidence-based practices for K-3 literacy instruction.',
+      shortExcerpt:
+        'Phonics and foundational reading skills evidence-based practices for K-3 literacy instruction.',
       tags: ['reading'],
       gradeBands: ['k-3'],
       year: 2016,

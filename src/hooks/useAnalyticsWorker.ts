@@ -37,7 +37,10 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { AnalyticsData, AnalyticsResults, AnalyticsWorkerMessage } from '@/types/analytics';
 import { usePerformanceCache } from './usePerformanceCache';
 import { analyticsConfig } from '@/lib/analyticsConfig';
-import { getValidatedConfig, validateAnalyticsRuntimeConfig } from '@/lib/analyticsConfigValidation';
+import {
+  getValidatedConfig,
+  validateAnalyticsRuntimeConfig,
+} from '@/lib/analyticsConfigValidation';
 import { buildInsightsCacheKey, buildInsightsTask } from '@/lib/analyticsManager';
 import { logger } from '@/lib/logger';
 import { toast } from '@/hooks/use-toast';
@@ -96,24 +99,35 @@ interface UseAnalyticsWorkerReturn {
   results: AnalyticsResultsAI | null;
   isAnalyzing: boolean;
   error: string | null;
-  runAnalysis: (data: AnalyticsData, options?: { useAI?: boolean; student?: Student; prewarm?: boolean }) => Promise<void>;
-  precomputeCommonAnalytics: (dataProvider: () => AnalyticsData[], options?: { student?: Student }) => void;
+  runAnalysis: (
+    data: AnalyticsData,
+    options?: { useAI?: boolean; student?: Student; prewarm?: boolean },
+  ) => Promise<void>;
+  precomputeCommonAnalytics: (
+    dataProvider: () => AnalyticsData[],
+    options?: { student?: Student },
+  ) => void;
   invalidateCacheForStudent: (studentId: string) => void;
   clearCache: () => void;
   cacheStats: CacheStats | null;
   cacheSize: number;
   // Optional precomputation status/controls
   precomputeEnabled?: boolean;
-  precomputeStatus?: { enabled: boolean; queueSize: number; isProcessing: boolean; processedCount: number } | null;
+  precomputeStatus?: {
+    enabled: boolean;
+    queueSize: number;
+    isProcessing: boolean;
+    processedCount: number;
+  } | null;
   startPrecomputation?: () => void;
   stopPrecomputation?: () => void;
 }
 
 /**
  * @hook useAnalyticsWorker
- * 
+ *
  * A custom hook to manage the analytics web worker with integrated caching.
- * 
+ *
  * @param options Configuration options for caching and precomputation
  * @returns {object} An object containing:
  *  - `results`: The latest analysis results received from the worker or cache.
@@ -124,18 +138,23 @@ interface UseAnalyticsWorkerReturn {
  *  - `clearCache`: Function to clear the analytics cache.
  *  - `invalidateCache`: Function to invalidate cache entries by tag or pattern.
  */
-export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): UseAnalyticsWorkerReturn => {
+export const useAnalyticsWorker = (
+  options: CachedAnalyticsWorkerOptions = {},
+): UseAnalyticsWorkerReturn => {
   // Resolve defaults from runtime analyticsConfig with safe fallbacks
-  const liveCfgRaw = (() => { try { return analyticsConfig.getConfig(); } catch { return null; } })();
+  const liveCfgRaw = (() => {
+    try {
+      return analyticsConfig.getConfig();
+    } catch {
+      return null;
+    }
+  })();
   const { config: liveCfg } = validateAnalyticsRuntimeConfig(liveCfgRaw ?? undefined);
-  const resolvedTtl = typeof options.cacheTTL === 'number'
-    ? options.cacheTTL
-    : (liveCfg?.cache?.ttl ?? ANALYTICS_CACHE_TTL_MS);
-  const {
-    cacheTTL = resolvedTtl,
-    enableCacheStats = false,
-    precomputeOnIdle = false
-  } = options;
+  const resolvedTtl =
+    typeof options.cacheTTL === 'number'
+      ? options.cacheTTL
+      : (liveCfg?.cache?.ttl ?? ANALYTICS_CACHE_TTL_MS);
+  const { cacheTTL = resolvedTtl, enableCacheStats = false, precomputeOnIdle = false } = options;
 
   const workerRef = useRef<Worker | null>(null);
   const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -148,61 +167,82 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
   const cacheTagsRef = useRef<Map<string, string[]>>(new Map());
   const alertPoliciesRef = useRef(new AlertPolicies());
   const precompManagerRef = useRef<AnalyticsPrecomputationManager | null>(null);
-  const [precomputeStatus, setPrecomputeStatus] = useState<{ enabled: boolean; queueSize: number; isProcessing: boolean; processedCount: number } | null>(null);
+  const [precomputeStatus, setPrecomputeStatus] = useState<{
+    enabled: boolean;
+    queueSize: number;
+    isProcessing: boolean;
+    processedCount: number;
+  } | null>(null);
   const lastAlertsReceivedAtRef = useRef<number>(0);
   const alertsHealthTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cleanupStackRef = useRef<Array<() => void>>([]);
 
   // Initialize performance cache with appropriate settings
   const cache = usePerformanceCache<AnalyticsResults>({
-    maxSize: (liveCfg?.cache?.maxSize ?? 50), // Use runtime config; fallback to 50
+    maxSize: liveCfg?.cache?.maxSize ?? 50, // Use runtime config; fallback to 50
     ttl: cacheTTL,
     enableStats: enableCacheStats,
-    versioning: true // Enable versioning to invalidate on data structure changes
+    versioning: true, // Enable versioning to invalidate on data structure changes
   });
 
   /**
    * Extracts tags from analytics data for cache invalidation
    * Allow override via options for testing
    */
-  const defaultExtractTagsFromData = useCallback((data: AnalyticsData | AnalyticsResults): string[] => {
-    const tags: string[] = ['analytics'];
-    
-    // Add student-specific tags if available
-    if ('entries' in data && (data as any).entries?.length > 0) {
-      const studentIds = Array.from(new Set((data as any).entries.map((e: any) => e.studentId)));
-      tags.push(...studentIds.map(id => `student-${id}`));
-    }
+  const defaultExtractTagsFromData = useCallback(
+    (data: AnalyticsData | AnalyticsResults): string[] => {
+      const tags: string[] = ['analytics'];
 
-    // Add date-based tags for time-sensitive invalidation
-    const now = new Date();
-    tags.push(`analytics-${now.getFullYear()}-${now.getMonth() + 1}`);
-    
-    return tags;
-  }, []);
+      // Add student-specific tags if available
+      if ('entries' in data && (data as any).entries?.length > 0) {
+        const studentIds = Array.from(new Set((data as any).entries.map((e: any) => e.studentId)));
+        tags.push(...studentIds.map((id) => `student-${id}`));
+      }
+
+      // Add date-based tags for time-sensitive invalidation
+      const now = new Date();
+      tags.push(`analytics-${now.getFullYear()}-${now.getMonth() + 1}`);
+
+      return tags;
+    },
+    [],
+  );
   const extractTagsFn = options.extractTagsFromData ?? defaultExtractTagsFromData;
 
-  const buildCacheTags = useCallback(({ data, goals, studentId, includeAiTag }: { data: AnalyticsData | AnalyticsResults; goals?: Goal[]; studentId?: string | number; includeAiTag?: boolean }): string[] => {
-    const tagsFromData = extractTagsFn({ ...data, goals } as AnalyticsData) ?? [];
-    const tagSet = new Set<string>(tagsFromData);
+  const buildCacheTags = useCallback(
+    ({
+      data,
+      goals,
+      studentId,
+      includeAiTag,
+    }: {
+      data: AnalyticsData | AnalyticsResults;
+      goals?: Goal[];
+      studentId?: string | number;
+      includeAiTag?: boolean;
+    }): string[] => {
+      const tagsFromData = extractTagsFn({ ...data, goals } as AnalyticsData) ?? [];
+      const tagSet = new Set<string>(tagsFromData);
 
-    (goals ?? []).forEach(goal => {
-      const goalId = (goal as Goal)?.id;
-      if (goalId) tagSet.add(`goal-${goalId}`);
-      const goalStudentId = (goal as Goal)?.studentId;
-      if (goalStudentId) tagSet.add(`student-${goalStudentId}`);
-    });
+      (goals ?? []).forEach((goal) => {
+        const goalId = (goal as Goal)?.id;
+        if (goalId) tagSet.add(`goal-${goalId}`);
+        const goalStudentId = (goal as Goal)?.studentId;
+        if (goalStudentId) tagSet.add(`student-${goalStudentId}`);
+      });
 
-    if (studentId !== undefined && studentId !== null) {
-      tagSet.add(`student-${studentId}`);
-    }
+      if (studentId !== undefined && studentId !== null) {
+        tagSet.add(`student-${studentId}`);
+      }
 
-    if (includeAiTag) {
-      tagSet.add('ai');
-    }
+      if (includeAiTag) {
+        tagSet.add('ai');
+      }
 
-    return Array.from(tagSet);
-  }, [extractTagsFn]);
+      return Array.from(tagSet);
+    },
+    [extractTagsFn],
+  );
 
   useEffect(() => {
     let isMounted = true; // Race condition guard
@@ -215,18 +255,20 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         if (DISABLE_ANALYTICS_WORKER) {
           doOnce('analytics_worker_disabled', 60_000, () => {
             try {
-              import('@/hooks/useTranslation').then(({ useTranslation }) => {
-                const { t } = useTranslation('analytics');
-                toast({
-                  title: t('worker.disabledTitle'),
-                  description: t('worker.disabledDescription'),
+              import('@/hooks/useTranslation')
+                .then(({ useTranslation }) => {
+                  const { t } = useTranslation('analytics');
+                  toast({
+                    title: t('worker.disabledTitle'),
+                    description: t('worker.disabledDescription'),
+                  });
+                })
+                .catch(() => {
+                  toast({
+                    title: 'Analytics worker disabled',
+                    description: 'Running analytics without a background worker (debug mode).',
+                  });
                 });
-              }).catch(() => {
-                toast({
-                  title: 'Analytics worker disabled',
-                  description: 'Running analytics without a background worker (debug mode).',
-                });
-              });
             } catch {
               toast({
                 title: 'Analytics worker disabled',
@@ -257,12 +299,13 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
           cache,
           cacheTagsRef,
           activeCacheKeyRef,
-          buildCacheTags: ({ data, goals, studentId, includeAiTag }) => buildCacheTags({
-            data: data as AnalyticsResults,
-            goals: goals as Goal[] | undefined,
-            studentId,
-            includeAiTag,
-          }),
+          buildCacheTags: ({ data, goals, studentId, includeAiTag }) =>
+            buildCacheTags({
+              data: data as AnalyticsResults,
+              goals: goals as Goal[] | undefined,
+              studentId,
+              includeAiTag,
+            }),
           setResults,
           setError,
           setIsAnalyzing,
@@ -279,11 +322,19 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         worker.addEventListener('messageerror', onMessageError as EventListener);
 
         // Expose worker globally for lightweight event streaming from game UI
-        try { (window as unknown as { __analyticsWorker?: Worker }).__analyticsWorker = worker; } catch { /* noop */ }
+        try {
+          (window as unknown as { __analyticsWorker?: Worker }).__analyticsWorker = worker;
+        } catch {
+          /* noop */
+        }
 
         cleanupStackRef.current.push(() => {
           try {
-            try { (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null; } catch { /* noop */ }
+            try {
+              (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null;
+            } catch {
+              /* noop */
+            }
             worker.removeEventListener('message', onMessage as EventListener);
             worker.removeEventListener('messageerror', onMessageError as EventListener);
           } catch {
@@ -308,7 +359,11 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       }
       // Run any per-hook cleanup fns (like removing event listeners)
       while (cleanupStackRef.current.length) {
-        try { (cleanupStackRef.current.pop() as () => void)(); } catch { /* noop */ }
+        try {
+          (cleanupStackRef.current.pop() as () => void)();
+        } catch {
+          /* noop */
+        }
       }
       if (alertsHealthTimerRef.current) {
         clearInterval(alertsHealthTimerRef.current);
@@ -316,8 +371,8 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       }
       releaseWorker();
     };
-  // Stable on mount; do not re-init on cache identity churn
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Stable on mount; do not re-init on cache identity churn
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Periodic alerts integration health publication (lightweight)
@@ -334,16 +389,28 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         const msSince = last ? now - last : Number.POSITIVE_INFINITY;
         const healthy = Number.isFinite(msSince) ? msSince < 120_000 : false; // consider stale if > 2 minutes
         try {
-          window.dispatchEvent(new CustomEvent(ALERTS_HEALTH_EVENT, {
-            detail: {
-              healthy,
-              msSinceLastAlert: Number.isFinite(msSince) ? msSince : null,
-              snapshot: (() => { try { return alertPerf.snapshot(); } catch { return null; } })(),
-            }
-          }));
-        } catch { /* noop */ }
+          window.dispatchEvent(
+            new CustomEvent(ALERTS_HEALTH_EVENT, {
+              detail: {
+                healthy,
+                msSinceLastAlert: Number.isFinite(msSince) ? msSince : null,
+                snapshot: (() => {
+                  try {
+                    return alertPerf.snapshot();
+                  } catch {
+                    return null;
+                  }
+                })(),
+              },
+            }),
+          );
+        } catch {
+          /* noop */
+        }
       }, 30_000);
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
     return () => {
       if (alertsHealthTimerRef.current) {
         clearInterval(alertsHealthTimerRef.current);
@@ -361,7 +428,9 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
       entries: data.entries,
       emotions: data.emotions,
       sensoryInputs: data.sensoryInputs,
-      ...(goals && goals.length ? { goals: goals.map(g => ({ id: (g as any).id })) as unknown as Goal[] } : {}),
+      ...(goals && goals.length
+        ? { goals: goals.map((g) => ({ id: (g as any).id })) as unknown as Goal[] }
+        : {}),
     } as unknown as { entries: unknown[]; emotions: unknown[]; sensoryInputs: unknown[] };
 
     // Use live runtime config to ensure keys align across app and worker
@@ -370,74 +439,96 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     return buildInsightsCacheKey(inputs as any, { config: cfg });
   }, []);
 
-  const runAnalysis = useMemo(() => createRunAnalysis({
-    cache,
-    cacheTagsRef,
-    activeCacheKeyRef,
-    workerRef,
-    watchdogRef,
-    setResults,
-    setError,
-    setIsAnalyzing,
-    createCacheKey,
-    buildCacheTags,
-    getGoalsForStudent: (studentId: string) => {
-      try {
-        return dataStorage.getGoalsForStudent(studentId) ?? [];
-      } catch {
-        return [];
-      }
-    },
-    analyticsManager,
-    analyticsWorkerFallback,
-    getValidatedConfig,
-    buildInsightsTask,
-    queuePendingTask,
-    getWorkerInstance,
-    isWorkerReady,
-    isCircuitOpen,
-    workerDisabled: DISABLE_ANALYTICS_WORKER,
-    logger,
-    diagnostics,
-  }), [cache, buildCacheTags, createCacheKey]);
+  const runAnalysis = useMemo(
+    () =>
+      createRunAnalysis({
+        cache,
+        cacheTagsRef,
+        activeCacheKeyRef,
+        workerRef,
+        watchdogRef,
+        setResults,
+        setError,
+        setIsAnalyzing,
+        createCacheKey,
+        buildCacheTags,
+        getGoalsForStudent: (studentId: string) => {
+          try {
+            return dataStorage.getGoalsForStudent(studentId) ?? [];
+          } catch {
+            return [];
+          }
+        },
+        analyticsManager,
+        analyticsWorkerFallback,
+        getValidatedConfig,
+        buildInsightsTask,
+        queuePendingTask,
+        getWorkerInstance,
+        isWorkerReady,
+        isCircuitOpen,
+        workerDisabled: DISABLE_ANALYTICS_WORKER,
+        logger,
+        diagnostics,
+      }),
+    [cache, buildCacheTags, createCacheKey],
+  );
 
   /**
    * Pre-compute analytics for common queries during idle time.
    * Note: When a student is provided, their goals are fetched and included to align with on-demand analytics.
    */
-  const precomputeCommonAnalytics = useCallback((dataProvider: () => AnalyticsData[], options?: { student?: Student }) => {
-    const pc = liveCfg?.precomputation;
-    if (!pc || !pc.enabled) return;
+  const precomputeCommonAnalytics = useCallback(
+    (dataProvider: () => AnalyticsData[], options?: { student?: Student }) => {
+      const pc = liveCfg?.precomputation;
+      if (!pc || !pc.enabled) return;
 
-    const schedule = async () => {
-      try {
-        const allowed = await deviceConstraints.canPrecompute(pc);
-        if (!allowed) return;
-      } catch { /* noop */ }
+      const schedule = async () => {
+        try {
+          const allowed = await deviceConstraints.canPrecompute(pc);
+          if (!allowed) return;
+        } catch {
+          /* noop */
+        }
 
-      const dataSets = dataProvider();
-      const student = options?.student;
-      dataSets.forEach((data, index) => {
-        setTimeout(() => {
-          // Route through runAnalysis to ensure caching and goal inclusion; mark as prewarm
-          runAnalysis(data, { student, prewarm: true }).catch(() => { /* noop */ });
-        }, index * (pc.taskStaggerDelay ?? 100));
-      });
-    };
+        const dataSets = dataProvider();
+        const student = options?.student;
+        dataSets.forEach((data, index) => {
+          setTimeout(
+            () => {
+              // Route through runAnalysis to ensure caching and goal inclusion; mark as prewarm
+              runAnalysis(data, { student, prewarm: true }).catch(() => {
+                /* noop */
+              });
+            },
+            index * (pc.taskStaggerDelay ?? 100),
+          );
+        });
+      };
 
-    if (pc.precomputeOnlyWhenIdle && 'requestIdleCallback' in window) {
-      idleCallbackRef.current = requestIdleCallback(() => { schedule(); }, { timeout: pc.idleTimeout ?? 5000 });
-    } else {
-      setTimeout(schedule, pc.idleTimeout ?? 1000);
-    }
-  }, [liveCfg, runAnalysis]);
+      if (pc.precomputeOnlyWhenIdle && 'requestIdleCallback' in window) {
+        idleCallbackRef.current = requestIdleCallback(
+          () => {
+            schedule();
+          },
+          { timeout: pc.idleTimeout ?? 5000 },
+        );
+      } else {
+        setTimeout(schedule, pc.idleTimeout ?? 1000);
+      }
+    },
+    [liveCfg, runAnalysis],
+  );
 
   /**
    * Invalidate cache entries for a specific student
    */
-  const invalidateCacheForStudent = useCallback((studentId: string) => {
-    cache.invalidateByTag(`student-${studentId}`);
-  }, [cache]);
+  const invalidateCacheForStudent = useCallback(
+    (studentId: string) => {
+      cache.invalidateByTag(`student-${studentId}`);
+    },
+    [cache],
+  );
 
   /**
    * Invalidate all analytics cache entries
@@ -465,7 +556,9 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
           }
           setPrecomputeStatus(precompManagerRef.current.getStatus());
         }
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     });
 
     return unsubscribe;
@@ -477,7 +570,11 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
    */
   useEffect(() => {
     const onClearAll = () => {
-      try { clearCache(); } catch { /* noop */ }
+      try {
+        clearCache();
+      } catch {
+        /* noop */
+      }
     };
     const onClearStudent = (evt: Event) => {
       try {
@@ -487,7 +584,9 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         } else {
           clearCache();
         }
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     };
 
     try {
@@ -497,19 +596,31 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
         cleanupStackRef.current.push(() => {
           try {
             window.removeEventListener('analytics:cache:clear', onClearAll as EventListener);
-            window.removeEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
-          } catch { /* noop */ }
+            window.removeEventListener(
+              'analytics:cache:clear:student',
+              onClearStudent as EventListener,
+            );
+          } catch {
+            /* noop */
+          }
         });
       }
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
 
     return () => {
       try {
         if (typeof window !== 'undefined') {
           window.removeEventListener('analytics:cache:clear', onClearAll as EventListener);
-          window.removeEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
+          window.removeEventListener(
+            'analytics:cache:clear:student',
+            onClearStudent as EventListener,
+          );
         }
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
     };
   }, [clearCache, invalidateCacheForStudent]);
 
@@ -527,23 +638,39 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     if (!precompManagerRef.current) {
       precompManagerRef.current = new AnalyticsPrecomputationManager((data) => {
         // Use runAnalysis with prewarm flag; student inference occurs within
-        runAnalysis(data, { prewarm: true }).catch(() => { /* noop */ });
+        runAnalysis(data, { prewarm: true }).catch(() => {
+          /* noop */
+        });
       });
     }
 
     // Kick off scheduling based on current data
     try {
       const entries = dataStorage.getTrackingEntries();
-      const emotions = entries.flatMap(e => (e.emotions || []).map(em => ({ ...em, studentId: em.studentId ?? e.studentId })));
-      const sensoryInputs = entries.flatMap(e => (e.sensoryInputs || []).map(s => ({ ...s, studentId: s.studentId ?? e.studentId })));
-      precompManagerRef.current.schedulePrecomputation(entries, emotions as any, sensoryInputs as any);
+      const emotions = entries.flatMap((e) =>
+        (e.emotions || []).map((em) => ({ ...em, studentId: em.studentId ?? e.studentId })),
+      );
+      const sensoryInputs = entries.flatMap((e) =>
+        (e.sensoryInputs || []).map((s) => ({ ...s, studentId: s.studentId ?? e.studentId })),
+      );
+      precompManagerRef.current.schedulePrecomputation(
+        entries,
+        emotions as any,
+        sensoryInputs as any,
+      );
       setPrecomputeStatus(precompManagerRef.current.getStatus());
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
 
     return () => {
-      try { precompManagerRef.current?.stop(); } catch { /* noop */ }
+      try {
+        precompManagerRef.current?.stop();
+      } catch {
+        /* noop */
+      }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveCfg?.precomputation?.enabled, workerReady]);
 
   /**
@@ -565,7 +692,21 @@ export const useAnalyticsWorker = (options: CachedAnalyticsWorkerOptions = {}): 
     cacheSize: cache.size,
     precomputeEnabled: !!liveCfg?.precomputation?.enabled,
     precomputeStatus,
-    startPrecomputation: () => { try { precompManagerRef.current?.resume(); setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null); } catch { /* noop */ } },
-    stopPrecomputation: () => { try { precompManagerRef.current?.stop(); setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null); } catch { /* noop */ } },
+    startPrecomputation: () => {
+      try {
+        precompManagerRef.current?.resume();
+        setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null);
+      } catch {
+        /* noop */
+      }
+    },
+    stopPrecomputation: () => {
+      try {
+        precompManagerRef.current?.stop();
+        setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null);
+      } catch {
+        /* noop */
+      }
+    },
   };
 };

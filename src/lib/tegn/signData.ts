@@ -2,14 +2,17 @@ import { SignItem } from '@/types/tegn';
 
 // Bulk import all PNGs in the viktige folder via Vite's import.meta.glob
 // The keys are file paths, the values are modules with a default export URL
-const modules = import.meta.glob('@/assets/signs/viktige/*.png', { eager: true }) as Record<string, { default: string }>
+const modules = import.meta.glob('@/assets/signs/viktige/*.png', { eager: true }) as Record<
+  string,
+  { default: string }
+>;
 
 function toTitleCase(input: string): string {
   return input
     .replace(/[-_]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .replace(/\b\w/g, c => c.toUpperCase());
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function extractWordFromPath(path: string): string {
@@ -32,5 +35,3 @@ export const SIGN_ITEMS: SignItem[] = Object.entries(modules)
     } satisfies SignItem;
   })
   .sort((a, b) => a.word.localeCompare(b.word, 'nb'));
-
-

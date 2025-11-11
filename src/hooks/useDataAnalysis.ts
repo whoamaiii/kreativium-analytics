@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
-import { enhancedPatternAnalysis, CorrelationMatrix, PredictiveInsight, AnomalyDetection } from '@/lib/enhancedPatternAnalysis';
+import {
+  enhancedPatternAnalysis,
+  CorrelationMatrix,
+  PredictiveInsight,
+  AnomalyDetection,
+} from '@/lib/enhancedPatternAnalysis';
 import { patternAnalysis, PatternResult } from '@/lib/patternAnalysis';
 import { logger } from '@/lib/logger';
 
@@ -36,21 +41,23 @@ export const useDataAnalysis = (filteredData: FilteredData) => {
             filteredData.emotions,
             filteredData.sensoryInputs,
             filteredData.trackingEntries,
-            []
+            [],
           );
           setPredictiveInsights(insights);
 
           const detectedAnomalies = enhancedPatternAnalysis.detectAnomalies(
             filteredData.emotions,
             filteredData.sensoryInputs,
-            filteredData.trackingEntries
+            filteredData.trackingEntries,
           );
           setAnomalies(detectedAnomalies);
         }
 
         // Generate correlation matrix
         if (filteredData.trackingEntries.length >= 10) {
-          const matrix = enhancedPatternAnalysis.generateCorrelationMatrix(filteredData.trackingEntries);
+          const matrix = enhancedPatternAnalysis.generateCorrelationMatrix(
+            filteredData.trackingEntries,
+          );
           setCorrelationMatrix(matrix);
         }
       } catch (error) {

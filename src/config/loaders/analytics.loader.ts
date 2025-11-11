@@ -1,7 +1,23 @@
 import { logger } from '@/lib/logger';
-import { analyticsConfigSchema, type AnalyticsConfig as SchemaAnalyticsConfig } from '@/config/schemas/analytics.schema';
+import {
+  analyticsConfigSchema,
+  type AnalyticsConfig as SchemaAnalyticsConfig,
+} from '@/config/schemas/analytics.schema';
 import { validateAndMergeAnalyticsConfig } from '@/config/validators/analytics.validator';
 import { getRuntimeAnalyticsConfig } from '@/config/analytics.config';
+
+// Create a wrapper to access environment variables that tests can override
+// Tests can set globalThis.__analyticsTestEnv to override environment variables
+function getEnv(): Record<string, string | boolean | undefined> {
+  // First check if tests have set an override (for test compatibility)
+  const testOverride = (globalThis as any).__analyticsTestEnv;
+  if (testOverride) {
+    return testOverride;
+  }
+
+  // Otherwise use import.meta.env
+  return (import.meta.env ?? {}) as Record<string, string | boolean | undefined>;
+}
 
 // Environment-based switching pattern
 // If VITE_USE_MOCK is truthy ("1", "true", "yes"), we prefer mock-oriented settings.
@@ -31,15 +47,19 @@ function parseJSON<T = unknown>(raw: unknown): T | undefined {
 
 // Read environment variables beginning with VITE_ANALYTICS_ and build a partial schema-backed config.
 function readEnvOverrides(): Partial<SchemaAnalyticsConfig> | null {
-  const env = import.meta.env as Record<string, string | boolean | undefined>;
+  const env = getEnv();
 
   // Fast path: if no relevant keys present, return null
   const hasAny = Object.keys(env).some((k) => k.startsWith('VITE_ANALYTICS_'));
   if (!hasAny) return null;
 
   // Support bulk JSON overrides for complex structures
-  const thresholdsJson = parseJSON<Record<string, SchemaAnalyticsConfig['thresholds'][string]>>(env.VITE_ANALYTICS_THRESHOLDS_JSON as string | undefined);
-  const rulesJson = parseJSON<SchemaAnalyticsConfig['rules']>(env.VITE_ANALYTICS_RULES_JSON as string | undefined);
+  const thresholdsJson = parseJSON<Record<string, SchemaAnalyticsConfig['thresholds'][string]>>(
+    env.VITE_ANALYTICS_THRESHOLDS_JSON as string | undefined,
+  );
+  const rulesJson = parseJSON<SchemaAnalyticsConfig['rules']>(
+    env.VITE_ANALYTICS_RULES_JSON as string | undefined,
+  );
 
   const chartsTheme = (env.VITE_ANALYTICS_CHARTS_THEME as string | undefined)?.toLowerCase() as
     | 'light'
@@ -53,24 +73,43 @@ function readEnvOverrides(): Partial<SchemaAnalyticsConfig> | null {
     rules: rulesJson ?? undefined,
     charts: {
       theme: chartsTheme,
-      showLegend: env.VITE_ANALYTICS_CHARTS_SHOW_LEGEND !== undefined ? truthy(env.VITE_ANALYTICS_CHARTS_SHOW_LEGEND) : undefined,
+      showLegend:
+        env.VITE_ANALYTICS_CHARTS_SHOW_LEGEND !== undefined
+          ? truthy(env.VITE_ANALYTICS_CHARTS_SHOW_LEGEND)
+          : undefined,
       lineWidth: toNumber(env.VITE_ANALYTICS_CHARTS_LINE_WIDTH),
       pointRadius: toNumber(env.VITE_ANALYTICS_CHARTS_POINT_RADIUS),
-      animation: env.VITE_ANALYTICS_CHARTS_ANIMATION !== undefined ? truthy(env.VITE_ANALYTICS_CHARTS_ANIMATION) : undefined,
+      animation:
+        env.VITE_ANALYTICS_CHARTS_ANIMATION !== undefined
+          ? truthy(env.VITE_ANALYTICS_CHARTS_ANIMATION)
+          : undefined,
       tooltip: {
-        appendToBody: env.VITE_ANALYTICS_TOOLTIP_APPEND_TO_BODY !== undefined ? truthy(env.VITE_ANALYTICS_TOOLTIP_APPEND_TO_BODY) : undefined,
+        appendToBody:
+          env.VITE_ANALYTICS_TOOLTIP_APPEND_TO_BODY !== undefined
+            ? truthy(env.VITE_ANALYTICS_TOOLTIP_APPEND_TO_BODY)
+            : undefined,
         transitionDuration: toNumber(env.VITE_ANALYTICS_TOOLTIP_TRANSITION_MS),
-        confine: env.VITE_ANALYTICS_TOOLTIP_CONFINE !== undefined ? truthy(env.VITE_ANALYTICS_TOOLTIP_CONFINE) : undefined,
+        confine:
+          env.VITE_ANALYTICS_TOOLTIP_CONFINE !== undefined
+            ? truthy(env.VITE_ANALYTICS_TOOLTIP_CONFINE)
+            : undefined,
       },
       container: {
-        overflowVisible: env.VITE_ANALYTICS_CONTAINER_OVERFLOW_VISIBLE !== undefined ? truthy(env.VITE_ANALYTICS_CONTAINER_OVERFLOW_VISIBLE) : undefined,
-        stableKeys: env.VITE_ANALYTICS_CONTAINER_STABLE_KEYS !== undefined ? truthy(env.VITE_ANALYTICS_CONTAINER_STABLE_KEYS) : undefined,
+        overflowVisible:
+          env.VITE_ANALYTICS_CONTAINER_OVERFLOW_VISIBLE !== undefined
+            ? truthy(env.VITE_ANALYTICS_CONTAINER_OVERFLOW_VISIBLE)
+            : undefined,
+        stableKeys:
+          env.VITE_ANALYTICS_CONTAINER_STABLE_KEYS !== undefined
+            ? truthy(env.VITE_ANALYTICS_CONTAINER_STABLE_KEYS)
+            : undefined,
       },
     },
     worker: {
       cache: {
         ttlSeconds: toNumber(env.VITE_ANALYTICS_WORKER_CACHE_TTL_SECONDS),
-        strategy: (env.VITE_ANALYTICS_WORKER_CACHE_STRATEGY as 'ttl' | 'lru' | undefined) ?? undefined,
+        strategy:
+          (env.VITE_ANALYTICS_WORKER_CACHE_STRATEGY as 'ttl' | 'lru' | undefined) ?? undefined,
       },
       memory: {
         maxHeapMB: toNumber(env.VITE_ANALYTICS_WORKER_MAX_HEAP_MB),
@@ -78,19 +117,40 @@ function readEnvOverrides(): Partial<SchemaAnalyticsConfig> | null {
         taskConcurrency: toNumber(env.VITE_ANALYTICS_WORKER_TASK_CONCURRENCY),
       },
       queue: {
-        enabled: env.VITE_ANALYTICS_QUEUE_ENABLED !== undefined ? truthy(env.VITE_ANALYTICS_QUEUE_ENABLED) : undefined,
+        enabled:
+          env.VITE_ANALYTICS_QUEUE_ENABLED !== undefined
+            ? truthy(env.VITE_ANALYTICS_QUEUE_ENABLED)
+            : undefined,
         backpressureLimit: toNumber(env.VITE_ANALYTICS_QUEUE_BACKPRESSURE_LIMIT),
       },
       security: {
-        allowEval: env.VITE_ANALYTICS_SECURITY_ALLOW_EVAL !== undefined ? truthy(env.VITE_ANALYTICS_SECURITY_ALLOW_EVAL) : undefined,
+        allowEval:
+          env.VITE_ANALYTICS_SECURITY_ALLOW_EVAL !== undefined
+            ? truthy(env.VITE_ANALYTICS_SECURITY_ALLOW_EVAL)
+            : undefined,
       },
     },
     features: {
-      enableTrends: env.VITE_ANALYTICS_FEATURE_TRENDS !== undefined ? truthy(env.VITE_ANALYTICS_FEATURE_TRENDS) : undefined,
-      enableAnomalies: env.VITE_ANALYTICS_FEATURE_ANOMALIES !== undefined ? truthy(env.VITE_ANALYTICS_FEATURE_ANOMALIES) : undefined,
-      enableCorrelation: env.VITE_ANALYTICS_FEATURE_CORRELATION !== undefined ? truthy(env.VITE_ANALYTICS_FEATURE_CORRELATION) : undefined,
-      enableForecasting: env.VITE_ANALYTICS_FEATURE_FORECASTING !== undefined ? truthy(env.VITE_ANALYTICS_FEATURE_FORECASTING) : undefined,
-      enableRealtime: env.VITE_ANALYTICS_FEATURE_REALTIME !== undefined ? truthy(env.VITE_ANALYTICS_FEATURE_REALTIME) : undefined,
+      enableTrends:
+        env.VITE_ANALYTICS_FEATURE_TRENDS !== undefined
+          ? truthy(env.VITE_ANALYTICS_FEATURE_TRENDS)
+          : undefined,
+      enableAnomalies:
+        env.VITE_ANALYTICS_FEATURE_ANOMALIES !== undefined
+          ? truthy(env.VITE_ANALYTICS_FEATURE_ANOMALIES)
+          : undefined,
+      enableCorrelation:
+        env.VITE_ANALYTICS_FEATURE_CORRELATION !== undefined
+          ? truthy(env.VITE_ANALYTICS_FEATURE_CORRELATION)
+          : undefined,
+      enableForecasting:
+        env.VITE_ANALYTICS_FEATURE_FORECASTING !== undefined
+          ? truthy(env.VITE_ANALYTICS_FEATURE_FORECASTING)
+          : undefined,
+      enableRealtime:
+        env.VITE_ANALYTICS_FEATURE_REALTIME !== undefined
+          ? truthy(env.VITE_ANALYTICS_FEATURE_REALTIME)
+          : undefined,
     },
   };
 
@@ -121,7 +181,14 @@ function deepMerge<T extends object>(base: T, overrides?: Partial<T> | null): T 
     const ov: any = (overrides as any)[key];
     if (ov === undefined) continue;
     const bv: any = (base as any)[key];
-    if (bv && typeof bv === 'object' && !Array.isArray(bv) && ov && typeof ov === 'object' && !Array.isArray(ov)) {
+    if (
+      bv &&
+      typeof bv === 'object' &&
+      !Array.isArray(bv) &&
+      ov &&
+      typeof ov === 'object' &&
+      !Array.isArray(ov)
+    ) {
       output[key] = deepMerge(bv, ov);
     } else {
       output[key] = ov;
@@ -131,7 +198,7 @@ function deepMerge<T extends object>(base: T, overrides?: Partial<T> | null): T 
 }
 
 function applyEnvironmentProfile(base: SchemaAnalyticsConfig): SchemaAnalyticsConfig {
-  const env = import.meta.env as Record<string, string | boolean | undefined>;
+  const env = getEnv();
   const useMock = truthy(env.VITE_USE_MOCK);
   const profile = (env.VITE_ANALYTICS_PROFILE as string | undefined)?.toLowerCase();
 
@@ -188,6 +255,7 @@ export function loadAnalyticsConfig(options: AnalyticsLoaderOptions = {}): Schem
   const envOverrides = readEnvOverrides();
 
   const { config: validated, errors } = validateAndMergeAnalyticsConfig(profiled, envOverrides);
+
   if (errors.length) {
     logger.warn('Environment analytics overrides contained invalid values; using safe fallbacks');
   }
@@ -211,4 +279,3 @@ if (import.meta.hot) {
 }
 
 // Optional: consumers can subscribe to changes by polling cacheStamp or wiring into HMR themselves.
-

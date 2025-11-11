@@ -10,6 +10,8 @@ import type { SourceItem } from '@/types/analytics';
 import { buildCitationList, type CitationListItem } from './citation-utils';
 import { sanitizePlainNorwegian, type AllowedContexts } from '@/lib/evidence/evidenceBuilder';
 import { EntryDetailsDrawer } from './EntryDetailsDrawer';
+import { useSessionState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export interface ExplanationChatProps {
   aiEnabled: boolean;
@@ -32,7 +34,7 @@ export function ExplanationChat({
   className,
   sources = [],
   sourcesRich = [],
-  allowed
+  allowed,
 }: ExplanationChatProps): React.ReactElement {
   const [messages, setMessages] = React.useState<ChatMessage[]>(() => initialMessages);
   const [input, setInput] = React.useState<string>('');
@@ -44,27 +46,41 @@ export function ExplanationChat({
   const [selectedSource, setSelectedSource] = React.useState<SourceItem | null>(null);
 
   React.useEffect(() => {
-    try { listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' }); } catch {}
+    try {
+      listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
+    } catch {}
   }, [messages, pending]);
 
   const onChangeRef = React.useRef(onMessagesChange);
-  React.useEffect(() => { onChangeRef.current = onMessagesChange; }, [onMessagesChange]);
+  React.useEffect(() => {
+    onChangeRef.current = onMessagesChange;
+  }, [onMessagesChange]);
   React.useEffect(() => {
     onChangeRef.current?.(messages);
   }, [messages]);
 
   const send = async () => {
     const trimmed = input.trim();
-    if (!aiEnabled) { toast.error(String(tAnalytics('insights.chat.disabled'))); return; }
+    if (!aiEnabled) {
+      toast.error(String(tAnalytics('insights.chat.disabled')));
+      return;
+    }
     if (pending || trimmed.length === 0) return;
     const next: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(next);
     setInput('');
-    try { textareaRef.current?.focus(); } catch {}
+    try {
+      textareaRef.current?.focus();
+    } catch {}
     setPending(true);
     try {
-      const chatMsgs: ChatMessage[] = [{ role: 'system', content: systemPrompt }, ...next.slice(-20)];
-      const { content } = await openRouterClient.chat(chatMsgs, undefined, { suppressToasts: true });
+      const chatMsgs: ChatMessage[] = [
+        { role: 'system', content: systemPrompt },
+        ...next.slice(-20),
+      ];
+      const { content } = await openRouterClient.chat(chatMsgs, undefined, {
+        suppressToasts: true,
+      });
       const base = String(content)
         .replace(/\*\*(.*?)\*\*/g, '$1')
         .replace(/__(.*?)__/g, '$1')
@@ -73,7 +89,9 @@ export function ExplanationChat({
         .trim();
       const cleaned = allowed ? sanitizePlainNorwegian(base, allowed) : base;
       setMessages((prev) => [...prev, { role: 'assistant', content: cleaned }]);
-      try { textareaRef.current?.focus(); } catch {}
+      try {
+        textareaRef.current?.focus();
+      } catch {}
     } catch (e) {
       toast.error('Kunne ikke hente AI-svar');
     } finally {
@@ -88,23 +106,33 @@ export function ExplanationChat({
     }
   };
 
-  // Persisted UI state for sources panel (per session)
-  const STORAGE_KEYS = React.useMemo(() => ({
-    collapsed: 'explanationChat.sourcesCollapsed',
-    showAll: 'explanationChat.showAllSources'
-  }), []);
-  const [showAllSources, setShowAllSources] = React.useState<boolean>(() => {
-    try { const v = sessionStorage.getItem('explanationChat.showAllSources'); return v ? v === '1' : false; } catch { return false; }
-  });
-  const [sourcesCollapsed, setSourcesCollapsed] = React.useState<boolean>(() => {
-    try { const v = sessionStorage.getItem('explanationChat.sourcesCollapsed'); return v ? v === '1' : false; } catch { return false; }
-  });
+  // Persisted UI state for sources panel (per session) - using session storage hooks
+  const [showAllSources, setShowAllSources] = useSessionState(
+    STORAGE_KEYS.SESSION_EXPLANATION_SHOW_ALL_SOURCES,
+    false,
+    {
+      serialize: (value) => (value ? '1' : '0'),
+      deserialize: (value) => value === '1',
+    },
+  );
+  const [sourcesCollapsed, setSourcesCollapsed] = useSessionState(
+    STORAGE_KEYS.SESSION_EXPLANATION_SOURCES_COLLAPSED,
+    false,
+    {
+      serialize: (value) => (value ? '1' : '0'),
+      deserialize: (value) => value === '1',
+    },
+  );
+
+  // Global event handlers for collapse/expand all
   React.useEffect(() => {
     function handleCollapseAll() {
-      try { setSourcesCollapsed(true); setShowAllSources(false); } catch {}
+      setSourcesCollapsed(true);
+      setShowAllSources(false);
     }
     function handleExpandAll() {
-      try { setSourcesCollapsed(false); setShowAllSources(true); } catch {}
+      setSourcesCollapsed(false);
+      setShowAllSources(true);
     }
     window.addEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
     window.addEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
@@ -112,14 +140,11 @@ export function ExplanationChat({
       window.removeEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
       window.removeEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
     };
-  }, []);
-  React.useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEYS.showAll, showAllSources ? '1' : '0'); } catch {}
-  }, [showAllSources, STORAGE_KEYS.showAll]);
-  React.useEffect(() => {
-    try { sessionStorage.setItem(STORAGE_KEYS.collapsed, sourcesCollapsed ? '1' : '0'); } catch {}
-  }, [sourcesCollapsed, STORAGE_KEYS.collapsed]);
-  const sList = React.useMemo<CitationListItem[]>(() => buildCitationList(sourcesRich), [sourcesRich]);
+  }, [setSourcesCollapsed, setShowAllSources]);
+  const sList = React.useMemo<CitationListItem[]>(
+    () => buildCitationList(sourcesRich),
+    [sourcesRich],
+  );
 
   const usedCitationKeys = React.useMemo(() => {
     const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
@@ -128,7 +153,7 @@ export function ExplanationChat({
     try {
       const re = /\[S(\d+)\]/g;
       let m: RegExpExecArray | null;
-       
+
       while ((m = re.exec(lastAssistant.content))) {
         const n = Number(m[1]);
         if (Number.isFinite(n) && n >= 1 && n <= sList.length) set.add(`S${n}`);
@@ -144,15 +169,25 @@ export function ExplanationChat({
 
   return (
     <div className={className}>
-      <div ref={listRef} className="flex-1 min-h-[12rem] md:min-h-[14rem] lg:min-h-[16rem] overflow-auto rounded border bg-card p-3 space-y-3" aria-live="polite">
+      <div
+        ref={listRef}
+        className="flex-1 min-h-[12rem] md:min-h-[14rem] lg:min-h-[16rem] overflow-auto rounded border bg-card p-3 space-y-3"
+        aria-live="polite"
+      >
         {messages.length === 0 && (
-          <p className="text-sm text-muted-foreground">{String(tAnalytics('insights.chat.placeholder'))}</p>
+          <p className="text-sm text-muted-foreground">
+            {String(tAnalytics('insights.chat.placeholder'))}
+          </p>
         )}
         {messages.map((m, idx) => (
           <div key={idx} className={m.role === 'user' ? 'text-right' : 'text-left'}>
-            <div className={`group inline-flex max-w-[85%] items-start gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div
+              className={`group inline-flex max-w-[85%] items-start gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
               {m.role !== 'user' && <span className="sr-only">AI</span>}
-              <div className={`rounded px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}>
+              <div
+                className={`rounded px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'}`}
+              >
                 {m.content}
               </div>
               <button
@@ -161,7 +196,12 @@ export function ExplanationChat({
                 aria-label="Kopier melding"
                 title="Kopier melding"
                 onClick={async () => {
-                  try { await navigator.clipboard.writeText(m.content); toast.success(String(tAnalytics('insights.chat.copyOk'))); } catch { toast.error(String(tAnalytics('insights.chat.copyFail'))); }
+                  try {
+                    await navigator.clipboard.writeText(m.content);
+                    toast.success(String(tAnalytics('insights.chat.copyOk')));
+                  } catch {
+                    toast.error(String(tAnalytics('insights.chat.copyFail')));
+                  }
                 }}
               >
                 <Copy className="h-3.5 w-3.5" />
@@ -171,7 +211,9 @@ export function ExplanationChat({
         ))}
         {pending && (
           <div className="text-left">
-            <div className="inline-block rounded px-3 py-2 text-sm bg-muted text-muted-foreground">{String(tAnalytics('insights.chat.aiTyping'))}</div>
+            <div className="inline-block rounded px-3 py-2 text-sm bg-muted text-muted-foreground">
+              {String(tAnalytics('insights.chat.aiTyping'))}
+            </div>
           </div>
         )}
       </div>
@@ -187,13 +229,11 @@ export function ExplanationChat({
           >
             <span className="font-medium">Kilder fra data ({sList.length})</span>
             <span className={`inline-flex items-center gap-1 text-[11px]`}>
-              {!sourcesCollapsed && (
-                <span className="hidden sm:inline">Klikk for å skjule</span>
-              )}
-              {sourcesCollapsed && (
-                <span className="hidden sm:inline">Klikk for å vise</span>
-              )}
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${sourcesCollapsed ? '' : 'rotate-180'}`} />
+              {!sourcesCollapsed && <span className="hidden sm:inline">Klikk for å skjule</span>}
+              {sourcesCollapsed && <span className="hidden sm:inline">Klikk for å vise</span>}
+              <ChevronDown
+                className={`h-3.5 w-3.5 transition-transform ${sourcesCollapsed ? '' : 'rotate-180'}`}
+              />
             </span>
           </button>
           {!sourcesCollapsed && (
@@ -211,29 +251,55 @@ export function ExplanationChat({
           {!sourcesCollapsed && (
             <ul id="sources-list" className="grid gap-1">
               {(showAllSources ? sList : sList.slice(-5)).map(({ key, source }, idx) => {
-              const ts = (() => { try { return new Date(source.timestamp).toISOString().replace('T', ' ').slice(0, 16); } catch { return String(source.timestamp); } })();
-              const primary = `${source.activity || source.place || 'sosial kontekst'} ${ts}`;
-              const emo = (source.emotions || []).map((e) => `${e.emotion}${typeof e.intensity === 'number' ? ` (${e.intensity})` : ''}`).join(', ');
-              const sen = (source.sensory || []).map((s) => `${s.type || 'sensor'}${s.response ? `: ${s.response}` : ''}${typeof s.intensity === 'number' ? ` (${s.intensity})` : ''}`).join(', ');
-              const meta = [source.note ? `notat: ${source.note}` : '', emo ? `følelser: ${emo}` : '', sen ? `sensorikk: ${sen}` : ''].filter(Boolean).join(' · ');
-              return (
-                <li key={key}>
-                  <button
-                    type="button"
-                    onClick={() => openDetails(source)}
-                    className="w-full text-left rounded border bg-card px-2 py-1 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
-                    aria-label={`Åpne detaljer for ${primary}`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="truncate text-foreground">
-                        <span className="font-medium">{primary}</span>
-                        {meta && <div className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2">{meta}</div>}
+                const ts = (() => {
+                  try {
+                    return new Date(source.timestamp).toISOString().replace('T', ' ').slice(0, 16);
+                  } catch {
+                    return String(source.timestamp);
+                  }
+                })();
+                const primary = `${source.activity || source.place || 'sosial kontekst'} ${ts}`;
+                const emo = (source.emotions || [])
+                  .map(
+                    (e) =>
+                      `${e.emotion}${typeof e.intensity === 'number' ? ` (${e.intensity})` : ''}`,
+                  )
+                  .join(', ');
+                const sen = (source.sensory || [])
+                  .map(
+                    (s) =>
+                      `${s.type || 'sensor'}${s.response ? `: ${s.response}` : ''}${typeof s.intensity === 'number' ? ` (${s.intensity})` : ''}`,
+                  )
+                  .join(', ');
+                const meta = [
+                  source.note ? `notat: ${source.note}` : '',
+                  emo ? `følelser: ${emo}` : '',
+                  sen ? `sensorikk: ${sen}` : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
+                return (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      onClick={() => openDetails(source)}
+                      className="w-full text-left rounded border bg-card px-2 py-1 hover:bg-accent/50 focus:outline-none focus:ring-2 focus:ring-ring"
+                      aria-label={`Åpne detaljer for ${primary}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="truncate text-foreground">
+                          <span className="font-medium">{primary}</span>
+                          {meta && (
+                            <div className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2">
+                              {meta}
+                            </div>
+                          )}
+                        </div>
+                        <span className="ml-2 shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{`S${idx + 1}`}</span>
                       </div>
-                      <span className="ml-2 shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{`S${idx + 1}`}</span>
-                    </div>
-                  </button>
-                </li>
-              );
+                    </button>
+                  </li>
+                );
               })}
             </ul>
           )}
@@ -241,7 +307,9 @@ export function ExplanationChat({
       ) : (
         sources.length > 0 && (
           <details className="mt-2 rounded border bg-muted/30 p-2 text-xs">
-            <summary className="cursor-pointer select-none text-muted-foreground">Kilder fra data ({sources.length})</summary>
+            <summary className="cursor-pointer select-none text-muted-foreground">
+              Kilder fra data ({sources.length})
+            </summary>
             <ul className="mt-2 list-disc pl-4 space-y-1">
               {sources.slice(0, 10).map((s, i) => (
                 <li key={i}>{s}</li>
@@ -281,9 +349,18 @@ export function ExplanationChat({
           disabled={!aiEnabled || pending}
           aria-label={String(tAnalytics('insights.chat.placeholder'))}
         />
-        <Button onClick={() => void send()} disabled={!aiEnabled || pending || input.trim().length === 0}>{String(tAnalytics('insights.chat.send'))}</Button>
+        <Button
+          onClick={() => void send()}
+          disabled={!aiEnabled || pending || input.trim().length === 0}
+        >
+          {String(tAnalytics('insights.chat.send'))}
+        </Button>
       </div>
-      <EntryDetailsDrawer open={detailsOpen} onOpenChange={setDetailsOpen} source={selectedSource} />
+      <EntryDetailsDrawer
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        source={selectedSource}
+      />
     </div>
   );
 }

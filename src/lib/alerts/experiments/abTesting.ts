@@ -125,28 +125,32 @@ export class ABTestingService {
     defaultBaseline?: number,
   ): number {
     const experiment = this.getExperiment(experimentKeyValue);
-    const fallback = typeof defaultBaseline === 'number' && defaultBaseline > 0 ? defaultBaseline : 0.5;
+    const fallback =
+      typeof defaultBaseline === 'number' && defaultBaseline > 0 ? defaultBaseline : 0.5;
     if (!experiment) {
-      const resolved = (typeof baselineThreshold === 'number' && baselineThreshold > 0)
-        ? baselineThreshold
-        : fallback;
+      const resolved =
+        typeof baselineThreshold === 'number' && baselineThreshold > 0
+          ? baselineThreshold
+          : fallback;
       return resolved;
     }
     const config = experiment.variants?.[variant];
     if (!config) {
-      const resolved = (typeof baselineThreshold === 'number' && baselineThreshold > 0)
-        ? baselineThreshold
-        : fallback;
+      const resolved =
+        typeof baselineThreshold === 'number' && baselineThreshold > 0
+          ? baselineThreshold
+          : fallback;
       return resolved;
     }
     const multiplier = config.thresholdMultiplier ?? 1;
     const delta = config.thresholdDelta ?? 0;
-    const baseCandidate = (typeof baselineThreshold === 'number' && baselineThreshold > 0)
-      ? baselineThreshold
-      : (override?.baselineThreshold && override.baselineThreshold > 0
-        ? override.baselineThreshold
-        : fallback);
-    return (baseCandidate * multiplier) + delta;
+    const baseCandidate =
+      typeof baselineThreshold === 'number' && baselineThreshold > 0
+        ? baselineThreshold
+        : override?.baselineThreshold && override.baselineThreshold > 0
+          ? override.baselineThreshold
+          : fallback;
+    return baseCandidate * multiplier + delta;
   }
 
   recordAssignment(assignment: ExperimentAssignment): void {

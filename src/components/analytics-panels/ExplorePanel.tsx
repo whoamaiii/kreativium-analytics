@@ -23,34 +23,53 @@ export interface ExplorePanelProps {
   preferredChartType?: any; // from useVisualizationState; keep loose here to avoid import cycle
 }
 
-export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps): React.ReactElement {
+export const ExplorePanel = memo(function ExplorePanel(
+  props: ExplorePanelProps,
+): React.ReactElement {
   const { tAnalytics } = useTranslation();
-  const [preset, setPreset] = useSyncedExplorePreset({ paramKey: 'preset', defaultPreset: 'charts', debounceMs: 150 });
+  const [preset, setPreset] = useSyncedExplorePreset({
+    paramKey: 'preset',
+    defaultPreset: 'charts',
+    debounceMs: 150,
+  });
 
   const onValueChange = (next: string) => setPreset(next as ExplorePreset);
 
   return (
     <section aria-labelledby="explore-title" className="relative">
-      <h2 id="explore-title" className="sr-only">{String(tAnalytics('explore.title'))}</h2>
-      
+      <h2 id="explore-title" className="sr-only">
+        {String(tAnalytics('explore.title'))}
+      </h2>
+
       {/* Compact preset selector with visual indicators */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-lg font-semibold">{String(tAnalytics('explore.title'))}</h3>
           <div className="text-sm text-muted-foreground">
-            {preset === 'charts' && String(tAnalytics('explore.help.charts', { defaultValue: 'Visual trends and patterns' }))}
-            {preset === 'patterns' && String(tAnalytics('explore.help.patterns', { defaultValue: 'AI-powered pattern analysis' }))}
-            {preset === 'correlations' && String(tAnalytics('explore.help.correlations', { defaultValue: 'Relationship insights' }))}
+            {preset === 'charts' &&
+              String(
+                tAnalytics('explore.help.charts', { defaultValue: 'Visual trends and patterns' }),
+              )}
+            {preset === 'patterns' &&
+              String(
+                tAnalytics('explore.help.patterns', {
+                  defaultValue: 'AI-powered pattern analysis',
+                }),
+              )}
+            {preset === 'correlations' &&
+              String(
+                tAnalytics('explore.help.correlations', { defaultValue: 'Relationship insights' }),
+              )}
           </div>
         </div>
-        
+
         <div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
           <button
             type="button"
             onClick={() => onValueChange('charts')}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-              preset === 'charts' 
-                ? 'bg-background text-foreground shadow-sm' 
+              preset === 'charts'
+                ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
             }`}
             aria-label={String(tAnalytics('aria.explore.chartsTab'))}
@@ -62,8 +81,8 @@ export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps)
             type="button"
             onClick={() => onValueChange('patterns')}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-              preset === 'patterns' 
-                ? 'bg-background text-foreground shadow-sm' 
+              preset === 'patterns'
+                ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
             }`}
             aria-label={String(tAnalytics('aria.explore.patternsTab'))}
@@ -75,8 +94,8 @@ export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps)
             type="button"
             onClick={() => onValueChange('correlations')}
             className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-              preset === 'correlations' 
-                ? 'bg-background text-foreground shadow-sm' 
+              preset === 'correlations'
+                ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
             }`}
             aria-label={String(tAnalytics('aria.explore.correlationsTab'))}
@@ -93,10 +112,16 @@ export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps)
             <TabsTrigger value="charts" aria-label={String(tAnalytics('aria.explore.chartsTab'))}>
               {String(tAnalytics('explore.presets.charts'))}
             </TabsTrigger>
-            <TabsTrigger value="patterns" aria-label={String(tAnalytics('aria.explore.patternsTab'))}>
+            <TabsTrigger
+              value="patterns"
+              aria-label={String(tAnalytics('aria.explore.patternsTab'))}
+            >
               {String(tAnalytics('explore.presets.patterns'))}
             </TabsTrigger>
-            <TabsTrigger value="correlations" aria-label={String(tAnalytics('aria.explore.correlationsTab'))}>
+            <TabsTrigger
+              value="correlations"
+              aria-label={String(tAnalytics('aria.explore.correlationsTab'))}
+            >
               {String(tAnalytics('explore.presets.correlations'))}
             </TabsTrigger>
           </TabsList>
@@ -109,8 +134,23 @@ export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps)
             className="relative data-[state=active]:opacity-100 data-[state=inactive]:opacity-0 transition-opacity duration-200"
           >
             <ErrorBoundary>
-              <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('explore.loadingPreset', { preset: String(tAnalytics('explore.presets.charts')) }))} />}>
-                <LazyChartsPanel studentName={props.studentName} filteredData={props.filteredData} preferredChartType={props.preferredChartType} />
+              <Suspense
+                fallback={
+                  <div
+                    className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse"
+                    aria-label={String(
+                      tAnalytics('explore.loadingPreset', {
+                        preset: String(tAnalytics('explore.presets.charts')),
+                      }),
+                    )}
+                  />
+                }
+              >
+                <LazyChartsPanel
+                  studentName={props.studentName}
+                  filteredData={props.filteredData}
+                  preferredChartType={props.preferredChartType}
+                />
               </Suspense>
             </ErrorBoundary>
           </TabsContent>
@@ -122,8 +162,23 @@ export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps)
             className="relative data-[state=active]:opacity-100 data-[state=inactive]:opacity-0 transition-opacity duration-200"
           >
             <ErrorBoundary>
-              <Suspense fallback={<div className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('explore.loadingPreset', { preset: String(tAnalytics('explore.presets.patterns')) }))} />}>
-                <LazyPatternsPanel filteredData={props.filteredData} useAI={props.useAI} student={props.student} />
+              <Suspense
+                fallback={
+                  <div
+                    className="h-[360px] rounded-xl border bg-card motion-safe:animate-pulse"
+                    aria-label={String(
+                      tAnalytics('explore.loadingPreset', {
+                        preset: String(tAnalytics('explore.presets.patterns')),
+                      }),
+                    )}
+                  />
+                }
+              >
+                <LazyPatternsPanel
+                  filteredData={props.filteredData}
+                  useAI={props.useAI}
+                  student={props.student}
+                />
               </Suspense>
             </ErrorBoundary>
           </TabsContent>
@@ -135,7 +190,18 @@ export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps)
             className="relative data-[state=active]:opacity-100 data-[state=inactive]:opacity-0 transition-opacity duration-200"
           >
             <ErrorBoundary>
-              <Suspense fallback={<div className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse" aria-label={String(tAnalytics('explore.loadingPreset', { preset: String(tAnalytics('explore.presets.correlations')) }))} />}>
+              <Suspense
+                fallback={
+                  <div
+                    className="h-[420px] rounded-xl border bg-card motion-safe:animate-pulse"
+                    aria-label={String(
+                      tAnalytics('explore.loadingPreset', {
+                        preset: String(tAnalytics('explore.presets.correlations')),
+                      }),
+                    )}
+                  />
+                }
+              >
                 <LazyCorrelationsPanel filteredData={props.filteredData} />
               </Suspense>
             </ErrorBoundary>
@@ -145,5 +211,3 @@ export const ExplorePanel = memo(function ExplorePanel(props: ExplorePanelProps)
     </section>
   );
 });
-
-

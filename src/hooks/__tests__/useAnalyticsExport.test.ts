@@ -116,7 +116,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       expect(result.current.isExporting).toBe(false);
@@ -132,7 +132,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -150,7 +150,7 @@ describe('useAnalyticsExport', () => {
           data: expect.any(Object),
           analytics: expect.any(Object),
         }),
-        undefined
+        undefined,
       );
 
       expect(mockToast).toHaveBeenCalledWith({
@@ -170,7 +170,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       // Start export and capture progress
@@ -196,18 +196,14 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
         await result.current.exportTo('json');
       });
 
-      expect(mockExportTo).toHaveBeenCalledWith(
-        'json',
-        expect.any(Object),
-        undefined
-      );
+      expect(mockExportTo).toHaveBeenCalledWith('json', expect.any(Object), undefined);
 
       expect(mockToast).toHaveBeenCalledWith({
         title: 'export.success.json',
@@ -224,18 +220,14 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
         await result.current.exportTo('pdf');
       });
 
-      expect(mockExportTo).toHaveBeenCalledWith(
-        'pdf',
-        expect.any(Object),
-        undefined
-      );
+      expect(mockExportTo).toHaveBeenCalledWith('pdf', expect.any(Object), undefined);
 
       expect(mockToast).toHaveBeenCalledWith({
         title: 'export.success.pdf',
@@ -250,18 +242,16 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
         await result.current.exportTo('pdf', { chartQuality: 'high' });
       });
 
-      expect(mockExportTo).toHaveBeenCalledWith(
-        'pdf',
-        expect.any(Object),
-        { pdf: { chartQuality: 'high' } }
-      );
+      expect(mockExportTo).toHaveBeenCalledWith('pdf', expect.any(Object), {
+        pdf: { chartQuality: 'high' },
+      });
     });
 
     it('includes visualization element if provided', async () => {
@@ -275,7 +265,7 @@ describe('useAnalyticsExport', () => {
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
           visualizationRef,
-        })
+        }),
       );
 
       await act(async () => {
@@ -292,7 +282,7 @@ describe('useAnalyticsExport', () => {
             }),
           ]),
         }),
-        undefined
+        undefined,
       );
     });
 
@@ -307,7 +297,7 @@ describe('useAnalyticsExport', () => {
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
           visualizationRef,
-        })
+        }),
       );
 
       await act(async () => {
@@ -327,7 +317,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -352,7 +342,7 @@ describe('useAnalyticsExport', () => {
           filteredData: emptyData,
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -380,7 +370,7 @@ describe('useAnalyticsExport', () => {
           filteredData: dataWithStringTimestamps,
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -408,7 +398,7 @@ describe('useAnalyticsExport', () => {
           filteredData: dataWithInvalidTimestamp,
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -428,7 +418,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -456,7 +446,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: partialResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -483,13 +473,13 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await expect(
         act(async () => {
           await result.current.exportTo('csv');
-        })
+        }),
       ).rejects.toThrow('Export failed');
 
       expect(mockLogger.error).toHaveBeenCalledWith('Export failed:', error);
@@ -511,7 +501,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       try {
@@ -534,7 +524,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       // Start an export
@@ -560,7 +550,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: {},
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       await act(async () => {
@@ -582,7 +572,7 @@ describe('useAnalyticsExport', () => {
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
           visualizationRef,
-        })
+        }),
       );
 
       await act(async () => {
@@ -600,15 +590,12 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       // Start two exports simultaneously
       await act(async () => {
-        await Promise.all([
-          result.current.exportTo('csv'),
-          result.current.exportTo('json'),
-        ]);
+        await Promise.all([result.current.exportTo('csv'), result.current.exportTo('json')]);
       });
 
       // Both should complete
@@ -624,7 +611,7 @@ describe('useAnalyticsExport', () => {
           filteredData: createMockFilteredData(),
           analyticsResults: mockAnalyticsResults,
           tAnalytics: mockTAnalytics,
-        })
+        }),
       );
 
       expect(result.current.exportProgress).toBe(0);

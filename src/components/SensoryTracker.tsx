@@ -1,12 +1,12 @@
-import { useState, memo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { IntensityScale } from "@/components/ui/intensity-scale";
-import { SensoryEntry } from "@/types/student";
-import { Eye, Ear, Hand, RotateCcw, Activity } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { useState, memo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { IntensityScale } from '@/components/ui/intensity-scale';
+import { SensoryEntry } from '@/types/student';
+import { Eye, Ear, Hand, RotateCcw, Activity } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 interface SensoryTrackerProps {
   onSensoryAdd: (sensory: Omit<SensoryEntry, 'id' | 'timestamp'>) => void;
@@ -30,15 +30,35 @@ const responses = [
 
 // Common body locations for sensory experiences
 const bodyLocations = [
-  'Head', 'Eyes', 'Ears', 'Mouth', 'Neck', 'Shoulders',
-  'Arms', 'Hands', 'Chest', 'Back', 'Stomach', 'Legs', 'Feet'
+  'Head',
+  'Eyes',
+  'Ears',
+  'Mouth',
+  'Neck',
+  'Shoulders',
+  'Arms',
+  'Hands',
+  'Chest',
+  'Back',
+  'Stomach',
+  'Legs',
+  'Feet',
 ];
 
 // Common coping strategy suggestions
 const copingStrategySuggestions = [
-  'Deep breathing', 'Take a break', 'Use fidget tool', 'Movement break',
-  'Quiet space', 'Headphones', 'Weighted blanket', 'Sensory walk',
-  'Compression', 'Joint compressions', 'Chewing gum', 'Water break'
+  'Deep breathing',
+  'Take a break',
+  'Use fidget tool',
+  'Movement break',
+  'Quiet space',
+  'Headphones',
+  'Weighted blanket',
+  'Sensory walk',
+  'Compression',
+  'Joint compressions',
+  'Chewing gum',
+  'Water break',
 ];
 
 const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProps) => {
@@ -65,7 +85,7 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
   };
 
   const handleRemoveCopingStrategy = (strategy: string) => {
-    setCopingStrategies(copingStrategies.filter(s => s !== strategy));
+    setCopingStrategies(copingStrategies.filter((s) => s !== strategy));
   };
 
   const handleSubmit = () => {
@@ -95,22 +115,26 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
   return (
     <Card className="font-dyslexia bg-gradient-card border-0">
       <CardHeader>
-        <CardTitle className="text-xl text-foreground">{String(tTracking('sensory.title'))}</CardTitle>
+        <CardTitle className="text-xl text-foreground">
+          {String(tTracking('sensory.title'))}
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Sensory Type Selection */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">{String(tTracking('sensory.selectType'))}</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            {String(tTracking('sensory.selectType'))}
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {sensoryTypes.map((type) => {
               const Icon = type.icon;
               return (
                 <Button
                   key={type.type}
-                  variant={selectedType === type.type ? "default" : "outline"}
+                  variant={selectedType === type.type ? 'default' : 'outline'}
                   className={`h-16 flex items-center gap-3 justify-start font-dyslexia hover-lift press-scale transition-all duration-300 ${
-                    selectedType === type.type 
-                      ? 'bg-gradient-primary shadow-glow animate-bounce-in' 
+                    selectedType === type.type
+                      ? 'bg-gradient-primary shadow-glow animate-bounce-in'
                       : 'hover:scale-105 animate-fade-in hover:shadow-soft'
                   }`}
                   onClick={() => setSelectedType(type.type)}
@@ -119,7 +143,9 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
                 >
                   <Icon className="h-5 w-5 transform transition-transform duration-200 hover:scale-110" />
                   <div className="text-left">
-                    <div className="font-medium">{String(tTracking(`sensory.types.${type.type}`))}</div>
+                    <div className="font-medium">
+                      {String(tTracking(`sensory.types.${type.type}`))}
+                    </div>
                   </div>
                 </Button>
               );
@@ -130,22 +156,26 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
         {/* Response Type */}
         {selectedType && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">{String(tTracking('sensory.response'))}</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              {String(tTracking('sensory.response'))}
+            </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {responses.map((response) => (
                 <Button
                   key={response.type}
-                  variant={selectedResponse === response.type ? "default" : "outline"}
+                  variant={selectedResponse === response.type ? 'default' : 'outline'}
                   className={`h-16 flex-col gap-1 font-dyslexia hover-lift press-scale transition-all duration-300 ${
-                    selectedResponse === response.type 
-                      ? 'bg-gradient-primary shadow-glow animate-bounce-in' 
+                    selectedResponse === response.type
+                      ? 'bg-gradient-primary shadow-glow animate-bounce-in'
                       : 'hover:scale-105 animate-fade-in hover:shadow-soft'
                   }`}
                   onClick={() => setSelectedResponse(response.type)}
                   aria-label={`Select response: ${String(tTracking(`sensory.responses.${response.type}`))}`}
                   aria-pressed={selectedResponse === response.type}
                 >
-                  <span className="font-medium">{String(tTracking(`sensory.responses.${response.type}`))}</span>
+                  <span className="font-medium">
+                    {String(tTracking(`sensory.responses.${response.type}`))}
+                  </span>
                 </Button>
               ))}
             </div>
@@ -171,7 +201,7 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
               {bodyLocations.map((loc) => (
                 <Badge
                   key={loc}
-                  variant={location === loc ? "default" : "outline"}
+                  variant={location === loc ? 'default' : 'outline'}
                   className="cursor-pointer font-dyslexia hover-lift transition-all duration-200"
                   onClick={() => setLocation(location === loc ? '' : loc)}
                   role="button"
@@ -256,7 +286,9 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
 
         {/* Notes */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">{String(tTracking('sensory.notes'))}</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            {String(tTracking('sensory.notes'))}
+          </h3>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -266,7 +298,7 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
           />
         </div>
 
-        <Button 
+        <Button
           onClick={handleSubmit}
           disabled={!selectedType || !selectedResponse}
           className="w-full font-dyslexia bg-gradient-primary hover:opacity-90 transition-all duration-200"

@@ -8,11 +8,11 @@
  * @module insightsOrchestrator
  */
 
-import { computeInsights, type ComputeInsightsInputs } from "@/lib/insights/unified";
-import { buildInsightsCacheKey, buildInsightsTask } from "@/lib/insights/task";
-import { analyticsConfig, DEFAULT_ANALYTICS_CONFIG } from "@/lib/analyticsConfig";
-import { logger } from "@/lib/logger";
-import type { InsightsOptions, AnalyticsResult } from "@/types/insights";
+import { computeInsights, type ComputeInsightsInputs } from '@/lib/insights/unified';
+import { buildInsightsCacheKey, buildInsightsTask } from '@/lib/insights/task';
+import { analyticsConfig, DEFAULT_ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
+import { logger } from '@/lib/logger';
+import type { InsightsOptions, AnalyticsResult } from '@/types/insights';
 
 /**
  * Compute insights and return a minimal, stable AnalyticsResult summary.
@@ -62,33 +62,33 @@ import type { InsightsOptions, AnalyticsResult } from "@/types/insights";
  */
 export async function getInsights(
   inputs: ComputeInsightsInputs,
-  options?: InsightsOptions
+  options?: InsightsOptions,
 ): Promise<AnalyticsResult> {
   try {
     // Generate cache key for this computation
     const cacheKey = buildInsightsCacheKey(inputs, options);
 
     // Resolve configuration and TTL
-    const cfg = (() => {
-      try {
-        return analyticsConfig.getConfig();
-      } catch {
-        return DEFAULT_ANALYTICS_CONFIG;
-      }
-    })() || DEFAULT_ANALYTICS_CONFIG;
+    const cfg =
+      (() => {
+        try {
+          return analyticsConfig.getConfig();
+        } catch {
+          return DEFAULT_ANALYTICS_CONFIG;
+        }
+      })() || DEFAULT_ANALYTICS_CONFIG;
 
     const ttlMs = cfg?.cache?.ttl ?? DEFAULT_ANALYTICS_CONFIG.cache.ttl;
-    const ttlSeconds = typeof options?.ttlSeconds === 'number'
-      ? options.ttlSeconds
-      : Math.max(1, Math.floor(ttlMs / 1000));
+    const ttlSeconds =
+      typeof options?.ttlSeconds === 'number'
+        ? options.ttlSeconds
+        : Math.max(1, Math.floor(ttlMs / 1000));
 
     // Normalize tags with defaults
-    const tags = Array.from(new Set(["insights", "v2", ...(options?.tags ?? [])]));
+    const tags = Array.from(new Set(['insights', 'v2', ...(options?.tags ?? [])]));
 
     // Build config for computation
-    const fullCfg = options?.config
-      ? { config: (options.config as any) }
-      : { config: cfg as any };
+    const fullCfg = options?.config ? { config: options.config as any } : { config: cfg as any };
 
     // Compute detailed insights
     const detailed = await computeInsights(inputs, fullCfg as any);
@@ -125,7 +125,7 @@ export async function getInsights(
 
     const cacheKey = buildInsightsCacheKey(inputs, options);
     const ttlSeconds = typeof options?.ttlSeconds === 'number' ? options.ttlSeconds : 300;
-    const tags = Array.from(new Set(["insights", "v2", ...(options?.tags ?? [])]));
+    const tags = Array.from(new Set(['insights', 'v2', ...(options?.tags ?? [])]));
 
     return {
       cacheKey,

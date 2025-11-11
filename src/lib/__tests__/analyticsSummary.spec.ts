@@ -46,17 +46,35 @@ describe('generateAnalyticsSummary thresholds and trends', () => {
       { id: 'a', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] },
       { id: 'b', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] },
     ] as any[];
-    const res = await generateAnalyticsSummary({ entries, emotions, results: { patterns: [], correlations: [] } });
+    const res = await generateAnalyticsSummary({
+      entries,
+      emotions,
+      results: { patterns: [], correlations: [] },
+    });
     const hasLimited = res.insights.some((s) => /Limited data available/.test(s));
     expect(hasLimited).toBe(true);
   });
 
   it('caps items per MAX_*_TO_SHOW', async () => {
     const emotions = [] as any[];
-    const entries = new Array(10).fill(0).map((_, i) => ({ id: String(i), studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] })) as any[];
-    const patterns = new Array(10).fill(0).map((_, i) => ({ description: `p${i}`, confidence: 0.99 }));
-    const correlations = new Array(10).fill(0).map((_, i) => ({ description: `c${i}`, significance: 'high' }));
-    const res = await generateAnalyticsSummary({ entries, emotions, results: { patterns, correlations } });
+    const entries = new Array(10).fill(0).map((_, i) => ({
+      id: String(i),
+      studentId: 's1',
+      timestamp: new Date(),
+      emotions: [],
+      sensoryInputs: [],
+    })) as any[];
+    const patterns = new Array(10)
+      .fill(0)
+      .map((_, i) => ({ description: `p${i}`, confidence: 0.99 }));
+    const correlations = new Array(10)
+      .fill(0)
+      .map((_, i) => ({ description: `c${i}`, significance: 'high' }));
+    const res = await generateAnalyticsSummary({
+      entries,
+      emotions,
+      results: { patterns, correlations },
+    });
     // Expect at most 2 patterns and 2 correlations in defaults
     const patternMsgs = res.insights.filter((s) => /Pattern detected:/.test(s));
     const corrMsgs = res.insights.filter((s) => /Strong correlation found:/.test(s));
@@ -64,4 +82,3 @@ describe('generateAnalyticsSummary thresholds and trends', () => {
     expect(corrMsgs.length).toBeLessThanOrEqual(2);
   });
 });
-

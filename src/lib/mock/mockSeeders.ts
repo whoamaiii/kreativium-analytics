@@ -22,7 +22,9 @@ export interface SeedDemoOptions {
  * This function is idempotent with respect to student creation (unique ids each run)
  * but will append tracking entries each invocation.
  */
-export async function seedDemoData(options: SeedDemoOptions = {}): Promise<{ totalStudentsAffected: number; totalEntriesCreated: number; }>{
+export async function seedDemoData(
+  options: SeedDemoOptions = {},
+): Promise<{ totalStudentsAffected: number; totalEntriesCreated: number }> {
   const { forExistingStudents = true, createNewStudents = 0, batchesPerStudent = 1 } = options;
   let totalStudentsAffected = 0;
   let totalEntriesCreated = 0;
@@ -41,7 +43,7 @@ export async function seedDemoData(options: SeedDemoOptions = {}): Promise<{ tot
           } else {
             // Fallback: push into existing list if your storage supports it
             const students = dataStorage.getStudents();
-            if (!students.find(s => s.id === id) && (dataStorage as any).setStudents) {
+            if (!students.find((s) => s.id === id) && (dataStorage as any).setStudents) {
               (dataStorage as any).setStudents([...students, student]);
             }
           }
@@ -64,17 +66,22 @@ export async function seedDemoData(options: SeedDemoOptions = {}): Promise<{ tot
             dataStorage.saveTrackingEntry(entry);
             totalEntriesCreated++;
           } catch (e) {
-            logger.error('[seedDemoData] Failed to save tracking entry', { studentId: student.id, error: e });
+            logger.error('[seedDemoData] Failed to save tracking entry', {
+              studentId: student.id,
+              error: e,
+            });
           }
         }
       }
     }
 
-    logger.info('[seedDemoData] Demo data seeding complete', { totalStudentsAffected, totalEntriesCreated });
+    logger.info('[seedDemoData] Demo data seeding complete', {
+      totalStudentsAffected,
+      totalEntriesCreated,
+    });
   } catch (error) {
     logger.error('[seedDemoData] Seeding failed', { error });
   }
 
   return { totalStudentsAffected, totalEntriesCreated };
 }
-

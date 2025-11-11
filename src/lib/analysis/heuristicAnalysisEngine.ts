@@ -1,11 +1,25 @@
 import { dataStorage } from '@/lib/dataStorage';
-import { analyticsConfig, PRESET_CONFIGS, ANALYTICS_CONFIG, type AnalyticsConfiguration } from '@/lib/analyticsConfig';
-import { computeInsights, type ComputeInsightsInputs, type ComputeInsightsOptions } from '@/lib/insights/unified';
+import {
+  analyticsConfig,
+  PRESET_CONFIGS,
+  ANALYTICS_CONFIG,
+  type AnalyticsConfiguration,
+} from '@/lib/analyticsConfig';
+import {
+  computeInsights,
+  type ComputeInsightsInputs,
+  type ComputeInsightsOptions,
+} from '@/lib/insights/unified';
 import { logger } from '@/lib/logger';
 
 import type { EmotionEntry, SensoryEntry, TrackingEntry, Goal } from '@/types/student';
 import type { AnalyticsResults } from '@/types/analytics';
-import type { AnalysisEngine, TimeRange, AnalysisOptions, AnalyticsResultsAI } from './analysisEngine';
+import type {
+  AnalysisEngine,
+  TimeRange,
+  AnalysisOptions,
+  AnalyticsResultsAI,
+} from './analysisEngine';
 
 /**
  * Safely converts a Date, string, or undefined input to a Date object.
@@ -80,13 +94,16 @@ function deepMerge<T extends Record<string, any>>(target: T, source: Record<stri
  * @param options - Optional analysis options containing profile, features, and overrides
  * @returns The merged configuration with all options applied
  */
-function applyOptionsToConfig(base: AnalyticsConfiguration, options?: AnalysisOptions): AnalyticsConfiguration {
+function applyOptionsToConfig(
+  base: AnalyticsConfiguration,
+  options?: AnalysisOptions,
+): AnalyticsConfiguration {
   if (!options) return base;
 
   let cfg = { ...base } as AnalyticsConfiguration;
 
   // Profile preset (if matches known presets) - now preserves base config via deepMerge
-  if (options.profile && (options.profile in PRESET_CONFIGS)) {
+  if (options.profile && options.profile in PRESET_CONFIGS) {
     const preset = PRESET_CONFIGS[options.profile as keyof typeof PRESET_CONFIGS];
     if (preset?.config) {
       cfg = deepMerge(cfg, preset.config);
@@ -122,7 +139,7 @@ export class HeuristicAnalysisEngine implements AnalysisEngine {
   async analyzeStudent(
     studentId: string,
     timeframe?: TimeRange,
-    options?: AnalysisOptions
+    options?: AnalysisOptions,
   ): Promise<AnalyticsResultsAI> {
     // Validate input early
     if (!studentId || typeof studentId !== 'string') {
@@ -140,57 +157,80 @@ export class HeuristicAnalysisEngine implements AnalysisEngine {
       const end = toDate(timeframe?.end);
 
       // Filter tracking entries by timeframe (dates already parsed by getEntriesForStudent)
-      const trackingEntries: TrackingEntry[] = (start || end)
-        ? trackingEntriesAll.filter((e) => withinRange(e.timestamp, start, end))
-        : trackingEntriesAll;
+      const trackingEntries: TrackingEntry[] =
+        start || end
+          ? trackingEntriesAll.filter((e) => withinRange(e.timestamp, start, end))
+          : trackingEntriesAll;
 
       // Extract emotions/sensory without redundant timeframe filtering
-      const emotions: EmotionEntry[] = (start || end)
-        ? trackingEntries.flatMap((entry) => (entry.emotions || []))
-        : trackingEntriesAll.flatMap((entry) => (entry.emotions || []));
+      const emotions: EmotionEntry[] =
+        start || end
+          ? trackingEntries.flatMap((entry) => entry.emotions || [])
+          : trackingEntriesAll.flatMap((entry) => entry.emotions || []);
 
-      const sensoryInputs: SensoryEntry[] = (start || end)
-        ? trackingEntries.flatMap((entry) => (entry.sensoryInputs || []))
-        : trackingEntriesAll.flatMap((entry) => (entry.sensoryInputs || []));
+      const sensoryInputs: SensoryEntry[] =
+        start || end
+          ? trackingEntries.flatMap((entry) => entry.sensoryInputs || [])
+          : trackingEntriesAll.flatMap((entry) => entry.sensoryInputs || []);
 
       // Resolve configuration with overrides
       const liveConfig = (() => {
-        try { return analyticsConfig.getConfig(); } catch { return ANALYTICS_CONFIG as unknown as AnalyticsConfiguration; }
+        try {
+          return analyticsConfig.getConfig();
+        } catch {
+          return ANALYTICS_CONFIG as unknown as AnalyticsConfiguration;
+        }
       })();
       const mergedConfig = applyOptionsToConfig(liveConfig as AnalyticsConfiguration, options);
 
       // Prepare inputs for unified insights
-      const inputs: ComputeInsightsInputs = { entries: trackingEntries, emotions, sensoryInputs, goals };
+      const inputs: ComputeInsightsInputs = {
+        entries: trackingEntries,
+        emotions,
+        sensoryInputs,
+        goals,
+      };
       const computeOptions: ComputeInsightsOptions = { config: mergedConfig };
 
       // Delegate to unified insights computation
       const results = await computeInsights(inputs, computeOptions);
 
       // Optionally attach lightweight AI metadata for lineage/traceability
-      const aiMeta = options?.includeAiMetadata === true ? {
-        provider: 'heuristic',
-        model: 'unified-insights-v1',
-        createdAt: new Date().toISOString(),
-        dataLineage: [
-          {
-            source: 'local-storage',
-            type: 'tracking',
-            timeRange: start && end ? { start: start.toISOString(), end: end.toISOString() } : undefined,
-            fields: ['entries', 'emotions', 'sensoryInputs', 'goals'],
-            notes: 'Computed via heuristic engine using unified insights',
-          },
-        ],
-        caveats: [],
-        confidence: { overall: (results as any).confidence ?? 1 },
-      } : undefined;
+      const aiMeta =
+        options?.includeAiMetadata === true
+          ? {
+              provider: 'heuristic',
+              model: 'unified-insights-v1',
+              createdAt: new Date().toISOString(),
+              dataLineage: [
+                {
+                  source: 'local-storage',
+                  type: 'tracking',
+                  timeRange:
+                    start && end
+                      ? { start: start.toISOString(), end: end.toISOString() }
+                      : undefined,
+                  fields: ['entries', 'emotions', 'sensoryInputs', 'goals'],
+                  notes: 'Computed via heuristic engine using unified insights',
+                },
+              ],
+              caveats: [],
+              confidence: { overall: (results as any).confidence ?? 1 },
+            }
+          : undefined;
 
       return { ...(results as AnalyticsResults), ai: aiMeta } as AnalyticsResultsAI;
     } catch (error) {
-      logger.error('[HeuristicAnalysisEngine] analyzeStudent failed', { error: error instanceof Error ? { message: error.message, stack: error.stack, name: error.name } : error, studentId });
+      logger.error('[HeuristicAnalysisEngine] analyzeStudent failed', {
+        error:
+          error instanceof Error
+            ? { message: error.message, stack: error.stack, name: error.name }
+            : error,
+        studentId,
+      });
       return buildSafeResults({ error: 'HEURISTIC_ENGINE_ERROR' });
     }
   }
 }
 
 export default HeuristicAnalysisEngine;
-

@@ -10,10 +10,9 @@ interface EmotionCardProps {
 
 export function EmotionCard({ emotion, selected, onClick }: EmotionCardProps) {
   const { tCommon, tTracking } = useTranslation();
-  const label =
-    emotion.labelKey.startsWith('tracking:')
-      ? tTracking(emotion.labelKey.replace('tracking:', ''))
-      : tCommon(emotion.labelKey.replace('common:', ''));
+  const label = emotion.labelKey.startsWith('tracking:')
+    ? tTracking(emotion.labelKey.replace('tracking:', ''))
+    : tCommon(emotion.labelKey.replace('common:', ''));
 
   return (
     <button
@@ -24,16 +23,8 @@ export function EmotionCard({ emotion, selected, onClick }: EmotionCardProps) {
         selected ? 'bg-gradient-primary shadow-glow' : 'bg-card hover:shadow-soft'
       }`}
     >
-      {emotion.iconPath && (
-        <img src={emotion.iconPath} alt="" className="h-8 w-8" />
-      )}
+      {emotion.iconPath && <img src={emotion.iconPath} alt="" className="h-8 w-8" />}
       <span className="text-sm font-medium">{label}</span>
     </button>
   );
 }
-
-
-
-
-
-

@@ -13,9 +13,7 @@ import { logger } from '@/lib/logger';
 import App from './App';
 import './index.css';
 
-const root = ReactDOM.createRoot(
-  document.getElementById('root')!
-);
+const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 root.render(
   <React.StrictMode>
@@ -26,7 +24,7 @@ root.render(
       onError={(error, errorInfo) => {
         logger.error('[App] Caught error in root boundary', {
           error: error.message,
-          componentStack: errorInfo.componentStack
+          componentStack: errorInfo.componentStack,
         });
       }}
       onRecovered={() => {
@@ -35,7 +33,7 @@ root.render(
     >
       <App />
     </ErrorBoundary>
-  </React.StrictMode>
+  </React.StrictMode>,
 );
 ```
 
@@ -69,10 +67,7 @@ export function Dashboard() {
         </ChartErrorBoundary>
 
         {/* Statistics with data boundary */}
-        <DataErrorBoundary
-          operationName="StudentStats"
-          showNetworkStatus={true}
-        >
+        <DataErrorBoundary operationName="StudentStats" showNetworkStatus={true}>
           <StudentStats />
         </DataErrorBoundary>
 
@@ -157,17 +152,11 @@ export function AnalyticsCharts({ data }) {
   return (
     <div className="grid grid-cols-2 gap-4">
       {/* Each chart has its own error boundary */}
-      <ChartErrorBoundary
-        chartName="RevenueChart"
-        showSuggestions={true}
-      >
+      <ChartErrorBoundary chartName="RevenueChart" showSuggestions={true}>
         <RevenueChart data={data.revenue} />
       </ChartErrorBoundary>
 
-      <ChartErrorBoundary
-        chartName="TrendChart"
-        showSuggestions={true}
-      >
+      <ChartErrorBoundary chartName="TrendChart" showSuggestions={true}>
         <TrendChart data={data.trends} />
       </ChartErrorBoundary>
 
@@ -177,9 +166,7 @@ export function AnalyticsCharts({ data }) {
         fallback={
           <div className="p-4 bg-muted rounded">
             <p>Comparison chart failed to load</p>
-            <p className="text-sm text-muted-foreground">
-              This may be due to large dataset
-            </p>
+            <p className="text-sm text-muted-foreground">This may be due to large dataset</p>
           </div>
         }
       >
@@ -209,7 +196,7 @@ export function GamePage() {
       await gameManagerRef.current.reset();
 
       // Reinitialize with fresh state
-      setGameKey(prev => prev + 1);
+      setGameKey((prev) => prev + 1);
     } catch (error) {
       console.error('Failed to reset game:', error);
       throw error;
@@ -311,7 +298,7 @@ export function Reports() {
           page: 'Reports',
           componentStack: errorInfo.componentStack,
           timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent
+          userAgent: navigator.userAgent,
         });
       }}
       onRecovered={() => {
@@ -347,40 +334,37 @@ import { errorHandler, ErrorHandlerOptions } from '@/lib/errorHandler';
 import { getRetryStrategy } from '@/lib/errorRecovery';
 
 export function useErrorRecovery() {
-  const handleError = useCallback(
-    async (error: Error, options?: ErrorHandlerOptions) => {
-      const strategy = getRetryStrategy(error);
+  const handleError = useCallback(async (error: Error, options?: ErrorHandlerOptions) => {
+    const strategy = getRetryStrategy(error);
 
-      if (strategy.shouldRetry) {
-        logger.info('Error is retryable, scheduling retry', {
-          errorMessage: error.message,
-          maxAttempts: strategy.maxAttempts,
-          delayMs: strategy.delayMs
-        });
+    if (strategy.shouldRetry) {
+      logger.info('Error is retryable, scheduling retry', {
+        errorMessage: error.message,
+        maxAttempts: strategy.maxAttempts,
+        delayMs: strategy.delayMs,
+      });
 
-        let attempt = 0;
-        while (attempt < strategy.maxAttempts) {
-          await new Promise(resolve =>
-            setTimeout(resolve, strategy.delayMs * Math.pow(strategy.backoffMultiplier, attempt))
-          );
+      let attempt = 0;
+      while (attempt < strategy.maxAttempts) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, strategy.delayMs * Math.pow(strategy.backoffMultiplier, attempt)),
+        );
 
-          try {
-            await errorHandler.handle(error, options);
-            return true;
-          } catch (err) {
-            attempt++;
-            if (attempt >= strategy.maxAttempts) {
-              logger.error('Max retry attempts reached', { error });
-              throw err;
-            }
+        try {
+          await errorHandler.handle(error, options);
+          return true;
+        } catch (err) {
+          attempt++;
+          if (attempt >= strategy.maxAttempts) {
+            logger.error('Max retry attempts reached', { error });
+            throw err;
           }
         }
       }
+    }
 
-      return false;
-    },
-    []
-  );
+    return false;
+  }, []);
 
   return { handleError };
 }
@@ -395,7 +379,7 @@ function MyComponent() {
     } catch (error) {
       await handleError(error as Error, {
         showToast: true,
-        logError: true
+        logError: true,
       });
     }
   };
@@ -411,10 +395,7 @@ function MyComponent() {
 import { logger } from '@/lib/logger';
 import { classifyError, logErrorForReporting } from '@/lib/errorRecovery';
 
-export async function apiRequest<T>(
-  url: string,
-  options?: RequestInit
-): Promise<T> {
+export async function apiRequest<T>(url: string, options?: RequestInit): Promise<T> {
   const startTime = Date.now();
 
   try {
@@ -422,14 +403,12 @@ export async function apiRequest<T>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const error = new Error(
-        errorData.message || `HTTP ${response.status}`
-      );
+      const error = new Error(errorData.message || `HTTP ${response.status}`);
 
       logErrorForReporting(error, {
         url,
         status: response.status,
-        method: options?.method || 'GET'
+        method: options?.method || 'GET',
       });
 
       throw error;
@@ -440,7 +419,7 @@ export async function apiRequest<T>(
 
     logger.debug(`[API] ${options?.method || 'GET'} ${url}`, {
       status: response.status,
-      duration
+      duration,
     });
 
     return data;
@@ -452,7 +431,7 @@ export async function apiRequest<T>(
       method: options?.method || 'GET',
       duration,
       errorType: classification.type,
-      isRecoverable: classification.isRecoverable
+      isRecoverable: classification.isRecoverable,
     });
 
     // Let error propagate to error boundary
@@ -505,11 +484,7 @@ function TestErrorComponent({ errorType }: { errorType: string }) {
     }
   }
 
-  return (
-    <Button onClick={() => setThrowError(true)}>
-      Throw {errorType} Error
-    </Button>
-  );
+  return <Button onClick={() => setThrowError(true)}>Throw {errorType} Error</Button>;
 }
 
 export function ErrorBoundaryTester() {
@@ -523,12 +498,8 @@ export function ErrorBoundaryTester() {
       </p>
 
       <div className="grid grid-cols-2 gap-2">
-        {errorTypes.map(type => (
-          <ErrorBoundary
-            key={type}
-            name={`Test-${type}`}
-            maxRetries={2}
-          >
+        {errorTypes.map((type) => (
+          <ErrorBoundary key={type} name={`Test-${type}`} maxRetries={2}>
             <TestErrorComponent errorType={type} />
           </ErrorBoundary>
         ))}
@@ -589,4 +560,5 @@ Root/
 - [ ] Verify accessibility
 - [ ] Document any custom recovery strategies
 
-These examples provide a complete foundation for implementing robust error handling throughout your application.
+These examples provide a complete foundation for implementing robust error handling throughout your
+application.

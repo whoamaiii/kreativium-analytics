@@ -124,9 +124,7 @@ function timestampToMillis(value: unknown): number {
  * }, [dataSignature]); // Re-run only when data actually changes
  * ```
  */
-export function useAnalyticsData(
-  options: UseAnalyticsDataOptions
-): UseAnalyticsDataReturn {
+export function useAnalyticsData(options: UseAnalyticsDataOptions): UseAnalyticsDataReturn {
   const { filteredData } = options;
 
   /**
@@ -172,8 +170,7 @@ export function useAnalyticsData(
     const sensory = filteredData.sensoryInputs || [];
 
     const firstTimestamp = entries[0]?.timestamp;
-    const lastTimestamp =
-      entries.length > 0 ? entries[entries.length - 1]?.timestamp : undefined;
+    const lastTimestamp = entries.length > 0 ? entries[entries.length - 1]?.timestamp : undefined;
 
     return [
       entries.length,
@@ -189,10 +186,7 @@ export function useAnalyticsData(
    *
    * This prevents re-normalization when only object identity changes.
    */
-  const normalizedData = useMemo(
-    () => normalizeData(filteredData),
-    [normalizeData, dataSignature]
-  );
+  const normalizedData = useMemo(() => normalizeData(filteredData), [normalizeData, dataSignature]);
 
   return {
     normalizedData,
@@ -259,8 +253,7 @@ export function generateDataSignature(data: FilteredData): string {
   const sensory = data.sensoryInputs || [];
 
   const firstTimestamp = entries[0]?.timestamp;
-  const lastTimestamp =
-    entries.length > 0 ? entries[entries.length - 1]?.timestamp : undefined;
+  const lastTimestamp = entries.length > 0 ? entries[entries.length - 1]?.timestamp : undefined;
 
   return [
     entries.length,

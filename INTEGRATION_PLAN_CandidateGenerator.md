@@ -2,13 +2,16 @@
 
 ## Executive Summary
 
-**Objective**: Replace AlertDetectionEngine's candidate building methods with CandidateGenerator module
+**Objective**: Replace AlertDetectionEngine's candidate building methods with CandidateGenerator
+module
 
-**Impact**: Remove ~452 lines of duplicated code from engine.ts (832 lines → ~380 lines, 54% reduction)
+**Impact**: Remove ~452 lines of duplicated code from engine.ts (832 lines → ~380 lines, 54%
+reduction)
 
 **Risk Level**: LOW - The implementations are nearly identical with only architectural differences
 
-**Complexity**: MEDIUM - Requires understanding dependency injection pattern used by CandidateGenerator
+**Complexity**: MEDIUM - Requires understanding dependency injection pattern used by
+CandidateGenerator
 
 ---
 
@@ -17,6 +20,7 @@
 ### AlertDetectionEngine (engine.ts) - 832 lines
 
 **Candidate Building Methods (274 lines total):**
+
 - `buildEmotionCandidates()` - Lines 215-282 (68 lines)
 - `buildSensoryCandidates()` - Lines 284-337 (54 lines)
 - `buildAssociationCandidates()` - Lines 339-375 (37 lines)
@@ -24,18 +28,21 @@
 - `detectInterventionOutcomes()` - Lines 412-492 (81 lines)
 
 **Data Building Methods (136 lines total):**
+
 - `buildEmotionSeries()` - Lines 610-628 (19 lines)
 - `buildSensoryAggregates()` - Lines 631-657 (27 lines)
 - `buildAssociationDataset()` - Lines 660-715 (56 lines)
 - `buildBurstEvents()` - Lines 717-750 (34 lines)
 
 **Helper Methods (42 lines total):**
+
 - `computeDetectionQuality()` - Lines 753-761 (9 lines)
 - `safeDetect()` - Lines 795-802 (8 lines)
 - `lookupEmotionBaseline()` - Lines 804-814 (11 lines)
 - `lookupSensoryBaseline()` - Lines 816-829 (14 lines)
 
 **Methods to KEEP (engine-specific):**
+
 - `resolveExperimentKey()` - Lines 494-508
 - `createThresholdContext()` - Lines 510-532
 - `applyThreshold()` - Lines 534-586
@@ -60,6 +67,7 @@ constructor(opts?: {
 ```
 
 **Configuration Needed:**
+
 - `cusumConfig` - Engine has this at `this.cusumConfig`
 - `seriesLimit` - Engine has this at `this.seriesLimit`
 - `tauUDetector` - Engine has this at `this.tauUDetector`
@@ -67,7 +75,8 @@ constructor(opts?: {
 
 ### Public Methods - Candidate Building
 
-All methods use **dependency injection pattern** - they require `applyThreshold` and `createThresholdContext` to be passed as parameters:
+All methods use **dependency injection pattern** - they require `applyThreshold` and
+`createThresholdContext` to be passed as parameters:
 
 ```typescript
 buildEmotionCandidates(args: {
@@ -82,6 +91,7 @@ buildEmotionCandidates(args: {
 ```
 
 **Same pattern for:**
+
 - `buildSensoryCandidates(args)` - Lines 193-256
 - `buildAssociationCandidates(args)` - Lines 262-308
 - `buildBurstCandidates(args)` - Lines 314-357
@@ -101,6 +111,7 @@ buildBurstEvents(emotions: EmotionEntry[], sensory: SensoryEntry[]): BurstEvent[
 ### Private Helper Methods
 
 Identical to engine:
+
 - `computeDetectionQuality()` - Lines 619-627
 - `safeDetect()` - Lines 633-640
 - `lookupEmotionBaseline()` - Lines 646-656
@@ -113,6 +124,7 @@ Identical to engine:
 ### Dependency Injection Pattern
 
 **Engine Approach (Current):**
+
 ```typescript
 // Engine has applyThreshold and createThresholdContext as instance methods
 private buildEmotionCandidates(args) {
@@ -122,6 +134,7 @@ private buildEmotionCandidates(args) {
 ```
 
 **CandidateGenerator Approach:**
+
 ```typescript
 // Generator receives these as function parameters
 buildEmotionCandidates(args: {
@@ -135,6 +148,7 @@ buildEmotionCandidates(args: {
 ```
 
 **Benefits:**
+
 - Better separation of concerns
 - CandidateGenerator doesn't depend on ThresholdLearner or ABTestingService
 - Easier to test in isolation
@@ -147,6 +161,7 @@ buildEmotionCandidates(args: {
 ### 1. Constructor Changes
 
 **BEFORE:**
+
 ```typescript
 constructor(opts?: {
   baselineService?: BaselineService;
@@ -166,6 +181,7 @@ constructor(opts?: {
 ```
 
 **AFTER:**
+
 ```typescript
 private readonly generator: CandidateGenerator;
 
@@ -202,12 +218,14 @@ constructor(opts?: {
 ```
 
 **New Import Required:**
+
 ```typescript
 import { CandidateGenerator } from '@/lib/alerts/detection/candidateGenerator';
 import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';
 ```
 
 **Imports to REMOVE:**
+
 ```typescript
 // These are no longer directly used by engine
 import { detectEWMATrend, TrendPoint } from '@/lib/alerts/detectors/ewma';
@@ -218,6 +236,7 @@ import { detectBurst, BurstEvent } from '@/lib/alerts/detectors/burst';
 ```
 
 **Imports to KEEP:**
+
 ```typescript
 // Still needed for type exports and interface definitions
 import type { TrendPoint } from '@/lib/alerts/detectors/ewma';
@@ -227,6 +246,7 @@ import type { BurstEvent } from '@/lib/alerts/detectors/burst';
 ### 2. runDetection Method Changes
 
 **BEFORE (Lines 151-213):**
+
 ```typescript
 runDetection(input: DetectionInput): AlertEvent[] {
   // ... setup code
@@ -261,6 +281,7 @@ runDetection(input: DetectionInput): AlertEvent[] {
 ```
 
 **AFTER:**
+
 ```typescript
 runDetection(input: DetectionInput): AlertEvent[] {
   // ... setup code (unchanged)
@@ -325,7 +346,9 @@ runDetection(input: DetectionInput): AlertEvent[] {
 ```
 
 **Note on `.bind(this)`:**
-- Required because `applyThreshold` and `createThresholdContext` access `this.learner`, `this.experiments`, etc.
+
+- Required because `applyThreshold` and `createThresholdContext` access `this.learner`,
+  `this.experiments`, etc.
 - Ensures methods maintain correct `this` context when called from generator
 
 ### 3. Methods to DELETE from Engine
@@ -416,7 +439,8 @@ interface AssociationDataset extends AssociationDetectorInput {
 interface ApplyThresholdContext { ... }
 ```
 
-**Note:** CandidateGenerator has its own copies of these interfaces. The duplication is intentional for module independence.
+**Note:** CandidateGenerator has its own copies of these interfaces. The duplication is intentional
+for module independence.
 
 ---
 
@@ -425,12 +449,14 @@ interface ApplyThresholdContext { ... }
 ### Phase 1: Add CandidateGenerator Import and Instance
 
 **Step 1.1**: Add imports (after line 1)
+
 ```typescript
 import { CandidateGenerator } from '@/lib/alerts/detection/candidateGenerator';
 import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';
 ```
 
 **Step 1.2**: Add generator field to class (after line 108)
+
 ```typescript
 export class AlertDetectionEngine {
   private readonly baselineService: BaselineService;
@@ -445,6 +471,7 @@ export class AlertDetectionEngine {
 ```
 
 **Step 1.3**: Initialize generator in constructor (replace lines 130-141)
+
 ```typescript
 constructor(opts?: { ... }) {
   this.baselineService = opts?.baselineService ?? new BaselineService();
@@ -473,6 +500,7 @@ constructor(opts?: { ... }) {
 **Step 2.1**: Replace data building calls (lines 160-163)
 
 **BEFORE:**
+
 ```typescript
 const emotionSeries = this.buildEmotionSeries(input.emotions);
 const sensoryAgg = this.buildSensoryAggregates(input.sensory);
@@ -481,6 +509,7 @@ const burstEvents = this.buildBurstEvents(input.emotions, input.sensory);
 ```
 
 **AFTER:**
+
 ```typescript
 const emotionSeries = this.generator.buildEmotionSeries(input.emotions);
 const sensoryAgg = this.generator.buildSensoryAggregates(input.sensory);
@@ -491,6 +520,7 @@ const burstEvents = this.generator.buildBurstEvents(input.emotions, input.sensor
 **Step 2.2**: Replace emotion candidates call (lines 165-171)
 
 **BEFORE:**
+
 ```typescript
 const emotionCandidates = this.buildEmotionCandidates({
   emotionSeries,
@@ -502,6 +532,7 @@ const emotionCandidates = this.buildEmotionCandidates({
 ```
 
 **AFTER:**
+
 ```typescript
 const emotionCandidates = this.generator.buildEmotionCandidates({
   emotionSeries,
@@ -517,6 +548,7 @@ const emotionCandidates = this.generator.buildEmotionCandidates({
 **Step 2.3**: Replace sensory candidates call (lines 173-179)
 
 **BEFORE:**
+
 ```typescript
 const sensoryCandidates = this.buildSensoryCandidates({
   sensoryAggregates: sensoryAgg,
@@ -528,6 +560,7 @@ const sensoryCandidates = this.buildSensoryCandidates({
 ```
 
 **AFTER:**
+
 ```typescript
 const sensoryCandidates = this.generator.buildSensoryCandidates({
   sensoryAggregates: sensoryAgg,
@@ -543,6 +576,7 @@ const sensoryCandidates = this.generator.buildSensoryCandidates({
 **Step 2.4**: Replace association candidates call (lines 181-186)
 
 **BEFORE:**
+
 ```typescript
 const associationCandidates = this.buildAssociationCandidates({
   dataset: associationDataset,
@@ -553,6 +587,7 @@ const associationCandidates = this.buildAssociationCandidates({
 ```
 
 **AFTER:**
+
 ```typescript
 const associationCandidates = this.generator.buildAssociationCandidates({
   dataset: associationDataset,
@@ -567,6 +602,7 @@ const associationCandidates = this.generator.buildAssociationCandidates({
 **Step 2.5**: Replace burst candidates call (lines 188-193)
 
 **BEFORE:**
+
 ```typescript
 const burstCandidates = this.buildBurstCandidates({
   burstEvents,
@@ -577,6 +613,7 @@ const burstCandidates = this.buildBurstCandidates({
 ```
 
 **AFTER:**
+
 ```typescript
 const burstCandidates = this.generator.buildBurstCandidates({
   burstEvents,
@@ -591,11 +628,13 @@ const burstCandidates = this.generator.buildBurstCandidates({
 **Step 2.6**: Replace intervention outcomes call (line 195)
 
 **BEFORE:**
+
 ```typescript
 const tauCandidates = this.detectInterventionOutcomes(input, thresholdOverrides, nowTs);
 ```
 
 **AFTER:**
+
 ```typescript
 const tauCandidates = this.generator.detectInterventionOutcomes({
   interventions: input.interventions ?? [],
@@ -611,6 +650,7 @@ const tauCandidates = this.generator.detectInterventionOutcomes({
 ### Phase 3: Remove Duplicate Methods
 
 **Step 3.1**: Delete candidate building methods
+
 - Remove `buildEmotionCandidates()` (lines 215-282)
 - Remove `buildSensoryCandidates()` (lines 284-337)
 - Remove `buildAssociationCandidates()` (lines 339-375)
@@ -618,18 +658,21 @@ const tauCandidates = this.generator.detectInterventionOutcomes({
 - Remove `detectInterventionOutcomes()` (lines 412-492)
 
 **Step 3.2**: Delete data building methods
+
 - Remove `buildEmotionSeries()` (lines 610-628)
 - Remove `buildSensoryAggregates()` (lines 631-657)
 - Remove `buildAssociationDataset()` (lines 660-715)
 - Remove `buildBurstEvents()` (lines 717-750)
 
 **Step 3.3**: Delete helper methods
+
 - Remove `computeDetectionQuality()` (lines 753-761)
 - Remove `safeDetect()` (lines 795-802)
 - Remove `lookupEmotionBaseline()` (lines 804-814)
 - Remove `lookupSensoryBaseline()` (lines 816-829)
 
 **Step 3.4**: Keep necessary methods
+
 - KEEP `resolveExperimentKey()` (lines 494-508)
 - KEEP `createThresholdContext()` (lines 510-532)
 - KEEP `applyThreshold()` (lines 534-586)
@@ -639,6 +682,7 @@ const tauCandidates = this.generator.detectInterventionOutcomes({
 ### Phase 4: Clean Up Imports
 
 **Step 4.1**: Remove unused detector imports
+
 ```typescript
 // DELETE these (no longer directly used):
 import { detectEWMATrend, TrendPoint } from '@/lib/alerts/detectors/ewma';
@@ -650,6 +694,7 @@ import { detectBurst, BurstEvent } from '@/lib/alerts/detectors/burst';
 ```
 
 **Step 4.2**: Keep type-only imports
+
 ```typescript
 // KEEP for type definitions:
 import type { TrendPoint } from '@/lib/alerts/detectors/ewma';
@@ -658,6 +703,7 @@ import type { AssociationDetectorInput } from '@/lib/alerts/detectors/associatio
 ```
 
 **Step 4.3**: Remove utility imports no longer needed
+
 ```typescript
 // DELETE these (generator handles internally):
 import { normalizeTimestamp, buildAlertId, truncateSeries } from '@/lib/alerts/utils';
@@ -673,6 +719,7 @@ import { buildAlertId } from '@/lib/alerts/utils';
 ### Constructor - Before/After
 
 **BEFORE:**
+
 ```typescript
 constructor(opts?: {
   baselineService?: BaselineService;
@@ -699,6 +746,7 @@ constructor(opts?: {
 ```
 
 **AFTER:**
+
 ```typescript
 constructor(opts?: {
   baselineService?: BaselineService;
@@ -733,6 +781,7 @@ constructor(opts?: {
 ### runDetection - Key Section Before/After
 
 **BEFORE:**
+
 ```typescript
 runDetection(input: DetectionInput): AlertEvent[] {
   const now = input.now ?? new Date();
@@ -782,6 +831,7 @@ runDetection(input: DetectionInput): AlertEvent[] {
 ```
 
 **AFTER:**
+
 ```typescript
 runDetection(input: DetectionInput): AlertEvent[] {
   const now = input.now ?? new Date();
@@ -865,7 +915,9 @@ runDetection(input: DetectionInput): AlertEvent[] {
 ### LOW RISK ✓
 
 **Reasons:**
-1. **Identical Logic**: CandidateGenerator methods are nearly byte-for-byte identical to engine methods
+
+1. **Identical Logic**: CandidateGenerator methods are nearly byte-for-byte identical to engine
+   methods
 2. **Type Safety**: TypeScript will catch any signature mismatches
 3. **Dependency Injection**: Clear separation of concerns reduces coupling
 4. **No Behavior Change**: Pure refactoring with no logic modifications
@@ -874,16 +926,19 @@ runDetection(input: DetectionInput): AlertEvent[] {
 ### Potential Issues and Mitigations
 
 **Issue 1: `.bind(this)` overhead**
+
 - **Impact**: Minimal - bind is called once per detection run
 - **Mitigation**: None needed - performance impact is negligible
 - **Alternative**: Could pass methods as arrow functions if performance becomes concern
 
 **Issue 2: Interface duplication**
+
 - **Status**: `AlertCandidate`, `AssociationDataset`, `ApplyThresholdContext` exist in both files
 - **Impact**: None - intentional for module independence
 - **Mitigation**: Document this is by design
 
 **Issue 3: Missing type imports**
+
 - **Status**: TrendPoint, BurstEvent still needed for type definitions
 - **Impact**: None - import as type-only
 - **Mitigation**: Use `import type { ... }` syntax
@@ -929,17 +984,20 @@ const candidates = (engineAny.buildBurstCandidates as ...)({...});
 ### Test Migration Strategy
 
 **Option A: Delete Implementation Tests (RECOMMENDED)**
+
 - Remove lines 252-338 entirely
 - Reasoning: Testing private implementation details is fragile
 - Public API tests (lines 71-250) already validate behavior
 - CandidateGenerator should have its own unit tests
 
 **Option B: Migrate to CandidateGenerator Tests**
+
 - Create new test file: `candidateGenerator.test.ts`
 - Move these tests to test CandidateGenerator directly
 - Reasoning: Preserves test coverage but moves to correct location
 
 **Option C: Refactor to Test Public API**
+
 - Rewrite tests to only use `runDetection()` public method
 - Assert on result structure instead of intermediate data
 - Reasoning: More brittle, less useful
@@ -954,6 +1012,7 @@ const candidates = (engineAny.buildBurstCandidates as ...)({...});
 4. **Implementation Details**: These tests verify HOW not WHAT
 
 **Verification**: After deletion, run existing tests (lines 71-250). They should:
+
 - ✓ Still test emotion detection
 - ✓ Still test sensory detection
 - ✓ Still test association detection
@@ -967,11 +1026,14 @@ const candidates = (engineAny.buildBurstCandidates as ...)({...});
 ### Unit Tests
 
 **Test CandidateGenerator integration:**
+
 ```typescript
 describe('AlertDetectionEngine with CandidateGenerator', () => {
   it('should delegate emotion series building to generator', () => {
     const engine = new AlertDetectionEngine();
-    const emotions = [/* test data */];
+    const emotions = [
+      /* test data */
+    ];
 
     // Should call generator's method
     const result = engine.runDetection({
@@ -995,11 +1057,13 @@ describe('AlertDetectionEngine with CandidateGenerator', () => {
 ### Integration Tests
 
 **Existing tests should pass without modification:**
+
 - Alert detection integration tests (lines 71-250) ✓
 - End-to-end detection pipeline tests ✓
 - Threshold application tests ✓
 
 **Tests requiring updates:**
+
 - Private method tests (lines 252-338) - DELETE
 
 ### Manual Testing
@@ -1016,9 +1080,11 @@ describe('AlertDetectionEngine with CandidateGenerator', () => {
 ### Lines of Code
 
 **Before:**
+
 - engine.ts: 832 lines
 
 **After:**
+
 - engine.ts: ~380 lines (removal of 452 lines)
 - New import: 1 line
 - New field: 1 line
@@ -1030,17 +1096,21 @@ describe('AlertDetectionEngine with CandidateGenerator', () => {
 ### File Structure
 
 **Files Modified:**
+
 - `/home/user/kreativium-analytics/src/lib/alerts/engine.ts`
 
 **Files Added:**
+
 - None (CandidateGenerator already exists)
 
 **Files Deleted:**
+
 - None
 
 ### Performance Impact
 
 **Expected:** Negligible
+
 - Generator instantiation: Once per engine instance
 - `.bind()` calls: 10 per detection run (minimal overhead)
 - Method delegation: No additional overhead vs direct calls
@@ -1051,8 +1121,9 @@ describe('AlertDetectionEngine with CandidateGenerator', () => {
 
 ### Required Files
 
-✓ `/home/user/kreativium-analytics/src/lib/alerts/detection/candidateGenerator.ts` (exists)
-✓ `/home/user/kreativium-analytics/src/constants/analytics.ts` (exists - contains MAX_ALERT_SERIES_LENGTH)
+✓ `/home/user/kreativium-analytics/src/lib/alerts/detection/candidateGenerator.ts` (exists) ✓
+`/home/user/kreativium-analytics/src/constants/analytics.ts` (exists - contains
+MAX_ALERT_SERIES_LENGTH)
 
 ### No Breaking Changes
 
@@ -1073,6 +1144,7 @@ If integration causes issues:
 4. **Remove imports** - remove CandidateGenerator import
 
 **Git revert command:**
+
 ```bash
 git revert <commit-hash>
 ```
@@ -1081,12 +1153,8 @@ git revert <commit-hash>
 
 ## Success Criteria
 
-✓ All existing tests pass
-✓ No runtime errors in alert detection
-✓ Code reduction of ~450 lines achieved
-✓ No performance degradation
-✓ TypeScript compilation successful
-✓ No eslint errors
+✓ All existing tests pass ✓ No runtime errors in alert detection ✓ Code reduction of ~450 lines
+achieved ✓ No performance degradation ✓ TypeScript compilation successful ✓ No eslint errors
 
 ---
 
@@ -1116,12 +1184,14 @@ git revert <commit-hash>
 ## Appendix: Full Import Changes
 
 ### Imports to ADD:
+
 ```typescript
 import { CandidateGenerator } from '@/lib/alerts/detection/candidateGenerator';
 import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';
 ```
 
 ### Imports to REMOVE:
+
 ```typescript
 import { detectEWMATrend, TrendPoint } from '@/lib/alerts/detectors/ewma';
 import { detectCUSUMShift } from '@/lib/alerts/detectors/cusum';
@@ -1133,6 +1203,7 @@ import { normalizeTimestamp, buildAlertId, truncateSeries } from '@/lib/alerts/u
 ```
 
 ### Imports to MODIFY:
+
 ```typescript
 // Change from full import to type-only:
 import type { TrendPoint } from '@/lib/alerts/detectors/ewma';
@@ -1144,6 +1215,7 @@ import { buildAlertId } from '@/lib/alerts/utils';
 ```
 
 ### Final Import Block:
+
 ```typescript
 import { BaselineService, StudentBaseline } from '@/lib/alerts/baseline';
 import { AlertPolicies } from '@/lib/alerts/policies';
@@ -1164,7 +1236,13 @@ import type { BurstEvent } from '@/lib/alerts/detectors/burst';
 import type { AssociationDetectorInput } from '@/lib/alerts/detectors/association';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
-import type { EmotionEntry, Goal, Intervention, SensoryEntry, TrackingEntry } from '@/types/student';
+import type {
+  EmotionEntry,
+  Goal,
+  Intervention,
+  SensoryEntry,
+  TrackingEntry,
+} from '@/types/student';
 import { generateSparklineData } from '@/lib/chartUtils';
 import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import { DEFAULT_DETECTOR_THRESHOLDS, getDefaultDetectorThreshold } from '@/lib/alerts/constants';

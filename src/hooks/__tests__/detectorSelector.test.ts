@@ -6,25 +6,47 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 describe('detector selector', () => {
   beforeEach(() => {
-    try { localStorage.removeItem('emotion.detectorType'); } catch {}
+    try {
+      localStorage.removeItem('emotion.detectorType');
+    } catch {}
   });
 
   it('defaults to faceapi-worker when unset', () => {
-    const value = ((): string => { try { return localStorage.getItem('emotion.detectorType') || 'faceapi-worker'; } catch { return 'faceapi-worker'; } })();
+    const value = ((): string => {
+      try {
+        return localStorage.getItem('emotion.detectorType') || 'faceapi-worker';
+      } catch {
+        return 'faceapi-worker';
+      }
+    })();
     expect(value).toBe('faceapi-worker');
   });
 
   it('uses mediapipe when set', () => {
-    try { localStorage.setItem('emotion.detectorType', 'mediapipe'); } catch {}
-    const value = ((): string => { try { return localStorage.getItem('emotion.detectorType') || 'faceapi-worker'; } catch { return 'faceapi-worker'; } })();
+    try {
+      localStorage.setItem('emotion.detectorType', 'mediapipe');
+    } catch {}
+    const value = ((): string => {
+      try {
+        return localStorage.getItem('emotion.detectorType') || 'faceapi-worker';
+      } catch {
+        return 'faceapi-worker';
+      }
+    })();
     expect(value).toBe('mediapipe');
   });
 
   it('uses faceapi-main when set', () => {
-    try { localStorage.setItem('emotion.detectorType', 'faceapi-main'); } catch {}
-    const value = ((): string => { try { return localStorage.getItem('emotion.detectorType') || 'faceapi-worker'; } catch { return 'faceapi-worker'; } })();
+    try {
+      localStorage.setItem('emotion.detectorType', 'faceapi-main');
+    } catch {}
+    const value = ((): string => {
+      try {
+        return localStorage.getItem('emotion.detectorType') || 'faceapi-worker';
+      } catch {
+        return 'faceapi-worker';
+      }
+    })();
     expect(value).toBe('faceapi-main');
   });
 });
-
-

@@ -2,7 +2,10 @@
 
 ## Executive Summary
 
-This is a sophisticated React/TypeScript application with **30 pages** and **177 components**. The architecture demonstrates modern patterns including lazy loading, error boundaries, web workers for heavy computation, and state management via React hooks. However, several potential problem areas and architectural concerns have been identified.
+This is a sophisticated React/TypeScript application with **30 pages** and **177 components**. The
+architecture demonstrates modern patterns including lazy loading, error boundaries, web workers for
+heavy computation, and state management via React hooks. However, several potential problem areas
+and architectural concerns have been identified.
 
 ---
 
@@ -11,6 +14,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 ### Core Pages (src/pages/)
 
 #### Primary User-Facing Pages
+
 1. **Dashboard.tsx** - Main landing page with student list, stats cards, animations
    - Purpose: Central hub showing students, quick actions, KPI metrics
    - Pattern: Hooks-based with useDashboardData, useTranslation
@@ -41,6 +45,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 11. **ConfidenceCalibration.tsx** - Calibration for confidence metrics
 
 #### Specialized Pages
+
 - **TegnLayout.tsx** + nested routes - Sign language learning module
 - **EnhancedTrackStudent.tsx** - Enhanced session tracking variant
 - **ReportBuilderPage.tsx** - Advanced report generation
@@ -50,10 +55,12 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 - **NotFound.tsx** - 404 page
 
 #### Adult/Admin Routes
+
 - **adult/Overview.tsx** - Adult/admin dashboard
 - **adult/Reports.tsx** - Adult reporting interface
 
 #### Session-Based Routes
+
 - **session/Flow.tsx** - Session flow management
 
 ---
@@ -63,12 +70,12 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 ### Component Organization (177 total components)
 
 #### High-Level Container Components
+
 1. **AnalyticsDashboard.tsx** (Main analytics interface)
    - Uses lazy-loaded panels: LazyOverviewPanel, LazyChartsPanel, LazyPatternsPanel
    - Integrates with useAnalyticsWorker (web worker for heavy computation)
    - Tab-based navigation (overview, charts, patterns, correlations, alerts, calibration)
    - Export functionality with progress tracking
-   
 2. **StudentProfile.tsx** (Complex profile page)
    - Memoized subsections: DashboardSection, AnalyticsSection, ToolsSection
    - Data filtering with useDataFiltering hook
@@ -76,6 +83,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
    - Error boundaries for each section
 
 #### Form Components (Data Entry)
+
 - **EmotionTracker.tsx** - Emotion selection with intensity (1-5), triggers, notes
 - **SensoryTracker.tsx** - Sensory type/response with intensity, coping strategies
 - **EnvironmentalTracker.tsx** - Environmental conditions tracking
@@ -83,6 +91,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 - **GoalManager.tsx** - Goal CRUD with validation and milestones (150+ lines)
 
 #### Analytics & Visualization
+
 - **AnalyticsDashboard.tsx** - Main analytics renderer
 - **analytics-panels/** subdirectory (14 components):
   - AlertsPanel.tsx (complex filtering, bulk actions)
@@ -94,6 +103,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
   - EntryDetailsDrawer.tsx
 
 #### Data Display Components
+
 - **TimelineVisualization.tsx** - Timeline with resize handling
 - **Visualization3D.tsx** / **Visualization3D.poc.stub.tsx**
 - **InteractiveDataVisualization.tsx**
@@ -101,11 +111,13 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 - **TrendsChart.tsx**
 
 #### Dialog/Modal Components
+
 - **Dialog, Drawer, Sheet, AlertDialog** from shadcn/ui
 - CreateGoalFromAlertDialog
 - Multiple modal patterns throughout
 
 #### Navigation & Layout
+
 - **GlobalMenu.tsx** - Navigation menu
 - **LanguageSettings.tsx** - Language selector
 - **HelpAndSupport.tsx** - Help dialog
@@ -113,6 +125,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 - **SidebarProvider/SidebarTrigger** - Responsive sidebar
 
 #### Status & Feedback Components
+
 - **LoadingFallback.tsx** - Loading state fallback
 - **ErrorBoundary.tsx** - Error catching component
 - **ErrorWrapper.tsx** - Error wrapper utility
@@ -121,6 +134,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 - **AlertCard.tsx** / **AlertDetails.tsx** - Alert visualization
 
 #### Dashboard Components
+
 - **StatsCard.tsx** - KPI cards with trend indicators
 - **StudentsGrid.tsx** - Student listing grid
 - **EmptyState.tsx** - Empty state displays
@@ -135,6 +149,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 **Location:** `/src/components/ErrorBoundary.tsx` (256 lines)
 
 **Strengths:**
+
 - Class-based error boundary catches React rendering errors
 - Auto-recovery mechanism after 3+ errors (5-second delay)
 - Graceful fallback UI with buttons (Try Again, Reload, Go Home)
@@ -143,6 +158,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 - Toast notifications for user feedback
 
 **Weaknesses:**
+
 - ✗ Only catches React errors, NOT async errors or event handlers
 - ✗ Doesn't catch errors in hooks (useEffect, event callbacks)
 - ✗ Auto-reset timeout could interrupt legitimate error display
@@ -184,6 +200,7 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 ### State Management Architecture
 
 #### Primary Patterns
+
 1. **Local Component State** (useState)
    - Most components use local state for UI state (forms, modals, filters)
    - Good for isolated concerns
@@ -213,37 +230,42 @@ This is a sophisticated React/TypeScript application with **30 pages** and **177
 ### IDENTIFIED RACE CONDITIONS
 
 #### 1. **useDashboardData Hook - Multiple Listeners**
+
 ```typescript
 // src/hooks/useDashboardData.ts
 window.addEventListener('storage', handleStorageChange);
 window.addEventListener('analytics:cache:clear', handleAnalyticsCacheClear);
 window.addEventListener('mockDataLoaded', handleMockDataLoaded);
 ```
+
 **Issues:**
-- Multiple listeners on same events across hook instances (N*3 listeners if 3 instances)
+
+- Multiple listeners on same events across hook instances (N\*3 listeners if 3 instances)
 - No deduplication of event handlers
 - Events fired globally, all listeners execute
 - No guarantee of order execution
 - Storage event fires even from same tab on some browsers
 
-**Risk Level:** HIGH
-**Impact:** Performance degradation, data inconsistency on rapid updates
+**Risk Level:** HIGH **Impact:** Performance degradation, data inconsistency on rapid updates
 
 #### 2. **useStudentData - No Request Cancellation**
+
 ```typescript
 // Lines 46-83: loadData() function
 // No AbortController, no cleanup of pending requests
 // If studentId changes rapidly, multiple concurrent loads
 ```
+
 **Issues:**
+
 - useState setter called on unmounted component if load completes after unmount
 - No mechanism to cancel in-flight data loads
 - Setting state after unmount triggers React warning
 
-**Risk Level:** MEDIUM
-**Severity:** Memory leaks, stale state updates
+**Risk Level:** MEDIUM **Severity:** Memory leaks, stale state updates
 
 #### 3. **useAnalyticsWorker - Complex Async Coordination**
+
 ```typescript
 // Lines 206-320: Worker initialization with multiple state updates
 retainWorker();
@@ -254,16 +276,19 @@ if (!isMounted) {
 }
 // ...multiple async operations without proper sequencing
 ```
+
 **Issues:**
+
 - Race between isMounted check and next async operation
-- Worker manager has reference counting (retainWorker/releaseWorker) but could have off-by-one errors
+- Worker manager has reference counting (retainWorker/releaseWorker) but could have off-by-one
+  errors
 - Multiple concurrent runAnalysis calls could corrupt cache state
 - activeCacheKeyRef and cacheTagsRef updated without synchronization
 
-**Risk Level:** MEDIUM-HIGH
-**Severity:** Worker leaks, cache corruption, memory exhaustion
+**Risk Level:** MEDIUM-HIGH **Severity:** Worker leaks, cache corruption, memory exhaustion
 
 #### 4. **Form State with External Data Sync**
+
 ```typescript
 // TrackStudent.tsx
 const [emotions, setEmotions] = useState([]);
@@ -271,16 +296,18 @@ const [sensoryInputs, setSensoryInputs] = useState([]);
 const [environmentalData, setEnvironmentalData] = useState(null);
 // No dependency tracking - manual coordination
 ```
+
 **Issues:**
+
 - Multiple independent form state variables
 - Save handler manually coords all three
 - If save partially fails, state inconsistency
 - No optimistic updates or rollback
 
-**Risk Level:** MEDIUM
-**Severity:** Data loss on network errors
+**Risk Level:** MEDIUM **Severity:** Data loss on network errors
 
 #### 5. **useDataFiltering - Stale Closure**
+
 ```typescript
 // useMemo with selectedRange as dependency
 const filteredData = useMemo(() => {
@@ -288,46 +315,51 @@ const filteredData = useMemo(() => {
   const { start, end } = selectedRange;
 }, [trackingEntries, allEmotions, allSensoryInputs, selectedRange]);
 ```
+
 **Issues:**
+
 - If selectedRange object identity changes unexpectedly, filter recalculates
 - Date objects compared with === (reference equality)
 - subDays/startOfDay create new Date objects each render
 
-**Risk Level:** LOW
-**Severity:** Unnecessary recalculations, performance
+**Risk Level:** LOW **Severity:** Unnecessary recalculations, performance
 
 #### 6. **GoalManager - Two-Phase Update Without Transaction**
+
 ```typescript
 // Lines 144-150
-const goalToUpdate = goals.find(g => g.id === goalId);
+const goalToUpdate = goals.find((g) => g.id === goalId);
 if (!goalToUpdate) return;
 const updatedGoal = { ...goalToUpdate, ...updates };
 dataStorage.saveGoal(updatedGoal);
 loadGoals(); // Re-fetches entire goal list
 ```
+
 **Issues:**
+
 - Find + Update + Reload = 3 separate operations
 - If save fails, UI still shows old state
 - If loadGoals fails, no error handling
 - No error feedback to user
 
-**Risk Level:** MEDIUM
-**Severity:** Silent failures, inconsistent UI state
+**Risk Level:** MEDIUM **Severity:** Silent failures, inconsistent UI state
 
 #### 7. **AlertsPanel - Complex Filter State**
+
 ```typescript
 // Lines 45-91: Many filter state variables
 const [filterState, setFilterState] = useState(...);
 // Updated independently with no atomic transactions
 ```
+
 **Issues:**
+
 - 10+ filter variables (severity, kinds, timeWindow, dates, etc.)
 - Can be partially updated, rendering alerts in intermediate states
 - No loading state during filter application
 - Bulk actions operate on stale activeAlerts
 
-**Risk Level:** MEDIUM
-**Severity:** Inconsistent filter results, incorrect bulk operations
+**Risk Level:** MEDIUM **Severity:** Inconsistent filter results, incorrect bulk operations
 
 ---
 
@@ -336,6 +368,7 @@ const [filterState, setFilterState] = useState(...);
 ### Loading State Patterns
 
 #### Pattern 1: Simple isLoading Flag
+
 ```typescript
 // AddStudent.tsx
 const [isLoading, setIsLoading] = useState(false);
@@ -345,27 +378,32 @@ const handleSubmit = async (e) => {
   finally { setIsLoading(false); }
 }
 ```
-**Assessment:** ✓ Good - Simple, predictable
-**Issue:** Button disabled, no abort capability
+
+**Assessment:** ✓ Good - Simple, predictable **Issue:** Button disabled, no abort capability
 
 #### Pattern 2: useAsyncState Hook
+
 ```typescript
 const state = useAsyncState(null, { autoResetMs: 1000 });
 state.execute(() => apiCall());
 // Provides status, data, error, isLoading, etc.
 ```
-**Assessment:** ✓ Better - Comprehensive state tracking
-**Issue:** Auto-reset could hide errors too quickly
+
+**Assessment:** ✓ Better - Comprehensive state tracking **Issue:** Auto-reset could hide errors too
+quickly
 
 #### Pattern 3: useDashboardData Custom Hook
+
 ```typescript
 // Returns: { students, isLoading, ... }
 // But NO distinction between initial load and refresh
 // No loading state for specific operations
 ```
+
 **Assessment:** ⚠ Adequate - But lacks granularity
 
 #### Pattern 4: Lazy Component + Suspense
+
 ```typescript
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 // Inside App.tsx
@@ -375,15 +413,18 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
   </Routes>
 </Suspense>
 ```
-**Assessment:** ✓ Good - Code splitting with fallback
-**Issue:** LoadingFallback is minimal (just text)
+
+**Assessment:** ✓ Good - Code splitting with fallback **Issue:** LoadingFallback is minimal (just
+text)
 
 #### Pattern 5: Web Worker Progress
+
 ```typescript
 // AnalyticsDashboard.tsx lines 96, 169
 const [exportProgress, setExportProgress] = useState(0);
 // Updated by worker messages
 ```
+
 **Assessment:** ✓ Good - Provides user feedback
 
 ### Identified Loading Issues
@@ -400,6 +441,7 @@ const [exportProgress, setExportProgress] = useState(0);
 ### Form Components Analysis
 
 #### 1. AddStudent.tsx - Simple Form
+
 - **Validation:** Basic required field check + sanitizeInput()
 - **Schema:** Uses Zod schema (formValidation.ts) but not in validation
 - **Issues:**
@@ -409,6 +451,7 @@ const [exportProgress, setExportProgress] = useState(0);
   - ✗ No field-level error display
 
 #### 2. EmotionTracker.tsx - Complex Form
+
 ```typescript
 // Lines 46-93: Multi-part form
 const [selectedEmotion, setSelectedEmotion] = useState('');
@@ -419,13 +462,16 @@ const [escalationPattern, setEscalationPattern] = useState('unknown');
 const [notes, setNotes] = useState('');
 const [triggers, setTriggers] = useState<string[]>([]);
 ```
+
 **Assessment:**
+
 - ✓ Comprehensive emotion data capture
 - ✗ No validation until submit
 - ✗ No min/max validation (duration, intensity)
 - ✗ Sub-emotion list fixed in code (not dynamic)
 
 #### 3. GoalManager.tsx - Goal CRUD Form
+
 ```typescript
 // Lines 77-142: Create goal with validation
 if (!newGoal.title.trim() || !newGoal.description.trim()) {
@@ -435,33 +481,38 @@ if (!newGoal.title.trim() || !newGoal.description.trim()) {
 // Validates baseline < target
 // Validates target date in future
 ```
+
 **Assessment:**
+
 - ✓ Proper validation for date/values
 - ✗ Manual validation instead of Zod schema
 - ✗ No field-level error display
 - ✗ Validation errors only in toast (not persistent)
 
 #### 4. ExportDialog.tsx - Settings Form
+
 ```typescript
 // Lines 35-102: Export options with conditional disabling
 <Select disabled={inProgress} />
 // Disables based on format selection (PDF only for templates)
 ```
+
 **Assessment:**
+
 - ✓ Good conditional logic
 - ✓ Form state properly managed
 - ✗ No validation of output configuration
 
 ### Form Validation Issues Summary
 
-| Issue | Severity | Frequency |
-|-------|----------|-----------|
-| Missing Zod validation in forms | Medium | 80% of forms |
-| No real-time validation | Low | 100% |
-| No field-level error UI | Medium | 90% |
-| Manual state coordination | Medium | 60% |
-| No dirty state tracking | Low | 100% |
-| Missing required field indicators | Low | 70% |
+| Issue                             | Severity | Frequency    |
+| --------------------------------- | -------- | ------------ |
+| Missing Zod validation in forms   | Medium   | 80% of forms |
+| No real-time validation           | Low      | 100%         |
+| No field-level error UI           | Medium   | 90%          |
+| Manual state coordination         | Medium   | 60%          |
+| No dirty state tracking           | Low      | 100%         |
+| Missing required field indicators | Low      | 70%          |
 
 ---
 
@@ -470,6 +521,7 @@ if (!newGoal.title.trim() || !newGoal.description.trim()) {
 ### Modal Pattern Usage
 
 **Primary Dialog Library:** shadcn/ui components
+
 - Dialog, AlertDialog, Drawer, Sheet (Radix UI primitives)
 
 #### Implemented Modal Patterns
@@ -526,19 +578,22 @@ if (!newGoal.title.trim() || !newGoal.description.trim()) {
 ### Data Fetching Architecture
 
 #### 1. **dataStorage API** (localStorage wrapper)
+
 ```typescript
 // Usage: dataStorage.getStudentById(studentId)
 // Synchronous, no network calls
 // Built-in validation: validateStudent(), validateTrackingEntry()
 ```
-**Pattern:** Singleton DataStorageManager with storage index
-**Issues:**
+
+**Pattern:** Singleton DataStorageManager with storage index **Issues:**
+
 - ✗ No caching layer (reads localStorage every call)
 - ✗ No batch operations (must load all then filter)
 - ✗ Validation run on every load
 - ✓ Prevents invalid data persistence
 
 #### 2. **useAnalyticsWorker Hook** (Complex caching)
+
 - **Cache Implementation:** usePerformanceCache
 - **Cache Strategy:**
   - maxSize: 50 entries (configurable)
@@ -549,47 +604,54 @@ if (!newGoal.title.trim() || !newGoal.description.trim()) {
 **Cache Key:** buildInsightsCacheKey() based on entries, emotions, sensoryInputs, goals
 
 **Cache Operations:**
+
 - Hit: Return cached results
 - Miss: Compute via worker
 - Invalidation: By tag (student-id, goal-id, analytics, ai)
 
 **Issues:**
+
 - ✗ Tags computed at cache-miss time (could be stale)
 - ✗ No explicit cache warming before query
 - ✗ TTL doesn't account for data freshness
 - ✓ Comprehensive stats tracking available
 
 #### 3. **Event-Based Invalidation**
+
 ```typescript
 // useAnalyticsWorker.ts lines 451-471
 window.addEventListener('analytics:cache:clear', onClearAll);
 window.addEventListener('analytics:cache:clear:student', onClearStudent);
 ```
-**Pattern:** Broadcast events trigger cache clear
-**Issues:**
+
+**Pattern:** Broadcast events trigger cache clear **Issues:**
+
 - ✗ Events dispatched from worker, listeners in multiple hooks
 - ✗ No ordering guarantee
 - ✗ Could miss updates if listener added after event
 
 #### 4. **useDataFiltering - In-Memory Filter**
+
 ```typescript
 // Lines 18-55: useMemo for date range filtering
 // Re-filters entire array on selectedRange change
 ```
+
 **Issues:**
+
 - ✗ O(n) operation for every filter change
 - ✗ No incremental filtering
 - ✓ Memoization prevents unnecessary recalculations
 
 ### Caching Issues Summary
 
-| Pattern | Issue | Severity |
-|---------|-------|----------|
-| dataStorage | No caching | Medium |
-| Cache key generation | Stale tags | Low |
-| Event invalidation | Race conditions | Medium |
-| Date filtering | Full re-scan | Low |
-| Concurrent requests | No dedup | Medium |
+| Pattern              | Issue           | Severity |
+| -------------------- | --------------- | -------- |
+| dataStorage          | No caching      | Medium   |
+| Cache key generation | Stale tags      | Low      |
+| Event invalidation   | Race conditions | Medium   |
+| Date filtering       | Full re-scan    | Low      |
+| Concurrent requests  | No dedup        | Medium   |
 
 ---
 
@@ -598,49 +660,61 @@ window.addEventListener('analytics:cache:clear:student', onClearStudent);
 ### Components with Highest Complexity
 
 #### 1. **AnalyticsDashboard.tsx** (400+ lines)
+
 ```
 State Variables: 13+
 Hooks: 8+ custom hooks
 Lazy-Loaded Components: 6
 Memoization: Heavy memoization of subsections
 ```
+
 **Complexity Issues:**
+
 - ✗ Multiple useState for UI state (tab, export, settings, etc.)
 - ✗ Async operations (analysis, export) not fully coordinated
 - ✗ Tab param synced to URL (useSyncedTabParam)
 - ✓ Lazy loading reduces initial bundle
 
 #### 2. **StudentProfile.tsx** (380+ lines)
+
 ```
 State Variables: 8+
 Hooks: 9+ custom hooks
 Nested Memoization: 6 memoized components
 Data Dependencies: Complex web of interdependencies
 ```
+
 **Complexity Issues:**
+
 - ✗ Data from useStudentData, useDataFiltering, useOptimizedInsights
 - ✗ Prop drilling to subsections
 - ✗ Memoization of memoized components (unnecessarily deep)
 - ✗ Diagnostic logging suggests debugging issues
 
 #### 3. **AlertsPanel.tsx** (300+ lines)
+
 ```
 State Variables: 12+ filter variables
 Hooks: 6+ custom hooks
 Bulk Actions: Multiple coordinated operations
 ```
+
 **Complexity Issues:**
+
 - ✗ 10+ filter state variables, no Formik/react-hook-form
 - ✗ Bulk action results don't update alert list
 - ✗ Keyboard shortcuts implemented inline
 
 #### 4. **GoalManager.tsx** (250+ lines)
+
 ```
 State Variables: 8
 Dialogs: 1 create dialog
 CRUD Operations: Full lifecycle
 ```
+
 **Complexity Issues:**
+
 - ✗ Manual goal state management
 - ✗ No optimistic updates
 - ✗ loadGoals() called after every mutation
@@ -652,37 +726,46 @@ CRUD Operations: Full lifecycle
 ### Identified Anti-Patterns
 
 #### 1. **isMounted Anti-Pattern**
+
 Found in: useAsyncState, useAnalyticsWorker, useStudentData
+
 ```typescript
 const isMountedRef = useRef(true);
 useEffect(() => {
-  return () => { isMountedRef.current = false; };
+  return () => {
+    isMountedRef.current = false;
+  };
 }, []);
 
 // Later:
 if (!isMountedRef.current) return;
 ```
-**Why Bad:** React 18 introduces automatic cleanup, this pattern is redundant
-**Better Solution:** Use AbortController for async operations
+
+**Why Bad:** React 18 introduces automatic cleanup, this pattern is redundant **Better Solution:**
+Use AbortController for async operations
 
 #### 2. **Silent Error Swallowing**
+
 ```typescript
 try { logger.debug(...) } catch {}
 try { window.dispatchEvent(...) } catch {}
 ```
-**Issue:** Errors silently ignored without logging
-**Frequency:** Found 20+ times
+
+**Issue:** Errors silently ignored without logging **Frequency:** Found 20+ times
 
 #### 3. **Stale State in Closures**
+
 ```typescript
 const loadData = useCallback(() => {
   const s = dataStorage.getStudents(); // Closure over no deps
   setStudents(s);
 }, [studentId]); // Missing dependency
 ```
+
 **Issue:** Dependencies not properly specified
 
 #### 4. **No Abort on Unmount**
+
 ```typescript
 useEffect(() => {
   const load = async () => {
@@ -692,31 +775,40 @@ useEffect(() => {
   load();
 }, []);
 ```
+
 **Found in:** useStudentData, useDataAnalysis
 
 #### 5. **Double-Wrapped Try-Catch**
+
 ```typescript
 try {
-  try { doSomething(); } catch {}
+  try {
+    doSomething();
+  } catch {}
   doSomethingElse();
 } catch {}
 ```
+
 **Issue:** Nested try-catch with both swallowing errors
 
 #### 6. **No Validation After External Updates**
+
 ```typescript
 dataStorage.saveGoal(goal);
 loadGoals(); // Assumes success, no error handling
 ```
+
 **Issues:** No verification that save succeeded
 
 #### 7. **Memoization Over-Optimization**
+
 ```typescript
 const MemoizedDashboardSection = memo(DashboardSection);
 const MemoizedAnalyticsSection = memo(AnalyticsSection);
 const MemoizedToolsSection = memo(ToolsSection);
 // All dependencies constantly change
 ```
+
 **Issue:** Memoization ineffective if props always change
 
 ---
@@ -757,12 +849,14 @@ const MemoizedToolsSection = memo(ToolsSection);
 ### Accessibility Patterns Found
 
 ✓ **Good:**
+
 - ARIA labels on buttons: `aria-label={tCommon('navigation.students')}`
 - Role attributes: `role="status"`, `role="toolbar"`
 - aria-live regions: `aria-live="polite"`
 - Semantic HTML in forms
 
 ✗ **Issues:**
+
 - Loading fallback too minimal
 - Modal focus management unclear
 - Error messages only in toast (temporary)
@@ -812,31 +906,32 @@ const MemoizedToolsSection = memo(ToolsSection);
 
 ## 14. SUMMARY TABLE: Problem Areas
 
-| Area | Severity | Frequency | Impact |
-|------|----------|-----------|--------|
-| Race conditions (events) | HIGH | Multiple | Data inconsistency |
-| No request cancellation | MEDIUM | Common | Memory leaks |
-| Form validation | MEDIUM | Frequent | User errors |
-| Modal data sync | MEDIUM | Scattered | Stale UI |
-| isMounted pattern | MEDIUM | Multiple | React warnings |
-| Silent error catch | MEDIUM | Frequent | Debug difficulty |
-| State synchronization | MEDIUM | Multiple | Race conditions |
-| Complex component state | LOW | Frequent | Maintenance burden |
-| Loading states | LOW | Frequent | Poor UX |
-| Performance | LOW | Scattered | Slow on weak devices |
+| Area                     | Severity | Frequency | Impact               |
+| ------------------------ | -------- | --------- | -------------------- |
+| Race conditions (events) | HIGH     | Multiple  | Data inconsistency   |
+| No request cancellation  | MEDIUM   | Common    | Memory leaks         |
+| Form validation          | MEDIUM   | Frequent  | User errors          |
+| Modal data sync          | MEDIUM   | Scattered | Stale UI             |
+| isMounted pattern        | MEDIUM   | Multiple  | React warnings       |
+| Silent error catch       | MEDIUM   | Frequent  | Debug difficulty     |
+| State synchronization    | MEDIUM   | Multiple  | Race conditions      |
+| Complex component state  | LOW      | Frequent  | Maintenance burden   |
+| Loading states           | LOW      | Frequent  | Poor UX              |
+| Performance              | LOW      | Scattered | Slow on weak devices |
 
 ---
 
 ## 15. CONCLUSION
 
-**Overall Assessment:** Professional codebase with modern patterns but several critical race condition and state management issues.
+**Overall Assessment:** Professional codebase with modern patterns but several critical race
+condition and state management issues.
 
 **Risk Level:** MEDIUM - Production ready but with important edge cases
 
 **Priority Fixes:**
+
 1. Implement AbortController in all async operations
 2. Fix event listener proliferation
 3. Add proper form validation
 4. Implement batch operations in dataStorage
 5. Systematic error handling review
-

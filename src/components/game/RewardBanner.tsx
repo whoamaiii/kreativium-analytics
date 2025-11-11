@@ -20,7 +20,11 @@ export function RewardBanner({ visible, stars, xpGained }: RewardBannerProps) {
           exit={{ y: -16, opacity: 0 }}
           transition={{ type: 'spring', stiffness: 280, damping: 24 }}
         >
-          <div className="px-4 py-2 rounded-full bg-black/60 text-white shadow-lg backdrop-blur" role="status" aria-live="polite">
+          <div
+            className="px-4 py-2 rounded-full bg-black/60 text-white shadow-lg backdrop-blur"
+            role="status"
+            aria-live="polite"
+          >
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
                 {items.map((i) => (
@@ -48,6 +52,3 @@ export function RewardBanner({ visible, stars, xpGained }: RewardBannerProps) {
     </AnimatePresence>
   );
 }
-
-
-

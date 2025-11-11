@@ -14,8 +14,8 @@ function makeEntries(n: number) {
       sensoryInputs: [],
       environmentalData: {
         location: i % 2 === 0 ? 'classroom' : 'playground',
-        classroom: { activity: i % 3 === 0 ? 'instruction' : 'group-work', timeOfDay: 'morning' }
-      }
+        classroom: { activity: i % 3 === 0 ? 'instruction' : 'group-work', timeOfDay: 'morning' },
+      },
     });
   }
   return entries;
@@ -31,15 +31,20 @@ describe('Environmental correlations parity: worker fallback vs direct', () => {
     const direct = patternAnalysis.analyzeEnvironmentalCorrelations(entries as any);
 
     // Fallback (routes internally, but we can simulate via processAnalytics)
-    const results = await analyticsWorkerFallback.processAnalytics({ entries, emotions, sensoryInputs: sensory } as any);
+    const results = await analyticsWorkerFallback.processAnalytics({
+      entries,
+      emotions,
+      sensoryInputs: sensory,
+    } as any);
     const viaFallback = results.environmentalCorrelations || results.correlations || [];
 
-    const topDirect = JSON.stringify(direct.slice(0, 3).map(c => ({ f1: c.factor1, f2: c.factor2 })));
-    const topFallback = JSON.stringify((viaFallback || []).slice(0, 3).map((c: any) => ({ f1: c.factor1, f2: c.factor2 })));
+    const topDirect = JSON.stringify(
+      direct.slice(0, 3).map((c) => ({ f1: c.factor1, f2: c.factor2 })),
+    );
+    const topFallback = JSON.stringify(
+      (viaFallback || []).slice(0, 3).map((c: any) => ({ f1: c.factor1, f2: c.factor2 })),
+    );
 
     expect(topFallback).toBe(topDirect);
   });
 });
-
-
-

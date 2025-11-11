@@ -1,18 +1,22 @@
 # DetectionOrchestrator Integration Analysis
 
-**Agent**: Agent 3 - DetectionOrchestrator Integration Analysis
-**Date**: 2025-11-09
-**Status**: Analysis Complete - Ready for Implementation
+**Agent**: Agent 3 - DetectionOrchestrator Integration Analysis **Date**: 2025-11-09 **Status**:
+Analysis Complete - Ready for Implementation
 
 ---
 
 ## Executive Summary
 
-**Recommendation**: **Full Replacement** of AlertDetectionEngine.runDetection() with DetectionOrchestrator
+**Recommendation**: **Full Replacement** of AlertDetectionEngine.runDetection() with
+DetectionOrchestrator
 
 **Migration Complexity**: **Medium** (Architectural alignment needed)
 
-**Key Finding**: DetectionOrchestrator and AlertDetectionEngine implement **duplicate pipelines** with different architectures. DetectionOrchestrator properly delegates to extracted modules (CandidateGenerator), while AlertDetectionEngine has inline implementations. However, DetectionOrchestrator does NOT use the extracted resultAggregator and alertFinalizer modules, creating architectural inconsistency.
+**Key Finding**: DetectionOrchestrator and AlertDetectionEngine implement **duplicate pipelines**
+with different architectures. DetectionOrchestrator properly delegates to extracted modules
+(CandidateGenerator), while AlertDetectionEngine has inline implementations. However,
+DetectionOrchestrator does NOT use the extracted resultAggregator and alertFinalizer modules,
+creating architectural inconsistency.
 
 ---
 
@@ -58,12 +62,15 @@ runDetection(input: DetectionInput): AlertEvent[] {
 ```
 
 **Architecture**:
+
 - **Data Building**: 428 lines of inline methods (buildEmotionSeries, buildSensoryAggregates, etc.)
-- **Candidate Generation**: 280+ lines of inline methods (buildEmotionCandidates, buildSensoryCandidates, etc.)
+- **Candidate Generation**: 280+ lines of inline methods (buildEmotionCandidates,
+  buildSensoryCandidates, etc.)
 - **Alert Building**: Uses extracted modules (aggregateDetectorResults, finalizeAlertEvent)
 - **Total Engine Size**: 833 lines
 
 **Dependencies**:
+
 - BaselineService (instance)
 - AlertPolicies (instance)
 - ThresholdLearner (instance)
@@ -120,12 +127,15 @@ orchestrateDetection(input: DetectionInput): AlertEvent[] {
 ```
 
 **Architecture**:
+
 - **Data Building**: Delegates to CandidateGenerator (677 lines)
 - **Candidate Generation**: Delegates to CandidateGenerator with dependency injection
-- **Alert Building**: INLINE implementation (Lines 376-442) - does NOT use resultAggregator/alertFinalizer
+- **Alert Building**: INLINE implementation (Lines 376-442) - does NOT use
+  resultAggregator/alertFinalizer
 - **Total Orchestrator Size**: 479 lines
 
 **Dependencies**:
+
 - BaselineService (optional, defaults to new instance)
 - AlertPolicies (optional, defaults to new instance)
 - ThresholdLearner (optional, defaults to new instance)
@@ -142,42 +152,53 @@ orchestrateDetection(input: DetectionInput): AlertEvent[] {
 
 ### Pipeline Stage Comparison
 
-| Stage | AlertDetectionEngine | DetectionOrchestrator | Ideal Architecture |
-|-------|---------------------|----------------------|-------------------|
-| **Data Series Building** | Inline methods (160 lines) | Delegates to CandidateGenerator | ✅ CandidateGenerator |
-| **Candidate Generation** | Inline methods (280 lines) | Delegates to CandidateGenerator | ✅ CandidateGenerator |
-| **Result Aggregation** | Uses resultAggregator module | INLINE in buildAlert | ❌ Should use resultAggregator |
-| **Alert Finalization** | Uses alertFinalizer module | INLINE in buildAlert | ❌ Should use alertFinalizer |
-| **Threshold Management** | Inline methods (70 lines) | Inline methods (70 lines) | ⚠️ Both inline (acceptable) |
-| **Deduplication** | AlertPolicies | AlertPolicies | ✅ AlertPolicies |
+| Stage                    | AlertDetectionEngine         | DetectionOrchestrator           | Ideal Architecture             |
+| ------------------------ | ---------------------------- | ------------------------------- | ------------------------------ |
+| **Data Series Building** | Inline methods (160 lines)   | Delegates to CandidateGenerator | ✅ CandidateGenerator          |
+| **Candidate Generation** | Inline methods (280 lines)   | Delegates to CandidateGenerator | ✅ CandidateGenerator          |
+| **Result Aggregation**   | Uses resultAggregator module | INLINE in buildAlert            | ❌ Should use resultAggregator |
+| **Alert Finalization**   | Uses alertFinalizer module   | INLINE in buildAlert            | ❌ Should use alertFinalizer   |
+| **Threshold Management** | Inline methods (70 lines)    | Inline methods (70 lines)       | ⚠️ Both inline (acceptable)    |
+| **Deduplication**        | AlertPolicies                | AlertPolicies                   | ✅ AlertPolicies               |
 
 ### Code Duplication Analysis
 
 **Duplicate Implementations**:
 
 1. **Data Series Builders** (4 methods):
-   - `buildEmotionSeries()`: Engine has inline (18 lines), Orchestrator delegates to CandidateGenerator (18 lines)
-   - `buildSensoryAggregates()`: Engine has inline (25 lines), Orchestrator delegates to CandidateGenerator (25 lines)
-   - `buildAssociationDataset()`: Engine has inline (54 lines), Orchestrator delegates to CandidateGenerator (54 lines)
-   - `buildBurstEvents()`: Engine has inline (32 lines), Orchestrator delegates to CandidateGenerator (32 lines)
+   - `buildEmotionSeries()`: Engine has inline (18 lines), Orchestrator delegates to
+     CandidateGenerator (18 lines)
+   - `buildSensoryAggregates()`: Engine has inline (25 lines), Orchestrator delegates to
+     CandidateGenerator (25 lines)
+   - `buildAssociationDataset()`: Engine has inline (54 lines), Orchestrator delegates to
+     CandidateGenerator (54 lines)
+   - `buildBurstEvents()`: Engine has inline (32 lines), Orchestrator delegates to
+     CandidateGenerator (32 lines)
 
 2. **Candidate Builders** (5 methods):
-   - `buildEmotionCandidates()`: Engine has inline (65 lines), Orchestrator delegates to CandidateGenerator (77 lines)
-   - `buildSensoryCandidates()`: Engine has inline (52 lines), Orchestrator delegates to CandidateGenerator (43 lines)
-   - `buildAssociationCandidates()`: Engine has inline (37 lines), Orchestrator delegates to CandidateGenerator (30 lines)
-   - `buildBurstCandidates()`: Engine has inline (27 lines), Orchestrator delegates to CandidateGenerator (27 lines)
-   - `detectInterventionOutcomes()`: Engine has inline (80 lines), Orchestrator delegates to CandidateGenerator (75 lines)
+   - `buildEmotionCandidates()`: Engine has inline (65 lines), Orchestrator delegates to
+     CandidateGenerator (77 lines)
+   - `buildSensoryCandidates()`: Engine has inline (52 lines), Orchestrator delegates to
+     CandidateGenerator (43 lines)
+   - `buildAssociationCandidates()`: Engine has inline (37 lines), Orchestrator delegates to
+     CandidateGenerator (30 lines)
+   - `buildBurstCandidates()`: Engine has inline (27 lines), Orchestrator delegates to
+     CandidateGenerator (27 lines)
+   - `detectInterventionOutcomes()`: Engine has inline (80 lines), Orchestrator delegates to
+     CandidateGenerator (75 lines)
 
 3. **Alert Building**:
    - Engine: Uses `aggregateDetectorResults` + `finalizeAlertEvent` (extracted modules) ✅
    - Orchestrator: Inline implementation (66 lines) ❌
 
 4. **Threshold Management** (3 methods):
-   - Both have identical `applyThreshold()`, `createThresholdContext()`, `resolveExperimentKey()` implementations
+   - Both have identical `applyThreshold()`, `createThresholdContext()`, `resolveExperimentKey()`
+     implementations
 
 5. **Helper Methods**:
    - Both have `computeSeriesStats()` (identical)
-   - Engine has `computeDetectionQuality()`, `safeDetect()`, `lookupEmotionBaseline()`, `lookupSensoryBaseline()`
+   - Engine has `computeDetectionQuality()`, `safeDetect()`, `lookupEmotionBaseline()`,
+     `lookupSensoryBaseline()`
    - Orchestrator has these in CandidateGenerator
 
 **Total Duplication**: ~550 lines of duplicate code across Engine and CandidateGenerator
@@ -193,6 +214,7 @@ Replace AlertDetectionEngine.runDetection() with DetectionOrchestrator.orchestra
 **Feasibility**: ✅ **HIGH** - API signatures are identical
 
 **Input/Output Compatibility**:
+
 ```typescript
 // Both accept identical input
 interface DetectionInput {
@@ -211,6 +233,7 @@ return type: AlertEvent[]
 ```
 
 **Constructor Compatibility**:
+
 ```typescript
 // Engine constructor
 constructor(opts?: {
@@ -236,6 +259,7 @@ constructor(opts?: {
 ```
 
 **Required Changes**:
+
 1. Replace `runDetection()` with `orchestrateDetection()` (or add alias)
 2. Update buildAlert to use resultAggregator + alertFinalizer (avoid duplication)
 3. Remove duplicate data series and candidate generation methods from Engine
@@ -249,6 +273,7 @@ Keep runDetection() as thin wrapper around DetectionOrchestrator
 **Feasibility**: ✅ **HIGH** but creates unnecessary indirection
 
 **Implementation**:
+
 ```typescript
 class AlertDetectionEngine {
   private orchestrator: DetectionOrchestrator;
@@ -264,6 +289,7 @@ class AlertDetectionEngine {
 ```
 
 **Problems**:
+
 - Adds unnecessary layer of indirection
 - Maintains two classes for same functionality
 - Confusing for developers (which one to use?)
@@ -276,6 +302,7 @@ class AlertDetectionEngine {
 ### Current State
 
 **AlertDetectionEngine** (tight coupling):
+
 ```typescript
 constructor(opts) {
   this.baselineService = opts?.baselineService ?? new BaselineService();
@@ -287,6 +314,7 @@ constructor(opts) {
 ```
 
 **DetectionOrchestrator** (proper DI):
+
 ```typescript
 constructor(opts) {
   this.baselineService = opts?.baselineService ?? new BaselineService();
@@ -311,6 +339,7 @@ constructor(opts) {
 ### CUSUM Configuration
 
 **Engine**:
+
 ```typescript
 this.cusumConfig = {
   kFactor: configSource?.kFactor ?? 0.5,
@@ -320,6 +349,7 @@ this.cusumConfig = {
 ```
 
 **Orchestrator**:
+
 ```typescript
 const cusumConfig = {
   kFactor: ANALYTICS_CONFIG.alerts?.cusum?.kFactor ?? 0.5,
@@ -333,11 +363,13 @@ const cusumConfig = {
 ### Series Limit
 
 **Engine**:
+
 ```typescript
 this.seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SERIES_LENGTH));
 ```
 
 **Orchestrator**:
+
 ```typescript
 this.seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SERIES_LENGTH));
 ```
@@ -347,11 +379,13 @@ this.seriesLimit = Math.max(10, Math.min(365, opts?.seriesLimit ?? MAX_ALERT_SER
 ### Baseline Thresholds
 
 **Engine**:
+
 ```typescript
 this.baselineThresholds = { ...DEFAULT_DETECTOR_THRESHOLDS };
 ```
 
 **Orchestrator**:
+
 ```typescript
 this.baselineThresholds = { ...DEFAULT_DETECTOR_THRESHOLDS };
 ```
@@ -365,6 +399,7 @@ this.baselineThresholds = { ...DEFAULT_DETECTOR_THRESHOLDS };
 ### Threshold Context Creation
 
 Both use **identical** implementations:
+
 - `resolveExperimentKey()`: Maps AlertKind → experiment key
 - `createThresholdContext()`: Assigns experiment variant, records assignment
 - `applyThreshold()`: Applies learning + A/B testing adjustments
@@ -374,6 +409,7 @@ Both use **identical** implementations:
 ### Experiment Assignment
 
 Both use **identical** logic:
+
 ```typescript
 const existing = this.experiments.getAssignment(experimentKey, studentId);
 const variant = existing?.variant ?? this.experiments.getVariant(studentId, experimentKey);
@@ -417,11 +453,13 @@ class DetectionOrchestrator {
 ### Import Changes
 
 **Before**:
+
 ```typescript
 import { AlertDetectionEngine } from '@/lib/alerts/engine';
 ```
 
 **After**:
+
 ```typescript
 import { DetectionOrchestrator } from '@/lib/alerts/detection';
 // OR for backward compatibility:
@@ -436,7 +474,8 @@ import { DetectionOrchestrator as AlertDetectionEngine } from '@/lib/alerts/dete
 
 ### Phase 1: Align DetectionOrchestrator with Extracted Modules
 
-**Problem**: DetectionOrchestrator.buildAlert() is inline (66 lines) instead of using resultAggregator + alertFinalizer
+**Problem**: DetectionOrchestrator.buildAlert() is inline (66 lines) instead of using
+resultAggregator + alertFinalizer
 
 **Solution**: Update DetectionOrchestrator.buildAlert() to match AlertDetectionEngine pattern:
 
@@ -474,6 +513,7 @@ private buildAlert(candidate: AlertCandidate, studentId: string, nowTs: number):
 ```
 
 **Benefits**:
+
 - Removes 60 lines of duplicate code
 - Uses extracted, tested modules
 - Consistent with AlertDetectionEngine architecture
@@ -519,6 +559,7 @@ export default AlertDetectionEngine;
 **Step 2.2**: Remove all duplicate methods from AlertDetectionEngine
 
 Delete these methods (now handled by DetectionOrchestrator/CandidateGenerator):
+
 - `buildEmotionSeries()` (18 lines)
 - `buildSensoryAggregates()` (25 lines)
 - `buildAssociationDataset()` (54 lines)
@@ -551,6 +592,7 @@ Delete these methods (now handled by DetectionOrchestrator/CandidateGenerator):
 **6 months after Phase 2**:
 
 1. Mark AlertDetectionEngine as deprecated:
+
 ```typescript
 /** @deprecated Use DetectionOrchestrator instead. Will be removed in v3.0.0 */
 export class AlertDetectionEngine { ... }
@@ -589,15 +631,10 @@ export class DetectionOrchestrator {
     );
 
     // Step 2: Finalize alert event with metadata enrichment and policies
-    return finalizeAlertEvent(
-      candidate,
-      aggregated,
-      studentId,
-      {
-        seriesLimit: this.seriesLimit,
-        policies: this.policies,
-      },
-    );
+    return finalizeAlertEvent(candidate, aggregated, studentId, {
+      seriesLimit: this.seriesLimit,
+      policies: this.policies,
+    });
   }
 
   // Remove computeSeriesStats() - now in alertFinalizer
@@ -605,6 +642,7 @@ export class DetectionOrchestrator {
 ```
 
 **Changes**:
+
 - Remove 66 lines of inline buildAlert logic
 - Add 2 import statements
 - Replace buildAlert implementation with 2 function calls
@@ -698,12 +736,14 @@ export default AlertDetectionEngine;
 ### Complexity: MEDIUM
 
 **Why Medium and not Low**:
+
 1. Need to update DetectionOrchestrator.buildAlert() to use extracted modules (Phase 1)
 2. Need to refactor AlertDetectionEngine to wrapper pattern (Phase 2)
 3. Need to update tests to verify behavioral equivalence
 4. Need to update any direct imports of AlertDetectionEngine internals
 
 **Why Not High**:
+
 1. Public APIs are identical (no consumer changes needed)
 2. No database migrations or data transformations
 3. No configuration file changes
@@ -785,6 +825,7 @@ Before implementing, investigate:
 ### 1. Direct Usage of AlertDetectionEngine Internals
 
 Search for direct method calls to private methods:
+
 ```bash
 # Check if any code accesses AlertDetectionEngine internals
 grep -r "engine\.build" src/
@@ -800,6 +841,7 @@ grep -r "engine\.lookup" src/
 ### 2. Test Dependencies
 
 Check test files for dependencies on internal methods:
+
 ```bash
 # Check test files
 grep -r "buildEmotionSeries" src/**/*.test.ts
@@ -812,6 +854,7 @@ grep -r "applyThreshold" src/**/*.test.ts
 ### 3. Performance Benchmarks
 
 If performance tests exist, run before/after comparison:
+
 ```bash
 npm run test:performance
 ```
@@ -825,10 +868,12 @@ npm run test:performance
 ### Alternative 1: Keep Both Classes (NOT RECOMMENDED)
 
 **Pros**:
+
 - No migration needed
 - No risk of breaking changes
 
 **Cons**:
+
 - Maintains code duplication
 - Confuses developers (which one to use?)
 - Double maintenance burden
@@ -841,10 +886,12 @@ npm run test:performance
 ### Alternative 2: Merge Both into Single Class (NOT RECOMMENDED)
 
 **Pros**:
+
 - Single source of truth
 - No wrapper overhead
 
 **Cons**:
+
 - Creates massive monolith class
 - Loses modular architecture benefits
 - Harder to test individual components
@@ -857,10 +904,12 @@ npm run test:performance
 ### Alternative 3: Gradual Method-by-Method Replacement (NOT RECOMMENDED)
 
 **Pros**:
+
 - Lower risk per change
 - Easier to isolate failures
 
 **Cons**:
+
 - Long transition period with mixed architecture
 - Partial duplication remains
 - More complex to track progress
@@ -875,12 +924,14 @@ npm run test:performance
 ### Sprint 1: Preparation and Alignment
 
 **Week 1**:
+
 1. Run pre-migration investigation (Section 13)
 2. Update DetectionOrchestrator.buildAlert() to use extracted modules (Phase 1)
 3. Add comprehensive integration tests comparing Engine vs Orchestrator
 4. Verify behavioral equivalence
 
 **Deliverables**:
+
 - [ ] DetectionOrchestrator uses resultAggregator + alertFinalizer
 - [ ] Integration tests prove equivalence
 - [ ] Investigation report on internal method usage
@@ -890,12 +941,14 @@ npm run test:performance
 ### Sprint 2: Refactoring and Migration
 
 **Week 2**:
+
 1. Convert AlertDetectionEngine to wrapper pattern
 2. Remove all duplicate methods
 3. Update tests to pass with new implementation
 4. Add backward compatibility exports
 
 **Deliverables**:
+
 - [ ] AlertDetectionEngine is thin wrapper (~60 lines)
 - [ ] All tests pass
 - [ ] No breaking changes for consumers
@@ -906,12 +959,14 @@ npm run test:performance
 ### Sprint 3: Documentation and Cleanup
 
 **Week 3**:
+
 1. Update documentation (CLAUDE.md, inline docs)
 2. Add migration guide
 3. Add deprecation warnings
 4. Update any remaining direct usages
 
 **Deliverables**:
+
 - [ ] Updated documentation
 - [ ] Migration guide published
 - [ ] Deprecation warnings in place
@@ -951,12 +1006,15 @@ npm run test:performance
 **Recommended Approach**: Full replacement via wrapper pattern
 
 **Key Actions**:
+
 1. ✅ Update DetectionOrchestrator to use resultAggregator + alertFinalizer (align architecture)
-2. ✅ Convert AlertDetectionEngine to thin wrapper around DetectionOrchestrator (eliminate duplication)
+2. ✅ Convert AlertDetectionEngine to thin wrapper around DetectionOrchestrator (eliminate
+   duplication)
 3. ✅ Maintain backward compatibility via wrapper (zero breaking changes)
 4. ⏳ Deprecate AlertDetectionEngine in future release (migration path)
 
 **Benefits**:
+
 - 91% code reduction in AlertDetectionEngine
 - Eliminate ~550 lines of duplicate code
 - Consistent architecture across all modules
@@ -996,16 +1054,18 @@ The implementation agent (Agent 4) should:
    - Create migration guide
 
 **Files to Modify**:
+
 - `/home/user/kreativium-analytics/src/lib/alerts/detection/detectionOrchestrator.ts` (Phase 1)
 - `/home/user/kreativium-analytics/src/lib/alerts/engine.ts` (Phase 2)
 - `/home/user/kreativium-analytics/CLAUDE.md` (Phase 4)
 
 **Files to Create**:
+
 - Integration test file comparing Engine vs Orchestrator outputs
 
 ---
 
 **Analysis Complete** ✅
 
-Generated by: Agent 3 - DetectionOrchestrator Integration Analysis
-Ready for: Agent 4 - Implementation
+Generated by: Agent 3 - DetectionOrchestrator Integration Analysis Ready for: Agent 4 -
+Implementation

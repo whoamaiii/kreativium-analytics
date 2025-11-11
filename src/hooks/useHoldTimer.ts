@@ -17,25 +17,32 @@ export interface HoldState {
 export function useHoldTimer(options: UseHoldTimerOptions) {
   const { threshold, holdMs } = options;
   const startRef = useRef<number | null>(null);
-  const [state, setState] = useState<HoldState>({ progress: 0, isHolding: false, satisfied: false });
+  const [state, setState] = useState<HoldState>({
+    progress: 0,
+    isHolding: false,
+    satisfied: false,
+  });
 
-  const update = useCallback((probability: number, now: number = performance.now()) => {
-    const pass = probability >= threshold;
-    let progress = 0;
-    let isHolding = false;
-    let satisfied = false;
-    if (pass) {
-      if (startRef.current === null) startRef.current = now;
-      const elapsed = now - startRef.current;
-      progress = Math.max(0, Math.min(1, elapsed / holdMs));
-      isHolding = true;
-      satisfied = progress >= 1;
-    } else {
-      startRef.current = null;
-    }
-    setState({ progress, isHolding, satisfied });
-    return { progress, isHolding, satisfied };
-  }, [threshold, holdMs]);
+  const update = useCallback(
+    (probability: number, now: number = performance.now()) => {
+      const pass = probability >= threshold;
+      let progress = 0;
+      let isHolding = false;
+      let satisfied = false;
+      if (pass) {
+        if (startRef.current === null) startRef.current = now;
+        const elapsed = now - startRef.current;
+        progress = Math.max(0, Math.min(1, elapsed / holdMs));
+        isHolding = true;
+        satisfied = progress >= 1;
+      } else {
+        startRef.current = null;
+      }
+      setState({ progress, isHolding, satisfied });
+      return { progress, isHolding, satisfied };
+    },
+    [threshold, holdMs],
+  );
 
   const reset = useCallback(() => {
     startRef.current = null;
@@ -44,7 +51,3 @@ export function useHoldTimer(options: UseHoldTimerOptions) {
 
   return useMemo(() => ({ state, update, reset }), [state, update, reset]);
 }
-
-
-
-

@@ -87,5 +87,3 @@ export interface EChartsOptionUpdateOptions {
 }
 
 export type { EChartsOption };
-
-

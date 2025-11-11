@@ -71,8 +71,9 @@ export function isManagerTtlCacheDisabled(): boolean {
     })();
 
     // Support both disableManagerTTLCache and disableManagerTTL keys
-    const cfgFlag = (cfg?.cache as any)?.disableManagerTTLCache === true
-                 || (cfg?.cache as any)?.disableManagerTTL === true;
+    const cfgFlag =
+      (cfg?.cache as any)?.disableManagerTTLCache === true ||
+      (cfg?.cache as any)?.disableManagerTTL === true;
 
     if (cfgFlag) {
       return true;

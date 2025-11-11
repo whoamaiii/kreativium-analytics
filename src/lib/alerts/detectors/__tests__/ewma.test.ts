@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { detectEWMATrend } from '@/lib/alerts/detectors/ewma';
 import type { TrendPoint } from '@/lib/alerts/detectors/types';
-import { toTrendSeries, generateStableBaseline, generateStepChange, generateGradualTrend, injectOutliers, addMissing } from './syntheticData';
+import {
+  toTrendSeries,
+  generateStableBaseline,
+  generateStepChange,
+  generateGradualTrend,
+  injectOutliers,
+  addMissing,
+} from './syntheticData';
 import { isValidDetectorResult } from '@/lib/alerts/types';
 
 describe('EWMA detector', () => {
@@ -27,7 +34,11 @@ describe('EWMA detector', () => {
   it('detects gradual trend with sufficient slope', () => {
     const values = generateGradualTrend(200, 0, 0.05, 0.8, 987);
     const series = toTrendSeries(values);
-    const res = detectEWMATrend(series, { lambda: 0.25, minPoints: 30, targetFalseAlertsPerN: 336 });
+    const res = detectEWMATrend(series, {
+      lambda: 0.25,
+      minPoints: 30,
+      targetFalseAlertsPerN: 336,
+    });
     expect(res).not.toBeNull();
     expect(res!.score).toBeGreaterThan(0.1);
   });
@@ -61,11 +72,15 @@ describe('EWMA detector', () => {
   it('supports adaptive thresholds via baseline quality score', () => {
     const values = generateStableBaseline(200, 0, 1, 333);
     const series = toTrendSeries(values);
-    const conservative = detectEWMATrend(series, { baselineQualityScore: 0.3, targetFalseAlertsPerN: 336 });
-    const relaxed = detectEWMATrend(series, { baselineQualityScore: 0.95, targetFalseAlertsPerN: 336 });
+    const conservative = detectEWMATrend(series, {
+      baselineQualityScore: 0.3,
+      targetFalseAlertsPerN: 336,
+    });
+    const relaxed = detectEWMATrend(series, {
+      baselineQualityScore: 0.95,
+      targetFalseAlertsPerN: 336,
+    });
     expect(conservative === null || isValidDetectorResult(conservative)).toBeTruthy();
     expect(relaxed === null || isValidDetectorResult(relaxed)).toBeTruthy();
   });
 });
-
-

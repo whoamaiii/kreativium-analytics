@@ -8,14 +8,14 @@ import { createCacheKey } from '@/lib/analytics/cache-key';
 export function useOptimizedInsights(
   emotions: EmotionEntry[],
   sensoryInputs: SensoryEntry[],
-  trackingEntries: TrackingEntry[]
+  trackingEntries: TrackingEntry[],
 ) {
   const cache = usePerformanceCache({
     maxSize: 50,
     ttl: 10 * 60 * 1000, // 10 minutes
     // Important: Disable stats to avoid triggering state updates on cache hits/misses,
     // which can cause dependent effects to re-run endlessly in consumers.
-    enableStats: false
+    enableStats: false,
   });
 
   // Build a deterministic cache key using centralized utility to avoid shadowed logic
@@ -26,9 +26,24 @@ export function useOptimizedInsights(
       entries: trackingEntries?.length ?? 0,
     };
     const latest = {
-      emotions: emotions && emotions.length ? new Date(Math.max(...emotions.map(e => new Date(e.timestamp).getTime()))).toISOString() : null,
-      sensory: sensoryInputs && sensoryInputs.length ? new Date(Math.max(...sensoryInputs.map(s => new Date(s.timestamp).getTime()))).toISOString() : null,
-      entries: trackingEntries && trackingEntries.length ? new Date(Math.max(...trackingEntries.map(t => new Date(t.timestamp).getTime()))).toISOString() : null,
+      emotions:
+        emotions && emotions.length
+          ? new Date(
+              Math.max(...emotions.map((e) => new Date(e.timestamp).getTime())),
+            ).toISOString()
+          : null,
+      sensory:
+        sensoryInputs && sensoryInputs.length
+          ? new Date(
+              Math.max(...sensoryInputs.map((s) => new Date(s.timestamp).getTime())),
+            ).toISOString()
+          : null,
+      entries:
+        trackingEntries && trackingEntries.length
+          ? new Date(
+              Math.max(...trackingEntries.map((t) => new Date(t.timestamp).getTime())),
+            ).toISOString()
+          : null,
     };
     return createCacheKey({
       namespace: 'insights-local',
@@ -39,7 +54,7 @@ export function useOptimizedInsights(
 
   const getInsights = useCallback(async () => {
     const cacheKey = `insights_${dataCacheKey}`;
-    
+
     // Try to get from cache first
     const cached = cache.get(cacheKey);
     if (cached) {
@@ -49,29 +64,31 @@ export function useOptimizedInsights(
     // Generate new insights
     const [basicInsights, predictiveInsights] = await Promise.all([
       Promise.resolve(patternAnalysis.analyzeEmotionPatterns(emotions)),
-      Promise.resolve(enhancedPatternAnalysis.generatePredictiveInsights(
-        emotions,
-        sensoryInputs,
-        trackingEntries,
-        [] // goals would be passed here if available
-      ))
+      Promise.resolve(
+        enhancedPatternAnalysis.generatePredictiveInsights(
+          emotions,
+          sensoryInputs,
+          trackingEntries,
+          [], // goals would be passed here if available
+        ),
+      ),
     ]);
 
     const combinedInsights = {
       basic: basicInsights,
       predictive: predictiveInsights,
-      generatedAt: new Date().toISOString()
+      generatedAt: new Date().toISOString(),
     };
 
     // Cache the results
     cache.set(cacheKey, combinedInsights);
-    
+
     return combinedInsights;
   }, [dataCacheKey, cache, emotions, sensoryInputs, trackingEntries]);
 
   const getCorrelationMatrix = useCallback(() => {
     const cacheKey = `correlations_${dataCacheKey}`;
-    
+
     const cached = cache.get(cacheKey);
     if (cached) {
       return cached;
@@ -83,13 +100,13 @@ export function useOptimizedInsights(
 
     const correlations = enhancedPatternAnalysis.generateCorrelationMatrix(trackingEntries);
     cache.set(cacheKey, correlations);
-    
+
     return correlations;
   }, [dataCacheKey, cache, trackingEntries]);
 
   const getAnomalies = useCallback(() => {
     const cacheKey = `anomalies_${dataCacheKey}`;
-    
+
     const cached = cache.get(cacheKey);
     if (cached) {
       return cached;
@@ -98,9 +115,9 @@ export function useOptimizedInsights(
     const anomalies = enhancedPatternAnalysis.detectAnomalies(
       emotions,
       sensoryInputs,
-      trackingEntries
+      trackingEntries,
     );
-    
+
     cache.set(cacheKey, anomalies);
     return anomalies;
   }, [dataCacheKey, cache, emotions, sensoryInputs, trackingEntries]);
@@ -114,6 +131,6 @@ export function useOptimizedInsights(
     getCorrelationMatrix,
     getAnomalies,
     clearCache,
-    cacheStats: cache.stats
+    cacheStats: cache.stats,
   };
 }

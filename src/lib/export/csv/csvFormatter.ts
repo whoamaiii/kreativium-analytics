@@ -4,14 +4,8 @@
  * RFC 4180 compliant
  */
 
-import { format } from "date-fns";
-import type {
-  Student,
-  EmotionEntry,
-  SensoryEntry,
-  Goal,
-  TrackingEntry
-} from "@/types/student";
+import { format } from 'date-fns';
+import type { Student, EmotionEntry, SensoryEntry, Goal, TrackingEntry } from '@/types/student';
 
 /**
  * CSV formatting options
@@ -48,11 +42,7 @@ export interface AnonymizationOptions {
  * - Quote character (")
  * - Line breaks (\n, \r)
  */
-export function escapeCSVValue(
-  value: unknown,
-  delimiter = ',',
-  quoteAll = false
-): string {
+export function escapeCSVValue(value: unknown, delimiter = ',', quoteAll = false): string {
   if (value === null || value === undefined) {
     return '';
   }
@@ -60,11 +50,14 @@ export function escapeCSVValue(
   const stringValue = String(value);
 
   // Check if value needs quoting
-  const needsQuoting = quoteAll ||
+  const needsQuoting =
+    quoteAll ||
     stringValue.includes(delimiter) ||
     stringValue.includes('"') ||
     stringValue.includes('\n') ||
-    stringValue.includes('\r');
+    stringValue.includes('\r') ||
+    stringValue.includes('(') ||
+    stringValue.includes(')');
 
   if (!needsQuoting) {
     return stringValue;
@@ -80,7 +73,7 @@ export function escapeCSVValue(
  */
 export function formatDate(
   date: Date | string | undefined,
-  dateFormat = 'yyyy-MM-dd HH:mm'
+  dateFormat = 'yyyy-MM-dd HH:mm',
 ): string {
   if (!date) return '';
 
@@ -95,10 +88,7 @@ export function formatDate(
 /**
  * Format an array to a delimited string
  */
-export function formatArray(
-  arr: unknown[] | undefined,
-  separator = '; '
-): string {
+export function formatArray(arr: unknown[] | undefined, separator = '; '): string {
   if (!arr || arr.length === 0) return '';
   return arr.join(separator);
 }
@@ -111,7 +101,7 @@ export function flattenObject(
   obj: Record<string, unknown>,
   prefix = '',
   maxDepth = 2,
-  currentDepth = 0
+  currentDepth = 0,
 ): Record<string, unknown> {
   if (currentDepth >= maxDepth) {
     return { [prefix]: JSON.stringify(obj) };
@@ -131,7 +121,7 @@ export function flattenObject(
     } else if (typeof value === 'object') {
       Object.assign(
         result,
-        flattenObject(value as Record<string, unknown>, newKey, maxDepth, currentDepth + 1)
+        flattenObject(value as Record<string, unknown>, newKey, maxDepth, currentDepth + 1),
       );
     } else {
       result[newKey] = value;
@@ -146,7 +136,7 @@ export function flattenObject(
  */
 export function selectFields<T extends Record<string, unknown>>(
   obj: T,
-  options: FieldSelectionOptions
+  options: FieldSelectionOptions,
 ): Partial<T> {
   const { includeFields, excludeFields } = options;
 
@@ -183,7 +173,7 @@ export function anonymizeStudentName(studentId: string): string {
  */
 export function anonymizeStudent(
   student: Student,
-  options: AnonymizationOptions
+  options: AnonymizationOptions,
 ): Partial<Student> {
   const anonymized: Partial<Student> = { ...student };
 
@@ -207,13 +197,13 @@ export function anonymizeStudent(
  */
 export function anonymizeEmotion(
   emotion: EmotionEntry,
-  options: AnonymizationOptions
+  options: AnonymizationOptions,
 ): EmotionEntry {
   if (!options.anonymizeIds) return emotion;
 
   return {
     ...emotion,
-    studentId: emotion.studentId?.slice(-4)
+    studentId: emotion.studentId?.slice(-4),
   };
 }
 
@@ -222,28 +212,25 @@ export function anonymizeEmotion(
  */
 export function anonymizeSensory(
   sensory: SensoryEntry,
-  options: AnonymizationOptions
+  options: AnonymizationOptions,
 ): SensoryEntry {
   if (!options.anonymizeIds) return sensory;
 
   return {
     ...sensory,
-    studentId: sensory.studentId?.slice(-4)
+    studentId: sensory.studentId?.slice(-4),
   };
 }
 
 /**
  * Anonymize goal
  */
-export function anonymizeGoal(
-  goal: Goal,
-  options: AnonymizationOptions
-): Goal {
+export function anonymizeGoal(goal: Goal, options: AnonymizationOptions): Goal {
   if (!options.anonymizeIds) return goal;
 
   return {
     ...goal,
-    studentId: goal.studentId.slice(-4)
+    studentId: goal.studentId.slice(-4),
   };
 }
 
@@ -252,26 +239,23 @@ export function anonymizeGoal(
  */
 export function anonymizeTracking(
   tracking: TrackingEntry,
-  options: AnonymizationOptions
+  options: AnonymizationOptions,
 ): TrackingEntry {
   if (!options.anonymizeIds) return tracking;
 
   return {
     ...tracking,
-    studentId: tracking.studentId.slice(-4)
+    studentId: tracking.studentId.slice(-4),
   };
 }
 
 /**
  * Map custom column names
  */
-export function mapColumnNames(
-  headers: string[],
-  columnMap?: Record<string, string>
-): string[] {
+export function mapColumnNames(headers: string[], columnMap?: Record<string, string>): string[] {
   if (!columnMap) return headers;
 
-  return headers.map(header => columnMap[header] || header);
+  return headers.map((header) => columnMap[header] || header);
 }
 
 /**
@@ -286,12 +270,12 @@ export function generateUtf8Bom(): string {
  */
 export function filterByDateRange<T extends { timestamp: Date }>(
   data: T[],
-  dateRange?: { start: Date; end: Date }
+  dateRange?: { start: Date; end: Date },
 ): T[] {
   if (!dateRange) return data;
 
-  return data.filter(item =>
-    item.timestamp >= dateRange.start && item.timestamp <= dateRange.end
+  return data.filter(
+    (item) => item.timestamp >= dateRange.start && item.timestamp <= dateRange.end,
   );
 }
 
@@ -300,16 +284,19 @@ export function filterByDateRange<T extends { timestamp: Date }>(
  */
 export function groupBy<T extends Record<string, unknown>>(
   data: T[],
-  field: keyof T
+  field: keyof T,
 ): Record<string, T[]> {
-  return data.reduce((acc, item) => {
-    const key = String(item[field] || 'undefined');
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(item);
-    return acc;
-  }, {} as Record<string, T[]>);
+  return data.reduce(
+    (acc, item) => {
+      const key = String(item[field] || 'undefined');
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(item);
+      return acc;
+    },
+    {} as Record<string, T[]>,
+  );
 }
 
 /**

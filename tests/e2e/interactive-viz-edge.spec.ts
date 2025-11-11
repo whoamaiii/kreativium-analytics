@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 import { runAxeWithAppChromeHidden, writeAxeViolations } from '../utils/a11y';
 
 test.describe('Interactive Visualization edge cases', () => {
-  test.skip('Focus mode toggles and filters resilient [temporarily skipped to stabilize control visibility]', async ({ page }) => {
+  test.skip('Focus mode toggles and filters resilient [temporarily skipped to stabilize control visibility]', async ({
+    page,
+  }) => {
     await page.goto('/e2e/interactive-viz');
 
     // Switch to Focus Mode via layout menu and back, ensure headings persist
@@ -29,4 +31,3 @@ test.describe('Interactive Visualization edge cases', () => {
     expect(a11y.violations.length).toBe(0);
   });
 });
-

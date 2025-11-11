@@ -1,7 +1,14 @@
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "./ui/dialog";
-import { HelpCircle } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { Button } from './ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from './ui/dialog';
+import { HelpCircle } from 'lucide-react';
+import { useTranslation } from '@/hooks/useTranslation';
 
 /**
  * Renders a localized "Help & Support" dialog trigger and content.
@@ -25,9 +32,7 @@ export const HelpAndSupport = () => {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{tCommon('help.title')}</DialogTitle>
-          <DialogDescription>
-            {String(tCommon('help.description'))}
-          </DialogDescription>
+          <DialogDescription>{String(tCommon('help.description'))}</DialogDescription>
         </DialogHeader>
         <div>
           <p>{tCommon('help.description')}</p>

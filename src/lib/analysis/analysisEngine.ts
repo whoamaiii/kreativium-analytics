@@ -1,5 +1,5 @@
-import type { AnalyticsResults } from "../../types/analytics";
-import type { AiDataLineageItem } from "./aiSchema";
+import type { AnalyticsResults } from '../../types/analytics';
+import type { AiDataLineageItem } from './aiSchema';
 
 export interface TimeRange {
   start: Date | string;
@@ -25,7 +25,6 @@ export interface AiTokenUsage {
   cacheWriteTokens?: number;
 }
 
-
 export interface AiMetadata {
   provider?: string;
   model?: string;
@@ -48,7 +47,7 @@ export interface AnalysisEngine {
   analyzeStudent(
     studentId: string,
     timeframe?: TimeRange,
-    options?: AnalysisOptions
+    options?: AnalysisOptions,
   ): Promise<AnalyticsResultsAI>;
 }
 

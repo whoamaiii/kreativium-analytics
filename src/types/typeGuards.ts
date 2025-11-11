@@ -23,4 +23,3 @@ export function isSensoryEntry(obj: unknown): obj is SensoryEntry {
     typeof obj.response === 'string'
   );
 }
-

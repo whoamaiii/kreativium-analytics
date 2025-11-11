@@ -106,7 +106,10 @@ export function useWeeklyReports() {
     };
   }, [load]);
 
-  const latestReport = useMemo(() => (reports.length ? reports[reports.length - 1] : null), [reports]);
+  const latestReport = useMemo(
+    () => (reports.length ? reports[reports.length - 1] : null),
+    [reports],
+  );
   const trendSummaries = useMemo(() => calculateTrendsInternal(reports), [reports]);
 
   const getLatestReport = useCallback(() => latestReport, [latestReport]);

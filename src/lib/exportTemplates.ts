@@ -31,7 +31,7 @@ export function getLayoutConfig(template: ExportTemplate): LayoutConfig {
     chartSize: { width: 500, height: 300 },
     chartsPerPage: 2,
     includePageNumbers: true,
-    includeTimestamp: true
+    includeTimestamp: true,
   };
 
   switch (template) {
@@ -40,18 +40,18 @@ export function getLayoutConfig(template: ExportTemplate): LayoutConfig {
         ...base,
         chartSize: { width: 400, height: 250 },
         chartsPerPage: 3,
-        fontSize: { ...base.fontSize, base: 9 }
+        fontSize: { ...base.fontSize, base: 9 },
       };
-    
+
     case 'presentation':
       return {
         ...base,
         orientation: 'landscape',
         chartSize: { width: 700, height: 400 },
         chartsPerPage: 1,
-        fontSize: { base: 12, title: 20, subtitle: 14, caption: 10 }
+        fontSize: { base: 12, title: 20, subtitle: 14, caption: 10 },
       };
-    
+
     case 'detailed':
     default:
       return base;
@@ -65,7 +65,7 @@ export function getChartConfig(quality: ChartQuality, scheme: ColorScheme): Char
   const base: ChartConfig = {
     dpi: 150,
     format: 'png',
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
   };
 
   // Quality adjustments
@@ -119,4 +119,3 @@ export function getChartA11yDescription(chartType: string, data: any): string {
     return 'Data visualization';
   }
 }
-

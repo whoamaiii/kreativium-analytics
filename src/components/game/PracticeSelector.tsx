@@ -1,5 +1,11 @@
 import React from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useTranslation } from '@/hooks/useTranslation';
 
 type ExpressionKey = 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised';
@@ -26,12 +32,20 @@ export function PracticeSelector({ value, onChange }: PracticeSelectorProps) {
     <div className="inline-flex items-center gap-2">
       <span className="text-xs text-foreground/70">{String(tCommon('game.practice.label'))}</span>
       <Select value={value} onValueChange={(v) => onChange(v as PracticeSelectorProps['value'])}>
-        <SelectTrigger className="h-8 w-[180px]" aria-label={String(tCommon('game.practice.label'))}>
-          <SelectValue placeholder={String(tCommon('game.practice.placeholder'))} aria-label={String(tCommon('game.practice.placeholder'))} />
+        <SelectTrigger
+          className="h-8 w-[180px]"
+          aria-label={String(tCommon('game.practice.label'))}
+        >
+          <SelectValue
+            placeholder={String(tCommon('game.practice.placeholder'))}
+            aria-label={String(tCommon('game.practice.placeholder'))}
+          />
         </SelectTrigger>
         <SelectContent>
-          {OPTIONS.map(opt => (
-            <SelectItem key={opt.value} value={opt.value}>{String(tCommon(opt.labelKey))}</SelectItem>
+          {OPTIONS.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {String(tCommon(opt.labelKey))}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -40,5 +54,3 @@ export function PracticeSelector({ value, onChange }: PracticeSelectorProps) {
 }
 
 export default PracticeSelector;
-
-

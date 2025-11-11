@@ -1,14 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
-import { benchmarkComponentRender, calculateRenderImprovement, trainToyModel } from './performanceTester';
+import {
+  benchmarkComponentRender,
+  calculateRenderImprovement,
+  trainToyModel,
+} from './performanceTester';
 
 // Mock the LoadingSpinner for testing
-const MockLoadingSpinner = ({ size = 'md', message = 'Loading...' }: any) => (
-  React.createElement('div', { 
-    'data-testid': 'loading-spinner',
-    'data-size': size 
-  }, message)
-);
+const MockLoadingSpinner = ({ size = 'md', message = 'Loading...' }: any) =>
+  React.createElement(
+    'div',
+    {
+      'data-testid': 'loading-spinner',
+      'data-size': size,
+    },
+    message,
+  );
 
 describe('performanceTester', () => {
   it('completes toy workload under threshold', () => {
@@ -26,7 +33,7 @@ describe('performanceTester', () => {
       const result = await benchmarkComponentRender(
         'LoadingSpinner',
         () => React.createElement(MockLoadingSpinner, { size: 'md', message: 'Test' }),
-        { iterations: 50, timeoutMs: 3000 }
+        { iterations: 50, timeoutMs: 3000 },
       );
 
       expect(result.componentName).toBe('LoadingSpinner');
@@ -43,18 +50,18 @@ describe('performanceTester', () => {
       const propVariations = [
         { size: 'sm', message: 'Small' },
         { size: 'lg', message: 'Large' },
-        { size: 'md', message: 'Medium' }
+        { size: 'md', message: 'Medium' },
       ];
 
       const result = await benchmarkComponentRender(
         'LoadingSpinner-Rerenders',
         () => React.createElement(MockLoadingSpinner, { size: 'md', message: 'Initial' }),
-        { 
-          iterations: 30, 
-          testRerenders: true, 
+        {
+          iterations: 30,
+          testRerenders: true,
           propVariations,
-          timeoutMs: 3000
-        }
+          timeoutMs: 3000,
+        },
       );
 
       expect(result.rerenderCount).toBe(30);
@@ -67,7 +74,7 @@ describe('performanceTester', () => {
         averageRenderTime: 10,
         minRenderTime: 8,
         maxRenderTime: 15,
-        totalRenders: 100
+        totalRenders: 100,
       };
 
       const after = {
@@ -75,11 +82,11 @@ describe('performanceTester', () => {
         averageRenderTime: 6,
         minRenderTime: 5,
         maxRenderTime: 9,
-        totalRenders: 100
+        totalRenders: 100,
       };
 
       const improvement = calculateRenderImprovement(before, after);
-      
+
       expect(improvement.avgRenderTimeReduction).toBe(4);
       expect(improvement.improvementPercentage).toBe(40);
       expect(improvement.significant).toBe(true);
@@ -91,7 +98,7 @@ describe('performanceTester', () => {
         averageRenderTime: 10,
         minRenderTime: 8,
         maxRenderTime: 15,
-        totalRenders: 100
+        totalRenders: 100,
       };
 
       const after = {
@@ -99,11 +106,11 @@ describe('performanceTester', () => {
         averageRenderTime: 9.5,
         minRenderTime: 8,
         maxRenderTime: 14,
-        totalRenders: 100
+        totalRenders: 100,
       };
 
       const improvement = calculateRenderImprovement(before, after);
-      
+
       expect(improvement.improvementPercentage).toBe(5);
       expect(improvement.significant).toBe(false);
     });

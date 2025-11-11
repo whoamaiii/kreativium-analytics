@@ -1,7 +1,10 @@
 import { analyticsManager } from './analyticsManager';
 import { dataStorage } from './dataStorage';
 import { logger } from './logger';
-import { getValidatedConfig, validateAnalyticsRuntimeConfig } from '@/lib/analyticsConfigValidation';
+import {
+  getValidatedConfig,
+  validateAnalyticsRuntimeConfig,
+} from '@/lib/analyticsConfigValidation';
 
 /**
  * Universal Analytics Initializer
@@ -25,22 +28,23 @@ export class UniversalAnalyticsInitializer {
   async initializeUniversalAnalytics(): Promise<void> {
     if (this.initialized) return;
 
-try {
+    try {
       // Validate configuration once at initialization to fail-soft fast
       const { meta } = validateAnalyticsRuntimeConfig(getValidatedConfig());
       if (!meta.isValid) {
-        logger.warn('[UniversalAnalyticsInitializer] Using default analytics configuration due to validation errors');
+        logger.warn(
+          '[UniversalAnalyticsInitializer] Using default analytics configuration due to validation errors',
+        );
       }
       // Get all existing students
       const students = dataStorage.getStudents();
-      
+
       // Initialize analytics for each student
       for (const student of students) {
         await this.ensureStudentHasAnalytics(student.id);
       }
-      
+
       this.initialized = true;
-      
     } catch (error) {
       logger.error('Error initializing universal analytics:', error);
     }
@@ -53,8 +57,6 @@ try {
     try {
       // Initialize analytics infrastructure only
       analyticsManager.initializeStudentAnalytics(studentId);
-      
-      
     } catch (error) {
       logger.error(`Error ensuring analytics for student ${studentId}:`, error);
     }
@@ -77,11 +79,11 @@ try {
   } {
     const students = dataStorage.getStudents();
     const analyticsStatus = analyticsManager.getAnalyticsStatus();
-    
+
     return {
       isInitialized: this.initialized,
-      studentsWithAnalytics: analyticsStatus.filter(s => s.isInitialized).length,
-      totalStudents: students.length
+      studentsWithAnalytics: analyticsStatus.filter((s) => s.isInitialized).length,
+      totalStudents: students.length,
     };
   }
 
@@ -98,4 +100,6 @@ try {
 export const universalAnalyticsInitializer = UniversalAnalyticsInitializer.getInstance();
 
 // Auto-initialize on import (runs once when the module is loaded)
-universalAnalyticsInitializer.initializeUniversalAnalytics().catch((error) => logger.error('Auto-initialization failed:', error));
+universalAnalyticsInitializer
+  .initializeUniversalAnalytics()
+  .catch((error) => logger.error('Auto-initialization failed:', error));

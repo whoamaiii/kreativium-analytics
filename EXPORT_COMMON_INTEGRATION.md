@@ -1,14 +1,18 @@
 # Export Common Utilities - Integration Report
 
 ## Overview
-Extracted shared data collection and preparation logic from `exportSystem.ts` into focused, reusable modules under `src/lib/export/common/`.
+
+Extracted shared data collection and preparation logic from `exportSystem.ts` into focused, reusable
+modules under `src/lib/export/common/`.
 
 ## Created Files
 
 ### 1. exportOptions.ts (313 lines)
+
 **Purpose**: Type definitions and validation for export configuration
 
 **Key Exports**:
+
 - `ExportOptions` - Core options interface for all export formats
 - `ExportDataCollection` - Standardized data structure for exports
 - `ExportMetadata` - Metadata calculated from export data
@@ -16,6 +20,7 @@ Extracted shared data collection and preparation logic from `exportSystem.ts` in
 - `ValidationResult` - Validation feedback structure
 
 **Functions**:
+
 ```typescript
 // Validate export options
 validateExportOptions(options: Partial<ExportOptions>): ValidationResult
@@ -38,6 +43,7 @@ isExportTooLarge(data: ExportDataCollection, options: ExportOptions): {
 ```
 
 **Constants**:
+
 - `DEFAULT_EXPORT_OPTIONS` - Sensible defaults
 - `AVAILABLE_FIELDS` - Valid field names
 - `NESTED_FIELD_PATHS` - Dot notation support
@@ -45,11 +51,13 @@ isExportTooLarge(data: ExportDataCollection, options: ExportOptions): {
 ---
 
 ### 2. dataCollector.ts (392 lines)
+
 **Purpose**: Memory-efficient data collection, filtering, and grouping
 
 **Key Functions**:
 
 #### Primary Collection
+
 ```typescript
 // Collect and filter all export data
 collectExportData(
@@ -66,6 +74,7 @@ collectExportData(
 ```
 
 #### Filtering
+
 ```typescript
 // Apply date range filter to timestamped data
 // Optimized for large datasets with early exit
@@ -82,6 +91,7 @@ filterByStudentIds<T extends { studentId?: string }>(
 ```
 
 #### Grouping
+
 ```typescript
 // Group data by dimension (student, date, goal)
 // Returns Map for efficient lookup
@@ -92,6 +102,7 @@ groupDataBy<T extends { studentId?: string; timestamp?: Date }>(
 ```
 
 #### Metadata
+
 ```typescript
 // Calculate comprehensive metadata
 calculateExportMetadata(
@@ -109,6 +120,7 @@ getDataStatistics(data: ExportDataCollection): {
 ```
 
 #### Streaming Support
+
 ```typescript
 // Memory-efficient chunked iteration
 function* chunkData<T>(data: T[], chunkSize?: number): Generator<T[]>
@@ -125,18 +137,21 @@ async function* streamExportData(
 **Algorithm Details**:
 
 **Date Range Filtering**:
+
 - Time complexity: O(n) where n = number of records
 - Space complexity: O(n) for filtered results
 - Early exit optimization using timestamp comparison
 - Pre-converts dates to timestamps for faster comparison
 
 **Grouping Algorithm**:
+
 - Uses Map for O(1) lookup and insertion
 - Single pass through data: O(n)
 - Space complexity: O(n + g) where g = number of groups
 - Date grouping uses ISO format YYYY-MM-DD for consistency
 
 **Progress Tracking**:
+
 - Incremental progress calculation
 - Phase-based reporting (collecting, filtering, transforming, etc.)
 - Callback-based to avoid blocking
@@ -144,11 +159,13 @@ async function* streamExportData(
 ---
 
 ### 3. dataTransformer.ts (524 lines)
+
 **Purpose**: Data anonymization, field selection, flattening, and enrichment
 
 **Key Functions**:
 
 #### Anonymization
+
 ```typescript
 // Anonymize specific data types
 anonymizeStudent(student: Student, options?: AnonymizationOptions): Student
@@ -168,23 +185,26 @@ redactPII(text: string): string
 ```
 
 **Anonymization Options**:
+
 ```typescript
 interface AnonymizationOptions {
-  anonymizeNames?: boolean;        // Student_XXXX format
-  removeDateOfBirth?: boolean;     // Remove DOB field
-  truncateIds?: boolean;           // Last 4 chars only
-  removeNotes?: boolean;           // Remove all notes
-  redactNotes?: boolean;           // Redact PII from notes
+  anonymizeNames?: boolean; // Student_XXXX format
+  removeDateOfBirth?: boolean; // Remove DOB field
+  truncateIds?: boolean; // Last 4 chars only
+  removeNotes?: boolean; // Remove all notes
+  redactNotes?: boolean; // Redact PII from notes
 }
 ```
 
 **PII Redaction Patterns**:
+
 - Email addresses: `[EMAIL]`
 - Phone numbers (various formats): `[PHONE]`
 - Name patterns (Dear X, From: X): `[NAME]`
 - Street addresses: `[ADDRESS]`
 
 #### Field Selection
+
 ```typescript
 // Select specific fields (supports dot notation)
 selectFields<T>(obj: T, fields: string[]): Partial<T>
@@ -197,12 +217,14 @@ setNestedField(obj: Record<string, unknown>, path: string, value: unknown): void
 ```
 
 #### Flattening
+
 ```typescript
 // Flatten nested objects for CSV
 flattenNestedData<T>(obj: T, prefix?: string): Record<string, unknown>
 ```
 
 **Flattening Rules**:
+
 - Objects: Recursively flattened with dot notation
 - Arrays: Joined with "; " separator
 - Dates: Converted to ISO strings
@@ -210,6 +232,7 @@ flattenNestedData<T>(obj: T, prefix?: string): Record<string, unknown>
 - Primitives: Preserved as-is
 
 #### Enrichment
+
 ```typescript
 // Add computed fields
 enrichWithComputedFields<T>(
@@ -220,23 +243,27 @@ enrichWithComputedFields<T>(
 
 **Pre-defined Computed Fields**:
 
-*Students*:
+_Students_:
+
 - `age` - Calculated from dateOfBirth
 - `activeGoalCount` - Number of active goals
 - `accountAge` - Days since account creation
 
-*Goals*:
+_Goals_:
+
 - `progressPercentage` - Current progress %
 - `daysActive` - Days since creation
 - `daysUntilTarget` - Days until target date
 - `isOverdue` - Boolean flag
 
-*Emotions*:
+_Emotions_:
+
 - `isPositive` - Positive emotion flag
 - `isNegative` - Negative emotion flag
 - `hasHighIntensity` - Intensity >= 7
 
 #### Batch Processing
+
 ```typescript
 // Transform in batches with progress
 function* transformDataBatched(
@@ -249,6 +276,7 @@ function* transformDataBatched(
 ---
 
 ### 4. index.ts (63 lines)
+
 **Purpose**: Central export point for all common utilities
 
 Re-exports all functions, types, and constants from the three modules.
@@ -258,13 +286,14 @@ Re-exports all functions, types, and constants from the three modules.
 ## Integration Examples
 
 ### Example 1: Basic Export with Validation
+
 ```typescript
 import {
   ExportOptions,
   validateExportOptions,
   mergeExportOptions,
   collectExportData,
-  calculateExportMetadata
+  calculateExportMetadata,
 } from '@/lib/export/common';
 
 // User-provided options
@@ -273,9 +302,9 @@ const userOptions: Partial<ExportOptions> = {
   includeFields: ['emotions', 'sensoryInputs'],
   dateRange: {
     start: new Date('2024-01-01'),
-    end: new Date('2024-12-31')
+    end: new Date('2024-12-31'),
   },
-  anonymize: true
+  anonymize: true,
 };
 
 // Validate options
@@ -289,14 +318,9 @@ if (!validation.valid) {
 const options = mergeExportOptions(userOptions);
 
 // Collect data
-const data = collectExportData(
-  students,
-  allData,
-  options,
-  (progress) => {
-    console.log(`${progress.phase}: ${progress.percentage}%`);
-  }
-);
+const data = collectExportData(students, allData, options, (progress) => {
+  console.log(`${progress.phase}: ${progress.percentage}%`);
+});
 
 // Calculate metadata
 const metadata = calculateExportMetadata(data);
@@ -304,12 +328,9 @@ console.log('Exporting:', metadata.totalRecords, 'records');
 ```
 
 ### Example 2: Anonymized Export
+
 ```typescript
-import {
-  collectExportData,
-  anonymizeData,
-  AnonymizationOptions
-} from '@/lib/export/common';
+import { collectExportData, anonymizeData, AnonymizationOptions } from '@/lib/export/common';
 
 // Collect data
 const data = collectExportData(students, allData, options);
@@ -319,7 +340,7 @@ const anonOptions: AnonymizationOptions = {
   anonymizeNames: true,
   removeDateOfBirth: true,
   truncateIds: true,
-  redactNotes: true  // Redact but keep notes
+  redactNotes: true, // Redact but keep notes
 };
 
 // Apply anonymization
@@ -327,6 +348,7 @@ const anonymizedData = anonymizeData(data, anonOptions);
 ```
 
 ### Example 3: Streaming Large Exports
+
 ```typescript
 import { streamExportData } from '@/lib/export/common';
 
@@ -340,20 +362,25 @@ for await (const chunk of streamExportData(students, allData, options, 500)) {
 ```
 
 ### Example 4: Field Selection and Flattening
+
 ```typescript
 import {
   selectFields,
   flattenNestedData,
   enrichWithComputedFields,
-  GOAL_COMPUTED_FIELDS
+  GOAL_COMPUTED_FIELDS,
 } from '@/lib/export/common';
 
 // Select specific fields
-const student = { /* ... */ };
+const student = {
+  /* ... */
+};
 const minimal = selectFields(student, ['name', 'grade', 'id']);
 
 // Flatten for CSV
-const goal = { /* nested structure */ };
+const goal = {
+  /* nested structure */
+};
 const flattened = flattenNestedData(goal);
 // Result: { 'title': 'Goal', 'milestones.0.title': 'Milestone 1', ... }
 
@@ -363,6 +390,7 @@ const enriched = enrichWithComputedFields(goal, GOAL_COMPUTED_FIELDS);
 ```
 
 ### Example 5: Grouped Export
+
 ```typescript
 import { collectExportData, groupDataBy } from '@/lib/export/common';
 
@@ -379,6 +407,7 @@ for (const [studentId, emotions] of byStudent) {
 ```
 
 ### Example 6: Size Estimation
+
 ```typescript
 import { isExportTooLarge, estimateExportSize } from '@/lib/export/common';
 
@@ -396,6 +425,7 @@ if (sizeCheck.tooLarge) {
 ## Performance Considerations
 
 ### Memory Efficiency
+
 1. **Streaming Support**: Use `streamExportData()` for large datasets
 2. **Chunked Processing**: `chunkData()` generator prevents memory spikes
 3. **Filter Early**: Apply date range filters before other operations
@@ -403,16 +433,17 @@ if (sizeCheck.tooLarge) {
 
 ### Algorithmic Complexity
 
-| Operation | Time | Space | Notes |
-|-----------|------|-------|-------|
-| Date filtering | O(n) | O(n) | Early exit optimization |
-| Grouping | O(n) | O(n+g) | Map-based, O(1) lookup |
-| Anonymization | O(n) | O(n) | In-place where possible |
-| Field selection | O(f) | O(f) | f = number of fields |
-| Flattening | O(n*d) | O(n*d) | d = depth of nesting |
-| PII redaction | O(m) | O(m) | m = text length |
+| Operation       | Time    | Space   | Notes                   |
+| --------------- | ------- | ------- | ----------------------- |
+| Date filtering  | O(n)    | O(n)    | Early exit optimization |
+| Grouping        | O(n)    | O(n+g)  | Map-based, O(1) lookup  |
+| Anonymization   | O(n)    | O(n)    | In-place where possible |
+| Field selection | O(f)    | O(f)    | f = number of fields    |
+| Flattening      | O(n\*d) | O(n\*d) | d = depth of nesting    |
+| PII redaction   | O(m)    | O(m)    | m = text length         |
 
 ### Optimization Tips
+
 1. **Batch Size**: Default 1000, adjust based on record size
 2. **Field Selection**: Minimize included fields to reduce processing
 3. **Date Ranges**: Narrow ranges reduce filtering overhead
@@ -424,6 +455,7 @@ if (sizeCheck.tooLarge) {
 ## Shared Interfaces
 
 ### ExportOptions
+
 ```typescript
 interface ExportOptions {
   format: 'pdf' | 'csv' | 'json';
@@ -438,6 +470,7 @@ interface ExportOptions {
 ```
 
 ### ExportDataCollection
+
 ```typescript
 interface ExportDataCollection {
   trackingEntries: TrackingEntry[];
@@ -449,6 +482,7 @@ interface ExportDataCollection {
 ```
 
 ### ExportMetadata
+
 ```typescript
 interface ExportMetadata {
   version: string;
@@ -499,6 +533,7 @@ class ExportSystem {
 ```
 
 **Benefits**:
+
 - Removes ~300 lines of duplicate code
 - Consistent behavior across all export formats
 - Easier to test and maintain
@@ -509,13 +544,16 @@ class ExportSystem {
 ## Testing Recommendations
 
 ### Unit Tests
+
 ```typescript
 describe('dataCollector', () => {
   test('applyDateRangeFilter filters correctly', () => {
-    const data = [/* test data */];
+    const data = [
+      /* test data */
+    ];
     const filtered = applyDateRangeFilter(data, {
       start: new Date('2024-01-01'),
-      end: new Date('2024-12-31')
+      end: new Date('2024-12-31'),
     });
     expect(filtered).toHaveLength(expectedCount);
   });
@@ -541,6 +579,7 @@ describe('dataTransformer', () => {
 ```
 
 ### Integration Tests
+
 - Test full export pipeline with real data
 - Verify large dataset handling (10k+ records)
 - Test streaming with memory monitoring
@@ -579,13 +618,12 @@ Total: 1,292 lines of production code
 
 Successfully extracted 1,292 lines of reusable export infrastructure:
 
-✅ **Type-safe** - Full TypeScript support with comprehensive interfaces
-✅ **Memory-efficient** - Streaming and chunking for large datasets
-✅ **Validated** - Input validation with helpful error messages
-✅ **Flexible** - Field selection with dot notation support
-✅ **Privacy-aware** - Configurable anonymization with PII redaction
-✅ **Performance-optimized** - Single-pass algorithms, early exits
-✅ **Progress-tracked** - Callbacks for long-running operations
-✅ **Well-documented** - Clear examples and integration guides
+✅ **Type-safe** - Full TypeScript support with comprehensive interfaces ✅ **Memory-efficient** -
+Streaming and chunking for large datasets ✅ **Validated** - Input validation with helpful error
+messages ✅ **Flexible** - Field selection with dot notation support ✅ **Privacy-aware** -
+Configurable anonymization with PII redaction ✅ **Performance-optimized** - Single-pass algorithms,
+early exits ✅ **Progress-tracked** - Callbacks for long-running operations ✅ **Well-documented** -
+Clear examples and integration guides
 
-This foundation enables all export formats (PDF, CSV, JSON) to share common logic while maintaining format-specific rendering in separate modules.
+This foundation enables all export formats (PDF, CSV, JSON) to share common logic while maintaining
+format-specific rendering in separate modules.

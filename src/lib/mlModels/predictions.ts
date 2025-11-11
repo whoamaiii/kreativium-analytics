@@ -17,7 +17,7 @@ import { EmotionPrediction, SensoryPrediction, MLSession, StoredModel, ModelType
 export async function predictEmotions(
   recentEntries: TrackingEntry[],
   daysToPredict: number,
-  models: Map<ModelType, StoredModel>
+  models: Map<ModelType, StoredModel>,
 ): Promise<EmotionPrediction[]> {
   const recentSessions = toMLSessions(recentEntries);
   const model = models.get('emotion-prediction');
@@ -29,10 +29,7 @@ export async function predictEmotions(
   const currentSessions = [...recentSessions];
 
   for (let day = 0; day < daysToPredict; day++) {
-    const { inputs, meta } = prepareEmotionDataset(
-      currentSessions.slice(-7),
-      7
-    );
+    const { inputs, meta } = prepareEmotionDataset(currentSessions.slice(-7), 7);
 
     if (inputs.shape[0] === 0) {
       inputs.dispose();
@@ -40,18 +37,19 @@ export async function predictEmotions(
     }
 
     const prediction = model.model.predict(inputs.slice([0, 0, 0], [1, -1, -1])) as tf.Tensor;
-    const values = await prediction.array() as number[][];
+    const values = (await prediction.array()) as number[][];
 
     const predictedDate = new Date(currentSessions[currentSessions.length - 1].date);
     predictedDate.setDate(predictedDate.getDate() + 1);
 
     // Denormalize predictions
-    const emotionValues = values[0].map(v => v * 10); // Convert back to 0-10 scale
+    const emotionValues = values[0].map((v) => v * 10); // Convert back to 0-10 scale
 
     // Simple dispersion-based confidence: inverse of variance across outputs
     const variance = (() => {
       const mean = emotionValues.reduce((s, v) => s + v, 0) / emotionValues.length;
-      const varSum = emotionValues.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / emotionValues.length;
+      const varSum =
+        emotionValues.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / emotionValues.length;
       return varSum;
     })();
     const confidence = Math.max(0.0, Math.min(1.0, 1 / (1 + variance)));
@@ -65,13 +63,13 @@ export async function predictEmotions(
         anxious: emotionValues[3],
         calm: emotionValues[4],
         energetic: emotionValues[5],
-        frustrated: emotionValues[6]
+        frustrated: emotionValues[6],
       },
       confidence,
       confidenceInterval: {
         lower: Math.max(0, confidence - 0.1),
-        upper: Math.min(1, confidence + 0.1)
-      }
+        upper: Math.min(1, confidence + 0.1),
+      },
     });
 
     // Add prediction as a new session for next iteration
@@ -86,12 +84,12 @@ export async function predictEmotions(
         anxious: emotionValues[3],
         calm: emotionValues[4],
         energetic: emotionValues[5],
-        frustrated: emotionValues[6]
+        frustrated: emotionValues[6],
       },
       sensory: currentSessions[currentSessions.length - 1].sensory,
       environment: currentSessions[currentSessions.length - 1].environment,
       activities: [],
-      notes: ''
+      notes: '',
     });
 
     // Clean up
@@ -116,7 +114,7 @@ export async function predictEmotions(
 export async function predictSensoryResponse(
   environment: MLSession['environment'],
   date: Date,
-  models: Map<ModelType, StoredModel>
+  models: Map<ModelType, StoredModel>,
 ): Promise<SensoryPrediction> {
   const model = models.get('sensory-response');
   if (!model) {
@@ -130,14 +128,14 @@ export async function predictSensoryResponse(
     environment.temperature === 'hot' ? 1 : environment.temperature === 'cold' ? 0 : 0.5,
     environment.crowded === 'very' ? 1 : environment.crowded === 'moderate' ? 0.5 : 0,
     environment.smells ? 1 : 0,
-    environment.textures ? 1 : 0
+    environment.textures ? 1 : 0,
   ];
 
   const timeFeatures = encodeTimeFeatures(date);
   const input = tf.tensor2d([[...environmentFeatures, ...timeFeatures]]);
 
   const prediction = model.model.predict(input) as tf.Tensor;
-  const values = await prediction.array() as number[][];
+  const values = (await prediction.array()) as number[][];
 
   // Parse predictions
   const senses = ['visual', 'auditory', 'tactile', 'vestibular', 'proprioceptive'];
@@ -146,7 +144,7 @@ export async function predictSensoryResponse(
     auditory: { seeking: 0, avoiding: 0, neutral: 0 },
     tactile: { seeking: 0, avoiding: 0, neutral: 0 },
     vestibular: { seeking: 0, avoiding: 0, neutral: 0 },
-    proprioceptive: { seeking: 0, avoiding: 0, neutral: 0 }
+    proprioceptive: { seeking: 0, avoiding: 0, neutral: 0 },
   };
 
   senses.forEach((sense, i) => {
@@ -154,7 +152,7 @@ export async function predictSensoryResponse(
     sensoryResponse[sense as keyof typeof sensoryResponse] = {
       seeking: values[0][baseIdx],
       avoiding: values[0][baseIdx + 1],
-      neutral: values[0][baseIdx + 2]
+      neutral: values[0][baseIdx + 2],
     };
   });
 
@@ -181,11 +179,11 @@ export async function predictSensoryResponse(
   const maxP = Math.max(...flat);
   const entropy = -flat.reduce((s, p) => s + (p > 0 ? p * Math.log(p) : 0), 0);
   const normEntropy = entropy / Math.log(flat.length || 1);
-  const confidence = Math.max(0, Math.min(1, (maxP * 0.6) + (1 - normEntropy) * 0.4));
+  const confidence = Math.max(0, Math.min(1, maxP * 0.6 + (1 - normEntropy) * 0.4));
 
   return {
     sensoryResponse,
     environmentalTriggers: triggers.sort((a, b) => b.probability - a.probability),
-    confidence
+    confidence,
   };
 }

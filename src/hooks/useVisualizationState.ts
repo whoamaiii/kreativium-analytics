@@ -14,7 +14,10 @@ export interface HighlightState {
   relatedIds: string[];
 }
 
-export const useVisualizationState = (availableEmotions: string[], initialChartType: ChartType = 'line') => {
+export const useVisualizationState = (
+  availableEmotions: string[],
+  initialChartType: ChartType = 'line',
+) => {
   const [selectedChartType, setSelectedChartType] = useState<ChartType>(initialChartType);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>('30d');
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(availableEmotions);
@@ -23,8 +26,15 @@ export const useVisualizationState = (availableEmotions: string[], initialChartT
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPictureInPicture, setIsPictureInPicture] = useState(false);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
-  const [selectedVisualizations, setSelectedVisualizations] = useState<VisualizationType[]>(['trends', 'patterns']);
-  const [highlightState, setHighlightState] = useState<HighlightState>({ type: null, id: null, relatedIds: [] });
+  const [selectedVisualizations, setSelectedVisualizations] = useState<VisualizationType[]>([
+    'trends',
+    'patterns',
+  ]);
+  const [highlightState, setHighlightState] = useState<HighlightState>({
+    type: null,
+    id: null,
+    relatedIds: [],
+  });
   const [filterCriteria, setFilterCriteria] = useState<FilterCriteria>({
     dateRange: { start: null, end: null },
     emotions: { types: [], intensityRange: [0, 10], includeTriggers: [], excludeTriggers: [] },
@@ -34,10 +44,10 @@ export const useVisualizationState = (availableEmotions: string[], initialChartT
       activities: [],
       conditions: { noiseLevel: [0, 10], temperature: [15, 30], lighting: [] },
       weather: [],
-      timeOfDay: []
+      timeOfDay: [],
     },
     patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },
-    realtime: false
+    realtime: false,
   });
 
   // Projection and accessibility

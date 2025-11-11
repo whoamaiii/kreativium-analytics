@@ -114,7 +114,7 @@ const ALLOWED_IMPORT_TYPES = new Set(['application/json', 'text/json']);
 function updateNestedValue(
   config: AnalyticsConfiguration,
   path: string[],
-  value: unknown
+  value: unknown,
 ): AnalyticsConfiguration {
   const newConfig = { ...config };
   let current: any = newConfig;
@@ -175,20 +175,18 @@ function detectPreset(config: AnalyticsConfiguration): PresetKey | 'custom' {
  * await actions.importConfig(file);
  * ```
  */
-export function useAnalyticsConfigManager(options: {
-  onConfigChange?: (config: AnalyticsConfiguration) => void;
-  onSave?: () => void;
-  onError?: (error: Error) => void;
-} = {}): UseAnalyticsConfigManagerReturn {
+export function useAnalyticsConfigManager(
+  options: {
+    onConfigChange?: (config: AnalyticsConfiguration) => void;
+    onSave?: () => void;
+    onError?: (error: Error) => void;
+  } = {},
+): UseAnalyticsConfigManagerReturn {
   const { onConfigChange, onSave, onError } = options;
 
   // State
-  const [config, setConfig] = useState<AnalyticsConfiguration>(
-    analyticsConfig.getConfig()
-  );
-  const [selectedPreset, setSelectedPreset] = useState<PresetKey | 'custom'>(
-    'balanced'
-  );
+  const [config, setConfig] = useState<AnalyticsConfiguration>(analyticsConfig.getConfig());
+  const [selectedPreset, setSelectedPreset] = useState<PresetKey | 'custom'>('balanced');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastError, setLastError] = useState<Error | null>(null);
 
@@ -345,107 +343,113 @@ export function useAnalyticsConfigManager(options: {
   /**
    * Import config from JSON string
    */
-  const importConfigFromString = useCallback((jsonString: string): boolean => {
-    try {
-      if (analyticsConfig.importConfig(jsonString)) {
-        setHasUnsavedChanges(false);
+  const importConfigFromString = useCallback(
+    (jsonString: string): boolean => {
+      try {
+        if (analyticsConfig.importConfig(jsonString)) {
+          setHasUnsavedChanges(false);
 
-        toast({
-          title: 'Configuration imported',
-          description: 'Successfully imported configuration',
-        });
+          toast({
+            title: 'Configuration imported',
+            description: 'Successfully imported configuration',
+          });
 
-        logger.info('[useAnalyticsConfigManager] Configuration imported');
-        return true;
-      } else {
-        toast({
-          title: 'Invalid configuration',
-          description: 'Configuration file is invalid',
-          variant: 'destructive',
-        });
+          logger.info('[useAnalyticsConfigManager] Configuration imported');
+          return true;
+        } else {
+          toast({
+            title: 'Invalid configuration',
+            description: 'Configuration file is invalid',
+            variant: 'destructive',
+          });
+          return false;
+        }
+      } catch (error) {
+        const err = error as Error;
+        logger.error('[useAnalyticsConfigManager] Failed to import config', { error: err });
+        setLastError(err);
+
+        if (onError) {
+          onError(err);
+        } else {
+          toast({
+            title: 'Import failed',
+            description: 'Failed to read configuration file',
+            variant: 'destructive',
+          });
+        }
         return false;
       }
-    } catch (error) {
-      const err = error as Error;
-      logger.error('[useAnalyticsConfigManager] Failed to import config', { error: err });
-      setLastError(err);
-
-      if (onError) {
-        onError(err);
-      } else {
-        toast({
-          title: 'Import failed',
-          description: 'Failed to read configuration file',
-          variant: 'destructive',
-        });
-      }
-      return false;
-    }
-  }, [onError]);
+    },
+    [onError],
+  );
 
   /**
    * Import config from file
    */
-  const importConfig = useCallback(async (file: File): Promise<void> => {
-    // Validate file size
-    if (file.size > MAX_IMPORT_BYTES) {
-      const error = new Error('Configuration file exceeds the 5 MB limit');
-      setLastError(error);
-
-      toast({
-        title: 'File too large',
-        description: 'Configuration file exceeds the 5 MB limit',
-        variant: 'destructive',
-      });
-
-      logger.warn('[useAnalyticsConfigManager] Import file too large', {
-        size: file.size,
-        maxSize: MAX_IMPORT_BYTES,
-      });
-      return;
-    }
-
-    // Validate file type
-    if (file.type && !ALLOWED_IMPORT_TYPES.has(file.type)) {
-      const error = new Error('Only JSON configuration files are supported');
-      setLastError(error);
-
-      toast({
-        title: 'Invalid file type',
-        description: 'Only JSON configuration files are supported',
-        variant: 'destructive',
-      });
-
-      logger.warn('[useAnalyticsConfigManager] Invalid file type', { type: file.type });
-      return;
-    }
-
-    // Read and import file
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-
-      reader.onload = (e) => {
-        try {
-          const content = e.target?.result as string;
-          if (importConfigFromString(content)) {
-            resolve();
-          } else {
-            reject(new Error('Invalid configuration'));
-          }
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      reader.onerror = () => {
-        const error = new Error('Failed to read file');
+  const importConfig = useCallback(
+    async (file: File): Promise<void> => {
+      // Validate file size
+      if (file.size > MAX_IMPORT_BYTES) {
+        const error = new Error('Configuration file exceeds the 5 MB limit');
         setLastError(error);
-        reject(error);
-      };
 
-      reader.readAsText(file);
-    });
-  }, [importConfigFromString]);
+        toast({
+          title: 'File too large',
+          description: 'Configuration file exceeds the 5 MB limit',
+          variant: 'destructive',
+        });
+
+        logger.warn('[useAnalyticsConfigManager] Import file too large', {
+          size: file.size,
+          maxSize: MAX_IMPORT_BYTES,
+        });
+        return;
+      }
+
+      // Validate file type
+      if (file.type && !ALLOWED_IMPORT_TYPES.has(file.type)) {
+        const error = new Error('Only JSON configuration files are supported');
+        setLastError(error);
+
+        toast({
+          title: 'Invalid file type',
+          description: 'Only JSON configuration files are supported',
+          variant: 'destructive',
+        });
+
+        logger.warn('[useAnalyticsConfigManager] Invalid file type', { type: file.type });
+        return;
+      }
+
+      // Read and import file
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+          try {
+            const content = e.target?.result as string;
+            if (importConfigFromString(content)) {
+              resolve();
+            } else {
+              reject(new Error('Invalid configuration'));
+            }
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        reader.onerror = () => {
+          const error = new Error('Failed to read file');
+          setLastError(error);
+          reject(error);
+        };
+
+        reader.readAsText(file);
+      });
+    },
+    [importConfigFromString],
+  );
 
   /**
    * Mark changes as saved (useful after external save)

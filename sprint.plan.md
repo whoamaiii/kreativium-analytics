@@ -1,4 +1,5 @@
 <!-- b37f9d6e-f734-4a3f-933f-0cacd1d8dfdc dd933af4-1941-42a2-81a8-fc882fafa8ec -->
+
 # Sprint 1 Foundations: Workerized Detector, Calibration, Ring-on-Face, Tutorial
 
 ## What we’ll deliver
@@ -32,8 +33,6 @@ if (largest) {
 }
 ```
 
-
-
 ```182:201:src/pages/EmotionGame.tsx
 <div className="relative">
   <video ref={videoRef} className="w-full h-auto rounded-lg" playsInline muted />
@@ -47,8 +46,6 @@ if (largest) {
   <AlmostThereHint visible={game.phase === 'detecting' && !!game.round && ((detector.probabilities as Record<string, number>)[game.round.target] ?? 0) >= (game.round.threshold * 0.8)} />
   {/* Debug HUD to visualize detector readiness and target probability */}
 ```
-
-
 
 ```45:58:src/components/game/AnimatedProgressRing.tsx
 return (
@@ -69,44 +66,58 @@ return (
 
 ## Implementation outline
 
-1) Detector architecture
+1. Detector architecture
 
-- Create `src/detector/types.ts` with `Detector` interface and `DetectorSnapshot` shape (align to current snapshot from `useExpressionDetector`).
+- Create `src/detector/types.ts` with `Detector` interface and `DetectorSnapshot` shape (align to
+  current snapshot from `useExpressionDetector`).
 - Add `src/detector/faceapi.detector.ts` (main-thread) to preserve `EmotionLab` behavior.
-- Add `src/workers/detector.worker.ts` implementing FaceAPI with tfjs wasm backend, consuming `ImageBitmap` frames; post snapshot messages.
-- Add `src/detector/worker.detector.ts` that abstracts worker messaging and adaptive FPS (15–24fps target) with health checks.
-- Optional: scaffold `src/detector/mediapipe.detector.ts` (behind flag) with identical contract for later swap.
+- Add `src/workers/detector.worker.ts` implementing FaceAPI with tfjs wasm backend, consuming
+  `ImageBitmap` frames; post snapshot messages.
+- Add `src/detector/worker.detector.ts` that abstracts worker messaging and adaptive FPS (15–24fps
+  target) with health checks.
+- Optional: scaffold `src/detector/mediapipe.detector.ts` (behind flag) with identical contract for
+  later swap.
 
-2) Hook integration
+2. Hook integration
 
-- Add `src/hooks/useDetector.ts` returning the same shape as `useExpressionDetector`, choosing worker when supported, falling back to faceapi main-thread.
-- Migrate `src/pages/EmotionGame.tsx` to use `useDetector` with existing smoothing and `useHoldTimer` logic.
+- Add `src/hooks/useDetector.ts` returning the same shape as `useExpressionDetector`, choosing
+  worker when supported, falling back to faceapi main-thread.
+- Migrate `src/pages/EmotionGame.tsx` to use `useDetector` with existing smoothing and
+  `useHoldTimer` logic.
 - Keep `src/hooks/useExpressionDetector.ts` for `EmotionLab` and deprecate usage in game.
 
-3) Calibration and adaptive thresholds
+3. Calibration and adaptive thresholds
 
-- Add `src/hooks/useCalibration.ts` with a guided 10–15s flow: neutral baseline, lighting check, recommended `threshold`, `holdMs`, and smoothing window.
-- Persist per-device calibration to `localStorage` (keyed by `emotion.calibration.v1`). Provide reset in Settings.
+- Add `src/hooks/useCalibration.ts` with a guided 10–15s flow: neutral baseline, lighting check,
+  recommended `threshold`, `holdMs`, and smoothing window.
+- Persist per-device calibration to `localStorage` (keyed by `emotion.calibration.v1`). Provide
+  reset in Settings.
 - On `EmotionGame` start, if no calibration, show `CalibrationOverlay` modal to run once.
 
-4) Ring-on-face overlay
+4. Ring-on-face overlay
 
-- Add `src/components/game/FaceOverlay.tsx` that renders: face box, subtle tracking dots (if landmarks available), progress ring anchored to box center, and an “Almost there” halo when ≥80% of threshold.
+- Add `src/components/game/FaceOverlay.tsx` that renders: face box, subtle tracking dots (if
+  landmarks available), progress ring anchored to box center, and an “Almost there” halo when ≥80%
+  of threshold.
 - Replace the bottom-right ring in `EmotionGame` with `FaceOverlay` layered over the video.
 
-5) Tutorial/onboarding overlay
+5. Tutorial/onboarding overlay
 
-- Add `src/components/game/TutorialOverlay.tsx` with 3-step tips; store `emotion.tutorialSeen=true` in `localStorage`.
+- Add `src/components/game/TutorialOverlay.tsx` with 3-step tips; store `emotion.tutorialSeen=true`
+  in `localStorage`.
 - Show on first run or via a Help button.
 
-6) Celebration orchestration
+6. Celebration orchestration
 
-- Add `src/hooks/useCelebrations.ts` to time: ring morph at success, small stars pop, banner slide, then `ConfettiBurst`.
-- Respect `prefers-reduced-motion`; add `aria-live="polite"` on success banner; expose a haptics toggle.
+- Add `src/hooks/useCelebrations.ts` to time: ring morph at success, small stars pop, banner slide,
+  then `ConfettiBurst`.
+- Respect `prefers-reduced-motion`; add `aria-live="polite"` on success banner; expose a haptics
+  toggle.
 
-7) Settings & accessibility
+7. Settings & accessibility
 
-- Expand `src/pages/Settings.tsx` with toggles: Motion, Sound volume, Enable hints, Reset calibration.
+- Expand `src/pages/Settings.tsx` with toggles: Motion, Sound volume, Enable hints, Reset
+  calibration.
 - Add i18n keys for tutorial/calibration text under `src/locales/**`.
 
 ## Files to add
@@ -129,12 +140,14 @@ return (
 - `src/components/game/AnimatedProgressRing.tsx` (optional: halo prop)
 - `src/pages/Settings.tsx` (new toggles)
 - `src/locales/en/common.json`, `src/locales/nb/common.json` (tutorial/calibration)
-- `vite.config.ts` (no change likely; worker bundling already configured similar to analytics/reports workers)
+- `vite.config.ts` (no change likely; worker bundling already configured similar to
+  analytics/reports workers)
 
 ## Testing
 
 - Unit: detector adapter contract (mock worker), hold timer edge cases, calibration math.
-- Integration: `EmotionGame` happy path (prompt → detecting → success → reward), overlay positions, reduced-motion behavior.
+- Integration: `EmotionGame` happy path (prompt → detecting → success → reward), overlay positions,
+  reduced-motion behavior.
 - Performance: keep ≥14 fps on mid devices by throttling worker analyze loop.
 - Accessibility: `axe` pass on overlays, ARIA live announcements.
 
@@ -158,6 +171,3 @@ return (
 - [x] Add motion, audio, hints, reset calibration to Settings page
 - [x] Add ARIA live, focus order, reduced-motion guards
 - [x] Add unit/integration/perf and axe checks for new flows
-
-
-

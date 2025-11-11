@@ -6,6 +6,7 @@ import { buildCitationList, type CitationListItem } from './citation-utils';
 import { computeAllowedContexts } from '@/lib/evidence/evidenceBuilder';
 import type { SourceItem } from '@/types/analytics';
 import { logger } from '@/lib/logger';
+import { useStorageState } from '@/lib/storage/useStorageState';
 
 export interface ExplanationTabsProps {
   // Core explanation props
@@ -27,7 +28,7 @@ export interface ExplanationTabsProps {
 }
 
 /**
- * New, tabbed explanation panel that separates Chat, Kilder, and Henvisninger.
+ * New, tabbed explanation panel that separates Chat, Kilder, and Bland.
  * This is intentionally simple for first scaffolding; richer behaviors like
  * virtualization and sticky composer will be layered on next.
  */
@@ -44,32 +45,52 @@ export function ExplanationTabs({
   onChatChange,
   dataset,
   sourcesRich = [],
-  className
+  className,
 }: ExplanationTabsProps): React.ReactElement {
-  const toSlug = (s?: string) => (s || 'pattern').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const toSlug = (s?: string) =>
+    (s || 'pattern')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
   const storageBase = React.useMemo(() => `explanationV2.${toSlug(patternTitle)}`, [patternTitle]);
-  const readStorage = (k: string, fallback: string) => {
-    try { const v = localStorage.getItem(`${storageBase}.${k}`); return v || fallback; } catch { return fallback; }
-  };
-  const writeStorage = (k: string, v: string) => {
-    try { localStorage.setItem(`${storageBase}.${k}`, v); } catch { /* no-op */ }
-  };
 
-  const [tab, setTab] = React.useState<string>(() => readStorage('tab', 'chat'));
-  const [visited, setVisited] = React.useState<{ kilder: boolean; henvisninger: boolean }>(() => ({
-    kilder: readStorage('visited.kilder', '0') === '1',
-    henvisninger: readStorage('visited.henvisninger', '0') === '1',
-  }));
-  const [showAllKilder, setShowAllKilder] = React.useState<boolean>(() => readStorage('kilder.showAll', '0') === '1');
+  const tabStorageKey = React.useMemo(() => `${storageBase}.tab`, [storageBase]);
+  const kilderVisitedKey = React.useMemo(() => `${storageBase}.visited.kilder`, [storageBase]);
+  const blandVisitedKey = React.useMemo(() => `${storageBase}.visited.bland`, [storageBase]);
+  const kilderShowAllKey = React.useMemo(() => `${storageBase}.kilder.showAll`, [storageBase]);
+
+  const [tab, setTab] = useStorageState(tabStorageKey, 'chat');
+  const [kilderVisited, setKilderVisited] = useStorageState(kilderVisitedKey, false, {
+    serialize: (v) => (v ? '1' : '0'),
+    deserialize: (v) => v === '1',
+  });
+  const [blandVisited, setBlandVisited] = useStorageState(blandVisitedKey, false, {
+    serialize: (v) => (v ? '1' : '0'),
+    deserialize: (v) => v === '1',
+  });
+  const [showAllKilder, setShowAllKilder] = useStorageState(kilderShowAllKey, false, {
+    serialize: (v) => (v ? '1' : '0'),
+    deserialize: (v) => v === '1',
+  });
+
+  const visited = React.useMemo(
+    () => ({
+      kilder: kilderVisited,
+      bland: blandVisited,
+    }),
+    [kilderVisited, blandVisited],
+  );
+
   const handleTabChange = (val: string) => {
     setTab(val);
-    writeStorage('tab', val);
-    try { logger.info('[UI] explanationV2.tabChange', { tab: val, pattern: patternTitle }); } catch {}
+    try {
+      logger.info('[UI] explanationV2.tabChange', { tab: val, pattern: patternTitle });
+    } catch {}
     if (val === 'kilder' && !visited.kilder) {
-      setVisited((v) => { const n = { ...v, kilder: true }; writeStorage('visited.kilder', '1'); return n; });
+      setKilderVisited(true);
     }
-    if (val === 'henvisninger' && !visited.henvisninger) {
-      setVisited((v) => { const n = { ...v, henvisninger: true }; writeStorage('visited.henvisninger', '1'); return n; });
+    if (val === 'bland' && !visited.bland) {
+      setBlandVisited(true);
     }
   };
   const allowed = React.useMemo(() => {
@@ -85,7 +106,10 @@ export function ExplanationTabs({
     }
   }, [dataset]);
 
-  const sourcesList = React.useMemo<CitationListItem[]>(() => buildCitationList(sourcesRich), [sourcesRich]);
+  const sourcesList = React.useMemo<CitationListItem[]>(
+    () => buildCitationList(sourcesRich),
+    [sourcesRich],
+  );
 
   const usedCitationKeys = React.useMemo(() => {
     const lastAssistant = [...(chatMessages || [])].reverse().find((m) => m.role === 'assistant');
@@ -94,7 +118,7 @@ export function ExplanationTabs({
     try {
       const re = /\[S(\d+)\]/g;
       let m: RegExpExecArray | null;
-       
+
       while ((m = re.exec((lastAssistant as any).content))) {
         const n = Number(m[1]);
         if (Number.isFinite(n) && n >= 1 && n <= sourcesList.length) set.add(`S${n}`);
@@ -109,34 +133,37 @@ export function ExplanationTabs({
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <TabsList className="grid grid-cols-3 w-auto gap-1 p-1 bg-muted rounded-lg">
-              <TabsTrigger 
-                value="chat" 
+              <TabsTrigger
+                value="chat"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 💬 Chat
               </TabsTrigger>
-              <TabsTrigger 
-                value="kilder" 
+              <TabsTrigger
+                value="kilder"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 📚 Kilder
               </TabsTrigger>
-              <TabsTrigger 
-                value="henvisninger" 
+              <TabsTrigger
+                value="bland"
                 className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
-                🔗 Henvisninger
+                🔗 Bland
               </TabsTrigger>
             </TabsList>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               type="button"
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
               title="Skjul alt"
               onClick={() => {
-                try { window.dispatchEvent(new CustomEvent('explanationV2:collapseAll')); logger.info('[UI] explanationV2.collapseAll'); } catch {}
+                try {
+                  window.dispatchEvent(new CustomEvent('explanationV2:collapseAll'));
+                  logger.info('[UI] explanationV2.collapseAll');
+                } catch {}
                 setShowAllKilder(false);
               }}
             >
@@ -147,7 +174,10 @@ export function ExplanationTabs({
               className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs text-muted-foreground hover:bg-accent/40 hover:text-foreground transition-colors"
               title="Vis alt"
               onClick={() => {
-                try { window.dispatchEvent(new CustomEvent('explanationV2:expandAll')); logger.info('[UI] explanationV2.expandAll'); } catch {}
+                try {
+                  window.dispatchEvent(new CustomEvent('explanationV2:expandAll'));
+                  logger.info('[UI] explanationV2.expandAll');
+                } catch {}
                 setShowAllKilder(true);
               }}
             >
@@ -185,50 +215,85 @@ export function ExplanationTabs({
           ) : (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-muted-foreground">Kilder fra data ({sourcesList.length})</div>
+                <div className="text-sm text-muted-foreground">
+                  Kilder fra data ({sourcesList.length})
+                </div>
                 <button
                   type="button"
                   className="rounded border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-accent/40"
-                  onClick={() => { setShowAllKilder((v) => { const n = !v; writeStorage('kilder.showAll', n ? '1' : '0'); return n; }); }}
+                  onClick={() => {
+                    setShowAllKilder((v) => !v);
+                  }}
                   aria-expanded={showAllKilder}
                 >
                   {showAllKilder ? 'Vis færre' : 'Vis mer'}
                 </button>
               </div>
               <ul className="grid gap-2">
-                {(showAllKilder ? sourcesList : sourcesList.slice(-8)).map(({ key, source }, idx) => {
-                  const ts = (() => {
-                    try { return new Date(source.timestamp).toISOString().replace('T', ' ').slice(0, 16); } catch { return String(source.timestamp); }
-                  })();
-                  const primary = `${source.activity || source.place || 'sosial kontekst'} ${ts}`;
-                  const emo = (source.emotions || []).map((e) => `${e.emotion}${typeof e.intensity === 'number' ? ` (${e.intensity})` : ''}`).join(', ');
-                  const sen = (source.sensory || []).map((s) => `${s.type || 'sensor'}${s.response ? `: ${s.response}` : ''}${typeof s.intensity === 'number' ? ` (${s.intensity})` : ''}`).join(', ');
-                  const meta = [source.note ? `notat: ${source.note}` : '', emo ? `følelser: ${emo}` : '', sen ? `sensorikk: ${sen}` : ''].filter(Boolean).join(' · ');
-                  return (
-                    <li key={key} className="rounded border bg-card px-3 py-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="truncate font-medium">{primary}</div>
-                          {meta && <div className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">{meta}</div>}
+                {(showAllKilder ? sourcesList : sourcesList.slice(-8)).map(
+                  ({ key, source }, idx) => {
+                    const ts = (() => {
+                      try {
+                        return new Date(source.timestamp)
+                          .toISOString()
+                          .replace('T', ' ')
+                          .slice(0, 16);
+                      } catch {
+                        return String(source.timestamp);
+                      }
+                    })();
+                    const primary = `${source.activity || source.place || 'sosial kontekst'} ${ts}`;
+                    const emo = (source.emotions || [])
+                      .map(
+                        (e) =>
+                          `${e.emotion}${typeof e.intensity === 'number' ? ` (${e.intensity})` : ''}`,
+                      )
+                      .join(', ');
+                    const sen = (source.sensory || [])
+                      .map(
+                        (s) =>
+                          `${s.type || 'sensor'}${s.response ? `: ${s.response}` : ''}${typeof s.intensity === 'number' ? ` (${s.intensity})` : ''}`,
+                      )
+                      .join(', ');
+                    const meta = [
+                      source.note ? `notat: ${source.note}` : '',
+                      emo ? `følelser: ${emo}` : '',
+                      sen ? `sensorikk: ${sen}` : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' · ');
+                    return (
+                      <li key={key} className="rounded border bg-card px-3 py-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="truncate font-medium">{primary}</div>
+                            {meta && (
+                              <div className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2">
+                                {meta}
+                              </div>
+                            )}
+                          </div>
+                          <span className="ml-2 shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            {key}
+                          </span>
                         </div>
-                        <span className="ml-2 shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">{key}</span>
-                      </div>
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  },
+                )}
               </ul>
             </div>
           )}
         </TabsContent>
 
-        <TabsContent value="henvisninger" className="mt-3">
-          {tab !== 'henvisninger' && !visited.henvisninger ? (
-            <div className="text-sm text-muted-foreground">Åpne fanen for å vise henvisninger…</div>
+        <TabsContent value="bland" className="mt-3">
+          {tab !== 'bland' && !visited.bland ? (
+            <div className="text-sm text-muted-foreground">Åpne fanen for å vise bland…</div>
           ) : sourcesList.length === 0 ? (
-            <div className="text-sm text-muted-foreground">Ingen henvisninger.</div>
+            <div className="text-sm text-muted-foreground">Ingen bland.</div>
           ) : (
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">Henvisninger</div>
+              <div className="text-sm text-muted-foreground">Bland</div>
               <div className="flex flex-wrap gap-1">
                 {sourcesList.map(({ key }) => (
                   <span
@@ -246,4 +311,3 @@ export function ExplanationTabs({
     </div>
   );
 }
-

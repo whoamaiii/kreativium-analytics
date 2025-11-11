@@ -57,7 +57,10 @@ export const useDashboardData = (): DashboardData => {
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('analytics:cache:clear', handleAnalyticsCacheClear as EventListener);
+      window.removeEventListener(
+        'analytics:cache:clear',
+        handleAnalyticsCacheClear as EventListener,
+      );
       window.removeEventListener('mockDataLoaded', handleMockDataLoaded as EventListener);
       logger.debug('[EVENT_LISTENER] useDashboardData removed listeners');
     };
@@ -73,16 +76,18 @@ export const useDashboardData = (): DashboardData => {
       const todayCount = allEntries.filter((entry) => isToday(entry.timestamp)).length;
 
       const now = new Date();
-      const weekOptions = { weekStartsOn: (currentLanguage === 'nb' ? 1 : 0) as 0 | 1 | 2 | 3 | 4 | 5 | 6 };
+      const weekOptions = {
+        weekStartsOn: (currentLanguage === 'nb' ? 1 : 0) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+      };
       const lastWeekStart = startOfWeek(subWeeks(now, 1), weekOptions);
       const lastWeekEnd = endOfWeek(subWeeks(now, 1), weekOptions);
       const thisWeekStart = startOfWeek(now, weekOptions);
 
       const lastWeekEntries = allEntries.filter((entry) =>
-        isWithinInterval(entry.timestamp, { start: lastWeekStart, end: lastWeekEnd })
+        isWithinInterval(entry.timestamp, { start: lastWeekStart, end: lastWeekEnd }),
       ).length;
       const thisWeekEntries = allEntries.filter((entry) =>
-        isWithinInterval(entry.timestamp, { start: thisWeekStart, end: now })
+        isWithinInterval(entry.timestamp, { start: thisWeekStart, end: now }),
       ).length;
 
       const entriesTrend =
@@ -93,10 +98,10 @@ export const useDashboardData = (): DashboardData => {
             : 0;
 
       const lastWeekStudents = students.filter((s) =>
-        isWithinInterval(new Date(s.createdAt), { start: lastWeekStart, end: lastWeekEnd })
+        isWithinInterval(new Date(s.createdAt), { start: lastWeekStart, end: lastWeekEnd }),
       ).length;
       const thisWeekStudents = students.filter((s) =>
-        isWithinInterval(new Date(s.createdAt), { start: thisWeekStart, end: now })
+        isWithinInterval(new Date(s.createdAt), { start: thisWeekStart, end: now }),
       ).length;
       const studentsTrend =
         lastWeekStudents > 0
@@ -125,21 +130,3 @@ export const useDashboardData = (): DashboardData => {
     refresh: load,
   };
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

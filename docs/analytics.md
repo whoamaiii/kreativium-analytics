@@ -37,7 +37,8 @@ preferred over the old singleton for new code.
 - getInsights(inputs, options): Promise<AnalyticsResult>
   - Returns a minimal, stable summary shape (counts + diagnostics) for UI and caching layers.
 
-Note: Prefer `@/lib/analyticsManager` for `buildInsightsCacheKey`/`buildInsightsTask`. The lower-level `@/lib/insights/task` is available for advanced/internal use only.
+Note: Prefer `@/lib/analyticsManager` for `buildInsightsCacheKey`/`buildInsightsTask`. The
+lower-level `@/lib/insights/task` is available for advanced/internal use only.
 
 Example
 
@@ -213,46 +214,47 @@ Notes:
 
 Goals are treated as first-class inputs throughout the analytics pipeline:
 
-- When a `student` context is provided, goals are fetched automatically and merged into the worker inputs.
+- When a `student` context is provided, goals are fetched automatically and merged into the worker
+  inputs.
 - Goals are included in cache keys to ensure distinct results when goal state changes.
 - Enhanced analysis functions receive goals and use them to tune insights and prioritization.
 
 Example: component-driven analysis with automatic goals
 
 ```tsx
-import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker'
+import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 
 export function StudentAnalytics({ student, entries, emotions, sensoryInputs }: Props) {
-  const { results, isAnalyzing, runAnalysis } = useAnalyticsWorker()
+  const { results, isAnalyzing, runAnalysis } = useAnalyticsWorker();
 
   useEffect(() => {
     if (entries?.length) {
       // Goals are fetched from the provided student context and sent to the worker
-      runAnalysis({ entries, emotions, sensoryInputs }, { student })
+      runAnalysis({ entries, emotions, sensoryInputs }, { student });
     }
-  }, [entries, emotions, sensoryInputs, student, runAnalysis])
+  }, [entries, emotions, sensoryInputs, student, runAnalysis]);
 
-  if (isAnalyzing) return <Spinner />
-  return <Charts data={results} />
+  if (isAnalyzing) return <Spinner />;
+  return <Charts data={results} />;
 }
 ```
 
 Example: manual task construction showing goals flow via `buildInsightsTask`
 
 ```ts
-import { buildInsightsTask, buildInsightsCacheKey } from '@/lib/analyticsManager'
-import { analyticsConfig } from '@/lib/analyticsConfig'
+import { buildInsightsTask, buildInsightsCacheKey } from '@/lib/analyticsManager';
+import { analyticsConfig } from '@/lib/analyticsConfig';
 
-const inputs = { entries, emotions, sensoryInputs, goals }
+const inputs = { entries, emotions, sensoryInputs, goals };
 
 // Cache keys include goals to avoid collisions when goal state differs
-const cacheKey = buildInsightsCacheKey(inputs, { tags: ['student:' + student.id] })
+const cacheKey = buildInsightsCacheKey(inputs, { tags: ['student:' + student.id] });
 
 // ttlSeconds is resolved from runtime config (analyticsConfig.cache.ttl)
-const task = buildInsightsTask(inputs, { tags: ['student:' + student.id] })
+const task = buildInsightsTask(inputs, { tags: ['student:' + student.id] });
 
 // Post to the worker
-worker.postMessage({ ...task.payload, cacheKey: task.cacheKey })
+worker.postMessage({ ...task.payload, cacheKey: task.cacheKey });
 ```
 
 Benefits:
@@ -265,59 +267,65 @@ Benefits:
 
 ## Cache invalidation flows with analyticsCoordinator
 
-Cache invalidation is coordinated centrally and propagated via DOM events so all listeners remain consistent.
+Cache invalidation is coordinated centrally and propagated via DOM events so all listeners remain
+consistent.
 
 - `analyticsCoordinator.broadcastCacheClear()` triggers global invalidation
-- `analyticsCoordinator.broadcastCacheClear({ tags })` triggers tag-based invalidation (e.g., per student)
+- `analyticsCoordinator.broadcastCacheClear({ tags })` triggers tag-based invalidation (e.g., per
+  student)
 - `useAnalyticsWorker` subscribes to these events and clears its internal caches accordingly
 
 Examples:
 
 ```ts
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator'
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 
 // Global invalidation
-analyticsCoordinator.broadcastCacheClear()
+analyticsCoordinator.broadcastCacheClear();
 
 // Student-specific invalidation using tags
-analyticsCoordinator.broadcastCacheClear({ tags: ['student:' + student.id] })
+analyticsCoordinator.broadcastCacheClear({ tags: ['student:' + student.id] });
 ```
 
-Within components using the hook, you also have imperative helpers for targeted invalidation when needed:
+Within components using the hook, you also have imperative helpers for targeted invalidation when
+needed:
 
 ```ts
-const { invalidateCacheForStudent } = useAnalyticsWorker()
-invalidateCacheForStudent(student.id)
+const { invalidateCacheForStudent } = useAnalyticsWorker();
+invalidateCacheForStudent(student.id);
 ```
 
 ---
 
 ## Real-time invalidation with useRealtimeData
 
-When new data arrives from realtime streams, caches are invalidated in a debounced fashion to keep the UI up to date without thrashing.
+When new data arrives from realtime streams, caches are invalidated in a debounced fashion to keep
+the UI up to date without thrashing.
 
-Flow: INSERT_DATA → analyticsCoordinator.broadcastCacheClear({ tags }) → useAnalyticsWorker clears + refetches.
+Flow: INSERT_DATA → analyticsCoordinator.broadcastCacheClear({ tags }) → useAnalyticsWorker clears +
+refetches.
 
 Example:
 
 ```ts
-import { useRealtimeData } from '@/hooks/useRealtimeData'
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator'
+import { useRealtimeData } from '@/hooks/useRealtimeData';
+import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
 
 useRealtimeData({
   onInsert: (payload) => {
-    const tag = 'student:' + payload.studentId
+    const tag = 'student:' + payload.studentId;
     // Debounced internally to avoid excessive recomputations
-    analyticsCoordinator.broadcastCacheClear({ tags: [tag] })
+    analyticsCoordinator.broadcastCacheClear({ tags: [tag] });
   },
-})
+});
 ```
 
 ---
 
 ## Precomputation with device constraints
 
-Background analytics precomputation runs opportunistically and respects device constraints (battery, CPU, network). Behavior is fully configurable.
+Background analytics precomputation runs opportunistically and respects device constraints (battery,
+CPU, network). Behavior is fully configurable.
 
 Key ideas:
 
@@ -328,7 +336,7 @@ Key ideas:
 Enable and tune via configuration:
 
 ```ts
-import { analyticsConfig } from '@/lib/analyticsConfig'
+import { analyticsConfig } from '@/lib/analyticsConfig';
 
 analyticsConfig.updateConfig({
   precomputation: {
@@ -340,7 +348,7 @@ analyticsConfig.updateConfig({
     precomputeOnlyWhenIdle: true,
     pauseOnUserActivity: true,
   },
-})
+});
 ```
 
 Operational notes:
@@ -358,8 +366,8 @@ Operational notes:
 ```ts
 const task = buildInsightsTask(
   { entries, emotions, sensoryInputs, goals },
-  { tags: ['student:' + student.id] }
-)
+  { tags: ['student:' + student.id] },
+);
 
 // Shape (illustrative):
 // {
@@ -374,7 +382,9 @@ const task = buildInsightsTask(
 // }
 ```
 
-TTL is derived from `analyticsConfig.getConfig().cache.ttl` (milliseconds) and converted to seconds for worker tasks: `ttlSeconds = Math.floor(cache.ttl / 1000)`. You may override this by passing `options.ttlSeconds`; omit to use the configured value.
+TTL is derived from `analyticsConfig.getConfig().cache.ttl` (milliseconds) and converted to seconds
+for worker tasks: `ttlSeconds = Math.floor(cache.ttl / 1000)`. You may override this by passing
+`options.ttlSeconds`; omit to use the configured value.
 
 Notes:
 
@@ -386,14 +396,15 @@ Notes:
 
 ## Configuration integration (charts and precomputation)
 
-Chart behavior and background precomputation are fully configurable at runtime via `analyticsConfig.getConfig()`.
+Chart behavior and background precomputation are fully configurable at runtime via
+`analyticsConfig.getConfig()`.
 
 Examples:
 
 ```ts
-const cfg = analyticsConfig.getConfig()
-const yMax = cfg.charts.yAxisMax
-const zoomMin = cfg.charts.dataZoomMinSpan
+const cfg = analyticsConfig.getConfig();
+const yMax = cfg.charts.yAxisMax;
+const zoomMin = cfg.charts.dataZoomMinSpan;
 
 if (cfg.precomputation.enabled && cfg.precomputation.precomputeOnlyWhenIdle) {
   // schedule background work conservatively

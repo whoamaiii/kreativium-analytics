@@ -45,7 +45,7 @@ export class GameErrorBoundary extends Component<Props, State> {
   public state: State = {
     hasError: false,
     retryCount: 0,
-    isResetting: false
+    isResetting: false,
   };
 
   public static getDerivedStateFromError(error: Error): Pick<State, 'hasError' | 'error'> {
@@ -71,13 +71,13 @@ export class GameErrorBoundary extends Component<Props, State> {
     logErrorForReporting(error, {
       boundaryType: 'GameErrorBoundary',
       gameName,
-      componentStack: errorInfo?.componentStack
+      componentStack: errorInfo?.componentStack,
     });
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       error,
       errorInfo,
-      retryCount: prevState.retryCount + 1
+      retryCount: prevState.retryCount + 1,
     }));
 
     this.props.onError?.(error, errorInfo);
@@ -112,7 +112,7 @@ export class GameErrorBoundary extends Component<Props, State> {
         hasError: false,
         error: undefined,
         errorInfo: undefined,
-        isResetting: false
+        isResetting: false,
       });
 
       logger.info(`[GameErrorBoundary] ${gameName} restarted successfully`);
@@ -150,14 +150,22 @@ export class GameErrorBoundary extends Component<Props, State> {
     }
 
     // Controller/input tips
-    if (errorMessage.includes('controller') || errorMessage.includes('input') || errorMessage.includes('gamepad')) {
+    if (
+      errorMessage.includes('controller') ||
+      errorMessage.includes('input') ||
+      errorMessage.includes('gamepad')
+    ) {
       tips.push('Reconnect your game controller or gamepad');
       tips.push('Check for controller driver updates');
       tips.push('Try using keyboard controls instead');
     }
 
     // Rendering/graphics tips
-    if (errorMessage.includes('render') || errorMessage.includes('canvas') || errorMessage.includes('webgl')) {
+    if (
+      errorMessage.includes('render') ||
+      errorMessage.includes('canvas') ||
+      errorMessage.includes('webgl')
+    ) {
       tips.push('Update your graphics drivers');
       tips.push('Disable hardware acceleration in browser settings');
       tips.push('Try a different browser');
@@ -194,7 +202,8 @@ export class GameErrorBoundary extends Component<Props, State> {
           <CardContent className="space-y-6">
             {/* Error message */}
             <p className="text-sm text-muted-foreground">
-              The game encountered an unexpected error and had to stop. Don't worry, you can restart it below.
+              The game encountered an unexpected error and had to stop. Don't worry, you can restart
+              it below.
             </p>
 
             {/* Error type indicator */}
@@ -243,7 +252,9 @@ export class GameErrorBoundary extends Component<Props, State> {
                 variant="default"
                 disabled={this.state.isResetting}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${this.state.isResetting ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${this.state.isResetting ? 'animate-spin' : ''}`}
+                />
                 {this.state.isResetting ? 'Restarting...' : 'Restart Game'}
               </Button>
               <Button

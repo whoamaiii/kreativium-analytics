@@ -17,7 +17,8 @@ export interface DataQualitySummary {
   avgIntensity: number | null;
 }
 
-const ensureDate = (value: Date | string): Date => (value instanceof Date ? value : new Date(value));
+const ensureDate = (value: Date | string): Date =>
+  value instanceof Date ? value : new Date(value);
 
 const withinRange = (timestamp: Date, range?: DateRange): boolean => {
   if (!range) return true;
@@ -25,7 +26,10 @@ const withinRange = (timestamp: Date, range?: DateRange): boolean => {
   return time >= range.start.getTime() && time <= range.end.getTime();
 };
 
-export const computeDataQualitySummary = (entries: TrackingEntry[], range?: DateRange): DataQualitySummary => {
+export const computeDataQualitySummary = (
+  entries: TrackingEntry[],
+  range?: DateRange,
+): DataQualitySummary => {
   const normalizedEntries = Array.isArray(entries) ? entries : [];
   const filtered = normalizedEntries.filter((entry) => {
     const timestamp = ensureDate(entry.timestamp);
@@ -34,8 +38,12 @@ export const computeDataQualitySummary = (entries: TrackingEntry[], range?: Date
 
   const total = filtered.length;
   const last = total > 0 ? ensureDate(filtered[0].timestamp) : null;
-  const daysSince = last ? Math.max(0, Math.round((Date.now() - last.getTime()) / (1000 * 60 * 60 * 24))) : null;
-  const completeCount = filtered.filter((entry) => (entry.emotions?.length || 0) > 0 && (entry.sensoryInputs?.length || 0) > 0).length;
+  const daysSince = last
+    ? Math.max(0, Math.round((Date.now() - last.getTime()) / (1000 * 60 * 60 * 24)))
+    : null;
+  const completeCount = filtered.filter(
+    (entry) => (entry.emotions?.length || 0) > 0 && (entry.sensoryInputs?.length || 0) > 0,
+  ).length;
   const completeness = total > 0 ? Math.round((completeCount / total) * 100) : 0;
 
   const buckets: DataQualityBuckets = { morning: 0, afternoon: 0, evening: 0 };

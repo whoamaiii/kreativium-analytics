@@ -1,8 +1,6 @@
 import { z, ZodError } from 'zod';
 import { logger } from '@/lib/logger';
-import {
-  analyticsConfigSchema,
-} from '@/config/schemas/analytics.schema';
+import { analyticsConfigSchema } from '@/config/schemas/analytics.schema';
 import type { AnalyticsConfig as SchemaAnalyticsConfig } from '@/config/schemas/analytics.schema';
 
 export interface AnalyticsValidationResult {
@@ -56,7 +54,13 @@ export function validateAndMergeAnalyticsConfig(
       const bv: any = (b as any)[key];
       if (bv === undefined) continue;
       const av: any = (a as any)[key];
-      if (av && typeof av === 'object' && !Array.isArray(av) && typeof bv === 'object' && !Array.isArray(bv)) {
+      if (
+        av &&
+        typeof av === 'object' &&
+        !Array.isArray(av) &&
+        typeof bv === 'object' &&
+        !Array.isArray(bv)
+      ) {
         out[key] = deepMerge(av, bv);
       } else {
         out[key] = bv;

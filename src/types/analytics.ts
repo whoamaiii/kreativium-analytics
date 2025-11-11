@@ -173,57 +173,57 @@ type WorkerProgress = { stage: string; percent: number };
 
 export type AnalyticsWorkerMessage =
   | {
-    type: 'progress';
-    cacheKey?: string;
-    chartsUpdated?: AnalyticsChartKey[];
-    progress?: WorkerProgress;
-  }
+      type: 'progress';
+      cacheKey?: string;
+      chartsUpdated?: AnalyticsChartKey[];
+      progress?: WorkerProgress;
+    }
   | {
-    type: 'partial';
-    cacheKey?: string;
-    payload?: AnalyticsResultsPartial;
-    chartsUpdated?: AnalyticsChartKey[];
-    progress?: WorkerProgress;
-  }
+      type: 'partial';
+      cacheKey?: string;
+      payload?: AnalyticsResultsPartial;
+      chartsUpdated?: AnalyticsChartKey[];
+      progress?: WorkerProgress;
+    }
   | {
-    type: 'complete';
-    cacheKey?: string;
-    payload: (AnalyticsResults & { prewarm?: boolean });
-    chartsUpdated?: AnalyticsChartKey[];
-    progress?: WorkerProgress;
-  }
+      type: 'complete';
+      cacheKey?: string;
+      payload: AnalyticsResults & { prewarm?: boolean };
+      chartsUpdated?: AnalyticsChartKey[];
+      progress?: WorkerProgress;
+    }
   | {
-    type: 'error';
-    cacheKey?: string;
-    error: string;
-    payload?: AnalyticsResultsPartial;
-    chartsUpdated?: AnalyticsChartKey[];
-    progress?: WorkerProgress;
-  }
+      type: 'error';
+      cacheKey?: string;
+      error: string;
+      payload?: AnalyticsResultsPartial;
+      chartsUpdated?: AnalyticsChartKey[];
+      progress?: WorkerProgress;
+    }
   | {
-    type: 'alerts';
-    cacheKey?: string;
-    payload: { alerts: AlertEvent[]; studentId?: string; prewarm?: boolean };
-  }
+      type: 'alerts';
+      cacheKey?: string;
+      payload: { alerts: AlertEvent[]; studentId?: string; prewarm?: boolean };
+    }
   | {
-    type: 'CACHE/CLEAR_DONE';
-    payload: {
-      scope: 'all' | 'student' | 'patterns';
-      studentId?: string;
-      patternsCleared?: number;
-      cacheCleared?: number;
-      stats?: { size: number };
-    };
-  }
+      type: 'CACHE/CLEAR_DONE';
+      payload: {
+        scope: 'all' | 'student' | 'patterns';
+        studentId?: string;
+        patternsCleared?: number;
+        cacheCleared?: number;
+        stats?: { size: number };
+      };
+    }
   // Lightweight meta channel for diagnostics; worker may ignore
   | {
-    type: 'game:event';
-    payload: unknown;
-  }
+      type: 'game:event';
+      payload: unknown;
+    }
   | {
-    type: 'game:session_summary';
-    payload: unknown;
-  };
+      type: 'game:session_summary';
+      payload: unknown;
+    };
 
 // -----------------------------------------------------------------------------
 // Configuration Types (exported explicitly)
@@ -398,7 +398,6 @@ export type _Doc_TaxonomyConfig = TaxonomyConfig;
 // -----------------------------------------------------------------------------
 
 /** Example: Balanced/default configuration clone. */
- 
 
 // -----------------------------------------------------------------------------
 // Migration Notes (breaking changes guidance)
@@ -421,7 +420,6 @@ export type _Doc_TaxonomyConfig = TaxonomyConfig;
  * 3) Presets
  *    - Preset keys are available via AnalyticsPresetKey. Use analyticsConfig.setPreset(key) at runtime.
  */
- 
 
 // -----------------------------------------------------------------------------
 // Cache & Manager types

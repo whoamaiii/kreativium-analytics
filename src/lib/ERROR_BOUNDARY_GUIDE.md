@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Kreativium Analytics application now features an enhanced error boundary architecture designed to provide robust error handling, user-friendly error messages, and automatic recovery mechanisms. This guide explains the components and how to use them effectively.
+The Kreativium Analytics application now features an enhanced error boundary architecture designed
+to provide robust error handling, user-friendly error messages, and automatic recovery mechanisms.
+This guide explains the components and how to use them effectively.
 
 ## Components
 
@@ -13,6 +15,7 @@ The Kreativium Analytics application now features an enhanced error boundary arc
 The enhanced main error boundary with automatic retry and recovery capabilities.
 
 #### Features:
+
 - Automatic recovery with exponential backoff
 - Actionable error messages with suggestions
 - Error reporting and logging integration
@@ -21,20 +24,22 @@ The enhanced main error boundary with automatic retry and recovery capabilities.
 - Toast notifications for errors and recovery
 
 #### Props:
+
 ```typescript
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;                    // Custom fallback UI
+  fallback?: ReactNode; // Custom fallback UI
   onError?: (error: Error, errorInfo) => void;
-  showToast?: boolean;                     // Default: true
-  name?: string;                           // Boundary name for logging
-  allowAutoRecovery?: boolean;             // Default: true
-  maxRetries?: number;                     // Default: 3
-  onRecovered?: () => void;                // Called on successful recovery
+  showToast?: boolean; // Default: true
+  name?: string; // Boundary name for logging
+  allowAutoRecovery?: boolean; // Default: true
+  maxRetries?: number; // Default: 3
+  onRecovered?: () => void; // Called on successful recovery
 }
 ```
 
 #### Usage Example:
+
 ```tsx
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 
@@ -58,6 +63,7 @@ export function App() {
 Specialized boundary for chart and visualization rendering errors.
 
 #### Features:
+
 - Chart-specific error messages
 - Data format validation suggestions
 - Performance optimization tips
@@ -65,17 +71,19 @@ Specialized boundary for chart and visualization rendering errors.
 - Automatic retry mechanism
 
 #### Props:
+
 ```typescript
 interface Props {
   children: ReactNode;
   onError?: (error: Error, errorInfo) => void;
   fallback?: ReactNode;
-  chartName?: string;           // For logging and UI
-  showSuggestions?: boolean;    // Default: true
+  chartName?: string; // For logging and UI
+  showSuggestions?: boolean; // Default: true
 }
 ```
 
 #### Usage Example:
+
 ```tsx
 import { ChartErrorBoundary } from '@/components/error-boundaries';
 import { EChartContainer } from '@/components/charts/EChartContainer';
@@ -96,6 +104,7 @@ export function AnalyticsDashboard() {
 Specialized boundary for data fetching, processing, and storage operations.
 
 #### Features:
+
 - Network error detection and handling
 - Storage quota management
 - Automatic retry with exponential backoff
@@ -104,18 +113,20 @@ Specialized boundary for data fetching, processing, and storage operations.
 - Timeout handling
 
 #### Props:
+
 ```typescript
 interface Props {
   children: ReactNode;
   onError?: (error: Error, errorInfo) => void;
-  onRetry?: () => Promise<void>;           // Custom retry logic
+  onRetry?: () => Promise<void>; // Custom retry logic
   fallback?: ReactNode;
-  operationName?: string;                  // For logging
-  showNetworkStatus?: boolean;             // Default: true
+  operationName?: string; // For logging
+  showNetworkStatus?: boolean; // Default: true
 }
 ```
 
 #### Usage Example:
+
 ```tsx
 import { DataErrorBoundary } from '@/components/error-boundaries';
 
@@ -126,10 +137,7 @@ export function StudentsList() {
   };
 
   return (
-    <DataErrorBoundary
-      operationName="Fetch Students"
-      onRetry={fetchStudents}
-    >
+    <DataErrorBoundary operationName="Fetch Students" onRetry={fetchStudents}>
       <StudentListContent />
     </DataErrorBoundary>
   );
@@ -143,6 +151,7 @@ export function StudentsList() {
 Specialized boundary for game component errors.
 
 #### Features:
+
 - Game-specific error messages
 - Performance issue detection
 - Controller/input error handling
@@ -151,17 +160,19 @@ Specialized boundary for game component errors.
 - Automatic game restart
 
 #### Props:
+
 ```typescript
 interface Props {
   children: ReactNode;
   onError?: (error: Error, errorInfo) => void;
-  onReset?: () => void | Promise<void>;    // Game reset logic
+  onReset?: () => void | Promise<void>; // Game reset logic
   fallback?: ReactNode;
-  gameName?: string;                       // For logging and UI
+  gameName?: string; // For logging and UI
 }
 ```
 
 #### Usage Example:
+
 ```tsx
 import { GameErrorBoundary } from '@/components/error-boundaries';
 
@@ -172,10 +183,7 @@ export function GameComponent() {
   };
 
   return (
-    <GameErrorBoundary
-      gameName="Sensory Game"
-      onReset={handleReset}
-    >
+    <GameErrorBoundary gameName="Sensory Game" onReset={handleReset}>
       <GameEngine />
     </GameErrorBoundary>
   );
@@ -191,14 +199,16 @@ Comprehensive utilities for error classification, message formatting, and recove
 ### Key Functions:
 
 #### classifyError(error)
+
 Classifies an error to determine its type and severity.
 
 ```typescript
-const classification = classifyError(new Error("Network failed"));
+const classification = classifyError(new Error('Network failed'));
 // Returns: { type: 'NETWORK_ERROR', severity: 'HIGH', isRecoverable: true }
 ```
 
 #### formatErrorForDisplay(error, isDevelopment)
+
 Formats an error for display with user-friendly messages.
 
 ```typescript
@@ -207,6 +217,7 @@ const displayInfo = formatErrorForDisplay(error, import.meta.env.DEV);
 ```
 
 #### getErrorSuggestions(error)
+
 Gets actionable suggestions for an error type.
 
 ```typescript
@@ -215,17 +226,19 @@ const suggestions = getErrorSuggestions(error);
 ```
 
 #### logErrorForReporting(error, context)
+
 Logs an error with context for error tracking and monitoring.
 
 ```typescript
 logErrorForReporting(error, {
   component: 'Dashboard',
   action: 'fetchData',
-  userId: user.id
+  userId: user.id,
 });
 ```
 
 #### getRetryStrategy(error)
+
 Returns recommended retry strategy for an error.
 
 ```typescript
@@ -236,23 +249,27 @@ const strategy = getRetryStrategy(error);
 ## Architecture Layers
 
 ### 1. Error Detection
+
 - `ErrorBoundary` and specialized boundaries catch React component errors
 - Global error handlers catch unhandled promise rejections and global errors
 - Error classification system categorizes errors by type and severity
 
 ### 2. Error Logging & Reporting
+
 - Structured logging through `logger` service
 - Error context preservation (user, route, timestamp)
 - Remote logging integration support
 - Development vs. production-aware logging
 
 ### 3. Error Messages
+
 - User-friendly messages with actionable suggestions
 - Error type-specific guidance
 - Development mode with technical details
 - Internationalization support ready
 
 ### 4. Recovery & Retry
+
 - Automatic retry with exponential backoff
 - Recovery strategy selection based on error type
 - Online/offline detection
@@ -260,6 +277,7 @@ const strategy = getRetryStrategy(error);
 - Manual recovery options
 
 ### 5. User Communication
+
 - Toast notifications for errors
 - Detailed error UI with suggestions
 - Recovery status indicators
@@ -379,14 +397,14 @@ logger.error('[ErrorBoundary] Component error caught', {
   route: '/dashboard',
   timestamp: '2024-01-01T00:00:00Z',
   retryCount: 1,
-  errorCount: 2
+  errorCount: 2,
 });
 
 // Custom error reporting
 logErrorForReporting(error, {
   context: 'userAction',
   userId: '123',
-  feature: 'analytics'
+  feature: 'analytics',
 });
 ```
 
@@ -401,17 +419,13 @@ function ThrowError() {
 
   if (shouldThrow) throw new Error('Test error');
 
-  return (
-    <button onClick={() => setShouldThrow(true)}>
-      Throw Error
-    </button>
-  );
+  return <button onClick={() => setShouldThrow(true)}>Throw Error</button>;
 }
 
 // Wrap in error boundary and test
 <ErrorBoundary name="TestBoundary">
   <ThrowError />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 ### Vitest Testing
@@ -454,18 +468,21 @@ describe('ErrorBoundary', () => {
 ## Troubleshooting
 
 ### Errors Not Caught
+
 - Error boundaries only catch render-time errors
 - Async errors need try/catch or custom event handlers
 - Event handler errors: use try/catch in handlers
 - Promise rejections: use `.catch()` or async/await with try/catch
 
 ### Too Many Retries
+
 - Reduce `maxRetries` if retries are excessive
 - Check error classification is correct
 - Implement backoff delay properly
 - Log retry counts to monitor
 
 ### Storage Full Errors
+
 - DataErrorBoundary can clear storage
 - Implement data retention policies
 - Monitor IndexedDB usage
@@ -480,13 +497,13 @@ If migrating from the old ErrorWrapper:
 import ErrorWrapper from '@/components/ErrorWrapper';
 <ErrorWrapper>
   <Component />
-</ErrorWrapper>
+</ErrorWrapper>;
 
 // New way
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 <ErrorBoundary name="Component">
   <Component />
-</ErrorBoundary>
+</ErrorBoundary>;
 ```
 
 ## Future Enhancements
@@ -505,6 +522,7 @@ Potential improvements to the error boundary system:
 ## Support
 
 For issues or questions about error boundaries:
+
 1. Check the error classification in `classifyError()`
 2. Review logging output in browser console (development mode)
 3. Check error suggestions in `getErrorSuggestions()`
@@ -514,6 +532,7 @@ For issues or questions about error boundaries:
 ## Summary
 
 The enhanced error boundary architecture provides:
+
 - ✓ Comprehensive error classification and handling
 - ✓ User-friendly error messages with actionable suggestions
 - ✓ Automatic recovery with exponential backoff
@@ -523,4 +542,5 @@ The enhanced error boundary architecture provides:
 - ✓ Performance-optimized retry mechanisms
 - ✓ Storage quota management
 
-Use these components strategically throughout your application for robust error handling and improved user experience.
+Use these components strategically throughout your application for robust error handling and
+improved user experience.

@@ -117,15 +117,13 @@ function calculateDateRange(entries: TrackingEntry[]): DateRange {
   }
 
   const [firstEntry] = entries;
-  const initial = firstEntry.timestamp instanceof Date
-    ? firstEntry.timestamp
-    : new Date(firstEntry.timestamp);
+  const initial =
+    firstEntry.timestamp instanceof Date ? firstEntry.timestamp : new Date(firstEntry.timestamp);
 
   const accumulator = entries.reduce<{ minDate: Date; maxDate: Date }>(
     (acc, entry) => {
-      const rawTimestamp = entry.timestamp instanceof Date
-        ? entry.timestamp
-        : new Date(entry.timestamp);
+      const rawTimestamp =
+        entry.timestamp instanceof Date ? entry.timestamp : new Date(entry.timestamp);
       const timestamp = Number.isNaN(rawTimestamp.getTime()) ? acc.minDate : rawTimestamp;
 
       return {
@@ -133,7 +131,7 @@ function calculateDateRange(entries: TrackingEntry[]): DateRange {
         maxDate: timestamp > acc.maxDate ? timestamp : acc.maxDate,
       };
     },
-    { minDate: initial, maxDate: initial }
+    { minDate: initial, maxDate: initial },
   );
 
   return { start: accumulator.minDate, end: accumulator.maxDate };
@@ -142,10 +140,7 @@ function calculateDateRange(entries: TrackingEntry[]): DateRange {
 /**
  * Check if two date ranges overlap
  */
-function dateRangesOverlap(
-  range1: DateRange,
-  range2: DateRange
-): boolean {
+function dateRangesOverlap(range1: DateRange, range2: DateRange): boolean {
   const start1 = range1.start.getTime();
   const end1 = range1.end.getTime();
   const start2 = range2.start.getTime();
@@ -183,9 +178,7 @@ function dateRangesOverlap(
  * )}
  * ```
  */
-export function useAnalyticsExport(
-  options: UseAnalyticsExportOptions
-): UseAnalyticsExportReturn {
+export function useAnalyticsExport(options: UseAnalyticsExportOptions): UseAnalyticsExportReturn {
   const {
     student,
     filteredData,
@@ -246,7 +239,7 @@ export function useAnalyticsExport(
               dataURL: methods.getImage({ pixelRatio: 2, backgroundColor: '#ffffff' }),
               svgString: methods.getSVG(),
             };
-          })
+          }),
         );
 
         const usableExports = exports.filter((item) => item.dataURL || item.svgString);
@@ -268,7 +261,7 @@ export function useAnalyticsExport(
         return [];
       }
     },
-    [student.id, maxCharts, tAnalytics, safeSetExportProgress]
+    [student.id, maxCharts, tAnalytics, safeSetExportProgress],
   );
 
   /**
@@ -354,7 +347,7 @@ export function useAnalyticsExport(
       visualizationRef,
       collectChartExports,
       safeSetExportProgress,
-    ]
+    ],
   );
 
   /**

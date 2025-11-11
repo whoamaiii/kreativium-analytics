@@ -1,18 +1,18 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Student } from "@/types/student";
-import { ArrowLeft, UserPlus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
-import { useTranslation } from "@/hooks/useTranslation";
-import { LanguageSettings } from "@/components/LanguageSettings";
-import { analyticsManager } from "@/lib/analyticsManager";
-import { dataStorage } from "@/lib/dataStorage";
-import { logger } from "@/lib/logger";
-import { validateStudent, sanitizeInput } from "@/lib/formValidation";
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Student } from '@/types/student';
+import { ArrowLeft, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
+import { useTranslation } from '@/hooks/useTranslation';
+import { LanguageSettings } from '@/components/LanguageSettings';
+import { analyticsManager } from '@/lib/analyticsManager';
+import { dataStorage } from '@/lib/dataStorage';
+import { logger } from '@/lib/logger';
+import { validateStudent, sanitizeInput } from '@/lib/formValidation';
 
 const AddStudent = () => {
   const [name, setName] = useState('');
@@ -33,13 +33,13 @@ const AddStudent = () => {
       name: name.trim(),
       grade: grade.trim(),
       dateOfBirth: dateOfBirth.trim(),
-      notes: notes.trim()
+      notes: notes.trim(),
     });
 
     if (!validationResult.success) {
       // Convert validation errors to field-level error map
       const errorMap: Record<string, string> = {};
-      validationResult.errors.forEach(err => {
+      validationResult.errors.forEach((err) => {
         errorMap[err.field] = err.message;
       });
       setErrors(errorMap);
@@ -74,7 +74,8 @@ const AddStudent = () => {
       navigate('/');
     } catch (error) {
       logger.error('Error adding student:', error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to add student. Please try again.";
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to add student. Please try again.';
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -95,17 +96,17 @@ const AddStudent = () => {
               className="font-dyslexia"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">{String(tStudent('addStudent.backToDashboard'))}</span>
+              <span className="hidden sm:inline">
+                {String(tStudent('addStudent.backToDashboard'))}
+              </span>
             </Button>
             <LanguageSettings />
           </div>
-          
+
           <h1 className="text-3xl font-bold text-foreground mb-2">
             {String(tStudent('addStudent.title'))}
           </h1>
-          <p className="text-muted-foreground">
-            {String(tStudent('addStudent.description'))}
-          </p>
+          <p className="text-muted-foreground">{String(tStudent('addStudent.description'))}</p>
         </div>
 
         {/* Form */}
@@ -130,7 +131,7 @@ const AddStudent = () => {
                     setName(e.target.value);
                     // Clear error on change
                     if (errors.name) {
-                      setErrors(prev => ({ ...prev, name: '' }));
+                      setErrors((prev) => ({ ...prev, name: '' }));
                     }
                   }}
                   placeholder={String(tStudent('addStudent.form.name.placeholder'))}
@@ -157,7 +158,7 @@ const AddStudent = () => {
                   onChange={(e) => {
                     setGrade(e.target.value);
                     if (errors.grade) {
-                      setErrors(prev => ({ ...prev, grade: '' }));
+                      setErrors((prev) => ({ ...prev, grade: '' }));
                     }
                   }}
                   placeholder={String(tStudent('addStudent.form.grade.placeholder'))}
@@ -183,7 +184,7 @@ const AddStudent = () => {
                   onChange={(e) => {
                     setDateOfBirth(e.target.value);
                     if (errors.dateOfBirth) {
-                      setErrors(prev => ({ ...prev, dateOfBirth: '' }));
+                      setErrors((prev) => ({ ...prev, dateOfBirth: '' }));
                     }
                   }}
                   className={`font-dyslexia bg-input border-border focus:ring-ring ${errors.dateOfBirth ? 'border-red-500' : ''}`}
@@ -207,7 +208,7 @@ const AddStudent = () => {
                   onChange={(e) => {
                     setNotes(e.target.value);
                     if (errors.notes) {
-                      setErrors(prev => ({ ...prev, notes: '' }));
+                      setErrors((prev) => ({ ...prev, notes: '' }));
                     }
                   }}
                   placeholder={String(tStudent('addStudent.form.notes.placeholder'))}
@@ -225,7 +226,7 @@ const AddStudent = () => {
 
               {/* Submit Buttons */}
               <div className="flex gap-4 pt-4">
-              <Button
+                <Button
                   type="button"
                   variant="ghost"
                   onClick={() => navigate('/')}
@@ -247,7 +248,8 @@ const AddStudent = () => {
                   ) : (
                     <>
                       <UserPlus className="h-4 w-4 mr-2" />
-                      {String(tCommon('buttons.add'))} {String(tCommon('navigation.students')).slice(0, -1)}
+                      {String(tCommon('buttons.add'))}{' '}
+                      {String(tCommon('navigation.students')).slice(0, -1)}
                     </>
                   )}
                 </Button>
@@ -258,7 +260,9 @@ const AddStudent = () => {
 
         {/* Helper Text */}
         <div className="mt-6 p-4 bg-accent/50 rounded-lg border border-accent">
-          <h3 className="font-medium text-accent-foreground mb-2">{String(tStudent('addStudent.helpText'))}</h3>
+          <h3 className="font-medium text-accent-foreground mb-2">
+            {String(tStudent('addStudent.helpText'))}
+          </h3>
           <p className="text-sm text-accent-foreground/80">
             {String(tStudent('addStudent.helpText'))}
           </p>

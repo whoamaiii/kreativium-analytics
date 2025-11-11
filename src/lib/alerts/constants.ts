@@ -80,17 +80,9 @@ export const VALID_STATUS_TRANSITIONS: Record<AlertStatus, AlertStatus[]> = {
     AlertStatus.Snoozed,
     AlertStatus.Dismissed,
   ],
-  [AlertStatus.InProgress]: [
-    AlertStatus.Resolved,
-    AlertStatus.Snoozed,
-    AlertStatus.Dismissed,
-  ],
+  [AlertStatus.InProgress]: [AlertStatus.Resolved, AlertStatus.Snoozed, AlertStatus.Dismissed],
   [AlertStatus.Resolved]: [],
-  [AlertStatus.Snoozed]: [
-    AlertStatus.InProgress,
-    AlertStatus.Resolved,
-    AlertStatus.Dismissed,
-  ],
+  [AlertStatus.Snoozed]: [AlertStatus.InProgress, AlertStatus.Resolved, AlertStatus.Dismissed],
   [AlertStatus.Dismissed]: [],
 };
 

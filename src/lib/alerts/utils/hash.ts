@@ -8,5 +8,3 @@ export function hashStudentId(input: string): string {
 }
 
 export default hashStudentId;
-
-

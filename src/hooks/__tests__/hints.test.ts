@@ -11,7 +11,3 @@ describe('hint economy', () => {
     expect(after2.remaining).toBe(1);
   });
 });
-
-
-
-

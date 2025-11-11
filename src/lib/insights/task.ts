@@ -26,9 +26,14 @@ function pickConfigSubset(cfg: AnalyticsConfiguration | null | undefined): Insig
  * Build a deterministic cache key for Insights computations.
  * Keeps payload minimal by hashing structural summaries rather than raw arrays.
  */
-export function buildInsightsCacheKey(inputs: ComputeInsightsInputs, options?: InsightsOptions): string {
+export function buildInsightsCacheKey(
+  inputs: ComputeInsightsInputs,
+  options?: InsightsOptions,
+): string {
   const { entries, emotions, sensoryInputs, goals } = inputs;
-  const cfgSubset = pickConfigSubset(options?.config as unknown as AnalyticsConfiguration | undefined);
+  const cfgSubset = pickConfigSubset(
+    options?.config as unknown as AnalyticsConfiguration | undefined,
+  );
 
   // Summarize inputs to keep the key stable and compact
   const summary = {
@@ -39,9 +44,22 @@ export function buildInsightsCacheKey(inputs: ComputeInsightsInputs, options?: I
       goals: goals?.length ?? 0,
     },
     latestTimestamps: {
-      entries: entries && entries.length ? new Date(Math.max(...entries.map(e => new Date(e.timestamp).getTime()))).toISOString() : null,
-      emotions: emotions && emotions.length ? new Date(Math.max(...emotions.map(e => new Date(e.timestamp).getTime()))).toISOString() : null,
-      sensory: sensoryInputs && sensoryInputs.length ? new Date(Math.max(...sensoryInputs.map(s => new Date(s.timestamp).getTime()))).toISOString() : null,
+      entries:
+        entries && entries.length
+          ? new Date(Math.max(...entries.map((e) => new Date(e.timestamp).getTime()))).toISOString()
+          : null,
+      emotions:
+        emotions && emotions.length
+          ? new Date(
+              Math.max(...emotions.map((e) => new Date(e.timestamp).getTime())),
+            ).toISOString()
+          : null,
+      sensory:
+        sensoryInputs && sensoryInputs.length
+          ? new Date(
+              Math.max(...sensoryInputs.map((s) => new Date(s.timestamp).getTime())),
+            ).toISOString()
+          : null,
     },
     // Include a minimal subset of config that affects computation semantics
     config: cfgSubset,
@@ -90,13 +108,21 @@ export type InsightsWorkerTask = Omit<AnalyticsWorkerTask, 'type' | 'payload'> &
  * - ttlSeconds: resolved from options or runtime config
  * - tags: ["insights", "v2", ...options.tags]
  */
-export function buildInsightsTask(inputs: ComputeInsightsInputs, options?: InsightsOptions): InsightsWorkerTask {
+export function buildInsightsTask(
+  inputs: ComputeInsightsInputs,
+  options?: InsightsOptions,
+): InsightsWorkerTask {
   const cacheKey = buildInsightsCacheKey(inputs, options);
   const ttlSeconds = resolveTtlSeconds(options);
-  const cfgSubset = options?.config ? pickConfigSubset(options.config as unknown as AnalyticsConfiguration) : undefined;
+  const cfgSubset = options?.config
+    ? pickConfigSubset(options.config as unknown as AnalyticsConfiguration)
+    : undefined;
 
   const baseTags = ['insights', 'v2'];
-  const tags = options?.tags && options.tags.length ? Array.from(new Set([...baseTags, ...options.tags])) : baseTags;
+  const tags =
+    options?.tags && options.tags.length
+      ? Array.from(new Set([...baseTags, ...options.tags]))
+      : baseTags;
 
   return {
     type: 'Insights/Compute',

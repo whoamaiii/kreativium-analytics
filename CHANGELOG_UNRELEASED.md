@@ -2,7 +2,8 @@
 
 ## chore: UI cleanup - remove dead code and duplicates
 
-- Removed legacy re-export `src/lib/buttonVariants.ts`; canonical source is now `src/components/ui/button-variants.ts`.
+- Removed legacy re-export `src/lib/buttonVariants.ts`; canonical source is now
+  `src/components/ui/button-variants.ts`.
 - Confirmed no remaining imports of `@/lib/buttonVariants`.
 - No `@/components/ui/chart` stub present; no action required for chart removal.
 
@@ -14,8 +15,10 @@
 
 ## docs: Align tabs and UI conventions
 
-- Updated `src/docs/components/profile-sections-README.md` to current tab keys: `overview`, `explore`, `alerts` with source-of-truth in `src/config/analyticsTabs.ts`.
-- Added UI conventions to `docs/CONFIGURATION_SCHEMA.md` covering toast wrapper, analytics panels location, tab config source, date range composition, and UI primitives.
+- Updated `src/docs/components/profile-sections-README.md` to current tab keys: `overview`,
+  `explore`, `alerts` with source-of-truth in `src/config/analyticsTabs.ts`.
+- Added UI conventions to `docs/CONFIGURATION_SCHEMA.md` covering toast wrapper, analytics panels
+  location, tab config source, date range composition, and UI primitives.
 
 ## feat: Comprehensive Infrastructure Improvements
 

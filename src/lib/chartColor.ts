@@ -17,8 +17,7 @@ const hslToRgba = (hsl: string, alpha = 1) => {
 
   const k = (n: number) => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
-  const f = (n: number) =>
-    l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
 
   const r = Math.round(255 * f(0));
   const g = Math.round(255 * f(8));

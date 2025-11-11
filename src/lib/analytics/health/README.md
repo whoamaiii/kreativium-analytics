@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Health Score Calculator is a pure, testable function extracted from the Analytics Manager that calculates an "analytics health score" (0-100) based on the completeness, quality, and confidence of analytics results.
+The Health Score Calculator is a pure, testable function extracted from the Analytics Manager that
+calculates an "analytics health score" (0-100) based on the completeness, quality, and confidence of
+analytics results.
 
 ## Module Structure
 
@@ -19,8 +21,8 @@ src/lib/analytics/health/
 ```typescript
 export function calculateHealthScore(
   results: AnalyticsResultsCompat,
-  config?: AnalyticsConfiguration
-): number
+  config?: AnalyticsConfiguration,
+): number;
 ```
 
 ### Parameters
@@ -47,13 +49,13 @@ export function calculateHealthScore(
 
 The score starts with five weighted components:
 
-| Component | Default Weight | Awarded When |
-|-----------|---------------|--------------|
-| **Patterns** | 20 | `results.patterns.length > 0` |
-| **Correlations** | 20 | `results.correlations.length > 0` |
-| **Predictions** | 20 | `results.predictiveInsights.length > 0` |
-| **Anomalies** | 20 | `results.anomalies.length > 0` |
-| **Minimum Data** | 20 | `hasMinimumData === true` or patterns/correlations exist |
+| Component        | Default Weight | Awarded When                                             |
+| ---------------- | -------------- | -------------------------------------------------------- |
+| **Patterns**     | 20             | `results.patterns.length > 0`                            |
+| **Correlations** | 20             | `results.correlations.length > 0`                        |
+| **Predictions**  | 20             | `results.predictiveInsights.length > 0`                  |
+| **Anomalies**    | 20             | `results.anomalies.length > 0`                           |
+| **Minimum Data** | 20             | `hasMinimumData === true` or patterns/correlations exist |
 
 ### Confidence Scaling
 
@@ -63,6 +65,7 @@ scaledScore = round(baseScore * confidence)
 ```
 
 **Confidence Priority:**
+
 1. AI confidence: `results.ai.confidence.overall` (preferred)
 2. Heuristic confidence: `results.confidence`
 3. Default: `1.0` (full confidence)
@@ -70,11 +73,13 @@ scaledScore = round(baseScore * confidence)
 ### AI Quality Bonuses (up to +11 points)
 
 **Provider Bonus:**
+
 - **+5 points**: Successful AI (non-heuristic, no fallback)
 - **+2 points**: AI with fallback to heuristic
 - **+0 points**: Pure heuristic or no AI
 
 **Data Lineage Bonus:**
+
 - **+3 points**: 3+ lineage entries
 - **+2 points**: 2 lineage entries
 - **+1 point**: 1 lineage entry
@@ -83,7 +88,7 @@ scaledScore = round(baseScore * confidence)
 ### Normalization
 
 ```typescript
-finalScore = max(0, min(100, scaledScore + bonuses))
+finalScore = max(0, min(100, scaledScore + bonuses));
 ```
 
 ## Dependencies
@@ -143,8 +148,12 @@ const profile: StudentAnalyticsProfile = {
   analyticsHealthScore: calculateHealthScore(results),
   lastAnalyzedAt: new Date(),
   isInitialized: true,
-  analyticsConfig: { /* ... */ },
-  minimumDataRequirements: { /* ... */ },
+  analyticsConfig: {
+    /* ... */
+  },
+  minimumDataRequirements: {
+    /* ... */
+  },
 };
 
 saveProfile(profile);
@@ -181,40 +190,47 @@ const score = calculateHealthScore(mockResults);
 The included test suite (`healthScoreCalculator.test.ts`) covers:
 
 ### Base Component Scoring
+
 - Empty results → 0 score
 - Individual components (patterns, correlations, predictions, anomalies)
 - Minimum data explicit vs. inferred
 - All components combined → 100 score
 
 ### Confidence Scaling
+
 - Various confidence factors (0, 0.5, 1.0)
 - AI confidence priority over heuristic
 - Default confidence when missing
 - Edge cases (negative, zero)
 
 ### AI Quality Bonuses
+
 - Successful AI (+5)
 - AI with fallback (+2)
 - Heuristic only (+0)
 - Data lineage bonuses (0-3 points)
 
 ### Score Normalization
+
 - Maximum clamping to 100
 - Minimum clamping to 0
 - Overflow scenarios
 
 ### Custom Configuration
+
 - Custom weight distribution
 - Config override behavior
 
 ### Real-World Scenarios
+
 - High-quality AI analysis
 - Sparse heuristic data
 - AI with fallback
 
 ## Migration Notes
 
-This function was extracted from `AnalyticsManagerService.calculateHealthScore()` (lines 393-435 in `analyticsManager.ts`).
+This function was extracted from `AnalyticsManagerService.calculateHealthScore()` (lines 393-435 in
+`analyticsManager.ts`).
 
 ### Why Extract?
 

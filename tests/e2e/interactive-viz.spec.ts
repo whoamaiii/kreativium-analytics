@@ -6,7 +6,9 @@ test.describe('Interactive Visualization - Trends & Filters smoke', () => {
     await page.goto('/e2e/interactive-viz');
 
     // Title with student name should be visible
-    await expect(page.getByRole('heading', { name: /interactive data analysis -\s*test student/i })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /interactive data analysis -\s*test student/i }),
+    ).toBeVisible();
 
     // Counts should be present
     const counts = page.locator('[aria-label="Data counts"]');
@@ -53,7 +55,7 @@ test.describe('Interactive Visualization - Trends & Filters smoke', () => {
     // Basic a11y check on the page
     const accessibilityScanResults = await runAxeWithAppChromeHidden(page, {
       tags: ['wcag2a', 'wcag2aa'],
-      disableRules: ['color-contrast', 'button-name']
+      disableRules: ['color-contrast', 'button-name'],
     });
     // Log violations for debugging
     console.log('AXE_VIOLATIONS_START');
@@ -64,5 +66,3 @@ test.describe('Interactive Visualization - Trends & Filters smoke', () => {
     expect(accessibilityScanResults.violations.length).toBe(0);
   });
 });
-
-

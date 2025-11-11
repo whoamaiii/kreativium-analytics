@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, memo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Activity,
   Brain,
@@ -10,12 +10,12 @@ import {
   AlertTriangle,
   RefreshCw,
   CheckCircle,
-  Clock
-} from "lucide-react";
-import { analyticsManager } from "@/lib/analyticsManager";
-import { dataStorage } from "@/lib/dataStorage";
-import { formatDistanceToNow } from "date-fns";
-import { logger } from "@/lib/logger";
+  Clock,
+} from 'lucide-react';
+import { analyticsManager } from '@/lib/analyticsManager';
+import { dataStorage } from '@/lib/dataStorage';
+import { formatDistanceToNow } from 'date-fns';
+import { logger } from '@/lib/logger';
 
 /**
  * Represents the analytics status for a single student
@@ -37,20 +37,20 @@ interface AnalyticsStatusIndicatorProps {
 
 /**
  * AnalyticsStatusIndicator Component
- * 
+ *
  * Displays the current analytics health and status for one or all students.
  * Auto-refreshes every 30 seconds to show real-time status updates.
- * 
+ *
  * @component
  * @param {AnalyticsStatusIndicatorProps} props - Component props
  * @param {string} [props.studentId] - Optional student ID to filter analytics
  * @param {boolean} [props.showDetails=false] - Whether to show detailed analytics systems status
  * @param {string} [props.className=""] - Additional CSS classes
  */
-const AnalyticsStatusIndicatorComponent = ({ 
-  studentId, 
-  showDetails = false, 
-  className = "" 
+const AnalyticsStatusIndicatorComponent = ({
+  studentId,
+  showDetails = false,
+  className = '',
 }: AnalyticsStatusIndicatorProps) => {
   const [analyticsStatus, setAnalyticsStatus] = useState<AnalyticsStatus[]>([]);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
@@ -63,7 +63,7 @@ const AnalyticsStatusIndicatorComponent = ({
   const loadAnalyticsStatus = useCallback(() => {
     const status = analyticsManager.getAnalyticsStatus() as AnalyticsStatus[];
     if (studentId) {
-      setAnalyticsStatus(status.filter(s => s.studentId === studentId));
+      setAnalyticsStatus(status.filter((s) => s.studentId === studentId));
     } else {
       setAnalyticsStatus(status);
     }
@@ -130,19 +130,21 @@ const AnalyticsStatusIndicatorComponent = ({
     return <AlertTriangle className="h-4 w-4 text-red-600" />;
   };
 
-  const getStatusColor = (status: AnalyticsStatus): "default" | "secondary" | "destructive" | "outline" => {
-    if (!status.isInitialized) return "secondary";
-    if (status.healthScore >= 80) return "default";
-    if (status.healthScore >= 60) return "secondary";
-    return "destructive";
+  const getStatusColor = (
+    status: AnalyticsStatus,
+  ): 'default' | 'secondary' | 'destructive' | 'outline' => {
+    if (!status.isInitialized) return 'secondary';
+    if (status.healthScore >= 80) return 'default';
+    if (status.healthScore >= 60) return 'secondary';
+    return 'destructive';
   };
 
   const getStatusText = (status: AnalyticsStatus): string => {
-    if (!status.isInitialized) return "Initializing";
-    if (status.healthScore >= 80) return "Excellent";
-    if (status.healthScore >= 60) return "Good";
-    if (status.healthScore >= 40) return "Fair";
-    return "Limited";
+    if (!status.isInitialized) return 'Initializing';
+    if (status.healthScore >= 80) return 'Excellent';
+    if (status.healthScore >= 60) return 'Good';
+    if (status.healthScore >= 40) return 'Fair';
+    return 'Limited';
   };
 
   if (!showDetails && studentId && analyticsStatus.length === 1) {
@@ -171,12 +173,7 @@ const AnalyticsStatusIndicatorComponent = ({
             Analytics Status
             {studentId && ` - ${analyticsStatus[0]?.studentName || 'Student'}`}
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-          >
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
@@ -191,7 +188,10 @@ const AnalyticsStatusIndicatorComponent = ({
         ) : (
           <div className="space-y-4">
             {analyticsStatus.map((status) => (
-              <div key={status.studentId} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+              <div
+                key={status.studentId}
+                className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+              >
                 <div className="flex items-center gap-3">
                   {getStatusIcon(status)}
                   <div>
@@ -220,7 +220,8 @@ const AnalyticsStatusIndicatorComponent = ({
                   <div className="text-sm text-muted-foreground">
                     {status.lastAnalyzed ? (
                       <>
-                        Last updated:<br />
+                        Last updated:
+                        <br />
                         {formatDistanceToNow(status.lastAnalyzed, { addSuffix: true })}
                       </>
                     ) : (
@@ -230,7 +231,7 @@ const AnalyticsStatusIndicatorComponent = ({
                 </div>
               </div>
             ))}
-            
+
             {showDetails && (
               <div className="pt-4 border-t border-border">
                 <h4 className="font-medium text-foreground mb-3">Active Analytics Systems:</h4>

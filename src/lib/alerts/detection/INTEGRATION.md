@@ -12,7 +12,8 @@ extracted from the monolithic `AlertDetectionEngine.buildAlert()` method.
 Handles detector result processing and score combination:
 
 - **Validation**: Filter invalid detector results
-- **Aggregation**: Combine scores using weighted formula (0.4·impact + 0.25·confidence + 0.2·recency + 0.15·tier)
+- **Aggregation**: Combine scores using weighted formula (0.4·impact + 0.25·confidence +
+  0.2·recency + 0.15·tier)
 - **Source Ranking**: Identify top 3 sources by score·confidence weighting
 - **Quality Metrics**: Compute detection quality diagnostics
 
@@ -164,7 +165,7 @@ private computeSeriesStats(series: TrendPoint[]) {
 import type { AggregationWeights } from '@/lib/alerts/detection';
 
 const customWeights: AggregationWeights = {
-  impact: 0.5,     // Emphasize impact more
+  impact: 0.5, // Emphasize impact more
   confidence: 0.3,
   recency: 0.15,
   tier: 0.05,
@@ -261,16 +262,18 @@ import { AlertPolicies } from '@/lib/alerts/policies';
 
 describe('finalizeAlertEvent', () => {
   it('should create complete alert with dedupeKey', () => {
-    const candidate = { /* ... */ };
-    const aggregated = { /* ... */ };
+    const candidate = {
+      /* ... */
+    };
+    const aggregated = {
+      /* ... */
+    };
     const policies = new AlertPolicies();
 
-    const alert = finalizeAlertEvent(
-      candidate,
-      aggregated,
-      'student_123',
-      { seriesLimit: 100, policies },
-    );
+    const alert = finalizeAlertEvent(candidate, aggregated, 'student_123', {
+      seriesLimit: 100,
+      policies,
+    });
 
     expect(alert.id).toMatch(/^alert_/);
     expect(alert.dedupeKey).toBeDefined();

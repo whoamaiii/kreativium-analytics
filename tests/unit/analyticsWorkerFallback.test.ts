@@ -35,4 +35,3 @@ describe('analyticsWorkerFallback', () => {
 
   // Additional tests can be added here
 });
-

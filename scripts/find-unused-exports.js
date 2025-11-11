@@ -118,10 +118,10 @@ function createSourceFile(filePath, text) {
   const scriptKind = filePath.endsWith('.tsx')
     ? ts.ScriptKind.TSX
     : filePath.endsWith('.ts')
-    ? ts.ScriptKind.TS
-    : filePath.endsWith('.jsx')
-    ? ts.ScriptKind.JSX
-    : ts.ScriptKind.JS;
+      ? ts.ScriptKind.TS
+      : filePath.endsWith('.jsx')
+        ? ts.ScriptKind.JSX
+        : ts.ScriptKind.JS;
   return ts.createSourceFile(filePath, text, ts.ScriptTarget.Latest, true, scriptKind);
 }
 
@@ -203,16 +203,22 @@ async function analyze(files) {
           node.isExportEquals !== true
         ) {
           fileToExports[file] ??= [];
-          fileToExports[file].push({ name: 'default', kind: 'default', typeOnly: false, isDefault: true });
+          fileToExports[file].push({
+            name: 'default',
+            kind: 'default',
+            typeOnly: false,
+            isDefault: true,
+          });
           return;
         }
 
         // export declarations with specifiers or re-exports
         if (ts.isExportDeclaration(node)) {
           const isTypeOnly = !!node.isTypeOnly;
-          const moduleSpecifier = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
-            ? node.moduleSpecifier.text
-            : null;
+          const moduleSpecifier =
+            node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
+              ? node.moduleSpecifier.text
+              : null;
 
           if (node.exportClause && ts.isNamedExports(node.exportClause)) {
             const elements = node.exportClause.elements;
@@ -220,17 +226,22 @@ async function analyze(files) {
               const exportedName = el.name.getText(sf);
               const isReExport = !!moduleSpecifier;
               fileToExports[file] ??= [];
-              fileToExports[file].push({ name: exportedName, kind: 're-export', typeOnly: isTypeOnly, isReExport });
+              fileToExports[file].push({
+                name: exportedName,
+                kind: 're-export',
+                typeOnly: isTypeOnly,
+                isReExport,
+              });
 
               // Mark original module's export as used when re-exporting
               if (moduleSpecifier) {
-              const resolved = tryResolveModule(file, moduleSpecifier);
-              if (resolved) {
+                const resolved = tryResolveModule(file, moduleSpecifier);
+                if (resolved) {
                   if (fileToUsedExports[resolved] !== 'ALL') {
                     const set = (fileToUsedExports[resolved] ??= new Set());
                     set.add(el.propertyName ? el.propertyName.getText(sf) : exportedName);
                   }
-              }
+                }
               }
             }
           } else if (!node.exportClause && moduleSpecifier) {
@@ -246,16 +257,28 @@ async function analyze(files) {
         // Named exports with modifiers (functions, consts, classes, enums, interfaces/types)
         if (hasExportModifier(node)) {
           // Handle `export default function/class` declarations
-          const hasDefaultModifier = !!(node.modifiers && node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword));
+          const hasDefaultModifier = !!(
+            node.modifiers && node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)
+          );
           if (hasDefaultModifier) {
             if (ts.isFunctionDeclaration(node)) {
               fileToExports[file] ??= [];
-              fileToExports[file].push({ name: 'default', kind: 'default-function', typeOnly: false, isDefault: true });
+              fileToExports[file].push({
+                name: 'default',
+                kind: 'default-function',
+                typeOnly: false,
+                isDefault: true,
+              });
               return;
             }
             if (ts.isClassDeclaration(node)) {
               fileToExports[file] ??= [];
-              fileToExports[file].push({ name: 'default', kind: 'default-class', typeOnly: false, isDefault: true });
+              fileToExports[file].push({
+                name: 'default',
+                kind: 'default-class',
+                typeOnly: false,
+                isDefault: true,
+              });
               return;
             }
           }
@@ -303,9 +326,10 @@ async function analyze(files) {
     // Collect imports used by this file (recursive traversal)
     function visit(node) {
       if (ts.isImportDeclaration(node)) {
-        const moduleSpecifier = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
-          ? node.moduleSpecifier.text
-          : null;
+        const moduleSpecifier =
+          node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
+            ? node.moduleSpecifier.text
+            : null;
         if (moduleSpecifier) {
           const resolved = tryResolveModule(file, moduleSpecifier);
           if (!resolved) {
@@ -332,7 +356,9 @@ async function analyze(files) {
                   fileToUsedExports[resolved] = 'ALL';
                 } else if (ts.isNamedImports(importClause.namedBindings)) {
                   for (const el of importClause.namedBindings.elements) {
-                    const importedName = el.propertyName ? el.propertyName.getText(sf) : el.name.getText(sf);
+                    const importedName = el.propertyName
+                      ? el.propertyName.getText(sf)
+                      : el.name.getText(sf);
                     if (fileToUsedExports[resolved] !== 'ALL') {
                       const set = (fileToUsedExports[resolved] ??= new Set());
                       set.add(importedName);
@@ -349,23 +375,31 @@ async function analyze(files) {
         const [arg] = node.arguments;
         if (arg && ts.isStringLiteral(arg)) {
           const mod = arg.text;
-        const resolved = tryResolveModule(file, mod);
-        if (!resolved) {
-            const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
+          const resolved = tryResolveModule(file, mod);
+          if (!resolved) {
+            const topLevel = mod.startsWith('@')
+              ? mod.split('/').slice(0, 2).join('/')
+              : mod.split('/')[0];
             usedExternalModules.add(topLevel);
-        } else {
-          fileToUsedExports[resolved] = 'ALL';
+          } else {
+            fileToUsedExports[resolved] = 'ALL';
           }
         }
       }
       // Detect require('module') in CJS contexts
-      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require') {
+      if (
+        ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) &&
+        node.expression.text === 'require'
+      ) {
         const [arg] = node.arguments;
         if (arg && ts.isStringLiteral(arg)) {
           const mod = arg.text;
           const resolved = tryResolveModule(file, mod);
           if (!resolved) {
-            const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
+            const topLevel = mod.startsWith('@')
+              ? mod.split('/').slice(0, 2).join('/')
+              : mod.split('/')[0];
             usedExternalModules.add(topLevel);
           } else {
             fileToUsedExports[resolved] = 'ALL';
@@ -393,7 +427,11 @@ function computeUnused({ fileToExports, fileToUsedExports }) {
       const name = ex.isDefault ? 'default' : ex.name;
       if (!name) continue;
       if (!usedSet.has(name)) {
-        unused.push({ file: normalizePath(path.relative(projectRoot, file)), exportName: name, exportKind: ex.kind });
+        unused.push({
+          file: normalizePath(path.relative(projectRoot, file)),
+          exportName: name,
+          exportKind: ex.kind,
+        });
       }
     }
   }
@@ -471,7 +509,12 @@ async function writeReports({ allFiles, fileToExports, unused, usedExternalModul
   await writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, usedExternalModules });
 }
 
-async function writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, usedExternalModules }) {
+async function writeDeadCodeMetrics({
+  allFiles,
+  fileToExports,
+  summaryByFile,
+  usedExternalModules,
+}) {
   // Read package.json for dependency lists
   const pkgJsonPath = path.join(projectRoot, 'package.json');
   /** @type {{ dependencies?: Record<string,string>, devDependencies?: Record<string,string> }} */
@@ -497,7 +540,9 @@ async function writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, us
           usedDeps.add('jsdom');
           break;
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
 
     // Allowlist runner-only devDeps often used without direct imports
@@ -521,13 +566,21 @@ async function writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, us
       }
 
       // Config-file implied tools
-      const postcssConfigCandidates = ['postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'].map((f) => path.join(projectRoot, f));
+      const postcssConfigCandidates = [
+        'postcss.config.js',
+        'postcss.config.cjs',
+        'postcss.config.ts',
+      ].map((f) => path.join(projectRoot, f));
       if (postcssConfigCandidates.some((p) => fs.existsSync(p))) {
         usedDeps.add('postcss');
         usedDeps.add('autoprefixer');
       }
-    } catch { /* ignore */ }
-  } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
+  } catch {
+    /* ignore */
+  }
 
   // Unused dependencies present in package.json but never imported anywhere
   const unusedDependencies = depNames.filter((d) => !usedDeps.has(d));
@@ -538,7 +591,9 @@ async function writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, us
   const devRunnerUsed = new Set(devUsed);
   // Vitest jsdom environment
   try {
-    const candidates = ['vitest.config.ts','vitest.config.js','vitest.config.tsx'].map(f => path.join(projectRoot, f));
+    const candidates = ['vitest.config.ts', 'vitest.config.js', 'vitest.config.tsx'].map((f) =>
+      path.join(projectRoot, f),
+    );
     for (const c of candidates) {
       try {
         const content = fs.readFileSync(c, 'utf8');
@@ -562,7 +617,9 @@ async function writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, us
       [/tsx\b/i, 'tsx'],
     ];
     for (const [pattern, name] of toolPatterns) if (pattern.test(joined)) devRunnerUsed.add(name);
-    const postcssConfigs = ['postcss.config.js','postcss.config.cjs','postcss.config.ts'].map(f => path.join(projectRoot, f));
+    const postcssConfigs = ['postcss.config.js', 'postcss.config.cjs', 'postcss.config.ts'].map(
+      (f) => path.join(projectRoot, f),
+    );
     if (postcssConfigs.some((p) => fs.existsSync(p))) {
       devRunnerUsed.add('postcss');
       devRunnerUsed.add('autoprefixer');
@@ -585,7 +642,8 @@ async function writeDeadCodeMetrics({ allFiles, fileToExports, summaryByFile, us
 
   const totalSrcFiles = allFiles.length;
   const totalSrcLoc = await sumLoc(allFiles);
-  const deadCodePercentByFiles = totalSrcFiles > 0 ? Number(((unusedFiles.length / totalSrcFiles) * 100).toFixed(2)) : 0;
+  const deadCodePercentByFiles =
+    totalSrcFiles > 0 ? Number(((unusedFiles.length / totalSrcFiles) * 100).toFixed(2)) : 0;
 
   const metrics = {
     totalSrcFiles,
@@ -659,13 +717,18 @@ async function collectExternalModuleUsage(files) {
       const sf = createSourceFile(file, sourceText);
       ts.forEachChild(sf, (node) => {
         if (ts.isImportDeclaration(node)) {
-          const mod = node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier) ? node.moduleSpecifier.text : null;
+          const mod =
+            node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)
+              ? node.moduleSpecifier.text
+              : null;
           if (!mod) return;
-        const resolved = tryResolveModule(file, mod);
-        if (!resolved) {
-            const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
+          const resolved = tryResolveModule(file, mod);
+          if (!resolved) {
+            const topLevel = mod.startsWith('@')
+              ? mod.split('/').slice(0, 2).join('/')
+              : mod.split('/')[0];
             used.add(topLevel);
-        }
+          }
         }
         if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
           const [arg] = node.arguments;
@@ -673,18 +736,26 @@ async function collectExternalModuleUsage(files) {
             const mod = arg.text;
             const resolved = tryResolveModule(file, mod);
             if (!resolved) {
-              const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
+              const topLevel = mod.startsWith('@')
+                ? mod.split('/').slice(0, 2).join('/')
+                : mod.split('/')[0];
               used.add(topLevel);
             }
           }
         }
-        if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require') {
+        if (
+          ts.isCallExpression(node) &&
+          ts.isIdentifier(node.expression) &&
+          node.expression.text === 'require'
+        ) {
           const [arg] = node.arguments;
           if (arg && ts.isStringLiteral(arg)) {
             const mod = arg.text;
             const resolved = tryResolveModule(file, mod);
             if (!resolved) {
-              const topLevel = mod.startsWith('@') ? mod.split('/').slice(0, 2).join('/') : mod.split('/')[0];
+              const topLevel = mod.startsWith('@')
+                ? mod.split('/').slice(0, 2).join('/')
+                : mod.split('/')[0];
               used.add(topLevel);
             }
           }
@@ -704,14 +775,13 @@ async function main() {
   const unused = computeUnused({ fileToExports, fileToUsedExports });
   await writeReports({ allFiles, fileToExports, unused, usedExternalModules });
   const ms = Date.now() - start;
-   
-  console.log(`Unused exports analysis complete in ${ms} ms. Report: ${normalizePath(path.relative(projectRoot, JSON_REPORT))}`);
+
+  console.log(
+    `Unused exports analysis complete in ${ms} ms. Report: ${normalizePath(path.relative(projectRoot, JSON_REPORT))}`,
+  );
 }
 
 main().catch((err) => {
-   
   console.error('Unused exports analysis failed:', err);
   process.exitCode = 1;
 });
-
-

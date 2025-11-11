@@ -71,7 +71,7 @@ type Mutable<T> = {
 export function validateTrackingEntry(
   entry: TrackingEntry,
   rules: TrackingValidationRules = {},
-  options: EntryValidationOptions = {}
+  options: EntryValidationOptions = {},
 ): ValidationResult {
   const now = options.now ?? new Date();
   const counts: ValidationCounts = {
@@ -105,12 +105,17 @@ export function validateTrackingEntry(
     warnings,
   });
 
-  runCustomValidators(rules, {
-    entry,
+  runCustomValidators(
     rules,
-    counts,
-    now,
-  }, errors, warnings);
+    {
+      entry,
+      rules,
+      counts,
+      now,
+    },
+    errors,
+    warnings,
+  );
 
   return { isValid: errors.length === 0, errors, warnings };
 }
@@ -118,7 +123,7 @@ export function validateTrackingEntry(
 export function validateSession(
   session: SessionRecoveryData,
   rules: TrackingValidationRules = {},
-  options: SessionValidationOptions = {}
+  options: SessionValidationOptions = {},
 ): ValidationResult {
   const now = options.now ?? new Date();
 
@@ -128,7 +133,9 @@ export function validateSession(
 
   const counts: ValidationCounts = {
     emotionCount: Array.isArray(session.data?.emotions) ? session.data.emotions.length : 0,
-    sensoryCount: Array.isArray(session.data?.sensoryInputs) ? session.data.sensoryInputs.length : 0,
+    sensoryCount: Array.isArray(session.data?.sensoryInputs)
+      ? session.data.sensoryInputs.length
+      : 0,
     totalDataPoints: getTotalDataPoints(session.data),
     hasEnvironmental: Boolean(session.data?.environmentalData),
     notesLength: session.data?.notes ? session.data.notes.trim().length : 0,
@@ -171,13 +178,18 @@ export function validateSession(
     }
   }
 
-  runCustomValidators(rules, {
-    session,
+  runCustomValidators(
     rules,
-    counts,
-    now,
-    quality,
-  }, errors, warnings);
+    {
+      session,
+      rules,
+      counts,
+      now,
+      quality,
+    },
+    errors,
+    warnings,
+  );
 
   return {
     isValid: errors.length === 0,
@@ -231,7 +243,7 @@ function runCustomValidators(
   rules: TrackingValidationRules,
   context: ValidationContext,
   errors: Mutable<string[]>,
-  warnings: Mutable<string[]>
+  warnings: Mutable<string[]>,
 ) {
   if (!rules.customValidators || rules.customValidators.length === 0) {
     return;
@@ -266,22 +278,25 @@ function normalizeMessages(input?: string | string[]): string[] {
   return Array.isArray(input) ? input : [input];
 }
 
-function getTotalDataPoints(source: {
-  emotions?: unknown;
-  sensoryInputs?: unknown;
-} | undefined): number {
+function getTotalDataPoints(
+  source:
+    | {
+        emotions?: unknown;
+        sensoryInputs?: unknown;
+      }
+    | undefined,
+): number {
   const emotions = Array.isArray(source?.emotions) ? source?.emotions.length : 0;
   const sensory = Array.isArray(source?.sensoryInputs) ? source?.sensoryInputs.length : 0;
   return emotions + sensory;
 }
 
 function getSessionDuration(session: SessionRecoveryData, now: Date): number {
-  const start = session.metadata?.startTime instanceof Date
-    ? session.metadata.startTime.getTime()
-    : new Date(session.metadata?.startTime ?? now).getTime();
-  const end = session.metadata?.endTime instanceof Date
-    ? session.metadata.endTime.getTime()
-    : now.getTime();
+  const start =
+    session.metadata?.startTime instanceof Date
+      ? session.metadata.startTime.getTime()
+      : new Date(session.metadata?.startTime ?? now).getTime();
+  const end =
+    session.metadata?.endTime instanceof Date ? session.metadata.endTime.getTime() : now.getTime();
   return Math.max(0, end - start);
 }
-

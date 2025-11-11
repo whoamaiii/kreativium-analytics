@@ -1,6 +1,10 @@
 import AlertDetectionEngine from '@/lib/alerts/engine';
 
-export type EngineTuningPresetName = 'default' | 'high_sensitivity' | 'stable_baseline' | 'low_resource';
+export type EngineTuningPresetName =
+  | 'default'
+  | 'high_sensitivity'
+  | 'stable_baseline'
+  | 'low_resource';
 
 export interface EngineConfigOptions {
   seriesLimit?: number;
@@ -10,7 +14,11 @@ export interface EngineConfigOptions {
 
 export type EngineTuningProfile = EngineConfigOptions;
 
-export function recommendDetectorSelection(params: { dataPoints: number; hasTracking: boolean; hasSensory: boolean }): string[] {
+export function recommendDetectorSelection(params: {
+  dataPoints: number;
+  hasTracking: boolean;
+  hasSensory: boolean;
+}): string[] {
   const detectors: string[] = [];
   detectors.push('ewma', 'cusum');
   if (params.hasSensory) detectors.push('beta');
@@ -35,7 +43,12 @@ export function recommendConfigPreset(preset: EngineTuningPresetName): EngineTun
 export function createEngineFromConfig(config?: EngineConfigOptions): AlertDetectionEngine {
   return new AlertDetectionEngine({
     seriesLimit: config?.seriesLimit,
-    cusumConfig: config?.cusum ? { kFactor: config.cusum.kFactor ?? 0.5, decisionInterval: config.cusum.decisionInterval ?? 5 } : undefined,
+    cusumConfig: config?.cusum
+      ? {
+          kFactor: config.cusum.kFactor ?? 0.5,
+          decisionInterval: config.cusum.decisionInterval ?? 5,
+        }
+      : undefined,
   });
 }
 
@@ -60,20 +73,34 @@ export type EngineTuningPreset = {
   thresholds?: Partial<Record<string, number>>;
 };
 
-export function recommendDetectorsFor(kind: AlertKind, baseline?: StudentBaseline | null): DetectorConfigRecommendation {
+export function recommendDetectorsFor(
+  kind: AlertKind,
+  baseline?: StudentBaseline | null,
+): DetectorConfigRecommendation {
   switch (kind) {
     case 'behavior_spike' as AlertKind:
-      return { detectorTypes: ['ewma', 'cusum', 'burst', 'beta'], reason: 'Behavior spikes benefit from trend, shift, burst, and rate checks.' };
+      return {
+        detectorTypes: ['ewma', 'cusum', 'burst', 'beta'],
+        reason: 'Behavior spikes benefit from trend, shift, burst, and rate checks.',
+      };
     case 'context_association' as AlertKind:
-      return { detectorTypes: ['association'], reason: 'Context relationships are validated via association tests.' };
+      return {
+        detectorTypes: ['association'],
+        reason: 'Context relationships are validated via association tests.',
+      };
     case 'intervention_due' as AlertKind:
       return { detectorTypes: ['tauU'], reason: 'Intervention outcomes use Tau-U phase analysis.' };
     default:
-      return { detectorTypes: ['ewma', 'cusum'], reason: 'Default trend/shift detectors for general signals.' };
+      return {
+        detectorTypes: ['ewma', 'cusum'],
+        reason: 'Default trend/shift detectors for general signals.',
+      };
   }
 }
 
-export function getPresetForPopulation(population: 'elementary' | 'middle' | 'high' | 'special_needs'): EngineTuningPreset {
+export function getPresetForPopulation(
+  population: 'elementary' | 'middle' | 'high' | 'special_needs',
+): EngineTuningPreset {
   if (population === 'special_needs') {
     return {
       label: 'Special Needs (higher sensitivity)',
@@ -106,7 +133,12 @@ export function normalizeScoringWeights(weights?: Partial<ScoringWeights>): Scor
   const w = { impact: 0.4, confidence: 0.25, recency: 0.2, tier: 0.15, ...(weights ?? {}) };
   const sum = w.impact + w.confidence + w.recency + w.tier;
   if (sum === 1) return w;
-  return { impact: w.impact / sum, confidence: w.confidence / sum, recency: w.recency / sum, tier: w.tier / sum };
+  return {
+    impact: w.impact / sum,
+    confidence: w.confidence / sum,
+    recency: w.recency / sum,
+    tier: w.tier / sum,
+  };
 }
 
 export function recommendSeriesLimit(baseline?: StudentBaseline | null): number {
@@ -115,5 +147,3 @@ export function recommendSeriesLimit(baseline?: StudentBaseline | null): number 
   if (quality >= 0.7) return 120;
   return 90;
 }
-
-

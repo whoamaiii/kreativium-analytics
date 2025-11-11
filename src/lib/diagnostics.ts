@@ -4,6 +4,7 @@
  */
 
 import { logger } from './logger';
+import { STORAGE_KEYS } from './storage/keys';
 
 // Type extension for Chrome performance memory API
 interface PerformanceMemory {
@@ -56,7 +57,8 @@ class DiagnosticLogger {
     if (typeof window !== 'undefined') {
       try {
         const urlFlag = new URLSearchParams(window.location.search).get('diag') === '1';
-        const lsFlag = (window.localStorage.getItem('diagnostics') || '').toLowerCase() === 'on';
+        const lsFlag =
+          (window.localStorage.getItem(STORAGE_KEYS.DIAGNOSTICS_MODE) || '').toLowerCase() === 'on';
         this.diagnosticMode = Boolean(urlFlag || lsFlag);
       } catch {
         this.diagnosticMode = false;
@@ -83,14 +85,14 @@ class DiagnosticLogger {
         const memInfo = (performance as ExtendedPerformance).memory!;
         const usedMB = (memInfo.usedJSHeapSize / 1048576).toFixed(2);
         const totalMB = (memInfo.totalJSHeapSize / 1048576).toFixed(2);
-        
+
         logger.info(`[DIAGNOSTIC] Memory Usage: ${usedMB}MB / ${totalMB}MB`);
-        
+
         // Warning if memory usage is high
         if (memInfo.usedJSHeapSize / memInfo.jsHeapSizeLimit > 0.9) {
           logger.warn('[DIAGNOSTIC] High memory usage detected!', {
             used: usedMB,
-            limit: (memInfo.jsHeapSizeLimit / 1048576).toFixed(2)
+            limit: (memInfo.jsHeapSizeLimit / 1048576).toFixed(2),
           });
         }
       }
@@ -103,13 +105,13 @@ class DiagnosticLogger {
 
   logComponentMount(componentName: string) {
     if (!this.diagnosticMode) return;
-    
+
     const info: DiagnosticInfo = {
       timestamp: new Date(),
       componentName,
       action: 'MOUNT',
       activeTimers: this.activeTimers.size,
-      activeListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0)
+      activeListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0),
     };
 
     logger.debug('[DIAGNOSTIC] Component Mounted', info);
@@ -117,13 +119,13 @@ class DiagnosticLogger {
 
   logComponentUnmount(componentName: string) {
     if (!this.diagnosticMode) return;
-    
+
     const info: DiagnosticInfo = {
       timestamp: new Date(),
       componentName,
       action: 'UNMOUNT',
       activeTimers: this.activeTimers.size,
-      activeListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0)
+      activeListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0),
     };
 
     logger.debug('[DIAGNOSTIC] Component Unmounted', info);
@@ -131,11 +133,11 @@ class DiagnosticLogger {
 
   logUseEffectCleanup(componentName: string, hasCleanup: boolean) {
     if (!this.diagnosticMode) return;
-    
+
     logger.debug('[DIAGNOSTIC] UseEffect Cleanup', {
       componentName,
       hasCleanup,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
 
     if (!hasCleanup) {
@@ -145,40 +147,40 @@ class DiagnosticLogger {
 
   logWorkerMessage(workerName: string, messageType: string, data?: unknown) {
     if (!this.diagnosticMode) return;
-    
+
     logger.debug('[DIAGNOSTIC] Worker Message', {
       workerName,
       messageType,
       timestamp: new Date(),
-      dataSize: data ? JSON.stringify(data).length : 0
+      dataSize: data ? JSON.stringify(data).length : 0,
     });
   }
 
   logWorkerTimeout(workerName: string, timeout: number) {
     if (!this.diagnosticMode) return;
-    
+
     logger.error('[DIAGNOSTIC] Worker Timeout!', {
       workerName,
       timeout,
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
   trackTimer(timerId: number) {
     if (!this.diagnosticMode) return;
     this.activeTimers.add(timerId);
-    logger.debug('[DIAGNOSTIC] Timer Created', { 
-      timerId, 
-      activeCount: this.activeTimers.size 
+    logger.debug('[DIAGNOSTIC] Timer Created', {
+      timerId,
+      activeCount: this.activeTimers.size,
     });
   }
 
   untrackTimer(timerId: number) {
     if (!this.diagnosticMode) return;
     this.activeTimers.delete(timerId);
-    logger.debug('[DIAGNOSTIC] Timer Cleared', { 
-      timerId, 
-      activeCount: this.activeTimers.size 
+    logger.debug('[DIAGNOSTIC] Timer Cleared', {
+      timerId,
+      activeCount: this.activeTimers.size,
     });
   }
 
@@ -187,11 +189,11 @@ class DiagnosticLogger {
     const key = `${element}-${event}`;
     const current = this.activeListeners.get(key) || 0;
     this.activeListeners.set(key, current + 1);
-    
+
     logger.debug('[DIAGNOSTIC] Event Listener Added', {
       element,
       event,
-      totalListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0)
+      totalListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0),
     });
   }
 
@@ -202,22 +204,22 @@ class DiagnosticLogger {
     if (current > 0) {
       this.activeListeners.set(key, current - 1);
     }
-    
+
     logger.debug('[DIAGNOSTIC] Event Listener Removed', {
       element,
       event,
-      totalListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0)
+      totalListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0),
     });
   }
 
   logAsyncOperation(operationName: string, duration: number, success: boolean) {
     if (!this.diagnosticMode) return;
-    
+
     const logData = {
       operationName,
       duration,
       success,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     if (duration > 3000) {
@@ -229,11 +231,11 @@ class DiagnosticLogger {
 
   checkForLeaks() {
     if (!this.diagnosticMode) return;
-    
+
     const report = {
       activeTimers: this.activeTimers.size,
       activeListeners: Array.from(this.activeListeners.values()).reduce((a, b) => a + b, 0),
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     if (report.activeTimers > 10) {
@@ -261,13 +263,13 @@ if (typeof window !== 'undefined' && diagnostics.isEnabled()) {
   const originalSetTimeout = window.setTimeout;
   const originalClearTimeout = window.clearTimeout;
 
-  window.setTimeout = function(...args: SetTimeoutArgs): TimerId {
+  window.setTimeout = function (...args: SetTimeoutArgs): TimerId {
     const timerId = originalSetTimeout.apply(window, args);
     diagnostics.trackTimer(Number(timerId));
     return timerId;
   };
 
-  window.clearTimeout = function(timerId: TimerId): void {
+  window.clearTimeout = function (timerId: TimerId): void {
     diagnostics.untrackTimer(Number(timerId));
     return originalClearTimeout.call(window, timerId);
   };

@@ -37,10 +37,7 @@ export function updateChartOption(
 }
 
 // Bind event handlers using a strongly typed map; unbinds previous handlers first
-export function bindChartEvents(
-  instance: ECharts,
-  events?: EChartsEventMap,
-): void {
+export function bindChartEvents(instance: ECharts, events?: EChartsEventMap): void {
   if (!events) return;
   // For safety, off() without args removes all listeners; then re-attach
   instance.off?.();
@@ -57,7 +54,10 @@ export function getTypedEChartsInstance(
 ): ECharts | undefined {
   const current = ref?.current as EChartsComponentRef | ReactECharts | null;
   if (!current) return undefined;
-  const getter: unknown = (current as Record<string, unknown>).getEchartsInstance ?? (current as Record<string, unknown>).getEChartsInstance ?? (current as Record<string, unknown>).getInstance;
+  const getter: unknown =
+    (current as Record<string, unknown>).getEchartsInstance ??
+    (current as Record<string, unknown>).getEChartsInstance ??
+    (current as Record<string, unknown>).getInstance;
   if (typeof getter === 'function') {
     try {
       const inst = (getter as () => ECharts)();
@@ -108,5 +108,3 @@ export function tryRenderToSVGString(instance: ECharts): string | undefined {
     return undefined;
   }
 }
-
-

@@ -46,13 +46,11 @@ const DefaultErrorFallback = () => (
 export const LazyLoadWrapper = ({
   fallback = <DefaultFallback />,
   errorFallback = <DefaultErrorFallback />,
-  children
+  children,
 }: LazyLoadWrapperProps) => {
   return (
     <ErrorBoundary fallback={errorFallback}>
-      <Suspense fallback={fallback}>
-        {children}
-      </Suspense>
+      <Suspense fallback={fallback}>{children}</Suspense>
     </ErrorBoundary>
   );
 };
@@ -61,7 +59,7 @@ export const LazyLoadWrapper = ({
 export function createLazyComponent<T extends ComponentType<unknown>>(
   importFunc: () => Promise<{ default: T }>,
   fallback?: React.ReactNode,
-  errorFallback?: React.ReactNode
+  errorFallback?: React.ReactNode,
 ): (props: React.ComponentProps<T>) => JSX.Element {
   const LazyComponent = lazy(importFunc);
 

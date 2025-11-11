@@ -11,9 +11,9 @@
  * Follows fail-soft philosophy: gracefully handles missing or invalid config.
  */
 
-import { analyticsConfig } from "@/lib/analyticsConfig";
-import { loadAiConfig } from "@/lib/aiConfig";
-import { logger } from "@/lib/logger";
+import { analyticsConfig } from '@/lib/analyticsConfig';
+import { loadAiConfig } from '@/lib/aiConfig';
+import { logger } from '@/lib/logger';
 
 /**
  * Resolved engine configuration after merging all sources
@@ -132,7 +132,7 @@ export function validateModel(requestedModel: string, allowedModels: string[]): 
   }
 
   try {
-    const allowedLc = new Set(allowedModels.map(m => m.toLowerCase()));
+    const allowedLc = new Set(allowedModels.map((m) => m.toLowerCase()));
     const modelLc = (requestedModel || '').toLowerCase();
 
     if (allowedLc.has(modelLc)) {

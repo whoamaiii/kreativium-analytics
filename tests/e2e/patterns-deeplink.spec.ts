@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Patterns deep-link and explanation flow', () => {
-  test('Overview pattern card deep-links to Explore > Patterns with explanation open', async ({ page }) => {
+  test('Overview pattern card deep-links to Explore > Patterns with explanation open', async ({
+    page,
+  }) => {
     // Go to a mock student that auto-seeds minimal data if needed
     await page.goto('/student/mock_emma_001?tab=overview');
 
@@ -29,7 +31,11 @@ test.describe('Patterns deep-link and explanation flow', () => {
     await explanationHeading.waitFor({ state: 'visible', timeout: 15000 });
 
     // Sanity: ensure Patterns preset tab content is mounted
-    await expect(page.locator('[data-state="active"][value="patterns"], [data-state="active"][data-value="patterns"]')).toBeVisible({ timeout: 10000 });
+    await expect(
+      page.locator(
+        '[data-state="active"][value="patterns"], [data-state="active"][data-value="patterns"]',
+      ),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('Legacy tab query redirects to Explore with suggested preset', async ({ page }) => {
@@ -40,6 +46,3 @@ test.describe('Patterns deep-link and explanation flow', () => {
     await expect(page).toHaveURL(/preset=patterns/);
   });
 });
-
-
-

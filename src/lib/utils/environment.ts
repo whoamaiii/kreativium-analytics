@@ -67,9 +67,7 @@ export const TEMPERATURE_THRESHOLDS = {
  * categorizeNoiseLevel(undefined) // 'moderate' (default)
  * ```
  */
-export function categorizeNoiseLevel(
-  noiseLevel: number | undefined | null
-): NoiseLevel {
+export function categorizeNoiseLevel(noiseLevel: number | undefined | null): NoiseLevel {
   if (noiseLevel == null) return 'moderate';
   if (noiseLevel > NOISE_THRESHOLDS.LOUD) return 'loud';
   if (noiseLevel < NOISE_THRESHOLDS.QUIET) return 'quiet';
@@ -90,9 +88,7 @@ export function categorizeNoiseLevel(
  * categorizeLightLevel(null)     // 'moderate' (default)
  * ```
  */
-export function categorizeLightLevel(
-  lightLevel: number | undefined | null
-): LightLevel {
+export function categorizeLightLevel(lightLevel: number | undefined | null): LightLevel {
   if (lightLevel == null) return 'moderate';
   if (lightLevel > LIGHT_THRESHOLDS.BRIGHT) return 'bright';
   if (lightLevel < LIGHT_THRESHOLDS.DIM) return 'dim';
@@ -113,9 +109,7 @@ export function categorizeLightLevel(
  * categorizeTemperature(undefined) // 'comfortable' (default)
  * ```
  */
-export function categorizeTemperature(
-  temperature: number | undefined | null
-): TemperatureLevel {
+export function categorizeTemperature(temperature: number | undefined | null): TemperatureLevel {
   if (temperature == null) return 'comfortable';
   if (temperature > TEMPERATURE_THRESHOLDS.HOT) return 'hot';
   if (temperature < TEMPERATURE_THRESHOLDS.COLD) return 'cold';
@@ -183,7 +177,7 @@ export interface TrackingEntryWithEnvironment {
  * ```
  */
 export function getLatestEnvironmentConditions(
-  trackingEntries: TrackingEntryWithEnvironment[]
+  trackingEntries: TrackingEntryWithEnvironment[],
 ): EnvironmentConditions {
   // Handle empty array
   if (trackingEntries.length === 0) {
@@ -219,7 +213,7 @@ export function getLatestEnvironmentConditions(
  * ```
  */
 export function getEnvironmentConditions(
-  entry: TrackingEntryWithEnvironment
+  entry: TrackingEntryWithEnvironment,
 ): EnvironmentConditions {
   const roomConditions = entry?.environmentalData?.roomConditions;
 

@@ -20,7 +20,7 @@ export function XPOrbsEmitter({ emit, count, intensity, className }: XPOrbsEmitt
       {items.map((i) => {
         const delay = 0.06 * i;
         const dur = 0.4 + 0.08 * (i % 3);
-        const dx = 20 + (i * 6);
+        const dx = 20 + i * 6;
         const dy = -8 - (i % 4) * 4;
         const s = 6 + Math.min(10, intensity * 10) - (i % 3);
         const alpha = 0.35 + Math.min(0.5, intensity * 0.6);
@@ -31,7 +31,14 @@ export function XPOrbsEmitter({ emit, count, intensity, className }: XPOrbsEmitt
             animate={{ opacity: [0, alpha, 0], x: dx, y: dy, scale: 1 }}
             transition={{ duration: dur, delay, ease: 'easeOut' }}
             className="absolute rounded-full"
-            style={{ width: s, height: s, right: 0, bottom: 0, background: 'radial-gradient(circle, rgba(255,255,255,0.9), rgba(59,130,246,0.0))', boxShadow: '0 0 10px rgba(59,130,246,0.6)' }}
+            style={{
+              width: s,
+              height: s,
+              right: 0,
+              bottom: 0,
+              background: 'radial-gradient(circle, rgba(255,255,255,0.9), rgba(59,130,246,0.0))',
+              boxShadow: '0 0 10px rgba(59,130,246,0.6)',
+            }}
           />
         );
       })}
@@ -40,8 +47,3 @@ export function XPOrbsEmitter({ emit, count, intensity, className }: XPOrbsEmitt
 }
 
 export default XPOrbsEmitter;
-
-
-
-
-

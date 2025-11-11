@@ -42,7 +42,13 @@ function normalizePreset(value: string | null | undefined, fallback: ExplorePres
   const ok = (VALID_PRESETS as readonly string[]).includes(mapped);
   const finalPreset = (ok ? mapped : fallback) as ExplorePreset;
   if (lower !== finalPreset) {
-    try { logger.debug('[useSyncedExplorePreset] Normalized/legacy-mapped preset', { from: value, mapped, to: finalPreset }); } catch {}
+    try {
+      logger.debug('[useSyncedExplorePreset] Normalized/legacy-mapped preset', {
+        from: value,
+        mapped,
+        to: finalPreset,
+      });
+    } catch {}
   }
   return finalPreset;
 }
@@ -65,55 +71,81 @@ export type UseSyncedExplorePresetReturn = [ExplorePreset, Dispatch<SetStateActi
  * - Debounces writes to avoid spamming history on quick toggles
  * - Keeps state in sync with back/forward navigation via popstate
  */
-export function useSyncedExplorePreset(options: UseSyncedExplorePresetOptions = {}): UseSyncedExplorePresetReturn {
-  const { debounceMs = 150, paramKey = 'preset', defaultPreset = 'charts', tabParamKey = 'tab', currentTab } = options;
+export function useSyncedExplorePreset(
+  options: UseSyncedExplorePresetOptions = {},
+): UseSyncedExplorePresetReturn {
+  const {
+    debounceMs = 150,
+    paramKey = 'preset',
+    defaultPreset = 'charts',
+    tabParamKey = 'tab',
+    currentTab,
+  } = options;
 
   return useUrlSync<ExplorePreset>({
     defaultValue: defaultPreset,
     debounceMs,
     loggerName: 'useSyncedExplorePreset',
-    read: useCallback((params: URLSearchParams): ExplorePreset => {
-      const urlValue = params.get(paramKey);
+    read: useCallback(
+      (params: URLSearchParams): ExplorePreset => {
+        const urlValue = params.get(paramKey);
 
-      // Check for a legacy tab redirect intent carried via history state
-      let suggestedFromLegacy: ExplorePreset | undefined;
-      try {
-        const state: any = window.history.state || {};
-        const legacy = state?.legacyRedirect;
-        if (legacy?.toTab === 'explore' && legacy?.suggestedPreset) {
-          suggestedFromLegacy = legacy.suggestedPreset as ExplorePreset;
-        }
-      } catch {}
-
-      // Fallback: infer from current tab param (customizable) if present and legacy-like
-      if (!suggestedFromLegacy) {
-        const tabRaw = typeof currentTab === 'string' && currentTab.length > 0 ? currentTab : params.get(tabParamKey);
-        const tabLower = (tabRaw || '').toLowerCase();
-        const maybePreset = LEGACY_TAB_TO_SUGGESTED_PRESET[tabLower];
-        if (maybePreset) suggestedFromLegacy = maybePreset;
-      }
-
-      const fallbackPreset = suggestedFromLegacy ?? defaultPreset;
-      const preset = normalizePreset(urlValue, fallbackPreset);
-
-      // If URL is missing or differs (due to legacy/normalization), conditionally sync it
-      const existing = params.get(paramKey);
-      const tabParam = (typeof currentTab === 'string' && currentTab.length > 0 ? currentTab : params.get(tabParamKey) || '').toLowerCase();
-      const shouldWrite = !!existing || tabParam === 'explore' || !!suggestedFromLegacy;
-      if (shouldWrite && (!existing || existing.toLowerCase() !== preset)) {
+        // Check for a legacy tab redirect intent carried via history state
+        let suggestedFromLegacy: ExplorePreset | undefined;
         try {
-          const url = new URL(window.location.href);
-          url.searchParams.set(paramKey, preset);
-          window.history.replaceState(window.history.state, '', url.toString());
-          try { logger.debug('[useSyncedExplorePreset] Applied legacy/normalized preset to URL', { preset, paramKey }); } catch {}
+          const state: any = window.history.state || {};
+          const legacy = state?.legacyRedirect;
+          if (legacy?.toTab === 'explore' && legacy?.suggestedPreset) {
+            suggestedFromLegacy = legacy.suggestedPreset as ExplorePreset;
+          }
         } catch {}
-      }
 
-      return preset;
-    }, [defaultPreset, paramKey, tabParamKey, currentTab]),
-    write: useCallback((preset: ExplorePreset, params: URLSearchParams) => {
-      params.set(paramKey, preset);
-    }, [paramKey]),
+        // Fallback: infer from current tab param (customizable) if present and legacy-like
+        if (!suggestedFromLegacy) {
+          const tabRaw =
+            typeof currentTab === 'string' && currentTab.length > 0
+              ? currentTab
+              : params.get(tabParamKey);
+          const tabLower = (tabRaw || '').toLowerCase();
+          const maybePreset = LEGACY_TAB_TO_SUGGESTED_PRESET[tabLower];
+          if (maybePreset) suggestedFromLegacy = maybePreset;
+        }
+
+        const fallbackPreset = suggestedFromLegacy ?? defaultPreset;
+        const preset = normalizePreset(urlValue, fallbackPreset);
+
+        // If URL is missing or differs (due to legacy/normalization), conditionally sync it
+        const existing = params.get(paramKey);
+        const tabParam = (
+          typeof currentTab === 'string' && currentTab.length > 0
+            ? currentTab
+            : params.get(tabParamKey) || ''
+        ).toLowerCase();
+        const shouldWrite = !!existing || tabParam === 'explore' || !!suggestedFromLegacy;
+        if (shouldWrite && (!existing || existing.toLowerCase() !== preset)) {
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.set(paramKey, preset);
+            window.history.replaceState(window.history.state, '', url.toString());
+            try {
+              logger.debug('[useSyncedExplorePreset] Applied legacy/normalized preset to URL', {
+                preset,
+                paramKey,
+              });
+            } catch {}
+          } catch {}
+        }
+
+        return preset;
+      },
+      [defaultPreset, paramKey, tabParamKey, currentTab],
+    ),
+    write: useCallback(
+      (preset: ExplorePreset, params: URLSearchParams) => {
+        params.set(paramKey, preset);
+      },
+      [paramKey],
+    ),
   });
 }
 

@@ -115,4 +115,3 @@ export interface SerializedPipeline {
   fitted: FittedStepState[];
   metadata: PipelineMetadata;
 }
-

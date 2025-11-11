@@ -99,7 +99,9 @@ function key(suffix: string): string {
 
 function normalCdf(z: number): number {
   const t = 1 / (1 + 0.2316419 * Math.abs(z));
-  const poly = t * (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
+  const poly =
+    t *
+    (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
   const pdf = Math.exp(-(z * z) / 2) / Math.sqrt(2 * Math.PI);
   const cdf = 1 - pdf * poly;
   return z >= 0 ? cdf : 1 - cdf;
@@ -174,7 +176,12 @@ export class AlertTelemetryService {
     const entries = this.readEntries();
     entries.push(this.toEntry(alert, extras));
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_created', { alertId: alert.id, experiment: extras?.experimentKey }); } catch {}
+    try {
+      (logger as any)?.info?.('alert_created', {
+        alertId: alert.id,
+        experiment: extras?.experimentKey,
+      });
+    } catch {}
     try {
       (logger as any)?.debug?.('alert_telemetry_captured', {
         alertId: alert.id,
@@ -191,7 +198,9 @@ export class AlertTelemetryService {
     const e = entries.find((x) => x.alertId === alertId);
     if (e) e.acknowledgedAt = new Date().toISOString();
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_acknowledged', { alertId }); } catch {}
+    try {
+      (logger as any)?.info?.('alert_acknowledged', { alertId });
+    } catch {}
   }
 
   /**
@@ -211,16 +220,23 @@ export class AlertTelemetryService {
       if (data?.actionId) e.resolutionActionId = data.actionId;
     }
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_resolved', { alertId }); } catch {}
+    try {
+      (logger as any)?.info?.('alert_resolved', { alertId });
+    } catch {}
   }
 
   /** Capture teacher feedback for an alert: relevance flag, rating, and comment. */
-  logFeedback(alertId: string, feedback: { relevant?: boolean; comment?: string; rating?: number }): void {
+  logFeedback(
+    alertId: string,
+    feedback: { relevant?: boolean; comment?: string; rating?: number },
+  ): void {
     const entries = this.readEntries();
     const e = entries.find((x) => x.alertId === alertId);
     if (e) e.feedback = feedback;
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_feedback', { alertId, feedback }); } catch {}
+    try {
+      (logger as any)?.info?.('alert_feedback', { alertId, feedback });
+    } catch {}
   }
 
   /** Snooze an alert until a future time with an optional reason. */
@@ -233,7 +249,13 @@ export class AlertTelemetryService {
       if (data?.reason) e.snoozeReason = data.reason;
     }
     this.writeEntries(entries);
-    try { (logger as any)?.info?.('alert_snoozed', { alertId, until: data?.until, reason: data?.reason }); } catch {}
+    try {
+      (logger as any)?.info?.('alert_snoozed', {
+        alertId,
+        until: data?.until,
+        reason: data?.reason,
+      });
+    } catch {}
   }
 
   /** Return all telemetry entries. Prefer getEntriesBetween for larger datasets. */
@@ -288,7 +310,9 @@ export class AlertTelemetryService {
       ? Math.round(times.reduce((a, b) => a + b, 0) / times.length)
       : undefined;
     const completionRate = totalCreated ? totalResolved / totalCreated : undefined;
-    const feedbacks = entries.map((e) => e.feedback).filter(Boolean) as NonNullable<AlertTelemetryEntry['feedback']>[];
+    const feedbacks = entries.map((e) => e.feedback).filter(Boolean) as NonNullable<
+      AlertTelemetryEntry['feedback']
+    >[];
     const positives = feedbacks.filter((f) => f.relevant === true).length;
     const ppvEstimate = feedbacks.length ? positives / feedbacks.length : undefined;
     const negatives = feedbacks.filter((f) => f.relevant === false).length;
@@ -296,8 +320,12 @@ export class AlertTelemetryService {
     const helpfulnessAvg = feedbacks.length
       ? feedbacks.reduce((sum, f) => sum + (f.rating ?? 0), 0) / feedbacks.length
       : undefined;
-    const studentDays = new Set(entries.map((e) => `${e.studentHash}:${new Date(e.createdAt).toDateString()}`)).size;
-    const falseAlertsPerStudentDay = studentDays ? (totalCreated - positives) / studentDays : undefined;
+    const studentDays = new Set(
+      entries.map((e) => `${e.studentHash}:${new Date(e.createdAt).toDateString()}`),
+    ).size;
+    const falseAlertsPerStudentDay = studentDays
+      ? (totalCreated - positives) / studentDays
+      : undefined;
 
     const experiments = this.computeExperimentSummaries(entries);
     const report: AlertTelemetryReport = {
@@ -354,7 +382,9 @@ export class AlertTelemetryService {
    * Buckets predictions into deciles [0.0, 0.1, ..., 0.9] with counts and average predicted/actual.
    */
   computeCalibrationMetrics(entries: AlertTelemetryEntry[]): CalibrationMetrics {
-    const reliabilityBins = new Array(10).fill(null).map(() => ({ count: 0, predictedSum: 0, actualSum: 0 }));
+    const reliabilityBins = new Array(10)
+      .fill(null)
+      .map(() => ({ count: 0, predictedSum: 0, actualSum: 0 }));
     let sampleSize = 0;
     let squaredErrorSum = 0;
     entries.forEach((entry) => {
@@ -414,7 +444,9 @@ export class AlertTelemetryService {
       });
 
       const variantSummaries = Array.from(variants.entries()).map(([variant, variantEntries]) => {
-        const withFeedback = variantEntries.filter((entry) => entry.feedback?.relevant !== undefined);
+        const withFeedback = variantEntries.filter(
+          (entry) => entry.feedback?.relevant !== undefined,
+        );
         const positives = withFeedback.filter((entry) => entry.feedback?.relevant === true).length;
         const samples = withFeedback.length;
         const ppv = samples ? positives / samples : undefined;
@@ -436,11 +468,16 @@ export class AlertTelemetryService {
       let significance: number | undefined;
       if (variantSummaries.length === 2) {
         const [a, b] = variantSummaries;
-        if (a.samples > 0 && b.samples > 0 && typeof a.ppv === 'number' && typeof b.ppv === 'number') {
+        if (
+          a.samples > 0 &&
+          b.samples > 0 &&
+          typeof a.ppv === 'number' &&
+          typeof b.ppv === 'number'
+        ) {
           const positivesA = Math.round(a.ppv * a.samples);
           const positivesB = Math.round(b.ppv * b.samples);
           const pooled = (positivesA + positivesB) / (a.samples + b.samples);
-          const denom = Math.sqrt(pooled * (1 - pooled) * ((1 / a.samples) + (1 / b.samples)));
+          const denom = Math.sqrt(pooled * (1 - pooled) * (1 / a.samples + 1 / b.samples));
           if (denom > 0) {
             const z = (a.ppv - b.ppv) / denom;
             const pValue = 2 * (1 - normalCdf(Math.abs(z)));

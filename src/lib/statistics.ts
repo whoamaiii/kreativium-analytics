@@ -1,13 +1,13 @@
 /**
  * Robust Statistics Module
- * 
+ *
  * This module provides statistical functions to replace inline implementations
  * currently in src/lib/enhancedPatternAnalysis.ts:
  * - calculatePearsonCorrelation() -> pearsonCorrelation()
  * - calculatePValue() with studentTCDF -> pValueForCorrelation()
  * - Mean/std z-scores in detectAnomalies() -> zScoresMedian()
  * - OLS slope in analyzeTrendsWithStatistics() -> huberRegression()
- * 
+ *
  * Follow-up task: Replace inline implementations with imports from this module.
  */
 
@@ -49,7 +49,7 @@ function variance(values: number[], isSample: boolean = true): number {
     const d = v[i] - m;
     acc += d * d;
   }
-  const denom = isSample ? (n - 1) : n;
+  const denom = isSample ? n - 1 : n;
   if (denom <= 0) return 0;
   return acc / denom;
 }
@@ -64,14 +64,8 @@ function clamp(value: number, min: number, max: number): number {
 function logGamma(z: number): number {
   // Coefficients for Lanczos approximation (g=7, n=9)
   const p = [
-    0.99999999999980993,
-    676.5203681218851,
-    -1259.1392167224028,
-    771.32342877765313,
-    -176.61502916214059,
-    12.507343278686905,
-    -0.13857109526572012,
-    9.9843695780195716e-6,
+    0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6,
     1.5056327351493116e-7,
   ];
 
@@ -180,18 +174,18 @@ export function mad(values: number[], method: 'normal' | 'raw' = 'normal'): numb
  */
 export function zScoresMedian(
   values: number[],
-  opts?: { constant?: number; center?: number }
+  opts?: { constant?: number; center?: number },
 ): number[] {
   const v = values.slice(); // preserve length and indexing
   if (v.length === 0) return [];
 
-  const center = typeof opts?.center === 'number' && Number.isFinite(opts.center)
-    ? opts.center
-    : median(safeArray(v));
+  const center =
+    typeof opts?.center === 'number' && Number.isFinite(opts.center)
+      ? opts.center
+      : median(safeArray(v));
 
-  const constant = typeof opts?.constant === 'number' && Number.isFinite(opts.constant)
-    ? opts.constant
-    : 1.4826;
+  const constant =
+    typeof opts?.constant === 'number' && Number.isFinite(opts.constant) ? opts.constant : 1.4826;
 
   // Compute MAD using raw method, then apply provided constant to denominator
   const vSafe = safeArray(v);
@@ -262,7 +256,7 @@ export function regularizedIncompleteBeta(a: number, b: number, x: number): numb
 
   // Compute front factor bt = exp(lgamma(a+b) - lgamma(a) - lgamma(b) + a*log(x) + b*log(1-x))
   const bt = Math.exp(
-    logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x)
+    logGamma(a + b) - logGamma(a) - logGamma(b) + a * Math.log(x) + b * Math.log(1 - x),
   );
 
   let result: number;
@@ -285,9 +279,7 @@ export function tCDF(t: number, df: number): number {
   // Numerically integrate the PDF using adaptive Simpson's rule for robust accuracy
   const tt = Math.abs(t);
 
-  const c = Math.exp(
-    logGamma((df + 1) / 2) - logGamma(df / 2) - 0.5 * Math.log(df * Math.PI)
-  );
+  const c = Math.exp(logGamma((df + 1) / 2) - logGamma(df / 2) - 0.5 * Math.log(df * Math.PI));
   const pdf = (u: number): number => c * Math.pow(1 + (u * u) / df, -((df + 1) / 2));
 
   // Adaptive Simpson's rule
@@ -302,7 +294,7 @@ export function tCDF(t: number, df: number): number {
     b: number,
     eps: number,
     S: number,
-    depth: number
+    depth: number,
   ): number {
     const c = (a + b) / 2;
     const Sleft = simpson(f, a, c);
@@ -369,11 +361,7 @@ export function fisherExactTwoTailed(a: number, b: number, c: number, d: number)
     return logGamma(n + 1) - logGamma(k + 1) - logGamma(n - k + 1);
   }
   function logHypergeom(x: number): number {
-    return (
-      logChoose(col1, x) +
-      logChoose(col2, row1 - x) -
-      logChoose(N, row1)
-    );
+    return logChoose(col1, x) + logChoose(col2, row1 - x) - logChoose(N, row1);
   }
 
   const minX = Math.max(0, row1 - col2);
@@ -407,7 +395,7 @@ export function fisherExactTwoTailed(a: number, b: number, c: number, d: number)
 export function huberRegression(
   x: number[],
   y: number[],
-  opts?: { delta?: number; maxIter?: number; tol?: number }
+  opts?: { delta?: number; maxIter?: number; tol?: number },
 ): HuberRegressionResult {
   const n = Math.min(x.length, y.length);
   const xs: number[] = [];
@@ -424,11 +412,18 @@ export function huberRegression(
   const m = xs.length;
   const defaultIntercept = m > 0 ? median(ys) : 0;
   if (m < 2) {
-    return { slope: 0, intercept: defaultIntercept, iterations: 0, converged: false, weights: new Array(n).fill(0) };
+    return {
+      slope: 0,
+      intercept: defaultIntercept,
+      iterations: 0,
+      converged: false,
+      weights: new Array(n).fill(0),
+    };
   }
 
   const delta = typeof opts?.delta === 'number' && opts.delta! > 0 ? opts.delta! : 1.345;
-  const maxIter = typeof opts?.maxIter === 'number' && opts.maxIter! > 0 ? Math.floor(opts!.maxIter!) : 50;
+  const maxIter =
+    typeof opts?.maxIter === 'number' && opts.maxIter! > 0 ? Math.floor(opts!.maxIter!) : 50;
   const tol = typeof opts?.tol === 'number' && opts.tol! > 0 ? opts.tol! : 1e-6;
 
   // Initialize with OLS if possible
@@ -448,7 +443,7 @@ export function huberRegression(
   let converged = false;
   let iterations = 0;
 
-for (let iter = 0; iter < maxIter; iter++) {
+  for (let iter = 0; iter < maxIter; iter++) {
     iterations = iter + 1;
     // residuals
     const residuals = new Array(m);
@@ -474,7 +469,8 @@ for (let iter = 0; iter < maxIter; iter++) {
     const W = sum(weights);
     if (W <= 0) break;
 
-    let xw = 0, yw = 0;
+    let xw = 0,
+      yw = 0;
     for (let i = 0; i < m; i++) {
       const w = weights[i];
       xw += w * xs[i];
@@ -483,7 +479,8 @@ for (let iter = 0; iter < maxIter; iter++) {
     const xBar = xw / W;
     const yBar = yw / W;
 
-    let sxx = 0, sxy = 0;
+    let sxx = 0,
+      sxy = 0;
     for (let i = 0; i < m; i++) {
       const w = weights[i];
       const dx = xs[i] - xBar;
@@ -509,4 +506,3 @@ for (let iter = 0; iter < maxIter; iter++) {
 
   return { slope, intercept, iterations, converged, weights };
 }
-

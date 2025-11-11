@@ -12,6 +12,7 @@
 
 import { logger } from '@/lib/logger';
 import { analyticsManager } from '@/lib/analyticsManager';
+import { storageSet } from '@/lib/storage/storageHelpers';
 
 export interface CacheManagerResult {
   ok: boolean;
@@ -73,19 +74,19 @@ class CacheManagerService {
 
       // Fallback cross-tab signal via localStorage
       try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('analytics:cache:signal', Date.now().toString());
-        }
+        storageSet('analytics:cache:signal', Date.now().toString(), {
+          serialize: (value) => value,
+        });
       } catch (e) {
         logger.warn('[cacheManager] Failed to set localStorage signal', e as Error);
       }
 
       // Coordinate with analytics manager (broadcast = false since we handle broadcasting here)
       const managerResult = await analyticsManager.clearAllAnalyticsCaches(false);
-      
+
       logger.info('[cacheManager] Global cache clear completed', {
         managerResult,
-        timestamp: this.lastClearAll
+        timestamp: this.lastClearAll,
       });
 
       return {
@@ -93,15 +94,15 @@ class CacheManagerService {
         message: 'All caches cleared successfully',
         details: {
           timestamp: this.lastClearAll,
-          managerResult
-        }
+          managerResult,
+        },
       };
     } catch (error) {
       logger.error('[cacheManager] Failed to clear all caches', error as Error);
       return {
         ok: false,
         message: 'Failed to clear all caches',
-        details: { error: (error as Error).message }
+        details: { error: (error as Error).message },
       };
     }
   }
@@ -113,7 +114,7 @@ class CacheManagerService {
     if (!studentId || typeof studentId !== 'string') {
       return {
         ok: false,
-        message: 'Invalid student ID provided'
+        message: 'Invalid student ID provided',
       };
     }
 
@@ -124,9 +125,11 @@ class CacheManagerService {
       // Broadcast student-specific cache clear event
       if (typeof window !== 'undefined') {
         try {
-          window.dispatchEvent(new CustomEvent('analytics:cache:clear:student', {
-            detail: { studentId }
-          }));
+          window.dispatchEvent(
+            new CustomEvent('analytics:cache:clear:student', {
+              detail: { studentId },
+            }),
+          );
         } catch (e) {
           logger.warn('[cacheManager] Failed to broadcast student cache clear event', e as Error);
         }
@@ -138,25 +141,26 @@ class CacheManagerService {
           this.broadcastChannel.postMessage({ type: 'clear-student', studentId });
         }
       } catch (e) {
-        logger.warn('[cacheManager] Failed to broadcast student clear via BroadcastChannel', e as Error);
+        logger.warn(
+          '[cacheManager] Failed to broadcast student clear via BroadcastChannel',
+          e as Error,
+        );
       }
 
       // Fallback cross-tab signal via localStorage
       try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('analytics:cache:signal:student', JSON.stringify({ studentId, timestamp: Date.now() }));
-        }
+        storageSet('analytics:cache:signal:student', { studentId, timestamp: Date.now() });
       } catch (e) {
         logger.warn('[cacheManager] Failed to set localStorage student signal', e as Error);
       }
 
       // Coordinate with analytics manager
       const managerResult = await analyticsManager.clearStudentCaches(studentId);
-      
+
       logger.info('[cacheManager] Student cache clear completed', {
         studentId,
         managerResult,
-        timestamp: this.lastClearStudent.timestamp
+        timestamp: this.lastClearStudent.timestamp,
       });
 
       return {
@@ -165,18 +169,18 @@ class CacheManagerService {
         details: {
           studentId,
           timestamp: this.lastClearStudent.timestamp,
-          managerResult
-        }
+          managerResult,
+        },
       };
     } catch (error) {
       logger.error('[cacheManager] Failed to clear student caches', error as Error);
       return {
         ok: false,
         message: `Failed to clear student caches for ${studentId}`,
-        details: { 
+        details: {
           studentId,
-          error: (error as Error).message 
-        }
+          error: (error as Error).message,
+        },
       };
     }
   }
@@ -186,18 +190,18 @@ class CacheManagerService {
    */
   async clearCachesByType(cacheType: string): Promise<CacheManagerResult> {
     logger.info('[cacheManager] Clearing caches by type', { cacheType });
-    
+
     // For now, route all type-specific clears to global clear
     // Future enhancement: implement type-specific clearing
     const result = await this.clearAllCaches();
-    
+
     return {
       ...result,
       message: `Caches cleared for type: ${cacheType}`,
       details: {
         ...result.details,
-        cacheType
-      }
+        cacheType,
+      },
     };
   }
 
@@ -209,13 +213,13 @@ class CacheManagerService {
       timestamp: Date.now(),
       services: [
         'analyticsManager',
-        'analyticsProfiles', 
+        'analyticsProfiles',
         'workerCache',
         'performanceCache',
-        'patternAnalysis'
+        'patternAnalysis',
       ],
       lastClearAll: this.lastClearAll || undefined,
-      lastClearStudent: this.lastClearStudent
+      lastClearStudent: this.lastClearStudent,
     };
   }
 

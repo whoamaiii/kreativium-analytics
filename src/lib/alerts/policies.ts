@@ -45,14 +45,20 @@ import {
 } from '@/lib/alerts/types';
 import { safeGet, safeSet } from '@/lib/storage';
 import { logger } from '@/lib/logger';
-import { DEDUPE_WINDOW_MS, MAX_THROTTLE_DELAY_MS, THROTTLE_BACKOFF_BASE } from '@/lib/alerts/constants';
+import {
+  DEDUPE_WINDOW_MS,
+  MAX_THROTTLE_DELAY_MS,
+  THROTTLE_BACKOFF_BASE,
+} from '@/lib/alerts/constants';
 
 function readStorage<T>(key: string): T | null {
   try {
     const raw = safeGet(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch (e) {
-    try { logger.debug('[AlertPolicies] Failed to read storage key', { key, error: e as Error }); } catch {}
+    try {
+      logger.debug('[AlertPolicies] Failed to read storage key', { key, error: e as Error });
+    } catch {}
     return null;
   }
 }
@@ -62,7 +68,9 @@ function writeStorage<T>(key: string, value: T): void {
     const raw = JSON.stringify(value);
     safeSet(key, raw);
   } catch (e) {
-    try { logger.debug('[AlertPolicies] Failed to write storage key', { key, error: e as Error }); } catch {}
+    try {
+      logger.debug('[AlertPolicies] Failed to write storage key', { key, error: e as Error });
+    } catch {}
     // no-op
   }
 }
@@ -170,7 +178,15 @@ export class AlertPolicies {
     try {
       const raw = readStorage<AlertEvent[]>(this.alertsListKey(studentId)) ?? [];
       const now = new Date();
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
+      const start = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0,
+      ).getTime();
       const end = start + 24 * 3600_000;
       for (let i = 0; i < raw.length; i += 1) {
         const createdMs = new Date(raw[i].createdAt).getTime();
@@ -196,7 +212,9 @@ export class AlertPolicies {
     if (alert.dedupeKey) return alert.dedupeKey;
     const created = new Date(alert.createdAt);
     const hourKey = `${created.getUTCFullYear()}-${created.getUTCMonth()}-${created.getUTCDate()}-${created.getUTCHours()}`;
-    const contextKey = String((alert.metadata as any)?.contextKey ?? (alert.metadata as any)?.classPeriod ?? 'na');
+    const contextKey = String(
+      (alert.metadata as any)?.contextKey ?? (alert.metadata as any)?.classPeriod ?? 'na',
+    );
     const raw = `${alert.studentId}|${alert.kind}|${contextKey}|${hourKey}`;
     return hashKey(raw);
   }
@@ -241,7 +259,10 @@ export class AlertPolicies {
   getThrottleDelay(studentId: string, dedupeKey: string): number {
     const throttles = readStorage<Record<string, number>>(this.key(studentId, 'throttle')) ?? {};
     const attempts = throttles[dedupeKey] ?? 0;
-    const delay = Math.min(MAX_THROTTLE_DELAY_MS, THROTTLE_BACKOFF_BASE ** Math.min(10, attempts) * 1000);
+    const delay = Math.min(
+      MAX_THROTTLE_DELAY_MS,
+      THROTTLE_BACKOFF_BASE ** Math.min(10, attempts) * 1000,
+    );
     return delay;
   }
 
@@ -257,7 +278,12 @@ export class AlertPolicies {
     const maxBySeverity = settings?.throttle?.maxDelayBySeverity ?? {};
     const base = baseBySeverity[alert.severity] ?? THROTTLE_BACKOFF_BASE;
     const perSeverityCap = (maxBySeverity as any)[alert.severity] as number | undefined;
-    const cap = Math.min(MAX_THROTTLE_DELAY_MS, typeof perSeverityCap === 'number' && Number.isFinite(perSeverityCap) && perSeverityCap > 0 ? perSeverityCap : MAX_THROTTLE_DELAY_MS);
+    const cap = Math.min(
+      MAX_THROTTLE_DELAY_MS,
+      typeof perSeverityCap === 'number' && Number.isFinite(perSeverityCap) && perSeverityCap > 0
+        ? perSeverityCap
+        : MAX_THROTTLE_DELAY_MS,
+    );
     const delay = Math.min(cap, base ** Math.min(10, attempts) * 1000);
     return delay;
   }
@@ -285,7 +311,8 @@ export class AlertPolicies {
     const throttles = readStorage<Record<string, number>>(this.key(studentId, 'throttle')) ?? {};
     delete throttles[dedupeKey];
     writeStorage(this.key(studentId, 'throttle'), throttles);
-    const schedules = readStorage<Record<string, string>>(this.key(studentId, 'throttleSchedule')) ?? {};
+    const schedules =
+      readStorage<Record<string, string>>(this.key(studentId, 'throttleSchedule')) ?? {};
     if (schedules[dedupeKey]) {
       delete schedules[dedupeKey];
       writeStorage(this.key(studentId, 'throttleSchedule'), schedules);
@@ -308,7 +335,9 @@ export class AlertPolicies {
     const studentId = alerts[0]?.studentId ?? '';
     return alerts.map((a) => {
       const inQ = this.isInQuietHours(studentId, settings, new Date(a.createdAt));
-      const governance = mergeGovernance((a as AlertWithGovernance).governance, { quietHours: inQ });
+      const governance = mergeGovernance((a as AlertWithGovernance).governance, {
+        quietHours: inQ,
+      });
       return { ...a, governance };
     });
   }
@@ -330,9 +359,12 @@ export class AlertPolicies {
     const studentId = alerts[0].studentId;
     const persistedCounts = existingTodayCounts ?? this.getTodayCounts(studentId);
     const resolvedCaps: Record<AlertSeverity, number> = {
-      [AlertSeverity.Critical]: settings?.dailyCaps?.critical ?? DEFAULT_CAPS[AlertSeverity.Critical],
-      [AlertSeverity.Important]: settings?.dailyCaps?.important ?? DEFAULT_CAPS[AlertSeverity.Important],
-      [AlertSeverity.Moderate]: settings?.dailyCaps?.moderate ?? DEFAULT_CAPS[AlertSeverity.Moderate],
+      [AlertSeverity.Critical]:
+        settings?.dailyCaps?.critical ?? DEFAULT_CAPS[AlertSeverity.Critical],
+      [AlertSeverity.Important]:
+        settings?.dailyCaps?.important ?? DEFAULT_CAPS[AlertSeverity.Important],
+      [AlertSeverity.Moderate]:
+        settings?.dailyCaps?.moderate ?? DEFAULT_CAPS[AlertSeverity.Moderate],
       [AlertSeverity.Low]: settings?.dailyCaps?.low ?? DEFAULT_CAPS[AlertSeverity.Low],
     };
     const counts: Record<AlertSeverity, number> = {
@@ -342,7 +374,9 @@ export class AlertPolicies {
       [AlertSeverity.Low]: persistedCounts?.[AlertSeverity.Low] ?? 0,
     };
 
-    const sorted = [...alerts].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const sorted = [...alerts].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
     const flagById = new Map<string, boolean>();
 
     sorted.forEach((alert) => {
@@ -370,7 +404,9 @@ export class AlertPolicies {
    * @returns Deduplicated alerts with governance flags
    */
   deduplicateAlerts(alerts: AlertEvent[], windowMs = DEDUPE_WINDOW_MS): AlertWithGovernance[] {
-    const sorted = [...alerts].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const sorted = [...alerts].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
     const results: AlertWithGovernance[] = [];
     const lastByKey = new Map<string, { index: number; alert: AlertWithGovernance }>();
 
@@ -378,7 +414,10 @@ export class AlertPolicies {
       const keyBase = this.calculateDedupeKey(alert);
       const current: AlertWithGovernance = {
         ...alert,
-        governance: mergeGovernance((alert as AlertWithGovernance).governance, { deduplicated: false, hasDuplicates: false }),
+        governance: mergeGovernance((alert as AlertWithGovernance).governance, {
+          deduplicated: false,
+          hasDuplicates: false,
+        }),
       };
       const previous = lastByKey.get(keyBase);
       if (!previous) {
@@ -399,7 +438,10 @@ export class AlertPolicies {
       const currRank = SEVERITY_RANK[current.severity];
       const markWinnerHasDupes = (winner: AlertWithGovernance): AlertWithGovernance => ({
         ...winner,
-        governance: mergeGovernance(winner.governance, { hasDuplicates: true, deduplicated: false }),
+        governance: mergeGovernance(winner.governance, {
+          hasDuplicates: true,
+          deduplicated: false,
+        }),
       });
 
       if (currRank > prevRank || (currRank === prevRank && currTime > prevTime)) {
@@ -463,10 +505,14 @@ export class AlertPolicies {
    * @param settings - Alert settings
    * @returns Throttle decision with optional `nextEligibleAt` ISO timestamp
    */
-  shouldThrottle(alert: AlertEvent, settings?: AlertSettings): { throttled: boolean; nextEligibleAt?: string } {
+  shouldThrottle(
+    alert: AlertEvent,
+    settings?: AlertSettings,
+  ): { throttled: boolean; nextEligibleAt?: string } {
     const dedupeKey = this.calculateDedupeKey(alert);
     const studentId = alert.studentId;
-    const schedules = readStorage<Record<string, string>>(this.key(studentId, 'throttleSchedule')) ?? {};
+    const schedules =
+      readStorage<Record<string, string>>(this.key(studentId, 'throttleSchedule')) ?? {};
     const scheduledIso = schedules[dedupeKey];
     const now = Date.now();
     if (scheduledIso) {
@@ -513,7 +559,11 @@ export class AlertPolicies {
   ): { allowed: boolean; status: AlertWithGovernance['governance'] } {
     const validation = validateAlertSettings(settings);
     if (!validation.isValid) {
-      try { logger.warn('[AlertPolicies] Invalid settings; using normalized defaults', { errors: validation.errors }); } catch {}
+      try {
+        logger.warn('[AlertPolicies] Invalid settings; using normalized defaults', {
+          errors: validation.errors,
+        });
+      } catch {}
     }
     const normalized = validation.normalized;
 
@@ -523,9 +573,12 @@ export class AlertPolicies {
     const quietHours = this.isInQuietHours(studentId, normalized, new Date(alert.createdAt));
     const { throttled, nextEligibleAt } = this.shouldThrottle(alert, normalized);
     const resolvedCaps: Record<AlertSeverity, number> = {
-      [AlertSeverity.Critical]: normalized?.dailyCaps?.critical ?? DEFAULT_CAPS[AlertSeverity.Critical],
-      [AlertSeverity.Important]: normalized?.dailyCaps?.important ?? DEFAULT_CAPS[AlertSeverity.Important],
-      [AlertSeverity.Moderate]: normalized?.dailyCaps?.moderate ?? DEFAULT_CAPS[AlertSeverity.Moderate],
+      [AlertSeverity.Critical]:
+        normalized?.dailyCaps?.critical ?? DEFAULT_CAPS[AlertSeverity.Critical],
+      [AlertSeverity.Important]:
+        normalized?.dailyCaps?.important ?? DEFAULT_CAPS[AlertSeverity.Important],
+      [AlertSeverity.Moderate]:
+        normalized?.dailyCaps?.moderate ?? DEFAULT_CAPS[AlertSeverity.Moderate],
       [AlertSeverity.Low]: normalized?.dailyCaps?.low ?? DEFAULT_CAPS[AlertSeverity.Low],
     };
     const todayCounts = existingTodayCounts ?? this.getTodayCounts(studentId);
@@ -538,7 +591,8 @@ export class AlertPolicies {
     if (throttled) reasons.push('throttled');
     if (capExceeded) reasons.push('cap_exceeded');
     try {
-      if (!allowed) logger.debug('[AlertPolicies] Alert blocked by policies', { alertId: alert.id, reasons });
+      if (!allowed)
+        logger.debug('[AlertPolicies] Alert blocked by policies', { alertId: alert.id, reasons });
       else logger.debug('[AlertPolicies] Alert allowed by policies', { alertId: alert.id });
     } catch {}
     this.auditPolicyDecision({ alert, dedupeKey, allowed, governance, reasons });
@@ -552,7 +606,13 @@ export class AlertPolicies {
   /**
    * Write an audit entry for a policy decision (bounded length per student).
    */
-  private auditPolicyDecision(params: { alert: AlertEvent; dedupeKey: string; allowed: boolean; governance: GovernanceStatus; reasons?: string[] }): void {
+  private auditPolicyDecision(params: {
+    alert: AlertEvent;
+    dedupeKey: string;
+    allowed: boolean;
+    governance: GovernanceStatus;
+    reasons?: string[];
+  }): void {
     const { alert, dedupeKey, allowed, governance, reasons } = params;
     const studentId = alert.studentId;
     const auditKey = this.key(studentId, 'audit');
@@ -567,10 +627,15 @@ export class AlertPolicies {
         allowed,
         reasons,
       });
-      const trimmed = entries.length > AUDIT_MAX_ENTRIES ? entries.slice(entries.length - AUDIT_MAX_ENTRIES) : entries;
+      const trimmed =
+        entries.length > AUDIT_MAX_ENTRIES
+          ? entries.slice(entries.length - AUDIT_MAX_ENTRIES)
+          : entries;
       writeStorage(auditKey, trimmed);
     } catch (e) {
-      try { logger.warn('[AlertPolicies] Failed to write policy audit entry', e as Error); } catch {}
+      try {
+        logger.warn('[AlertPolicies] Failed to write policy audit entry', e as Error);
+      } catch {}
     }
   }
 
@@ -599,7 +664,9 @@ export class AlertPolicies {
       const entries = this.getAuditTrail(studentId, limit);
       return JSON.stringify(entries);
     } catch (e) {
-      try { logger.warn('[AlertPolicies] Failed to export audit trail', e as Error); } catch {}
+      try {
+        logger.warn('[AlertPolicies] Failed to export audit trail', e as Error);
+      } catch {}
       return '[]';
     }
   }
@@ -620,7 +687,8 @@ function isValidTimeString(s?: string): boolean {
 
 function normalizeCaps(input?: AlertSettings['dailyCaps']): Required<AlertSettings['dailyCaps']> {
   const caps = input ?? { critical: 1, important: 2, moderate: 4, low: 999 };
-  const clamp = (n: unknown, fallback: number) => (typeof n === 'number' && Number.isFinite(n) && n >= 0 ? n : fallback);
+  const clamp = (n: unknown, fallback: number) =>
+    typeof n === 'number' && Number.isFinite(n) && n >= 0 ? n : fallback;
   return {
     critical: clamp(caps.critical, DEFAULT_CAPS[AlertSeverity.Critical]),
     important: clamp(caps.important, DEFAULT_CAPS[AlertSeverity.Important]),
@@ -629,13 +697,22 @@ function normalizeCaps(input?: AlertSettings['dailyCaps']): Required<AlertSettin
   } as Required<AlertSettings['dailyCaps']>;
 }
 
-function normalizeQuietHours(input?: AlertSettings['quietHours']): AlertSettings['quietHours'] | undefined {
+function normalizeQuietHours(
+  input?: AlertSettings['quietHours'],
+): AlertSettings['quietHours'] | undefined {
   if (!input) return undefined;
   const startOk = isValidTimeString(input.start);
   const endOk = isValidTimeString(input.end);
   if (!startOk || !endOk) return undefined;
-  const days = Array.isArray(input.daysOfWeek) ? input.daysOfWeek.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6) : undefined;
-  return { start: input.start, end: input.end, timezone: input.timezone, daysOfWeek: days && days.length ? days : undefined };
+  const days = Array.isArray(input.daysOfWeek)
+    ? input.daysOfWeek.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+    : undefined;
+  return {
+    start: input.start,
+    end: input.end,
+    timezone: input.timezone,
+    daysOfWeek: days && days.length ? days : undefined,
+  };
 }
 
 /**
@@ -646,21 +723,34 @@ function normalizeQuietHours(input?: AlertSettings['quietHours']): AlertSettings
  * @example
  * const { isValid, errors, normalized } = validateAlertSettings(rawSettings);
  */
-export function validateAlertSettings(settings?: AlertSettings): { isValid: boolean; errors: string[]; normalized: AlertSettings } {
+export function validateAlertSettings(settings?: AlertSettings): {
+  isValid: boolean;
+  errors: string[];
+  normalized: AlertSettings;
+} {
   const errors: string[] = [];
   const studentId = settings?.studentId ?? '__global__';
   const quietHours = normalizeQuietHours(settings?.quietHours);
-  if (settings?.quietHours && !quietHours) errors.push('quietHours must have valid start/end times in HH:MM format');
+  if (settings?.quietHours && !quietHours)
+    errors.push('quietHours must have valid start/end times in HH:MM format');
   const dailyCaps = normalizeCaps(settings?.dailyCaps);
   if (settings?.dailyCaps) {
     (['critical', 'important', 'moderate', 'low'] as const).forEach((k) => {
       const v = (settings.dailyCaps as any)[k];
-      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) errors.push(`dailyCaps.${k} must be a non-negative number`);
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0)
+        errors.push(`dailyCaps.${k} must be a non-negative number`);
     });
   }
   const snoozePreferences = settings?.snoozePreferences ?? {};
-  const defaultHours = typeof snoozePreferences.defaultHours === 'number' && snoozePreferences.defaultHours > 0 ? snoozePreferences.defaultHours : 24;
-  const dontShowAgainDays = typeof snoozePreferences.dontShowAgainDays === 'number' && snoozePreferences.dontShowAgainDays > 0 ? snoozePreferences.dontShowAgainDays : 7;
+  const defaultHours =
+    typeof snoozePreferences.defaultHours === 'number' && snoozePreferences.defaultHours > 0
+      ? snoozePreferences.defaultHours
+      : 24;
+  const dontShowAgainDays =
+    typeof snoozePreferences.dontShowAgainDays === 'number' &&
+    snoozePreferences.dontShowAgainDays > 0
+      ? snoozePreferences.dontShowAgainDays
+      : 7;
   const normalized: AlertSettings = {
     studentId,
     quietHours,

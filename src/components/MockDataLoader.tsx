@@ -1,12 +1,34 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Database, Users, Trash2, CheckCircle } from 'lucide-react';
-import { loadMockDataToStorage, clearMockDataFromStorage, generateMockStudents, generateAllMockData, loadScenarioDataToStorage } from '@/lib/mockDataGenerator';
+import {
+  loadMockDataToStorage,
+  clearMockDataFromStorage,
+  generateMockStudents,
+  generateAllMockData,
+  loadScenarioDataToStorage,
+} from '@/lib/mockDataGenerator';
 import { dataStorage } from '@/lib/dataStorage';
 
 /**
@@ -16,7 +38,9 @@ import { dataStorage } from '@/lib/dataStorage';
 export const MockDataLoader = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [selectedScenario, setSelectedScenario] = useState<'all' | 'emma' | 'lars' | 'astrid'>('all');
+  const [selectedScenario, setSelectedScenario] = useState<'all' | 'emma' | 'lars' | 'astrid'>(
+    'all',
+  );
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -39,7 +63,7 @@ export const MockDataLoader = () => {
     try {
       // Simulate loading progress for better UX
       setLoadingProgress(25);
-      
+
       // Generate and load the data based on selected scenario
       progressIntervalRef.current = setInterval(() => {
         setLoadingProgress((oldProgress) => {
@@ -60,35 +84,35 @@ export const MockDataLoader = () => {
       } else {
         await loadScenarioDataToStorage(selectedScenario);
       }
-      
+
       // Clear interval before setting final progress
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
-      
+
       setLoadingProgress(75);
-      
-      await new Promise(resolve => {
+
+      await new Promise((resolve) => {
         timeoutRef.current = setTimeout(resolve, 300);
       });
       setLoadingProgress(100);
-      
+
       // Get stats for success message
       const stats = dataStorage.getStorageStats();
-      
-      const description = selectedScenario === 'all'
-        ? `Loaded ${stats.studentsCount} students with ${stats.entriesCount} tracking entries`
-        : `Loaded scenario "${selectedScenario}" with ${stats.entriesCount} tracking entries`;
-      
+
+      const description =
+        selectedScenario === 'all'
+          ? `Loaded ${stats.studentsCount} students with ${stats.entriesCount} tracking entries`
+          : `Loaded scenario "${selectedScenario}" with ${stats.entriesCount} tracking entries`;
+
       toast.success('Mock data loaded successfully!', {
         description,
       });
-      
+
       // Dispatch a custom event to notify other components that mock data has been loaded.
       // This allows for dynamic updates without requiring a full page reload.
       window.dispatchEvent(new CustomEvent('mockDataLoaded'));
-      
     } catch (error) {
       // Clean up interval on error
       if (progressIntervalRef.current) {
@@ -110,12 +134,11 @@ export const MockDataLoader = () => {
   const handleClearMockData = useCallback(async () => {
     try {
       clearMockDataFromStorage();
-      
+
       toast.success('Mock data cleared successfully!');
-      
+
       // Dispatch a custom event to force a refresh on components that listen for it.
       window.dispatchEvent(new CustomEvent('mockDataLoaded'));
-      
     } catch (error) {
       toast.error('Failed to clear mock data', {
         description: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -126,8 +149,8 @@ export const MockDataLoader = () => {
   const mockStudents = useMemo(() => generateMockStudents(), []);
   const currentStats = useMemo(() => dataStorage.getStorageStats(), [isLoading]);
   const hasMockData = useMemo(
-    () => dataStorage.getStudents().some(s => s.id.startsWith('mock_')),
-    [isLoading]
+    () => dataStorage.getStudents().some((s) => s.id.startsWith('mock_')),
+    [isLoading],
   );
 
   return (
@@ -140,19 +163,23 @@ export const MockDataLoader = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm text-muted-foreground">
-          Load realistic test data to explore pattern analysis and correlation features.
-          Mock data includes 3 students with 3-6 months of tracking data each.
+          Load realistic test data to explore pattern analysis and correlation features. Mock data
+          includes 3 students with 3-6 months of tracking data each.
         </div>
-
 
         {/* Student Preview */}
         <div className="space-y-2">
           <div className="text-sm font-medium">Students to be created:</div>
           <div className="space-y-1">
-            {mockStudents.map(student => (
-              <div key={student.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+            {mockStudents.map((student) => (
+              <div
+                key={student.id}
+                className="flex items-center gap-2 text-sm text-muted-foreground"
+              >
                 <Users className="h-3 w-3" />
-                <span>{student.name} ({student.grade})</span>
+                <span>
+                  {student.name} ({student.grade})
+                </span>
               </div>
             ))}
           </div>
@@ -174,9 +201,11 @@ export const MockDataLoader = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
             <div className="text-sm font-medium">Scenario</div>
-            <Select 
+            <Select
               value={selectedScenario}
-              onValueChange={(val) => setSelectedScenario((val as 'all' | 'emma' | 'lars' | 'astrid'))}
+              onValueChange={(val) =>
+                setSelectedScenario(val as 'all' | 'emma' | 'lars' | 'astrid')
+              }
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select scenario" />
@@ -213,11 +242,7 @@ export const MockDataLoader = () => {
           {hasMockData && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  disabled={isLoading}
-                >
+                <Button variant="destructive" size="sm" disabled={isLoading}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Clear All
                 </Button>
@@ -226,8 +251,8 @@ export const MockDataLoader = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Clear All Data?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will permanently delete all student data and tracking entries. 
-                    This action cannot be undone.
+                    This will permanently delete all student data and tracking entries. This action
+                    cannot be undone.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

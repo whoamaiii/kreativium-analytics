@@ -7,7 +7,12 @@ interface IntensityRingProps {
   star?: boolean;
 }
 
-export function IntensityRing({ size = 112, stroke = 10, progress, star = true }: IntensityRingProps) {
+export function IntensityRing({
+  size = 112,
+  stroke = 10,
+  progress,
+  star = true,
+}: IntensityRingProps) {
   const radius = (size - stroke) / 2;
   const circ = 2 * Math.PI * radius;
   const dash = Math.max(0, Math.min(circ, circ * progress));
@@ -21,9 +26,25 @@ export function IntensityRing({ size = 112, stroke = 10, progress, star = true }
             <stop offset="100%" stopColor="#f59e0b" />
           </linearGradient>
         </defs>
-        <circle cx={size/2} cy={size/2} r={radius} stroke="#ffffff22" strokeWidth={stroke} fill="none" />
-        <circle cx={size/2} cy={size/2} r={radius} stroke="url(#igrad)" strokeLinecap="round" strokeWidth={stroke}
-          fill="none" strokeDasharray={`${dash} ${circ - dash}`} transform={`rotate(-90 ${size/2} ${size/2})`} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="#ffffff22"
+          strokeWidth={stroke}
+          fill="none"
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke="url(#igrad)"
+          strokeLinecap="round"
+          strokeWidth={stroke}
+          fill="none"
+          strokeDasharray={`${dash} ${circ - dash}`}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
       </svg>
       {star && progress >= 1 && (
         <div className="absolute inset-0 grid place-items-center text-2xl">✨</div>
@@ -33,9 +54,3 @@ export function IntensityRing({ size = 112, stroke = 10, progress, star = true }
 }
 
 export default IntensityRing;
-
-
-
-
-
-

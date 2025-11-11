@@ -122,7 +122,8 @@ function isLikelyTranslatable(text: string): boolean {
 
 function scanFile(filePath: string): Offender[] {
   const text = fs.readFileSync(filePath, 'utf8');
-  const scriptKind = filePath.endsWith('.tsx') || filePath.endsWith('.jsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+  const scriptKind =
+    filePath.endsWith('.tsx') || filePath.endsWith('.jsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
   const sf = ts.createSourceFile(filePath, text, ts.ScriptTarget.Latest, true, scriptKind);
   const offenders: Offender[] = [];
 
@@ -131,12 +132,25 @@ function scanFile(filePath: string): Offender[] {
 
   function record(node: ts.Node, kind: Offender['kind'], detail: string, value: string) {
     const { line, column } = getLineAndCol(sf, node.getStart());
-    offenders.push({ file: path.relative(ROOT, filePath), kind, detail, value, line, column, context: getContext(sf, node.getStart()) });
+    offenders.push({
+      file: path.relative(ROOT, filePath),
+      kind,
+      detail,
+      value,
+      line,
+      column,
+      context: getContext(sf, node.getStart()),
+    });
   }
 
   // collect imports to better detect message APIs
-  sf.forEachChild(node => {
-    if (ts.isImportDeclaration(node) && node.importClause && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+  sf.forEachChild((node) => {
+    if (
+      ts.isImportDeclaration(node) &&
+      node.importClause &&
+      node.moduleSpecifier &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
       const mod = node.moduleSpecifier.text;
       if (mod === 'sonner' || mod.includes('toast')) {
         hasSonnerToast = true;
@@ -170,10 +184,19 @@ function scanFile(filePath: string): Offender[] {
           }
         }
         // Also catch jsx expression with string literal: placeholder={"Text"}
-        if (ts.isJsxExpression(node.initializer) && node.initializer.expression && ts.isStringLiteral(node.initializer.expression)) {
+        if (
+          ts.isJsxExpression(node.initializer) &&
+          node.initializer.expression &&
+          ts.isStringLiteral(node.initializer.expression)
+        ) {
           const value = node.initializer.expression.text;
           if (isLikelyTranslatable(value)) {
-            record(node.initializer.expression, 'JSXAttribute', `Static ${attrName} attribute`, value);
+            record(
+              node.initializer.expression,
+              'JSXAttribute',
+              `Static ${attrName} attribute`,
+              value,
+            );
           }
         }
       }
@@ -237,8 +260,11 @@ function main() {
       });
     }
   }
-  fs.writeFileSync(OUTPUT_JSON, JSON.stringify({ generatedAt: new Date().toISOString(), offenders: all }, null, 2));
-   
+  fs.writeFileSync(
+    OUTPUT_JSON,
+    JSON.stringify({ generatedAt: new Date().toISOString(), offenders: all }, null, 2),
+  );
+
   console.log(`Wrote ${all.length} offenders to ${path.relative(ROOT, OUTPUT_JSON)}`);
 }
 

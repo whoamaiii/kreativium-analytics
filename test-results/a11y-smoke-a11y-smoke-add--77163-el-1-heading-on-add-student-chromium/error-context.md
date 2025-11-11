@@ -2,7 +2,7 @@
 
 ```yaml
 - link "Hopp til hovedinnhold":
-  - /url: "#main-content"
+    - /url: '#main-content'
 - main:
-  - status: Laster...
+    - status: Laster...
 ```

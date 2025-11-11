@@ -29,7 +29,13 @@ describe('BaselineService (enhanced)', () => {
     // 14 days of values with a few outliers
     for (let i = 0; i < 14; i++) {
       const intensity = i === 5 ? 10 : i === 9 ? 0 : 3 + (i % 3);
-      emotions.push({ id: `e${i}`, studentId: 's1', emotion: 'frustration', intensity, timestamp: makeDate(14 - i) } as EmotionEntry);
+      emotions.push({
+        id: `e${i}`,
+        studentId: 's1',
+        emotion: 'frustration',
+        intensity,
+        timestamp: makeDate(14 - i),
+      } as EmotionEntry);
     }
     const sensory: SensoryEntry[] = [];
     const tracking: TrackingEntry[] = emotions.map((e, idx) => ({
@@ -38,7 +44,9 @@ describe('BaselineService (enhanced)', () => {
       timestamp: e.timestamp,
       emotions: [e],
       sensoryInputs: [],
-      environmentalData: { roomConditions: { noiseLevel: 60 + (idx % 4) * 5, temperature: 22, humidity: 40 } },
+      environmentalData: {
+        roomConditions: { noiseLevel: 60 + (idx % 4) * 5, temperature: 22, humidity: 40 },
+      },
     })) as unknown as TrackingEntry[];
 
     const res = svc.updateBaseline({ studentId: 's1', emotions, sensory, tracking });
@@ -60,7 +68,12 @@ describe('BaselineService (enhanced)', () => {
     const emotions: EmotionEntry[] = [];
     const sensory: SensoryEntry[] = [];
     for (let i = 0; i < 20; i++) {
-      sensory.push({ id: `s${i}`, response: 'seeking', intensity: 4 + (i % 2), timestamp: makeDate(10 - (i % 10)) } as unknown as SensoryEntry);
+      sensory.push({
+        id: `s${i}`,
+        response: 'seeking',
+        intensity: 4 + (i % 2),
+        timestamp: makeDate(10 - (i % 10)),
+      } as unknown as SensoryEntry);
     }
     const tracking: TrackingEntry[] = [] as unknown as TrackingEntry[];
 
@@ -82,7 +95,13 @@ describe('BaselineService (enhanced)', () => {
     const sensory: SensoryEntry[] = [];
     const tracking: TrackingEntry[] = [] as unknown as TrackingEntry[];
     for (let i = 0; i < 15; i++) {
-      const e: EmotionEntry = { id: `e${i}`, studentId: 's3', emotion: 'anxiety', intensity: 2 + (i % 4), timestamp: makeDate(15 - i) } as EmotionEntry;
+      const e: EmotionEntry = {
+        id: `e${i}`,
+        studentId: 's3',
+        emotion: 'anxiety',
+        intensity: 2 + (i % 4),
+        timestamp: makeDate(15 - i),
+      } as EmotionEntry;
       emotions.push(e);
       tracking.push({
         id: `t${i}`,
@@ -90,7 +109,13 @@ describe('BaselineService (enhanced)', () => {
         timestamp: e.timestamp,
         emotions: [e],
         sensoryInputs: [],
-        environmentalData: { roomConditions: { noiseLevel: 50 + (i % 6) * 8, temperature: 20 + (i % 2), humidity: 35 + (i % 3) } },
+        environmentalData: {
+          roomConditions: {
+            noiseLevel: 50 + (i % 6) * 8,
+            temperature: 20 + (i % 2),
+            humidity: 35 + (i % 3),
+          },
+        },
       } as unknown as TrackingEntry);
     }
     const res = svc.updateBaseline({ studentId: 's3', emotions, sensory, tracking });
@@ -109,7 +134,13 @@ describe('BaselineService (enhanced)', () => {
     const sensory: SensoryEntry[] = [];
     const tracking: TrackingEntry[] = [] as unknown as TrackingEntry[];
     for (let i = 0; i < 10; i++) {
-      emotions.push({ id: `e${i}`, studentId: 's4', emotion: 'joy', intensity: 3, timestamp: makeDate(10 - i) } as EmotionEntry);
+      emotions.push({
+        id: `e${i}`,
+        studentId: 's4',
+        emotion: 'joy',
+        intensity: 3,
+        timestamp: makeDate(10 - i),
+      } as EmotionEntry);
     }
     const res = svc.updateBaseline({ studentId: 's4', emotions, sensory, tracking });
     expect(res).not.toBeNull();
@@ -118,5 +149,3 @@ describe('BaselineService (enhanced)', () => {
     expect(loaded!.studentId).toBe('s4');
   });
 });
-
-

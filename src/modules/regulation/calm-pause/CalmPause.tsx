@@ -18,10 +18,12 @@ export default function CalmPause() {
     let raf: number;
     const step = () => {
       if (neutral.isNeutral) {
-        setHoldMs(prev => {
+        setHoldMs((prev) => {
           const next = Math.min(goalMs, prev + 100);
           if (next === goalMs) {
-            try { incNeutralHold(); } catch {}
+            try {
+              incNeutralHold();
+            } catch {}
           }
           return next;
         });
@@ -42,9 +44,12 @@ export default function CalmPause() {
       try {
         if (!cameraEnabled || !videoRef.current) return;
         if (!navigator.mediaDevices?.getUserMedia) return;
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user' },
+          audio: false,
+        });
         if (cancelled) {
-          stream.getTracks().forEach(t => t.stop());
+          stream.getTracks().forEach((t) => t.stop());
           return;
         }
         streamRef.current = stream;
@@ -55,9 +60,11 @@ export default function CalmPause() {
     if (cameraEnabled) start();
     return () => {
       cancelled = true;
-      if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop());
+      if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
       if (videoRef.current) {
-        try { videoRef.current.pause(); } catch {}
+        try {
+          videoRef.current.pause();
+        } catch {}
         videoRef.current.srcObject = null;
       }
     };
@@ -66,7 +73,9 @@ export default function CalmPause() {
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto space-y-6">
-        <h1 className="text-2xl font-semibold">{String(tCommon('navigation.emotionLab', { defaultValue: 'Ro‑pause' }))}</h1>
+        <h1 className="text-2xl font-semibold">
+          {String(tCommon('navigation.emotionLab', { defaultValue: 'Ro‑pause' }))}
+        </h1>
 
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-xl border bg-card p-6 flex flex-col items-center justify-center gap-4">
@@ -78,13 +87,27 @@ export default function CalmPause() {
           </div>
           <div className="space-y-3">
             <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
-              <video ref={videoRef} className="w-full h-64 object-cover" autoPlay playsInline muted aria-label="Calm Pause camera" />
+              <video
+                ref={videoRef}
+                className="w-full h-64 object-cover"
+                autoPlay
+                playsInline
+                muted
+                aria-label="Calm Pause camera"
+              />
             </div>
-            <button className="px-3 py-2 rounded-lg border" onClick={() => setCameraEnabled(v => !v)}>
-              {cameraEnabled ? String(tCommon('tegn.cameraDisable', { defaultValue: 'Skru av kamera' })) : String(tCommon('tegn.cameraEnable', { defaultValue: 'Skru på kamera' }))}
+            <button
+              className="px-3 py-2 rounded-lg border"
+              onClick={() => setCameraEnabled((v) => !v)}
+            >
+              {cameraEnabled
+                ? String(tCommon('tegn.cameraDisable', { defaultValue: 'Skru av kamera' }))
+                : String(tCommon('tegn.cameraEnable', { defaultValue: 'Skru på kamera' }))}
             </button>
             <div className="text-sm text-muted-foreground">
-              {String(tCommon('calmPause.neutralGoal', { defaultValue: 'Mål: nøytral i 10–20 sekunder' }))}
+              {String(
+                tCommon('calmPause.neutralGoal', { defaultValue: 'Mål: nøytral i 10–20 sekunder' }),
+              )}
             </div>
           </div>
         </div>
@@ -92,5 +115,3 @@ export default function CalmPause() {
     </div>
   );
 }
-
-

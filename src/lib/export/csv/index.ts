@@ -16,7 +16,7 @@ export {
   generateCSVHeader,
   generateCSVRow,
   type CSVExportOptions,
-  type CSVGenerationResult
+  type CSVGenerationResult,
 } from './csvGenerator';
 
 // Export formatter utilities
@@ -40,5 +40,5 @@ export {
   calculateGoalProgress,
   type CSVFormattingOptions,
   type FieldSelectionOptions,
-  type AnonymizationOptions
+  type AnonymizationOptions,
 } from './csvFormatter';

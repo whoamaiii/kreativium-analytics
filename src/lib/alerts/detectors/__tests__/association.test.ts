@@ -35,13 +35,15 @@ describe('Association detector (Fisher exact + log-odds + correlation)', () => {
   it('uses Pearson correlation when time series provided', () => {
     const { x, y } = generateCorrelatedSeries(50, 0.7, 1357);
     const table = generateContingencyTable({ total: 200, oddsRatio: 2 });
-    const res = detectAssociation({ label: 'With corr', contingency: table, seriesX: x, seriesY: y, minSupport: 5 });
+    const res = detectAssociation({
+      label: 'With corr',
+      contingency: table,
+      seriesX: x,
+      seriesY: y,
+      minSupport: 5,
+    });
     expect(res).not.toBeNull();
     const details = (res!.sources?.[0]?.details ?? {}) as any;
     expect(Math.abs(details.correlation)).toBeGreaterThan(0.5);
   });
 });
-
-
-
-

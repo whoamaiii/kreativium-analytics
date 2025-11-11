@@ -56,8 +56,9 @@ const LoadingFallback = () => (
 );
 
 export const LazyComparisonSummary = createLazyComponent(
-  () => import('@/components/ComparisonSummary').then(module => ({
-    default: module.ComparisonSummary
-  })),
-  <LoadingFallback />
+  () =>
+    import('@/components/ComparisonSummary').then((module) => ({
+      default: module.ComparisonSummary,
+    })),
+  <LoadingFallback />,
 );

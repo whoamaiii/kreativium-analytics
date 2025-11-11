@@ -1,15 +1,15 @@
 # Kreativium Analytics - Comprehensive Refactoring Analysis
 
-**Generated:** 2025-11-09
-**Branch:** claude/codebase-refactoring-analysis-011CUwzXHaGzdGhsp3o1Bfsv
-**Analyzer:** Claude Sonnet 4.5
-**Analysis Depth:** Very Thorough
+**Generated:** 2025-11-09 **Branch:** claude/codebase-refactoring-analysis-011CUwzXHaGzdGhsp3o1Bfsv
+**Analyzer:** Claude Sonnet 4.5 **Analysis Depth:** Very Thorough
 
 ---
 
 ## 🔍 EXECUTIVE SUMMARY
 
-This comprehensive analysis examines the Kreativium Analytics codebase (~87,870 lines of TypeScript/TSX) and identifies systematic refactoring opportunities to improve code quality, maintainability, and developer experience.
+This comprehensive analysis examines the Kreativium Analytics codebase (~87,870 lines of
+TypeScript/TSX) and identifies systematic refactoring opportunities to improve code quality,
+maintainability, and developer experience.
 
 ### Key Metrics
 
@@ -31,6 +31,7 @@ This comprehensive analysis examines the Kreativium Analytics codebase (~87,870 
 ### Recommended Approach
 
 Start with **low-risk, high-impact** changes:
+
 1. Extract reusable utilities (localStorage, environment mapping)
 2. Create constants for magic numbers
 3. Improve type safety with proper discriminated unions
@@ -43,6 +44,7 @@ Start with **low-risk, high-impact** changes:
 ### 🔴 HIGH PRIORITY (Start Here - Low Risk, High Impact)
 
 #### 1. Extract localStorage Utilities ⭐
+
 - **Risk:** Low | **Impact:** High | **Effort:** 4 hours
 - **Locations:** 30+ instances across the codebase
   - `src/pages/EmotionGame.tsx` (6 instances)
@@ -52,6 +54,7 @@ Start with **low-risk, high-impact** changes:
 - **Action:** Create `src/hooks/useLocalStorage.ts` with generic type support
 
 #### 2. Extract Magic Numbers to Constants ⭐
+
 - **Risk:** Low | **Impact:** Medium | **Effort:** 6 hours
 - **Count:** 20+ hardcoded values
 - **Locations:**
@@ -62,6 +65,7 @@ Start with **low-risk, high-impact** changes:
 - **Action:** Create `src/constants/analytics.ts` and `src/constants/game.ts`
 
 #### 3. Remove Dead Code and Unused Imports ⭐
+
 - **Risk:** Low | **Impact:** Medium | **Effort:** 2 hours
 - **Files to Remove:**
   - `src/pages/StudentProfile.original.tsx` (555 lines, completely unreferenced)
@@ -70,6 +74,7 @@ Start with **low-risk, high-impact** changes:
 - **Action:** Run ESLint with auto-fix, manual verification
 
 #### 4. Type Worker Messages Properly ⭐
+
 - **Risk:** Low | **Impact:** High | **Effort:** 8 hours
 - **Locations:**
   - `src/workers/analytics.worker.ts:257` → `const msg = e.data as any;`
@@ -78,6 +83,7 @@ Start with **low-risk, high-impact** changes:
 - **Action:** Create `src/types/worker-messages.ts` with discriminated unions
 
 #### 5. Extract Environment Mapping Helper ⭐
+
 - **Risk:** Low | **Impact:** Medium | **Effort:** 3 hours
 - **Locations:**
   - `src/lib/enhancedPatternAnalysis.ts:227-235` (deeply nested ternary)
@@ -87,6 +93,7 @@ Start with **low-risk, high-impact** changes:
 ### 🟠 MEDIUM PRIORITY (Medium Risk, High Impact)
 
 #### 6. Split mlModels.impl.ts
+
 - **Risk:** Medium | **Impact:** High | **Effort:** 24 hours
 - **Current:** 1,112 lines mixing model creation, training, storage, evaluation
 - **Action:** Split into 4 focused modules:
@@ -96,6 +103,7 @@ Start with **low-risk, high-impact** changes:
   - `src/lib/ml/evaluation.ts` (evaluation logic)
 
 #### 7. Refactor Alert Engine
+
 - **Risk:** Medium | **Impact:** High | **Effort:** 20 hours
 - **Current:** 952 lines with complex threshold logic
 - **Action:** Extract into focused modules:
@@ -104,18 +112,22 @@ Start with **low-risk, high-impact** changes:
   - Simplify `engine.ts` to orchestration only
 
 #### 8. Extract EmotionGame State Machine
+
 - **Risk:** Medium | **Impact:** High | **Effort:** 16 hours
 - **Current:** 30+ useState declarations creating state explosion
 - **Problem:** Interdependent state scattered, hard to understand flow
 - **Action:** Implement useReducer pattern or state machine library (XState)
 
 #### 9. Create Config Type Accessors
+
 - **Risk:** Medium | **Impact:** High | **Effort:** 6 hours
 - **Current:** `const cfgAny: any = analyticsConfig as any;` pattern repeated 10+ times
-- **Locations:** `src/lib/enhancedPatternAnalysis.ts` (lines 118, 284, 388, 491, 553, 600, 699, 861, 903, 929)
+- **Locations:** `src/lib/enhancedPatternAnalysis.ts` (lines 118, 284, 388, 491, 553, 600, 699, 861,
+  903, 929)
 - **Action:** Create `src/lib/utils/config.ts` with typed getters
 
 #### 10. Split AnalyticsSettings Component
+
 - **Risk:** Medium | **Impact:** High | **Effort:** 20 hours
 - **Current:** 914 lines mixing UI, ML management, configuration
 - **Action:** Split into:
@@ -126,6 +138,7 @@ Start with **low-risk, high-impact** changes:
 ### 🟡 LOW PRIORITY (High Risk, High Impact)
 
 #### 11. Resolve Circular Dependencies
+
 - **Risk:** High | **Impact:** High | **Effort:** 16 hours
 - **Problem:** Alert system has circular dependency risk
   - `engine.ts` ↔ `policies.ts` ↔ `telemetry.ts`
@@ -134,6 +147,7 @@ Start with **low-risk, high-impact** changes:
   - Extract common types to separate module
 
 #### 12. Refactor Analytics Coordinator
+
 - **Risk:** High | **Impact:** Medium | **Effort:** 16 hours
 - **Problem:** Potential circular dependency with manager
 - **Action:** Separate precomputation, caching, orchestration concerns
@@ -144,26 +158,26 @@ Start with **low-risk, high-impact** changes:
 
 ### Files Over 900 Lines
 
-| File | Lines | Primary Issues | Priority |
-|------|-------|----------------|----------|
-| `src/lib/mlModels.impl.ts` | 1,112 | Multiple responsibilities: model creation, training, storage, evaluation | 🔴 Critical |
-| `src/lib/alerts/engine.ts` | 952 | Alert detection mixed with threshold management, baseline calculation | 🔴 Critical |
-| `src/lib/enhancedPatternAnalysis.ts` | 948 | 20+ public methods, mixed trend analysis, anomaly detection, predictions | 🔴 Critical |
-| `src/components/AnalyticsSettings.tsx` | 914 | Settings UI + ML model management + configuration logic | 🔴 Critical |
-| `src/components/analytics-panels/AlertsPanel.tsx` | 907 | Alert display, filtering, bulk actions, governance all in one | 🔴 Critical |
-| `src/pages/EmotionGame.tsx` | 906 | 50+ state variables, game loop, calibration, effects, telemetry, UI | 🔴 Critical |
+| File                                              | Lines | Primary Issues                                                           | Priority    |
+| ------------------------------------------------- | ----- | ------------------------------------------------------------------------ | ----------- |
+| `src/lib/mlModels.impl.ts`                        | 1,112 | Multiple responsibilities: model creation, training, storage, evaluation | 🔴 Critical |
+| `src/lib/alerts/engine.ts`                        | 952   | Alert detection mixed with threshold management, baseline calculation    | 🔴 Critical |
+| `src/lib/enhancedPatternAnalysis.ts`              | 948   | 20+ public methods, mixed trend analysis, anomaly detection, predictions | 🔴 Critical |
+| `src/components/AnalyticsSettings.tsx`            | 914   | Settings UI + ML model management + configuration logic                  | 🔴 Critical |
+| `src/components/analytics-panels/AlertsPanel.tsx` | 907   | Alert display, filtering, bulk actions, governance all in one            | 🔴 Critical |
+| `src/pages/EmotionGame.tsx`                       | 906   | 50+ state variables, game loop, calibration, effects, telemetry, UI      | 🔴 Critical |
 
 ### Files 750-900 Lines
 
-| File | Lines | Primary Issues | Priority |
-|------|-------|----------------|----------|
-| `src/lib/analyticsManager.ts` | 861 | Orchestration mixed with specific analysis tasks | 🟠 High |
-| `src/lib/exportSystem.ts` | 827 | Export functionality with incomplete tests | 🟠 High |
-| `src/components/AnalyticsDashboard.tsx` | 808 | 100+ state management lines, complex tab handling | 🟠 High |
-| `src/lib/dataStorage.ts` | 784 | Storage abstraction needs better error handling | 🟠 High |
-| `src/components/analytics/FiltersDrawer.tsx` | 784 | Complex filtering logic mixed with UI | 🟠 High |
-| `src/components/TimelineVisualization.tsx` | 783 | Visualization + interaction + animation | 🟠 High |
-| `src/components/analytics-panels/PatternsPanel.tsx` | 767 | Pattern display + filtering + analytics | 🟠 High |
+| File                                                | Lines | Primary Issues                                    | Priority |
+| --------------------------------------------------- | ----- | ------------------------------------------------- | -------- |
+| `src/lib/analyticsManager.ts`                       | 861   | Orchestration mixed with specific analysis tasks  | 🟠 High  |
+| `src/lib/exportSystem.ts`                           | 827   | Export functionality with incomplete tests        | 🟠 High  |
+| `src/components/AnalyticsDashboard.tsx`             | 808   | 100+ state management lines, complex tab handling | 🟠 High  |
+| `src/lib/dataStorage.ts`                            | 784   | Storage abstraction needs better error handling   | 🟠 High  |
+| `src/components/analytics/FiltersDrawer.tsx`        | 784   | Complex filtering logic mixed with UI             | 🟠 High  |
+| `src/components/TimelineVisualization.tsx`          | 783   | Visualization + interaction + animation           | 🟠 High  |
+| `src/components/analytics-panels/PatternsPanel.tsx` | 767   | Pattern display + filtering + analytics           | 🟠 High  |
 
 ---
 
@@ -173,32 +187,33 @@ Start with **low-risk, high-impact** changes:
 
 #### Excessive Use of `any` Type
 
-| File | Line | Pattern | Severity |
-|------|------|---------|----------|
-| `src/workers/analytics.worker.ts` | 257 | `const msg = e.data as any;` | 🔴 High |
-| `src/lib/enhancedPatternAnalysis.ts` | 118, 284, 388, 491, 553, 600, 699, 861, 903, 929 | `const cfgAny: any = analyticsConfig as any;` | 🔴 Critical |
-| `src/lib/ai/openrouterClient.ts` | 399, 403, 413, 487, 493 | Tool response parsing with `as any` | 🔴 High |
-| `src/config/loaders/analytics.loader.ts` | 99, 119, 121, 123 | Deep object merging | 🟠 Medium |
+| File                                     | Line                                             | Pattern                                       | Severity    |
+| ---------------------------------------- | ------------------------------------------------ | --------------------------------------------- | ----------- |
+| `src/workers/analytics.worker.ts`        | 257                                              | `const msg = e.data as any;`                  | 🔴 High     |
+| `src/lib/enhancedPatternAnalysis.ts`     | 118, 284, 388, 491, 553, 600, 699, 861, 903, 929 | `const cfgAny: any = analyticsConfig as any;` | 🔴 Critical |
+| `src/lib/ai/openrouterClient.ts`         | 399, 403, 413, 487, 493                          | Tool response parsing with `as any`           | 🔴 High     |
+| `src/config/loaders/analytics.loader.ts` | 99, 119, 121, 123                                | Deep object merging                           | 🟠 Medium   |
 
 **Example Problem:**
+
 ```typescript
 // src/lib/enhancedPatternAnalysis.ts:284 (REPEATED 10+ TIMES!)
 const cfgAny: any = analyticsConfig as any;
 const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
-const { enhancedAnalysis, timeWindows, insights, patternAnalysis } = cfg || {} as any;
+const { enhancedAnalysis, timeWindows, insights, patternAnalysis } = cfg || ({} as any);
 ```
 
 **Impact:** No compile-time safety for config property access, runtime errors possible
 
 #### Missing Type Definitions (104 instances)
 
-| Location | Pattern | Severity |
-|----------|---------|----------|
-| `src/hooks/useTranslation.ts:23` | `i18n: any;` in return type | 🔴 High |
-| `src/lib/analytics/runAnalysisTask.ts:30-37` | `getValidatedConfig: () => any;` | 🔴 High |
-| `src/components/alerts/AlertCard.tsx:78` | `return this.props.children as any;` | 🔴 High |
-| `src/lib/analyticsExport.ts:2-3` | `let __jsPDF: any \| null = null;` | 🟠 Medium |
-| `src/detector/mediapipe.detector.ts:3` | `type FaceLandmarkerType = any;` | 🔴 High |
+| Location                                     | Pattern                              | Severity  |
+| -------------------------------------------- | ------------------------------------ | --------- |
+| `src/hooks/useTranslation.ts:23`             | `i18n: any;` in return type          | 🔴 High   |
+| `src/lib/analytics/runAnalysisTask.ts:30-37` | `getValidatedConfig: () => any;`     | 🔴 High   |
+| `src/components/alerts/AlertCard.tsx:78`     | `return this.props.children as any;` | 🔴 High   |
+| `src/lib/analyticsExport.ts:2-3`             | `let __jsPDF: any \| null = null;`   | 🟠 Medium |
+| `src/detector/mediapipe.detector.ts:3`       | `type FaceLandmarkerType = any;`     | 🔴 High   |
 
 ---
 
@@ -234,7 +249,7 @@ const loadStoredPractice = (): PracticeMode => {
 // src/lib/enhancedPatternAnalysis.ts - REPEATED 10 TIMES
 const cfgAny: any = analyticsConfig as any;
 const cfg = typeof cfgAny.get === 'function' ? cfgAny.get() : analyticsConfig.getConfig();
-const { enhancedAnalysis, timeWindows, insights, patternAnalysis } = cfg || {} as any;
+const { enhancedAnalysis, timeWindows, insights, patternAnalysis } = cfg || ({} as any);
 ```
 
 #### Pattern 3: Detector Wrapper (5+ instances)
@@ -254,20 +269,21 @@ if (ewma) {
 
 ### 3. Long Functions & Methods (>50 lines)
 
-| File | Lines | Function | Issues | Severity |
-|------|-------|----------|--------|----------|
-| `src/lib/enhancedPatternAnalysis.ts` | 282-350 (68 lines) | `analyzeTrendsWithStatistics()` | Multiple nested loops, complex R² calculation | 🔴 High |
-| `src/lib/mlModels.impl.ts` | 412-470 (58 lines) | `trainEmotionModel()` | Model creation, training, evaluation in one | 🔴 High |
-| `src/pages/EmotionGame.tsx` | 200-300 (100+ lines) | Game round logic | Cascading setTimeout calls, state explosion | 🔴 Critical |
-| `src/components/AnalyticsDashboard.tsx` | 150-250 (100+ lines) | Tab initialization | Data subscription + cache warmup mixed | 🟠 High |
+| File                                    | Lines                | Function                        | Issues                                        | Severity    |
+| --------------------------------------- | -------------------- | ------------------------------- | --------------------------------------------- | ----------- |
+| `src/lib/enhancedPatternAnalysis.ts`    | 282-350 (68 lines)   | `analyzeTrendsWithStatistics()` | Multiple nested loops, complex R² calculation | 🔴 High     |
+| `src/lib/mlModels.impl.ts`              | 412-470 (58 lines)   | `trainEmotionModel()`           | Model creation, training, evaluation in one   | 🔴 High     |
+| `src/pages/EmotionGame.tsx`             | 200-300 (100+ lines) | Game round logic                | Cascading setTimeout calls, state explosion   | 🔴 Critical |
+| `src/components/AnalyticsDashboard.tsx` | 150-250 (100+ lines) | Tab initialization              | Data subscription + cache warmup mixed        | 🟠 High     |
 
 **Example - Triple Nested Loop:**
+
 ```typescript
 // src/lib/enhancedPatternAnalysis.ts:310-336 (O(n²) complexity!)
 for (let i = 0; i < n; i++) {
   for (let k = 0; k < m; k++) {
     const idx = xSafe[k];
-    const resid = ySafe[k] - yPred[idx];  // Array access in nested loop
+    const resid = ySafe[k] - yPred[idx]; // Array access in nested loop
     ssRes += resid * resid;
   }
 }
@@ -277,14 +293,14 @@ for (let i = 0; i < n; i++) {
 
 ### 4. Magic Numbers & Hardcoded Values
 
-| Location | Value | Context | Recommended Constant |
-|----------|-------|---------|---------------------|
-| `src/lib/alerts/engine.ts:71` | `90` | Series limit for alert detection | `MAX_ALERT_SERIES_LENGTH` |
-| `src/game/levels.ts:20-25` | `800, 900, 1000` | Hold durations in milliseconds | `GAME_HOLD_DURATIONS` |
-| `src/hooks/useRealtimeData.ts:52-54` | `1000` | Data point slice limit | `MAX_REALTIME_DATA_POINTS` |
-| `src/hooks/useAnalyticsWorker.ts:132` | `300_000` | Cache TTL fallback | `ANALYTICS_CACHE_TTL_MS` |
-| `src/lib/alerts/engine.ts:331` | `0.8, 1` | Tier calculation thresholds | `ALERT_TIER_THRESHOLDS` |
-| `src/hooks/usePerformanceMonitor.ts` | `100, 5` | Memory/update thresholds | `PERFORMANCE_THRESHOLDS` |
+| Location                              | Value            | Context                          | Recommended Constant       |
+| ------------------------------------- | ---------------- | -------------------------------- | -------------------------- |
+| `src/lib/alerts/engine.ts:71`         | `90`             | Series limit for alert detection | `MAX_ALERT_SERIES_LENGTH`  |
+| `src/game/levels.ts:20-25`            | `800, 900, 1000` | Hold durations in milliseconds   | `GAME_HOLD_DURATIONS`      |
+| `src/hooks/useRealtimeData.ts:52-54`  | `1000`           | Data point slice limit           | `MAX_REALTIME_DATA_POINTS` |
+| `src/hooks/useAnalyticsWorker.ts:132` | `300_000`        | Cache TTL fallback               | `ANALYTICS_CACHE_TTL_MS`   |
+| `src/lib/alerts/engine.ts:331`        | `0.8, 1`         | Tier calculation thresholds      | `ALERT_TIER_THRESHOLDS`    |
+| `src/hooks/usePerformanceMonitor.ts`  | `100, 5`         | Memory/update thresholds         | `PERFORMANCE_THRESHOLDS`   |
 
 ---
 
@@ -301,6 +317,7 @@ noise: (trackingEntries[trackingEntries.length - 1].environmentalData?.roomCondi
 ```
 
 **Issues:**
+
 - Repeated array access without caching
 - 3-4 levels of ternary operators
 - No null safety guards
@@ -369,12 +386,14 @@ noise: (trackingEntries[trackingEntries.length - 1].environmentalData?.roomCondi
 #### Example 1: AnalyticsSettings Component (914 lines)
 
 **Current Responsibilities:**
+
 1. UI Layer (form rendering)
 2. State Management (20+ useState hooks)
 3. ML Model Management (getModelStatus, training)
 4. Configuration Logic (config merging, validation)
 
 **Recommended Split:**
+
 ```typescript
 // src/components/analytics-settings/AnalyticsSettingsLayout.tsx (~300 lines)
 // UI only, receives data and callbacks as props
@@ -389,12 +408,14 @@ noise: (trackingEntries[trackingEntries.length - 1].environmentalData?.roomCondi
 #### Example 2: AlertsPanel Component (907 lines)
 
 **Current Responsibilities:**
+
 1. Alert Display Logic
 2. Filter State Management (50+ destructured props)
 3. Bulk Operations (acknowledge, snooze, resolve)
 4. Governance Application
 
 **Recommended Extraction:**
+
 ```typescript
 // src/hooks/useAlertFiltering.ts
 // Filter logic: buildFilter, applyFilters, filterState
@@ -412,18 +433,20 @@ noise: (trackingEntries[trackingEntries.length - 1].environmentalData?.roomCondi
 ### 1. Inefficient Algorithms
 
 **Triple Nested Loop (O(n²) complexity):**
+
 ```typescript
 // src/lib/enhancedPatternAnalysis.ts:310-336
 for (let i = 0; i < n; i++) {
   for (let k = 0; k < m; k++) {
     const idx = xSafe[k];
-    const resid = ySafe[k] - yPred[idx];  // Could be O(n)
+    const resid = ySafe[k] - yPred[idx]; // Could be O(n)
     ssRes += resid * resid;
   }
 }
 ```
 
 **Repeated Array Operations:**
+
 ```typescript
 // src/hooks/useRealtimeData.ts:52-54
 // Called on EVERY update, creates new arrays each time
@@ -437,6 +460,7 @@ trackingEntries: [...state.trackingEntries, payload.tracking].slice(-1000),
 ### 2. Memory Leak Potential
 
 **Event Listeners Without Guaranteed Cleanup:**
+
 ```typescript
 // src/components/analytics-panels/AlertsPanel.tsx:152
 const detail = (evt as CustomEvent).detail as any;
@@ -444,6 +468,7 @@ const detail = (evt as CustomEvent).detail as any;
 ```
 
 **Intervals Without Error Path Cleanup:**
+
 ```typescript
 // src/hooks/useAlerts.ts:128
 const t = setInterval(load, 10_000);
@@ -452,7 +477,8 @@ const t = setInterval(load, 10_000);
 
 ### 3. Computation Bottlenecks
 
-- **Analytics Worker:** Single worker handles all analysis types, no task prioritization or queue management
+- **Analytics Worker:** Single worker handles all analysis types, no task prioritization or queue
+  management
 - **ML Models:** Loads TensorFlow for all model types upfront, should lazy-load on demand
 
 ---
@@ -461,15 +487,16 @@ const t = setInterval(load, 10_000);
 
 ### Files Without Tests (High Complexity)
 
-| File | Lines | Complexity | Risk Level |
-|------|-------|-----------|------------|
-| `src/lib/analyticsConfig.ts` | 659 | High - Core configuration | 🔴 High |
-| `src/lib/dataStorage.ts` | 784 | High - Storage abstraction | 🔴 High |
-| `src/lib/exportSystem.ts` | 827 | High - Export functionality | 🟠 Medium |
-| `src/components/TimelineVisualization.tsx` | 783 | High - Complex visualization | 🟠 Medium |
-| `src/lib/mockDataGenerator.ts` | 699 | Medium - Used in tests but not tested | 🟡 Low |
+| File                                       | Lines | Complexity                            | Risk Level |
+| ------------------------------------------ | ----- | ------------------------------------- | ---------- |
+| `src/lib/analyticsConfig.ts`               | 659   | High - Core configuration             | 🔴 High    |
+| `src/lib/dataStorage.ts`                   | 784   | High - Storage abstraction            | 🔴 High    |
+| `src/lib/exportSystem.ts`                  | 827   | High - Export functionality           | 🟠 Medium  |
+| `src/components/TimelineVisualization.tsx` | 783   | High - Complex visualization          | 🟠 Medium  |
+| `src/lib/mockDataGenerator.ts`             | 699   | Medium - Used in tests but not tested | 🟡 Low     |
 
 **Test Coverage Gap:**
+
 - Current: ~1 test file per 1,237 lines of code
 - Industry Standard: ~1 test file per 400-500 lines
 - Recommendation: Increase coverage from ~14% to 75%+
@@ -507,8 +534,8 @@ const t = setInterval(load, 10_000);
 **Goal:** Establish reusable utilities and eliminate code duplication
 
 #### Task 1.1: Create useLocalStorage Hook
-**Estimated Effort:** 4 hours
-**Test Coverage Target:** 90%+
+
+**Estimated Effort:** 4 hours **Test Coverage Target:** 90%+
 
 ```typescript
 // Create: src/hooks/useLocalStorage.ts
@@ -523,6 +550,7 @@ const t = setInterval(load, 10_000);
 ```
 
 #### Task 1.2: Extract Constants
+
 **Estimated Effort:** 6 hours
 
 ```typescript
@@ -546,8 +574,8 @@ export const GAME_HOLD_DURATIONS = {
 ```
 
 #### Task 1.3: Extract Environment Utils
-**Estimated Effort:** 3 hours
-**Test Coverage Target:** 95%+
+
+**Estimated Effort:** 3 hours **Test Coverage Target:** 95%+
 
 ```typescript
 // Create: src/lib/utils/environment.ts
@@ -557,6 +585,7 @@ export function getLatestEnvironmentConditions(entries: TrackingEntry[]): Enviro
 ```
 
 #### Task 1.4: Run ESLint Cleanup
+
 **Estimated Effort:** 2 hours
 
 ```bash
@@ -566,12 +595,14 @@ npm run lint -- --fix
 ```
 
 **Phase 1 Deliverables:**
+
 - [ ] useLocalStorage hook with comprehensive tests
 - [ ] Constants files with JSDoc documentation
 - [ ] Environment utilities with unit tests
 - [ ] Clean ESLint report (zero errors)
 
 **Success Metrics:**
+
 - 200+ lines of duplicated code removed
 - All magic numbers extracted to constants
 - Zero ESLint errors
@@ -584,8 +615,8 @@ npm run lint -- --fix
 **Goal:** Eliminate `any` types and improve compile-time safety
 
 #### Task 2.1: Type Worker Messages
-**Estimated Effort:** 8 hours
-**Test Coverage Target:** 85%+
+
+**Estimated Effort:** 8 hours **Test Coverage Target:** 85%+
 
 ```typescript
 // Create: src/types/worker-messages.ts
@@ -601,8 +632,8 @@ export function isAnalyzeRequest(msg: WorkerRequest): msg is AnalyzeRequest;
 ```
 
 #### Task 2.2: Create Config Accessors
-**Estimated Effort:** 6 hours
-**Test Coverage Target:** 90%+
+
+**Estimated Effort:** 6 hours **Test Coverage Target:** 90%+
 
 ```typescript
 // Create: src/lib/utils/config.ts
@@ -612,6 +643,7 @@ export function getPatternAnalysisConfig(provider: ConfigProvider);
 ```
 
 #### Task 2.3: Replace Config Patterns
+
 **Estimated Effort:** 4 hours
 
 - Update 10+ files using `cfgAny: any` pattern
@@ -619,6 +651,7 @@ export function getPatternAnalysisConfig(provider: ConfigProvider);
 - Verify no runtime breakage
 
 #### Task 2.4: Enable Strict Null Checks (Gradual)
+
 **Estimated Effort:** 12 hours
 
 - Enable for utility modules first
@@ -626,12 +659,14 @@ export function getPatternAnalysisConfig(provider: ConfigProvider);
 - Expand to other modules gradually
 
 **Phase 2 Deliverables:**
+
 - [ ] Worker message types with guards and tests
 - [ ] Config accessor utilities
 - [ ] Zero `cfgAny: any` patterns remaining
 - [ ] Strict null checks enabled for 25% of codebase
 
 **Success Metrics:**
+
 - 50+ `as any` casts eliminated
 - All worker messages type-safe
 - TypeScript strict mode enabled for utility modules
@@ -644,11 +679,11 @@ export function getPatternAnalysisConfig(provider: ConfigProvider);
 **Goal:** Break down large components, improve separation of concerns
 
 #### Task 3.1: Extract EmotionGame State Machine
-**Estimated Effort:** 16 hours
-**Test Coverage Target:** 80%+
 
-**Current Problem:** 30+ useState declarations
-**Solution:** Implement useReducer or state machine library
+**Estimated Effort:** 16 hours **Test Coverage Target:** 80%+
+
+**Current Problem:** 30+ useState declarations **Solution:** Implement useReducer or state machine
+library
 
 ```typescript
 // Create: src/hooks/useGameState.ts
@@ -663,16 +698,16 @@ type GameState = {
 type GameAction =
   | { type: 'START_ROUND' }
   | { type: 'CORRECT_ANSWER'; points: number }
-  | { type: 'WRONG_ANSWER' }
-  // ... action types
+  | { type: 'WRONG_ANSWER' };
+// ... action types
 
 // Simplify: src/pages/EmotionGame.tsx
 const [state, dispatch] = useGameState();
 ```
 
 #### Task 3.2: Split AnalyticsSettings
-**Estimated Effort:** 20 hours
-**Test Coverage Target:** 75%+
+
+**Estimated Effort:** 20 hours **Test Coverage Target:** 75%+
 
 ```typescript
 // Create: src/components/analytics-settings/AnalyticsSettingsLayout.tsx
@@ -686,8 +721,8 @@ const [state, dispatch] = useGameState();
 ```
 
 #### Task 3.3: Extract AlertsPanel Hooks
-**Estimated Effort:** 12 hours
-**Test Coverage Target:** 85%+
+
+**Estimated Effort:** 12 hours **Test Coverage Target:** 85%+
 
 ```typescript
 // Create: src/hooks/useAlertFiltering.ts
@@ -698,8 +733,8 @@ export function useAlertBulkOps(alerts: Alert[]);
 ```
 
 #### Task 3.4: Refactor AnalyticsDashboard
-**Estimated Effort:** 16 hours
-**Test Coverage Target:** 70%+
+
+**Estimated Effort:** 16 hours **Test Coverage Target:** 70%+
 
 ```typescript
 // Create: src/hooks/useAnalyticsData.ts
@@ -712,12 +747,14 @@ export function useAlertBulkOps(alerts: Alert[]);
 ```
 
 **Phase 3 Deliverables:**
+
 - [ ] EmotionGame with state machine implementation
 - [ ] AnalyticsSettings split into 3 focused modules
 - [ ] AlertsPanel with extracted hooks
 - [ ] AnalyticsDashboard simplified
 
 **Success Metrics:**
+
 - All refactored components under 400 lines
 - Business logic separated into testable hooks
 - useState calls reduced by 50%
@@ -730,8 +767,8 @@ export function useAlertBulkOps(alerts: Alert[]);
 **Goal:** Improve module structure, resolve coupling issues
 
 #### Task 4.1: Split mlModels.impl.ts
-**Estimated Effort:** 24 hours
-**Test Coverage Target:** 70%+
+
+**Estimated Effort:** 24 hours **Test Coverage Target:** 70%+
 
 ```typescript
 // Create: src/lib/ml/model-factory.ts
@@ -748,8 +785,8 @@ export function useAlertBulkOps(alerts: Alert[]);
 ```
 
 #### Task 4.2: Refactor Alert Engine
-**Estimated Effort:** 20 hours
-**Test Coverage Target:** 75%+
+
+**Estimated Effort:** 20 hours **Test Coverage Target:** 75%+
 
 ```typescript
 // Create: src/lib/alerts/detector-factory.ts
@@ -763,32 +800,36 @@ export function useAlertBulkOps(alerts: Alert[]);
 ```
 
 #### Task 4.3: Resolve Circular Dependencies
-**Estimated Effort:** 16 hours
-**Test Coverage Target:** 65%+
+
+**Estimated Effort:** 16 hours **Test Coverage Target:** 65%+
 
 **Approach:**
+
 1. Map complete dependency graph
 2. Extract common interfaces
 3. Invert dependencies using dependency injection
 4. Add integration tests to verify no breakage
 
 #### Task 4.4: Add Comprehensive Tests
-**Estimated Effort:** 32 hours
-**Test Coverage Target:** 80%+
+
+**Estimated Effort:** 32 hours **Test Coverage Target:** 80%+
 
 **Priority Test Files:**
+
 - `src/lib/analyticsConfig.spec.ts` (659 lines to cover)
 - `src/lib/dataStorage.spec.ts` (784 lines to cover)
 - `src/lib/exportSystem.spec.ts` (827 lines to cover)
 - Integration tests for refactored modules
 
 **Phase 4 Deliverables:**
+
 - [ ] ML modules split into 4 focused files
 - [ ] Alert engine refactored and tested
 - [ ] Zero circular dependencies
 - [ ] Test coverage increased to 75%+
 
 **Success Metrics:**
+
 - All files under 600 lines
 - No circular dependencies detected
 - Test coverage increased from ~14% to 75%+
@@ -818,12 +859,7 @@ emotions: [...state.emotions, payload.emotion].slice(-MAX_REALTIME_DATA_POINTS),
 ```typescript
 // src/types/worker-messages.ts
 export function isAnalyzeRequest(msg: unknown): msg is AnalyzeRequest {
-  return (
-    typeof msg === 'object' &&
-    msg !== null &&
-    'type' in msg &&
-    msg.type === 'analyze'
-  );
+  return typeof msg === 'object' && msg !== null && 'type' in msg && msg.type === 'analyze';
 }
 
 // src/workers/analytics.worker.ts
@@ -859,36 +895,36 @@ git commit -m "chore: remove unused imports"
 
 ### Code Quality Metrics
 
-| Metric | Current | Target (Phase 4) | Improvement |
-|--------|---------|------------------|-------------|
-| Average File Size | ~350 lines | <250 lines | 29% reduction |
-| Files >500 lines | 30+ | <5 | 83% reduction |
-| `any` type usage | 655+ | <50 | 92% reduction |
-| Longest function | 100+ lines | <50 lines | 50% reduction |
-| Test coverage | ~14% | >75% | 435% increase |
-| Circular dependencies | 2+ | 0 | 100% resolution |
-| Magic numbers | 20+ | 0 | 100% extraction |
-| Code duplication | 30+ patterns | <5 patterns | 83% reduction |
+| Metric                | Current      | Target (Phase 4) | Improvement     |
+| --------------------- | ------------ | ---------------- | --------------- |
+| Average File Size     | ~350 lines   | <250 lines       | 29% reduction   |
+| Files >500 lines      | 30+          | <5               | 83% reduction   |
+| `any` type usage      | 655+         | <50              | 92% reduction   |
+| Longest function      | 100+ lines   | <50 lines        | 50% reduction   |
+| Test coverage         | ~14%         | >75%             | 435% increase   |
+| Circular dependencies | 2+           | 0                | 100% resolution |
+| Magic numbers         | 20+          | 0                | 100% extraction |
+| Code duplication      | 30+ patterns | <5 patterns      | 83% reduction   |
 
 ### Developer Experience Metrics
 
-| Metric | Current | Target | Improvement |
-|--------|---------|--------|-------------|
-| Time to onboard new developer | ~2 weeks | <1 week | 50% reduction |
-| Average PR review time | ~4 hours | <2 hours | 50% reduction |
-| Build time | ~45 seconds | <40 seconds | 11% reduction |
-| Type checking time | ~12 seconds | <8 seconds | 33% reduction |
-| Test execution time | ~30 seconds | <25 seconds | 17% reduction |
+| Metric                        | Current     | Target      | Improvement   |
+| ----------------------------- | ----------- | ----------- | ------------- |
+| Time to onboard new developer | ~2 weeks    | <1 week     | 50% reduction |
+| Average PR review time        | ~4 hours    | <2 hours    | 50% reduction |
+| Build time                    | ~45 seconds | <40 seconds | 11% reduction |
+| Type checking time            | ~12 seconds | <8 seconds  | 33% reduction |
+| Test execution time           | ~30 seconds | <25 seconds | 17% reduction |
 
 ### Maintainability Metrics
 
-| Metric | Current | Target | Status |
-|--------|---------|--------|--------|
-| Code duplication | High (30+ patterns) | Low (<5 patterns) | To improve |
-| Cognitive complexity | High (20+ complex functions) | Medium (<10 complex functions) | To improve |
-| Documentation coverage | ~25% | >80% | To improve |
-| Error handling consistency | Low (inconsistent patterns) | High (standardized) | To improve |
-| Type safety | Medium (655+ `any` casts) | High (<50 `any` casts) | To improve |
+| Metric                     | Current                      | Target                         | Status     |
+| -------------------------- | ---------------------------- | ------------------------------ | ---------- |
+| Code duplication           | High (30+ patterns)          | Low (<5 patterns)              | To improve |
+| Cognitive complexity       | High (20+ complex functions) | Medium (<10 complex functions) | To improve |
+| Documentation coverage     | ~25%                         | >80%                           | To improve |
+| Error handling consistency | Low (inconsistent patterns)  | High (standardized)            | To improve |
+| Type safety                | Medium (655+ `any` casts)    | High (<50 `any` casts)         | To improve |
 
 ---
 
@@ -904,6 +940,7 @@ git commit -m "chore: remove unused imports"
 - ✅ Fix ESLint warnings
 
 **Why Low Risk:**
+
 - No behavioral changes
 - Isolated changes
 - Easy to verify
@@ -918,12 +955,14 @@ git commit -m "chore: remove unused imports"
 - ⚠️ Refactor state management
 
 **Why Medium Risk:**
+
 - Changes component behavior
 - Requires comprehensive testing
 - May affect multiple features
 - Needs careful code review
 
 **Mitigation:**
+
 - Write tests before refactoring
 - Refactor incrementally
 - Use feature flags if possible
@@ -938,12 +977,14 @@ git commit -m "chore: remove unused imports"
 - ⛔ Modify core analytics manager
 
 **Why High Risk:**
+
 - Core business logic
 - Many dependents (19+ files for analyticsManager)
 - Complex interdependencies
 - High impact if bugs introduced
 
 **Mitigation:**
+
 - Create detailed plan with team
 - Implement in isolated branch
 - Add integration tests
@@ -981,7 +1022,7 @@ import { useState, useCallback } from 'react';
 export function useLocalStorage<T>(
   key: string,
   defaultValue: T,
-  validator?: (value: unknown) => value is T
+  validator?: (value: unknown) => value is T,
 ): [T, (value: T | ((prev: T) => T)) => void, () => void] {
   const [value, setValue] = useState<T>(() => {
     try {
@@ -1008,7 +1049,7 @@ export function useLocalStorage<T>(
         console.error(`Failed to save to localStorage key "${key}":`, error);
       }
     },
-    [key, value]
+    [key, value],
   );
 
   const removeValue = useCallback(() => {
@@ -1128,7 +1169,7 @@ self.addEventListener('message', (e: MessageEvent) => {
     const errorResponse: WorkerResponse = {
       type: 'error',
       id: 'unknown',
-      payload: { message: 'Invalid message format' }
+      payload: { message: 'Invalid message format' },
     };
     self.postMessage(errorResponse);
     return;
@@ -1142,7 +1183,7 @@ self.addEventListener('message', (e: MessageEvent) => {
     const response: WorkerResponse = {
       type: 'result',
       id: msg.id,
-      payload: result
+      payload: result,
     };
     self.postMessage(response);
   }
@@ -1193,9 +1234,7 @@ export const TEMPERATURE_THRESHOLDS = {
  * categorizeNoiseLevel(30) // 'quiet'
  * categorizeNoiseLevel(undefined) // 'moderate' (default)
  */
-export function categorizeNoiseLevel(
-  noiseLevel: number | undefined | null
-): NoiseLevel {
+export function categorizeNoiseLevel(noiseLevel: number | undefined | null): NoiseLevel {
   if (noiseLevel == null) return 'moderate';
   if (noiseLevel > NOISE_THRESHOLDS.LOUD) return 'loud';
   if (noiseLevel < NOISE_THRESHOLDS.QUIET) return 'quiet';
@@ -1208,9 +1247,7 @@ export function categorizeNoiseLevel(
  * @param lightLevel - Numeric light level (0-100 scale)
  * @returns Categorical light level: 'bright' | 'moderate' | 'dim'
  */
-export function categorizeLightLevel(
-  lightLevel: number | undefined | null
-): LightLevel {
+export function categorizeLightLevel(lightLevel: number | undefined | null): LightLevel {
   if (lightLevel == null) return 'moderate';
   if (lightLevel > LIGHT_THRESHOLDS.BRIGHT) return 'bright';
   if (lightLevel < LIGHT_THRESHOLDS.DIM) return 'dim';
@@ -1223,9 +1260,7 @@ export function categorizeLightLevel(
  * @param temperature - Temperature in Celsius
  * @returns Categorical temperature level: 'hot' | 'comfortable' | 'cold'
  */
-export function categorizeTemperature(
-  temperature: number | undefined | null
-): TemperatureLevel {
+export function categorizeTemperature(temperature: number | undefined | null): TemperatureLevel {
   if (temperature == null) return 'comfortable';
   if (temperature > TEMPERATURE_THRESHOLDS.HOT) return 'hot';
   if (temperature < TEMPERATURE_THRESHOLDS.COLD) return 'cold';
@@ -1253,7 +1288,7 @@ export interface EnvironmentConditions {
  * // { noise: 'moderate', lighting: 'bright', temperature: 'comfortable' }
  */
 export function getLatestEnvironmentConditions(
-  trackingEntries: Array<{ environmentalData?: any }>
+  trackingEntries: Array<{ environmentalData?: any }>,
 ): EnvironmentConditions {
   if (trackingEntries.length === 0) {
     return {
@@ -1374,9 +1409,9 @@ export const COMBO_THRESHOLDS = {
  * Score multipliers for different achievement types
  */
 export const SCORE_MULTIPLIERS = {
-  PERFECT: 1.5,   // Perfect accuracy (no mistakes)
-  FAST: 1.25,     // Completed quickly
-  COMBO: 1.1,     // Active combo streak
+  PERFECT: 1.5, // Perfect accuracy (no mistakes)
+  FAST: 1.25, // Completed quickly
+  COMBO: 1.1, // Active combo streak
 } as const;
 
 // ============================================================================
@@ -1400,7 +1435,9 @@ export const GAME_TIMING = {
 
 ## 🎯 CONCLUSION
 
-This comprehensive refactoring analysis provides a clear roadmap for improving the Kreativium Analytics codebase. The recommended approach prioritizes **low-risk, high-impact** changes that can be implemented incrementally:
+This comprehensive refactoring analysis provides a clear roadmap for improving the Kreativium
+Analytics codebase. The recommended approach prioritizes **low-risk, high-impact** changes that can
+be implemented incrementally:
 
 ### Key Takeaways
 
@@ -1432,10 +1469,12 @@ This comprehensive refactoring analysis provides a clear roadmap for improving t
 - **Phase 4 (Architecture):** 4 weeks
 - **Total:** ~12 weeks of focused refactoring work
 
-This roadmap provides a systematic approach to improving code quality while minimizing risk and maximizing value delivery.
+This roadmap provides a systematic approach to improving code quality while minimizing risk and
+maximizing value delivery.
 
 **Happy refactoring! 🚀**
 
 ---
 
-*For questions or clarifications about this analysis, please refer to the specific file locations and line numbers provided throughout this document.*
+_For questions or clarifications about this analysis, please refer to the specific file locations
+and line numbers provided throughout this document._

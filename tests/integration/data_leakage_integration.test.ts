@@ -5,7 +5,10 @@ import { DataLeakageDetector } from '@/lib/validation/dataLeakage';
 
 describe('Integration: data leakage guards in a real-world-like split', () => {
   it('flags leakage when train and test overlap or chronology is violated', () => {
-    const det = new DataLeakageDetector({ mode: 'permissive', temporal: { timeColumn: 't', entityColumn: 'sid', allowTrainAfterTest: false } });
+    const det = new DataLeakageDetector({
+      mode: 'permissive',
+      temporal: { timeColumn: 't', entityColumn: 'sid', allowTrainAfterTest: false },
+    });
 
     // Create a small dataset mimicking training rows
     const records = [
@@ -20,11 +23,16 @@ describe('Integration: data leakage guards in a real-world-like split', () => {
     const trainIndex = [0, 1, 3];
     const testIndex = [1, 2, 4];
 
-    const report = det.analyze(records, { records, trainIndex, testIndex, targetKey: 'y', featureKeys: ['x'] });
+    const report = det.analyze(records, {
+      records,
+      trainIndex,
+      testIndex,
+      targetKey: 'y',
+      featureKeys: ['x'],
+    });
     expect(report.hasHighRisk).toBe(true);
-    expect(report.issues.some(i => i.type === 'SPLIT_OVERLAP')).toBe(true);
-    expect(report.issues.some(i => i.type === 'TEMPORAL_GLOBAL')).toBe(true);
-    expect(report.issues.some(i => i.type === 'TEMPORAL_PER_ENTITY')).toBe(true);
+    expect(report.issues.some((i) => i.type === 'SPLIT_OVERLAP')).toBe(true);
+    expect(report.issues.some((i) => i.type === 'TEMPORAL_GLOBAL')).toBe(true);
+    expect(report.issues.some((i) => i.type === 'TEMPORAL_PER_ENTITY')).toBe(true);
   });
 });
-

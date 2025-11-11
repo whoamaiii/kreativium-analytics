@@ -34,13 +34,20 @@ describe('AnalyticsDashboard', () => {
       invalidateCacheForStudent: mockInvalidateCache,
     });
 
-    const student = { id: 's1', name: 'Test Student' } as unknown as import('@/types/student').Student;
-    render(<AnalyticsDashboard student={student} filteredData={{ entries: [], emotions: [], sensoryInputs: [] }} />);
+    const student = {
+      id: 's1',
+      name: 'Test Student',
+    } as unknown as import('@/types/student').Student;
+    render(
+      <AnalyticsDashboard
+        student={student}
+        filteredData={{ entries: [], emotions: [], sensoryInputs: [] }}
+      />,
+    );
 
     // Expect at least one analyzing indicator present (aria-label on Suspense fallbacks)
     expect(screen.getAllByLabelText('states.analyzing').length).toBeGreaterThan(0);
   });
-
 
   it('should call runAnalysis on mount with filtered data', () => {
     (useAnalyticsWorker as unknown as vi.Mock).mockReturnValue({
@@ -57,7 +64,10 @@ describe('AnalyticsDashboard', () => {
       sensoryInputs: [],
     };
 
-    const student = { id: 's1', name: 'Test Student' } as unknown as import('@/types/student').Student;
+    const student = {
+      id: 's1',
+      name: 'Test Student',
+    } as unknown as import('@/types/student').Student;
     render(<AnalyticsDashboard student={student} filteredData={filteredData} />);
 
     expect(mockRunAnalysis).toHaveBeenCalledWith(
@@ -65,8 +75,7 @@ describe('AnalyticsDashboard', () => {
       expect.objectContaining({
         student: expect.objectContaining({ id: 's1' }),
         useAI: expect.any(Boolean),
-      })
+      }),
     );
   });
 });
-

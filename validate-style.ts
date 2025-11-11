@@ -10,14 +10,14 @@ interface ValidationResult {
 
 async function validateCodeStyle(): Promise<void> {
   console.log('🔍 Validating code style consistency...\n');
-  
+
   const srcPath = path.join(process.cwd(), 'src');
   const results: ValidationResult[] = [];
 
   // Find all TypeScript/React files
   const files = await glob('**/*.{ts,tsx}', {
     cwd: srcPath,
-    ignore: ['**/*.test.*', '**/*.spec.*', '**/node_modules/**']
+    ignore: ['**/*.test.*', '**/*.spec.*', '**/node_modules/**'],
   });
 
   for (const file of files) {
@@ -59,11 +59,11 @@ async function validateCodeStyle(): Promise<void> {
       const propsRegex = /interface\s+\w+Props\s*{/g;
       const components = content.match(componentRegex);
       const propsInterfaces = content.match(propsRegex);
-      
+
       if (components && components.length > 0) {
         const componentCount = components.length;
         const interfaceCount = propsInterfaces ? propsInterfaces.length : 0;
-        
+
         if (interfaceCount === 0 && componentCount > 0) {
           // Check if component accepts props
           const hasPropsParam = /\(\s*\{|\(\s*props\s*[,:)]/.test(content);
@@ -81,28 +81,30 @@ async function validateCodeStyle(): Promise<void> {
       const classes = match[1].split(' ');
       for (const cls of classes) {
         // Skip dynamic classes, cn() calls, and known Tailwind patterns
-        if (cls && 
-            !cls.includes('{') && 
-            !cls.includes('$') &&
-            !cls.startsWith('font-') &&
-            !cls.startsWith('text-') &&
-            !cls.startsWith('bg-') &&
-            !cls.startsWith('border-') &&
-            !cls.startsWith('p-') &&
-            !cls.startsWith('m-') &&
-            !cls.startsWith('w-') &&
-            !cls.startsWith('h-') &&
-            !cls.startsWith('flex') &&
-            !cls.startsWith('grid') &&
-            !cls.startsWith('absolute') &&
-            !cls.startsWith('relative') &&
-            !cls.startsWith('animate-') &&
-            !cls.includes(':') &&
-            cls.length > 2 &&
-            !/^[a-z]+-\d+$/.test(cls) &&
-            !/^[a-z]+-[a-z]+$/.test(cls)) {
+        if (
+          cls &&
+          !cls.includes('{') &&
+          !cls.includes('$') &&
+          !cls.startsWith('font-') &&
+          !cls.startsWith('text-') &&
+          !cls.startsWith('bg-') &&
+          !cls.startsWith('border-') &&
+          !cls.startsWith('p-') &&
+          !cls.startsWith('m-') &&
+          !cls.startsWith('w-') &&
+          !cls.startsWith('h-') &&
+          !cls.startsWith('flex') &&
+          !cls.startsWith('grid') &&
+          !cls.startsWith('absolute') &&
+          !cls.startsWith('relative') &&
+          !cls.startsWith('animate-') &&
+          !cls.includes(':') &&
+          cls.length > 2 &&
+          !/^[a-z]+-\d+$/.test(cls) &&
+          !/^[a-z]+-[a-z]+$/.test(cls)
+        ) {
           // This might be a non-Tailwind class
-          if (!violations.find(v => v.includes('non-Tailwind'))) {
+          if (!violations.find((v) => v.includes('non-Tailwind'))) {
             violations.push(`Potentially non-Tailwind CSS class: "${cls}"`);
           }
         }
@@ -119,18 +121,20 @@ async function validateCodeStyle(): Promise<void> {
     console.log('✅ All files pass code style validation!');
   } else {
     console.log(`❌ Found violations in ${results.length} files:\n`);
-    
+
     for (const result of results) {
       console.log(`\n📄 ${result.file}:`);
       for (const violation of result.violations) {
         console.log(`   ⚠️  ${violation}`);
       }
     }
-    
+
     console.log('\n📊 Summary:');
     console.log(`   Total files checked: ${files.length}`);
     console.log(`   Files with violations: ${results.length}`);
-    console.log(`   Pass rate: ${((files.length - results.length) / files.length * 100).toFixed(1)}%`);
+    console.log(
+      `   Pass rate: ${(((files.length - results.length) / files.length) * 100).toFixed(1)}%`,
+    );
   }
 }
 

@@ -91,7 +91,7 @@ export class ErrorBoundary extends Component<Props, State> {
     hasError: false,
     errorCount: 0,
     retryCount: 0,
-    isRecovering: false
+    isRecovering: false,
   };
 
   /**
@@ -137,11 +137,11 @@ export class ErrorBoundary extends Component<Props, State> {
     // Use centralized error handler
     handleErrorBoundaryError(error, errorInfo);
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       error,
       errorInfo,
       errorCount: prevState.errorCount + 1,
-      retryCount: prevState.retryCount + 1
+      retryCount: prevState.retryCount + 1,
     }));
 
     // Call custom error handler if provided
@@ -164,8 +164,8 @@ export class ErrorBoundary extends Component<Props, State> {
           description: displayError.userMessage,
           action: {
             label: 'Dismiss',
-            onClick: () => {}
-          }
+            onClick: () => {},
+          },
         });
       } catch {
         // no-op; avoid crashing when toast system not mounted
@@ -216,14 +216,14 @@ export class ErrorBoundary extends Component<Props, State> {
       // Attempt recovery through the error handler's recovery strategies
       if (this.state.error) {
         // Wait a moment before resetting to allow async operations to settle
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       this.setState({
         hasError: false,
         error: undefined,
         errorInfo: undefined,
-        isRecovering: false
+        isRecovering: false,
       });
 
       // Call recovery callback if provided
@@ -275,7 +275,8 @@ export class ErrorBoundary extends Component<Props, State> {
               {/* Main error message */}
               <div>
                 <p className="text-sm text-muted-foreground mb-2">
-                  {displayError?.userMessage || 'An unexpected error occurred. The application may not be working correctly.'}
+                  {displayError?.userMessage ||
+                    'An unexpected error occurred. The application may not be working correctly.'}
                 </p>
 
                 {/* Error suggestions/recovery actions */}
@@ -303,7 +304,7 @@ export class ErrorBoundary extends Component<Props, State> {
                     Error Details (Development)
                   </summary>
                   <pre className="mt-2 p-3 bg-muted rounded overflow-auto max-h-48 text-xs whitespace-pre-wrap break-words">
-{`Name: ${error.name}
+                    {`Name: ${error.name}
 Message: ${error.message}
 
 Stack:
@@ -357,7 +358,8 @@ ${this.state.errorInfo?.componentStack || 'No component stack available'}`}
               {this.state.retryCount > 0 && (
                 <p className="text-xs text-muted-foreground">
                   Retry attempts: {this.state.retryCount}
-                  {this.state.retryCount >= (this.props.maxRetries ?? 3) && ' - Maximum retries reached'}
+                  {this.state.retryCount >= (this.props.maxRetries ?? 3) &&
+                    ' - Maximum retries reached'}
                 </p>
               )}
             </CardContent>

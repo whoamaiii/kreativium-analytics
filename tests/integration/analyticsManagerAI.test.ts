@@ -41,7 +41,10 @@ vi.mock('@/lib/aiConfig', async (orig) => {
 
 vi.mock('@/lib/analyticsConfig', async (orig) => {
   const mod: any = await orig();
-  const cfg = { ...mod.DEFAULT_ANALYTICS_CONFIG, features: { ...mod.DEFAULT_ANALYTICS_CONFIG.features, aiAnalysisEnabled: true } };
+  const cfg = {
+    ...mod.DEFAULT_ANALYTICS_CONFIG,
+    features: { ...mod.DEFAULT_ANALYTICS_CONFIG.features, aiAnalysisEnabled: true },
+  };
   return {
     ...mod,
     analyticsConfig: {
@@ -72,12 +75,12 @@ describe('analyticsManager AI integration', () => {
     // Mock analytics config to disable AI analysis
     vi.doMock('@/lib/analyticsConfig', async (orig) => {
       const mod: any = await orig();
-      const disabledConfig = { 
-        ...mod.DEFAULT_ANALYTICS_CONFIG, 
-        features: { 
-          ...mod.DEFAULT_ANALYTICS_CONFIG.features, 
-          aiAnalysisEnabled: false 
-        } 
+      const disabledConfig = {
+        ...mod.DEFAULT_ANALYTICS_CONFIG,
+        features: {
+          ...mod.DEFAULT_ANALYTICS_CONFIG.features,
+          aiAnalysisEnabled: false,
+        },
       };
       return {
         ...mod,
@@ -91,18 +94,17 @@ describe('analyticsManager AI integration', () => {
     // Re-import with mocked config
     vi.resetModules();
     const { analyticsManager } = await import('@/lib/analyticsManager');
-    
+
     const student = { id: 's3', name: 'Test Student', createdAt: new Date() } as any;
-    
+
     // Test that runtime useAI: true overrides config aiAnalysisEnabled: false
     const res = await analyticsManager.getStudentAnalytics(student, { useAI: true });
-    
+
     // Should use LLM engine despite config being disabled (runtime priority)
     expect(res.ai?.provider).toBe('openrouter');
-    
+
     // Also test that useAI: false still works with disabled config
     const res2 = await analyticsManager.getStudentAnalytics(student, { useAI: false });
     expect(res2.ai?.provider).toBe('heuristic');
   });
 });
-

@@ -2,8 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { AlertDetectionEngine } from '@/lib/alerts/engine';
 import { BaselineService } from '@/lib/alerts/baseline';
 import { AlertKind, AlertSeverity, AlertStatus } from '@/lib/alerts/types';
-import { generateStableBaseline, toTrendSeries, generateBurstEvents } from '@/lib/alerts/detectors/__tests__/syntheticData';
-import type { EmotionEntry, SensoryEntry, TrackingEntry, Goal, Intervention } from '@/types/student';
+import {
+  generateStableBaseline,
+  toTrendSeries,
+  generateBurstEvents,
+} from '@/lib/alerts/detectors/__tests__/syntheticData';
+import type {
+  EmotionEntry,
+  SensoryEntry,
+  TrackingEntry,
+  Goal,
+  Intervention,
+} from '@/types/student';
 
 function minutesFrom(start: number, i: number): Date {
   return new Date(start + i * 60_000);
@@ -13,7 +23,7 @@ function buildEmotions(n = 180, spikeAt = 140): EmotionEntry[] {
   const start = Date.UTC(2025, 0, 5, 9, 0, 0);
   const out: EmotionEntry[] = [];
   for (let i = 0; i < n; i += 1) {
-    const intensity = i >= spikeAt ? 5 : (i % 10 === 0 ? 3 : 2);
+    const intensity = i >= spikeAt ? 5 : i % 10 === 0 ? 3 : 2;
     out.push({
       id: `e${i}`,
       studentId: 's1',
@@ -54,12 +64,14 @@ function buildTracking(n = 60): TrackingEntry[] {
       studentId: 's1',
       timestamp: minutesFrom(start, i),
       sensoryInputs: [],
-      emotions: [{
-        id: `te${i}`,
-        emotion: 'frustration',
-        intensity: emoIntensity,
-        timestamp: minutesFrom(start, i),
-      } as EmotionEntry],
+      emotions: [
+        {
+          id: `te${i}`,
+          emotion: 'frustration',
+          intensity: emoIntensity,
+          timestamp: minutesFrom(start, i),
+        } as EmotionEntry,
+      ],
       environmentalData: {
         roomConditions: { noiseLevel },
       },
@@ -88,7 +100,9 @@ describe('AlertDetectionEngine', () => {
       expect((a.metadata?.sparkValues?.length ?? 0) <= 90).toBe(true);
       expect(typeof a.dedupeKey).toBe('string');
       // Experiment metadata present
-      expect(typeof a.metadata?.experimentKey === 'string' || a.metadata?.experimentKey === undefined).toBe(true);
+      expect(
+        typeof a.metadata?.experimentKey === 'string' || a.metadata?.experimentKey === undefined,
+      ).toBe(true);
     });
   });
 
@@ -102,10 +116,15 @@ describe('AlertDetectionEngine', () => {
     });
     expect(alerts.length).toBeGreaterThan(0);
     alerts.forEach((a) => {
-      const br = (a.metadata as any)?.detectionScoreBreakdown as { impact: number; confidence: number; recency: number; tier: number } | undefined;
+      const br = (a.metadata as any)?.detectionScoreBreakdown as
+        | { impact: number; confidence: number; recency: number; tier: number }
+        | undefined;
       expect(br).toBeTruthy();
       if (br) {
-        const score = Math.min(1, 0.4 * br.impact + 0.25 * br.confidence + 0.2 * br.recency + 0.15 * br.tier);
+        const score = Math.min(
+          1,
+          0.4 * br.impact + 0.25 * br.confidence + 0.2 * br.recency + 0.15 * br.tier,
+        );
         expect((a.metadata as any)?.score).toBeCloseTo(score, 6);
       }
     });
@@ -119,7 +138,9 @@ describe('AlertDetectionEngine', () => {
       sensory: buildSensory(120, 5),
       tracking: buildTracking(70),
     });
-    const anyWithSources = alerts.find((a) => (a.sources?.length ?? 0) > 0 || (a.metadata?.sourceRanks?.length ?? 0) > 0);
+    const anyWithSources = alerts.find(
+      (a) => (a.sources?.length ?? 0) > 0 || (a.metadata?.sourceRanks?.length ?? 0) > 0,
+    );
     if (anyWithSources) {
       const ranks = anyWithSources.metadata?.sourceRanks ?? [];
       expect(ranks.length).toBeGreaterThan(0);
@@ -138,28 +159,42 @@ describe('AlertDetectionEngine', () => {
 });
 
 function buildEmotionEntries(values: number[], start: number, step: number): EmotionEntry[] {
-  return toTrendSeries(values, start, step).map((p, i) => ({
-    id: `e${i}`,
-    emotion: 'frustration',
-    intensity: Math.max(0, Math.min(5, Math.round(p.value + 2))),
-    timestamp: new Date(p.timestamp),
-  } as EmotionEntry));
+  return toTrendSeries(values, start, step).map(
+    (p, i) =>
+      ({
+        id: `e${i}`,
+        emotion: 'frustration',
+        intensity: Math.max(0, Math.min(5, Math.round(p.value + 2))),
+        timestamp: new Date(p.timestamp),
+      }) as EmotionEntry,
+  );
 }
 
 function buildSensoryEntries(n: number, start: number): SensoryEntry[] {
   const events = generateBurstEvents({ n, startMs: start, cluster: true });
-  return events.map((ev, i) => ({ id: `s${i}` as string, response: 'seeking', intensity: 4, timestamp: new Date(ev.timestamp) } as SensoryEntry));
+  return events.map(
+    (ev, i) =>
+      ({
+        id: `s${i}` as string,
+        response: 'seeking',
+        intensity: 4,
+        timestamp: new Date(ev.timestamp),
+      }) as SensoryEntry,
+  );
 }
 
 function buildTrackingEntries(emotions: EmotionEntry[], start: number): TrackingEntry[] {
-  return emotions.map((e, i) => ({
-    id: `t${i}`,
-    studentId: 's1',
-    timestamp: new Date(start + i * 60_000),
-    emotions: [e],
-    sensoryInputs: [],
-    environmentalData: { roomConditions: { noiseLevel: 60 + (i % 10) } },
-  } as TrackingEntry));
+  return emotions.map(
+    (e, i) =>
+      ({
+        id: `t${i}`,
+        studentId: 's1',
+        timestamp: new Date(start + i * 60_000),
+        emotions: [e],
+        sensoryInputs: [],
+        environmentalData: { roomConditions: { noiseLevel: 60 + (i % 10) } },
+      }) as TrackingEntry,
+  );
 }
 
 describe('AlertDetectionEngine orchestration', () => {
@@ -174,7 +209,12 @@ describe('AlertDetectionEngine orchestration', () => {
     alerts.forEach((a) => {
       expect(a.confidence).toBeGreaterThanOrEqual(0);
       expect(a.confidence).toBeLessThanOrEqual(1);
-      expect([AlertSeverity.Critical, AlertSeverity.Important, AlertSeverity.Moderate, AlertSeverity.Low]).toContain(a.severity);
+      expect([
+        AlertSeverity.Critical,
+        AlertSeverity.Important,
+        AlertSeverity.Moderate,
+        AlertSeverity.Low,
+      ]).toContain(a.severity);
       expect(a.status).toBe(AlertStatus.New);
     });
   });
@@ -187,7 +227,12 @@ describe('AlertDetectionEngine orchestration', () => {
     const emotions = buildEmotionEntries(values, now, 60_000);
     const sensory = buildSensoryEntries(10, now);
     const tracking = buildTrackingEntries(emotions, now);
-    const baseline = baselineService.updateBaseline({ studentId: 's2', emotions, sensory, tracking });
+    const baseline = baselineService.updateBaseline({
+      studentId: 's2',
+      emotions,
+      sensory,
+      tracking,
+    });
     const alerts = engine.runDetection({ studentId: 's2', emotions, sensory, tracking, baseline });
     expect(Array.isArray(alerts)).toBe(true);
   });
@@ -227,13 +272,47 @@ describe('AlertDetectionEngine orchestration', () => {
     const emotions = buildEmotionEntries(values, now, 60_000);
     const sensory = buildSensoryEntries(14, now);
     const tracking = buildTrackingEntries(emotions, now);
-    const goals: Goal[] = [{
-      id: 'g1', studentId: 's5', title: 'Reduce escalations', description: '', category: 'behavioral', targetDate: new Date(now + 30*86400000), createdDate: new Date(now), updatedAt: new Date(now), status: 'active', measurableObjective: '', currentProgress: 0, progress: 0,
-    }];
-    const interventions: Intervention[] = [{
-      id: 'i1', studentId: 's5', title: 'De-escalation strategy', description: '', category: 'behavioral', strategy: 'breathing', implementationDate: new Date(now - 14*86400000), status: 'active', effectiveness: 3, frequency: 'daily', implementedBy: ['t1'], dataCollection: [], relatedGoals: ['g1'],
-    }];
-    const alerts = engine.runDetection({ studentId: 's5', emotions, sensory, tracking, goals, interventions });
+    const goals: Goal[] = [
+      {
+        id: 'g1',
+        studentId: 's5',
+        title: 'Reduce escalations',
+        description: '',
+        category: 'behavioral',
+        targetDate: new Date(now + 30 * 86400000),
+        createdDate: new Date(now),
+        updatedAt: new Date(now),
+        status: 'active',
+        measurableObjective: '',
+        currentProgress: 0,
+        progress: 0,
+      },
+    ];
+    const interventions: Intervention[] = [
+      {
+        id: 'i1',
+        studentId: 's5',
+        title: 'De-escalation strategy',
+        description: '',
+        category: 'behavioral',
+        strategy: 'breathing',
+        implementationDate: new Date(now - 14 * 86400000),
+        status: 'active',
+        effectiveness: 3,
+        frequency: 'daily',
+        implementedBy: ['t1'],
+        dataCollection: [],
+        relatedGoals: ['g1'],
+      },
+    ];
+    const alerts = engine.runDetection({
+      studentId: 's5',
+      emotions,
+      sensory,
+      tracking,
+      goals,
+      interventions,
+    });
     expect(Array.isArray(alerts)).toBe(true);
   });
 
@@ -241,7 +320,14 @@ describe('AlertDetectionEngine orchestration', () => {
     // Create minimal inputs with potential edge cases
     const engine = new AlertDetectionEngine();
     const now = Date.UTC(2024, 0, 5, 9, 0, 0);
-    const emotions: EmotionEntry[] = [{ id: 'e', emotion: 'unknown', intensity: Number.NaN as unknown as number, timestamp: new Date(now) } as EmotionEntry];
+    const emotions: EmotionEntry[] = [
+      {
+        id: 'e',
+        emotion: 'unknown',
+        intensity: Number.NaN as unknown as number,
+        timestamp: new Date(now),
+      } as EmotionEntry,
+    ];
     const sensory: SensoryEntry[] = [];
     const tracking: TrackingEntry[] = [];
     const alerts = engine.runDetection({ studentId: 's6', emotions, sensory, tracking });

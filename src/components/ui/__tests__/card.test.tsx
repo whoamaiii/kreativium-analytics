@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '../card';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '../card';
 
 describe('Card Components', () => {
   describe('Card', () => {
@@ -15,7 +8,13 @@ describe('Card Components', () => {
       render(<Card data-testid="card">Card content</Card>);
       const card = screen.getByTestId('card');
       expect(card).toBeInTheDocument();
-      expect(card).toHaveClass('rounded-lg', 'border', 'bg-card', 'text-card-foreground', 'shadow-sm');
+      expect(card).toHaveClass(
+        'rounded-lg',
+        'border',
+        'bg-card',
+        'text-card-foreground',
+        'shadow-sm',
+      );
     });
 
     it('applies custom className', () => {
@@ -35,7 +34,7 @@ describe('Card Components', () => {
         <Card>
           <span>Child 1</span>
           <span>Child 2</span>
-        </Card>
+        </Card>,
       );
       expect(screen.getByText('Child 1')).toBeInTheDocument();
       expect(screen.getByText('Child 2')).toBeInTheDocument();
@@ -109,11 +108,18 @@ describe('Card Components', () => {
       render(
         <CardContent>
           <form>
-            <label id="card-input-label" htmlFor="card-input" className="sr-only">Input</label>
-            <input id="card-input" aria-labelledby="card-input-label" type="text" placeholder="Enter text" />
+            <label id="card-input-label" htmlFor="card-input" className="sr-only">
+              Input
+            </label>
+            <input
+              id="card-input"
+              aria-labelledby="card-input-label"
+              type="text"
+              placeholder="Enter text"
+            />
             <button type="submit">Submit</button>
           </form>
-        </CardContent>
+        </CardContent>,
       );
       expect(screen.getByPlaceholderText('Enter text')).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /submit/i })).toBeInTheDocument();
@@ -148,7 +154,7 @@ describe('Card Components', () => {
           <CardFooter>
             <button>Action</button>
           </CardFooter>
-        </Card>
+        </Card>,
       );
 
       expect(screen.getByText('Test Card')).toBeInTheDocument();
@@ -164,15 +170,15 @@ describe('Card Components', () => {
             <CardTitle>Semantic Test</CardTitle>
           </CardHeader>
           <CardContent>Content</CardContent>
-        </Card>
+        </Card>,
       );
 
       const card = container.firstChild;
       expect(card).toHaveClass('rounded-lg', 'border');
-      
+
       const header = card?.firstChild;
       expect(header).toHaveClass('flex', 'flex-col');
-      
+
       const title = header?.firstChild;
       expect(title?.tagName).toBe('H3');
     });
@@ -185,15 +191,13 @@ describe('Card Components', () => {
           <CardHeader>
             <CardTitle id="card-title">Profile</CardTitle>
           </CardHeader>
-          <CardContent aria-describedby="card-title">
-            Content
-          </CardContent>
-        </Card>
+          <CardContent aria-describedby="card-title">Content</CardContent>
+        </Card>,
       );
 
       const card = screen.getByRole('article');
       expect(card).toHaveAttribute('aria-label', 'User profile card');
-      
+
       const content = screen.getByText('Content').parentElement;
       expect(content).toHaveAttribute('aria-describedby', 'card-title');
     });
@@ -207,12 +211,12 @@ describe('Card Components', () => {
               <CardTitle>Card Title</CardTitle>
             </CardHeader>
           </Card>
-        </div>
+        </div>,
       );
 
       const pageHeading = screen.getByText('Page Section');
       const cardTitle = screen.getByText('Card Title');
-      
+
       expect(pageHeading.tagName).toBe('H2');
       expect(cardTitle.tagName).toBe('H3');
     });

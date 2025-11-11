@@ -28,30 +28,30 @@ interface CacheStats {
 
 /**
  * Enhanced high-performance caching hook with LRU eviction, TTL, tagging, and performance statistics
- * 
+ *
  * @param options Configuration object for cache behavior
  * @param options.maxSize Maximum number of entries (default: 100)
  * @param options.ttl Time to live in milliseconds (default: 5 minutes)
  * @param options.enableStats Whether to track performance statistics (default: false)
  * @param options.versioning Whether to enable cache versioning (default: false)
- * 
+ *
  * @returns Cache interface with get, set, has, clear, cleanup, invalidate methods and optional stats
- * 
+ *
  * @example
  * ```typescript
- * const cache = usePerformanceCache<AnalyticsResult>({ 
- *   maxSize: 50, 
+ * const cache = usePerformanceCache<AnalyticsResult>({
+ *   maxSize: 50,
  *   ttl: 10 * 60 * 1000, // 10 minutes
  *   enableStats: true,
  *   versioning: true
  * });
- * 
+ *
  * // Store data with tags
  * cache.set('analytics:student:123', result, ['student-123', 'analytics']);
- * 
+ *
  * // Invalidate by tag
  * cache.invalidateByTag('student-123');
- * 
+ *
  * // Create composite cache key
  * const key = cache.createKey('analytics', { studentId: '123', dateRange: '7d' });
  * ```
@@ -61,7 +61,7 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
     maxSize = 100,
     ttl = 5 * 60 * 1000, // 5 minutes default
     enableStats = false,
-    versioning = false
+    versioning = false,
   } = options;
 
   const cache = useRef<Map<string, CacheEntry<T>>>(new Map());
@@ -75,32 +75,38 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
     misses: 0,
     sets: 0,
     evictions: 0,
-    invalidations: 0
+    invalidations: 0,
   });
 
   const bumpMutation = useCallback(() => {
     mutationCounter.current += 1;
   }, []);
 
-  const updateStats = useCallback((operation: keyof typeof stats) => {
-    if (enableStats) {
-      setStats(prev => ({
-        ...prev,
-        [operation]: prev[operation] + 1
-      }));
-      // Also bump mutation so hitRate and memoryUsage recompute alongside stats updates
-      bumpMutation();
-    }
-  }, [enableStats, bumpMutation]);
+  const updateStats = useCallback(
+    (operation: keyof typeof stats) => {
+      if (enableStats) {
+        setStats((prev) => ({
+          ...prev,
+          [operation]: prev[operation] + 1,
+        }));
+        // Also bump mutation so hitRate and memoryUsage recompute alongside stats updates
+        bumpMutation();
+      }
+    },
+    [enableStats, bumpMutation],
+  );
 
-  const isExpired = useCallback((entry: CacheEntry<T>): boolean => {
-    return Date.now() - entry.timestamp > ttl;
-  }, [ttl]);
+  const isExpired = useCallback(
+    (entry: CacheEntry<T>): boolean => {
+      return Date.now() - entry.timestamp > ttl;
+    },
+    [ttl],
+  );
 
   // Helpers must be declared before any callbacks that depend on them to avoid
   // temporal dead zone issues when React evaluates dependency arrays.
   const removeFromTagIndex = useCallback((key: string, tags: string[]) => {
-    tags.forEach(tag => {
+    tags.forEach((tag) => {
       const keys = tagIndex.current.get(tag);
       if (keys) {
         keys.delete(key);
@@ -112,7 +118,7 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
   }, []);
 
   const addToTagIndex = useCallback((key: string, tags: string[]) => {
-    tags.forEach(tag => {
+    tags.forEach((tag) => {
       if (!tagIndex.current.has(tag)) {
         tagIndex.current.set(tag, new Set());
       }
@@ -142,94 +148,103 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
     }
   }, [updateStats, bumpMutation, removeFromTagIndex]);
 
-  const get = useCallback((key: string): T | undefined => {
-    const entry = cache.current.get(key);
-    
-    if (!entry) {
-      updateStats('misses');
-      return undefined;
-    }
-    
-    if (isExpired(entry)) {
-      if (entry.tags) {
-        removeFromTagIndex(key, entry.tags);
+  const get = useCallback(
+    (key: string): T | undefined => {
+      const entry = cache.current.get(key);
+
+      if (!entry) {
+        updateStats('misses');
+        return undefined;
       }
-      cache.current.delete(key);
-      updateStats('misses');
-      bumpMutation();
-      return undefined;
-    }
 
-    if (versioning && entry.version !== currentVersion.current) {
-      if (entry.tags) {
-        removeFromTagIndex(key, entry.tags);
+      if (isExpired(entry)) {
+        if (entry.tags) {
+          removeFromTagIndex(key, entry.tags);
+        }
+        cache.current.delete(key);
+        updateStats('misses');
+        bumpMutation();
+        return undefined;
       }
-      cache.current.delete(key);
-      updateStats('misses');
-      bumpMutation();
-      return undefined;
-    }
 
-    // Update hit count and timestamp for LRU
-    entry.hits++;
-    entry.timestamp = Date.now();
-    updateStats('hits');
-    
-    return entry.data;
-  }, [isExpired, updateStats, versioning, removeFromTagIndex, bumpMutation]);
-
-  const set = useCallback((key: string, value: T, tags: string[] = []): void => {
-    // Check if we need to evict
-    if (cache.current.size >= maxSize && !cache.current.has(key)) {
-      evictLRU();
-    }
-
-    // If updating existing entry, remove old tags
-    const existingEntry = cache.current.get(key);
-    if (existingEntry?.tags) {
-      removeFromTagIndex(key, existingEntry.tags);
-    }
-
-    cache.current.set(key, {
-      data: value,
-      timestamp: Date.now(),
-      hits: 0,
-      tags,
-      version: versioning ? currentVersion.current : undefined
-    });
-
-    if (tags.length > 0) {
-      addToTagIndex(key, tags);
-    }
-
-    updateStats('sets');
-    bumpMutation();
-  }, [maxSize, evictLRU, updateStats, versioning, removeFromTagIndex, addToTagIndex, bumpMutation]);
-
-  const has = useCallback((key: string): boolean => {
-    const entry = cache.current.get(key);
-    if (!entry) return false;
-    
-    if (isExpired(entry)) {
-      if (entry.tags) {
-        removeFromTagIndex(key, entry.tags);
+      if (versioning && entry.version !== currentVersion.current) {
+        if (entry.tags) {
+          removeFromTagIndex(key, entry.tags);
+        }
+        cache.current.delete(key);
+        updateStats('misses');
+        bumpMutation();
+        return undefined;
       }
-      cache.current.delete(key);
-      bumpMutation();
-      return false;
-    }
 
-    if (versioning && entry.version !== currentVersion.current) {
-      if (entry.tags) {
-        removeFromTagIndex(key, entry.tags);
+      // Update hit count and timestamp for LRU
+      entry.hits++;
+      entry.timestamp = Date.now();
+      updateStats('hits');
+
+      return entry.data;
+    },
+    [isExpired, updateStats, versioning, removeFromTagIndex, bumpMutation],
+  );
+
+  const set = useCallback(
+    (key: string, value: T, tags: string[] = []): void => {
+      // Check if we need to evict
+      if (cache.current.size >= maxSize && !cache.current.has(key)) {
+        evictLRU();
       }
-      cache.current.delete(key);
-      bumpMutation();
-      return false;
-    }
 
-    return true;
-  }, [isExpired, versioning, removeFromTagIndex, bumpMutation]);
+      // If updating existing entry, remove old tags
+      const existingEntry = cache.current.get(key);
+      if (existingEntry?.tags) {
+        removeFromTagIndex(key, existingEntry.tags);
+      }
+
+      cache.current.set(key, {
+        data: value,
+        timestamp: Date.now(),
+        hits: 0,
+        tags,
+        version: versioning ? currentVersion.current : undefined,
+      });
+
+      if (tags.length > 0) {
+        addToTagIndex(key, tags);
+      }
+
+      updateStats('sets');
+      bumpMutation();
+    },
+    [maxSize, evictLRU, updateStats, versioning, removeFromTagIndex, addToTagIndex, bumpMutation],
+  );
+
+  const has = useCallback(
+    (key: string): boolean => {
+      const entry = cache.current.get(key);
+      if (!entry) return false;
+
+      if (isExpired(entry)) {
+        if (entry.tags) {
+          removeFromTagIndex(key, entry.tags);
+        }
+        cache.current.delete(key);
+        bumpMutation();
+        return false;
+      }
+
+      if (versioning && entry.version !== currentVersion.current) {
+        if (entry.tags) {
+          removeFromTagIndex(key, entry.tags);
+        }
+        cache.current.delete(key);
+        bumpMutation();
+        return false;
+      }
+
+      return true;
+    },
+    [isExpired, versioning, removeFromTagIndex, bumpMutation],
+  );
 
   const clear = useCallback(() => {
     cache.current.clear();
@@ -238,47 +253,53 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
     bumpMutation();
   }, [bumpMutation]);
 
-  const invalidateByTag = useCallback((tag: string): number => {
-    const keys = tagIndex.current.get(tag);
-    if (!keys) return 0;
+  const invalidateByTag = useCallback(
+    (tag: string): number => {
+      const keys = tagIndex.current.get(tag);
+      if (!keys) return 0;
 
-    let invalidatedCount = 0;
-    keys.forEach(key => {
-      const entry = cache.current.get(key);
-      if (entry) {
+      let invalidatedCount = 0;
+      keys.forEach((key) => {
+        const entry = cache.current.get(key);
+        if (entry) {
+          cache.current.delete(key);
+          invalidatedCount++;
+          updateStats('invalidations');
+        }
+      });
+
+      tagIndex.current.delete(tag);
+      if (invalidatedCount > 0) bumpMutation();
+      return invalidatedCount;
+    },
+    [updateStats, bumpMutation],
+  );
+
+  const invalidateByPattern = useCallback(
+    (pattern: RegExp): number => {
+      let invalidatedCount = 0;
+      const keysToDelete: string[] = [];
+
+      cache.current.forEach((entry, key) => {
+        if (pattern.test(key)) {
+          keysToDelete.push(key);
+          if (entry.tags) {
+            removeFromTagIndex(key, entry.tags);
+          }
+        }
+      });
+
+      keysToDelete.forEach((key) => {
         cache.current.delete(key);
         invalidatedCount++;
         updateStats('invalidations');
-      }
-    });
+      });
 
-    tagIndex.current.delete(tag);
-    if (invalidatedCount > 0) bumpMutation();
-    return invalidatedCount;
-  }, [updateStats, bumpMutation]);
-
-  const invalidateByPattern = useCallback((pattern: RegExp): number => {
-    let invalidatedCount = 0;
-    const keysToDelete: string[] = [];
-
-    cache.current.forEach((entry, key) => {
-      if (pattern.test(key)) {
-        keysToDelete.push(key);
-        if (entry.tags) {
-          removeFromTagIndex(key, entry.tags);
-        }
-      }
-    });
-
-    keysToDelete.forEach(key => {
-      cache.current.delete(key);
-      invalidatedCount++;
-      updateStats('invalidations');
-    });
-
-    if (invalidatedCount > 0) bumpMutation();
-    return invalidatedCount;
-  }, [updateStats, removeFromTagIndex, bumpMutation]);
+      if (invalidatedCount > 0) bumpMutation();
+      return invalidatedCount;
+    },
+    [updateStats, removeFromTagIndex, bumpMutation],
+  );
 
   const invalidateVersion = useCallback(() => {
     if (versioning) {
@@ -289,7 +310,7 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
   const createKey = useCallback((prefix: string, params: Record<string, unknown>): string => {
     const sortedParams = Object.keys(params)
       .sort()
-      .map(key => `${key}:${JSON.stringify(params[key])}`)
+      .map((key) => `${key}:${JSON.stringify(params[key])}`)
       .join(':');
     return `${prefix}:${sortedParams}`;
   }, []);
@@ -300,11 +321,11 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
       if (obj === null || obj === undefined) return 'null';
       if (typeof obj !== 'object') return String(obj);
       if (Array.isArray(obj)) return `[${obj.map(stringify).join(',')}]`;
-      
+
       // Treat remaining cases as plain objects with string keys
       const record = obj as Record<string, unknown>;
       const keys = Object.keys(record).sort();
-      return `{${keys.map(k => `${k}:${stringify(record[k])}`).join(',')}}`;
+      return `{${keys.map((k) => `${k}:${stringify(record[k])}`).join(',')}}`;
     };
 
     const str = stringify(data);
@@ -312,7 +333,7 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
     return Math.abs(hash).toString(36);
@@ -329,7 +350,7 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
 
   const memoryUsage = useMemo(() => {
     if (!enableStats) return undefined;
-    
+
     // Rough estimation of memory usage
     let totalSize = 0;
     cache.current.forEach((entry) => {
@@ -353,7 +374,7 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
     });
 
     if (keysToDelete.length > 0) {
-      keysToDelete.forEach(key => cache.current.delete(key));
+      keysToDelete.forEach((key) => cache.current.delete(key));
       bumpMutation();
     }
   }, [ttl, versioning, removeFromTagIndex, bumpMutation]);
@@ -363,7 +384,7 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
       ...stats,
       hitRate,
       size,
-      memoryUsage
+      memoryUsage,
     };
   }, [stats, hitRate, size, memoryUsage]);
 
@@ -379,6 +400,6 @@ export function usePerformanceCache<T>(options: CacheOptions = {}) {
     invalidateVersion,
     createKey,
     getDataFingerprint,
-    stats: enableStats ? getCacheStats() : null
+    stats: enableStats ? getCacheStats() : null,
   };
 }

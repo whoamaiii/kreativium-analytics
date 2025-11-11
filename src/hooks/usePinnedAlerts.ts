@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { logger } from '@/lib/logger';
-
-const STORAGE_KEY = 'sensoryTracker_pinnedAlerts';
+import { useCallback, useMemo } from 'react';
+import { useStorageState } from '@/lib/storage/useStorageState';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export interface UsePinnedAlertsReturn {
   pinnedIds: Set<string>;
@@ -12,87 +11,64 @@ export interface UsePinnedAlertsReturn {
   clearPinnedAlerts: () => void;
 }
 
-function readFromStorage(): string[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((v) => typeof v === 'string' && v.length > 0);
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('usePinnedAlerts: failed to read from localStorage', err);
-    return [];
-  }
-}
-
-function writeToStorage(ids: string[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ids));
-  } catch (error) {
-    const err = error instanceof Error ? error : new Error(String(error));
-    logger.error('usePinnedAlerts: failed to write to localStorage', err);
-  }
-}
-
 export function usePinnedAlerts(): UsePinnedAlertsReturn {
-  const [pinnedIdsSet, setPinnedIdsSet] = useState<Set<string>>(() => new Set(readFromStorage()));
-  const isMountedRef = useRef(false);
+  // Use storage hook for automatic persistence and cross-tab sync
+  const [pinnedIdsArray, setPinnedIdsArray] = useStorageState<string[]>(
+    STORAGE_KEYS.PINNED_ALERTS,
+    [],
+    {
+      deserialize: (value) => {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter((v) => typeof v === 'string' && v.length > 0);
+      },
+    },
+  );
 
-  // Persist on changes
-  useEffect(() => {
-    if (!isMountedRef.current) {
-      isMountedRef.current = true;
-      return;
-    }
-    writeToStorage(Array.from(pinnedIdsSet));
-  }, [pinnedIdsSet]);
-
-  // Sync across tabs
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) {
-        setPinnedIdsSet(new Set(readFromStorage()));
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
+  // Convert array to Set for efficient lookups
+  const pinnedIdsSet = useMemo(() => new Set(pinnedIdsArray), [pinnedIdsArray]);
 
   const isPinned = useCallback((alertId: string) => pinnedIdsSet.has(alertId), [pinnedIdsSet]);
 
-  const pinAlert = useCallback((alertId: string) => {
-    if (typeof alertId !== 'string' || alertId.trim().length === 0) return;
-    setPinnedIdsSet((prev) => {
-      if (prev.has(alertId)) return prev;
-      const next = new Set(prev);
-      next.add(alertId);
-      return next;
-    });
-  }, []);
+  const pinAlert = useCallback(
+    (alertId: string) => {
+      if (typeof alertId !== 'string' || alertId.trim().length === 0) return;
+      setPinnedIdsArray((prev) => {
+        if (prev.includes(alertId)) return prev;
+        return [...prev, alertId];
+      });
+    },
+    [setPinnedIdsArray],
+  );
 
-  const unpinAlert = useCallback((alertId: string) => {
-    if (typeof alertId !== 'string' || alertId.trim().length === 0) return;
-    setPinnedIdsSet((prev) => {
-      if (!prev.has(alertId)) return prev;
-      const next = new Set(prev);
-      next.delete(alertId);
-      return next;
-    });
-  }, []);
+  const unpinAlert = useCallback(
+    (alertId: string) => {
+      if (typeof alertId !== 'string' || alertId.trim().length === 0) return;
+      setPinnedIdsArray((prev) => {
+        if (!prev.includes(alertId)) return prev;
+        return prev.filter((id) => id !== alertId);
+      });
+    },
+    [setPinnedIdsArray],
+  );
 
-  const togglePin = useCallback((alertId: string) => {
-    if (typeof alertId !== 'string' || alertId.trim().length === 0) return;
-    setPinnedIdsSet((prev) => {
-      const next = new Set(prev);
-      if (next.has(alertId)) next.delete(alertId); else next.add(alertId);
-      return next;
-    });
-  }, []);
+  const togglePin = useCallback(
+    (alertId: string) => {
+      if (typeof alertId !== 'string' || alertId.trim().length === 0) return;
+      setPinnedIdsArray((prev) => {
+        if (prev.includes(alertId)) {
+          return prev.filter((id) => id !== alertId);
+        } else {
+          return [...prev, alertId];
+        }
+      });
+    },
+    [setPinnedIdsArray],
+  );
 
   const clearPinnedAlerts = useCallback(() => {
-    setPinnedIdsSet(new Set());
-  }, []);
+    setPinnedIdsArray([]);
+  }, [setPinnedIdsArray]);
 
   const pinnedIds = useMemo(() => pinnedIdsSet, [pinnedIdsSet]);
 
@@ -107,6 +83,3 @@ export function usePinnedAlerts(): UsePinnedAlertsReturn {
 }
 
 export default usePinnedAlerts;
-
-
-

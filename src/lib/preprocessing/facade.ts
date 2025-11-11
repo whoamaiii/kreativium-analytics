@@ -34,12 +34,12 @@ export interface SensoryPreparationOptions {
  */
 export function convertTrackingEntriesToSessions(entries: TrackingEntry[]): MLSession[] {
   // Reuse the legacy transformation logic to ensure backward-compatible outputs
-  return entries.map(entry => {
+  return entries.map((entry) => {
     const emotionData: MLSession['emotion'] = {};
     const emotionTypes = ['happy', 'sad', 'angry', 'anxious', 'calm', 'energetic', 'frustrated'];
 
-    emotionTypes.forEach(emotionType => {
-      const emotions = entry.emotions.filter(e => e.emotion.toLowerCase() === emotionType);
+    emotionTypes.forEach((emotionType) => {
+      const emotions = entry.emotions.filter((e) => e.emotion.toLowerCase() === emotionType);
       if (emotions.length > 0) {
         emotionData[emotionType as keyof MLSession['emotion']] =
           emotions.reduce((sum, e) => sum + e.intensity, 0) / emotions.length;
@@ -49,13 +49,18 @@ export function convertTrackingEntriesToSessions(entries: TrackingEntry[]): MLSe
     const sensoryData: MLSession['sensory'] = {};
     const sensoryTypes = ['visual', 'auditory', 'tactile', 'vestibular', 'proprioceptive'];
 
-    sensoryTypes.forEach(sensoryType => {
-      const sensoryInputs = entry.sensoryInputs.filter(s =>
-        s.sensoryType?.toLowerCase() === sensoryType || s.type?.toLowerCase() === sensoryType
+    sensoryTypes.forEach((sensoryType) => {
+      const sensoryInputs = entry.sensoryInputs.filter(
+        (s) =>
+          s.sensoryType?.toLowerCase() === sensoryType || s.type?.toLowerCase() === sensoryType,
       );
       if (sensoryInputs.length > 0) {
-        const seekingCount = sensoryInputs.filter(s => s.response.toLowerCase().includes('seeking')).length;
-        const avoidingCount = sensoryInputs.filter(s => s.response.toLowerCase().includes('avoiding')).length;
+        const seekingCount = sensoryInputs.filter((s) =>
+          s.response.toLowerCase().includes('seeking'),
+        ).length;
+        const avoidingCount = sensoryInputs.filter((s) =>
+          s.response.toLowerCase().includes('avoiding'),
+        ).length;
         const neutralCount = sensoryInputs.length - seekingCount - avoidingCount;
 
         if (seekingCount > avoidingCount && seekingCount > neutralCount) {
@@ -69,15 +74,35 @@ export function convertTrackingEntriesToSessions(entries: TrackingEntry[]): MLSe
     });
 
     const environmentData: MLSession['environment'] = {
-      lighting: (entry.environmentalData?.roomConditions?.lighting as 'bright' | 'dim' | 'moderate') || 'moderate',
-      noise: entry.environmentalData?.roomConditions?.noiseLevel && entry.environmentalData.roomConditions.noiseLevel > 70 ? 'loud' :
-            entry.environmentalData?.roomConditions?.noiseLevel && entry.environmentalData.roomConditions.noiseLevel < 40 ? 'quiet' : 'moderate',
-      temperature: entry.environmentalData?.roomConditions?.temperature && entry.environmentalData.roomConditions.temperature > 26 ? 'hot' :
-                   entry.environmentalData?.roomConditions?.temperature && entry.environmentalData.roomConditions.temperature < 18 ? 'cold' : 'comfortable',
-      crowded: entry.environmentalData?.classroom?.studentCount && entry.environmentalData.classroom.studentCount > 25 ? 'very' :
-               entry.environmentalData?.classroom?.studentCount && entry.environmentalData.classroom.studentCount < 10 ? 'not' : 'moderate',
+      lighting:
+        (entry.environmentalData?.roomConditions?.lighting as 'bright' | 'dim' | 'moderate') ||
+        'moderate',
+      noise:
+        entry.environmentalData?.roomConditions?.noiseLevel &&
+        entry.environmentalData.roomConditions.noiseLevel > 70
+          ? 'loud'
+          : entry.environmentalData?.roomConditions?.noiseLevel &&
+              entry.environmentalData.roomConditions.noiseLevel < 40
+            ? 'quiet'
+            : 'moderate',
+      temperature:
+        entry.environmentalData?.roomConditions?.temperature &&
+        entry.environmentalData.roomConditions.temperature > 26
+          ? 'hot'
+          : entry.environmentalData?.roomConditions?.temperature &&
+              entry.environmentalData.roomConditions.temperature < 18
+            ? 'cold'
+            : 'comfortable',
+      crowded:
+        entry.environmentalData?.classroom?.studentCount &&
+        entry.environmentalData.classroom.studentCount > 25
+          ? 'very'
+          : entry.environmentalData?.classroom?.studentCount &&
+              entry.environmentalData.classroom.studentCount < 10
+            ? 'not'
+            : 'moderate',
       smells: false,
-      textures: false
+      textures: false,
     };
 
     return {
@@ -88,7 +113,7 @@ export function convertTrackingEntriesToSessions(entries: TrackingEntry[]): MLSe
       sensory: sensoryData,
       environment: environmentData,
       activities: [],
-      notes: entry.notes || ''
+      notes: entry.notes || '',
     };
   });
 }
@@ -105,17 +130,21 @@ export function convertTrackingEntriesToSessions(entries: TrackingEntry[]): MLSe
  */
 export function prepareEmotionData(
   sessions: MLSession[],
-  options: EmotionPreparationOptions = {}
+  options: EmotionPreparationOptions = {},
 ): { inputs: tf.Tensor3D; outputs: tf.Tensor2D; normalizers: { min: number; max: number } } {
   const sequenceLength = options.sequenceLength ?? 7;
 
   // Construct a pipeline if provided, but default behavior mirrors legacy logic
-  const pipeline = options.pipelineConfig ? new PreprocessingPipeline(options.pipelineConfig) : null;
+  const pipeline = options.pipelineConfig
+    ? new PreprocessingPipeline(options.pipelineConfig)
+    : null;
 
   const sequences: number[][][] = [];
   const targets: number[][] = [];
 
-  const sortedSessions = [...sessions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const sortedSessions = [...sessions].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
 
   for (let i = 0; i < sortedSessions.length - sequenceLength; i++) {
     const sequence: number[][] = [];
@@ -131,7 +160,7 @@ export function prepareEmotionData(
         session.emotion.anxious ?? 0,
         session.emotion.calm ?? 0,
         session.emotion.energetic ?? 0,
-        session.emotion.frustrated ?? 0
+        session.emotion.frustrated ?? 0,
       ];
       sequence.push([...emotionValues, ...timeFeatures]);
     }
@@ -144,7 +173,7 @@ export function prepareEmotionData(
       targetSession.emotion.anxious ?? 0,
       targetSession.emotion.calm ?? 0,
       targetSession.emotion.energetic ?? 0,
-      targetSession.emotion.frustrated ?? 0
+      targetSession.emotion.frustrated ?? 0,
     );
 
     sequences.push(sequence);
@@ -157,8 +186,10 @@ export function prepareEmotionData(
   const min = Math.min(...allValues);
   const max = Math.max(...allValues);
 
-  const normalizedSequences = sequences.map(seq => seq.map(step => normalizeData(step, min, max)));
-  const normalizedTargets = targets.map(target => normalizeData(target, 0, 10));
+  const normalizedSequences = sequences.map((seq) =>
+    seq.map((step) => normalizeData(step, min, max)),
+  );
+  const normalizedTargets = targets.map((target) => normalizeData(target, 0, 10));
 
   // If a pipeline was provided, we could apply additional transforms here in the future
   void pipeline;
@@ -166,7 +197,7 @@ export function prepareEmotionData(
   return {
     inputs: tf.tensor3d(normalizedSequences),
     outputs: tf.tensor2d(normalizedTargets),
-    normalizers: { min, max }
+    normalizers: { min, max },
   };
 }
 
@@ -181,33 +212,45 @@ export function prepareEmotionData(
  */
 export function prepareSensoryData(
   sessions: MLSession[],
-  _options: SensoryPreparationOptions = {}
+  _options: SensoryPreparationOptions = {},
 ): { inputs: tf.Tensor2D; outputs: tf.Tensor2D } {
   const inputs: number[][] = [];
   const outputs: number[][] = [];
 
-  sessions.forEach(session => {
+  sessions.forEach((session) => {
     if (!session.sensory || !session.environment) return;
 
     const environmentFeatures = [
-      session.environment.lighting === 'bright' ? 1 : session.environment.lighting === 'dim' ? 0.5 : 0,
+      session.environment.lighting === 'bright'
+        ? 1
+        : session.environment.lighting === 'dim'
+          ? 0.5
+          : 0,
       session.environment.noise === 'loud' ? 1 : session.environment.noise === 'moderate' ? 0.5 : 0,
-      session.environment.temperature === 'hot' ? 1 : session.environment.temperature === 'cold' ? 0 : 0.5,
-      session.environment.crowded === 'very' ? 1 : session.environment.crowded === 'moderate' ? 0.5 : 0,
+      session.environment.temperature === 'hot'
+        ? 1
+        : session.environment.temperature === 'cold'
+          ? 0
+          : 0.5,
+      session.environment.crowded === 'very'
+        ? 1
+        : session.environment.crowded === 'moderate'
+          ? 0.5
+          : 0,
       session.environment.smells ? 1 : 0,
-      session.environment.textures ? 1 : 0
+      session.environment.textures ? 1 : 0,
     ];
 
     const timeFeatures = extractTimeFeatures(new Date(session.date));
     inputs.push([...environmentFeatures, ...timeFeatures]);
 
     const sensoryOutputs: number[] = [];
-    ['visual', 'auditory', 'tactile', 'vestibular', 'proprioceptive'].forEach(sense => {
+    ['visual', 'auditory', 'tactile', 'vestibular', 'proprioceptive'].forEach((sense) => {
       const response = session.sensory[sense as keyof typeof session.sensory];
       sensoryOutputs.push(
         response === 'seeking' ? 1 : 0,
         response === 'avoiding' ? 1 : 0,
-        response === 'neutral' ? 1 : 0
+        response === 'neutral' ? 1 : 0,
       );
     });
 
@@ -216,7 +259,7 @@ export function prepareSensoryData(
 
   return {
     inputs: tf.tensor2d(inputs),
-    outputs: tf.tensor2d(outputs)
+    outputs: tf.tensor2d(outputs),
   };
 }
 
@@ -241,14 +284,7 @@ export function extractTimeFeatures(date: Date): number[] {
   const hourOfDaySin = Math.sin(2 * Math.PI * hourOfDay);
   const hourOfDayCos = Math.cos(2 * Math.PI * hourOfDay);
 
-  return [
-    dayOfWeekSin,
-    dayOfWeekCos,
-    hourOfDaySin,
-    hourOfDayCos,
-    dayOfMonth,
-    monthOfYear
-  ];
+  return [dayOfWeekSin, dayOfWeekCos, hourOfDaySin, hourOfDayCos, dayOfMonth, monthOfYear];
 }
 
 /**
@@ -266,6 +302,5 @@ export function normalizeData(data: number[], min?: number, max?: number): numbe
   const dataMin = min ?? Math.min(...data);
   const dataMax = max ?? Math.max(...data);
   const range = dataMax - dataMin || 1;
-  return data.map(value => (value - dataMin) / range);
+  return data.map((value) => (value - dataMin) / range);
 }
-

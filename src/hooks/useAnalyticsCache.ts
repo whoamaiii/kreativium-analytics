@@ -123,21 +123,24 @@ export function useAnalyticsCache(options: UseAnalyticsCacheOptions = {}): UseAn
   /**
    * Handle cache clear events from the global event bus
    */
-  const handleCacheClear = useCallback((event: Event) => {
-    const customEvent = event as CustomEvent<{ studentId?: string } | undefined>;
-    const targetStudentId = customEvent.detail?.studentId;
+  const handleCacheClear = useCallback(
+    (event: Event) => {
+      const customEvent = event as CustomEvent<{ studentId?: string } | undefined>;
+      const targetStudentId = customEvent.detail?.studentId;
 
-    // If event specifies a student ID, only respond if it matches
-    if (targetStudentId && studentId && targetStudentId !== studentId) {
-      return;
-    }
+      // If event specifies a student ID, only respond if it matches
+      if (targetStudentId && studentId && targetStudentId !== studentId) {
+        return;
+      }
 
-    setHasNewInsights(true);
+      setHasNewInsights(true);
 
-    if (onCacheClear) {
-      onCacheClear();
-    }
-  }, [studentId, onCacheClear]);
+      if (onCacheClear) {
+        onCacheClear();
+      }
+    },
+    [studentId, onCacheClear],
+  );
 
   /**
    * Listen for global and student-specific cache clear events

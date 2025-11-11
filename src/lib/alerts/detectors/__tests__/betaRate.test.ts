@@ -1,15 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import { detectBetaRateShift } from '@/lib/alerts/detectors/betaRate';
 import { isValidDetectorResult } from '@/lib/alerts/types';
-import {
-  generateBetaRateData,
-  zeroRateCase,
-  perfectRateCase,
-} from './syntheticData';
+import { generateBetaRateData, zeroRateCase, perfectRateCase } from './syntheticData';
 
 describe('Beta-binomial rate detector', () => {
   it('does not alert on stable baseline rates (no shift)', () => {
-    const sample = generateBetaRateData({ trials: 200, baselineRate: 0.2, shift: 0, priorWeight: 80, seed: 1001 });
+    const sample = generateBetaRateData({
+      trials: 200,
+      baselineRate: 0.2,
+      shift: 0,
+      priorWeight: 80,
+      seed: 1001,
+    });
     const res = detectBetaRateShift({
       successes: sample.successes,
       trials: sample.trials,
@@ -22,7 +24,13 @@ describe('Beta-binomial rate detector', () => {
   });
 
   it('alerts on significant rate increase above baseline + Δ with high probability', () => {
-    const sample = generateBetaRateData({ trials: 300, baselineRate: 0.2, shift: 0.15, priorWeight: 50, seed: 2002 });
+    const sample = generateBetaRateData({
+      trials: 300,
+      baselineRate: 0.2,
+      shift: 0.15,
+      priorWeight: 50,
+      seed: 2002,
+    });
     const res = detectBetaRateShift({
       successes: sample.successes,
       trials: sample.trials,
@@ -38,7 +46,13 @@ describe('Beta-binomial rate detector', () => {
   });
 
   it('enforces minimum support (trials < 5 → no alert)', () => {
-    const sample = generateBetaRateData({ trials: 4, baselineRate: 0.2, shift: 0.3, priorWeight: 10, seed: 3003 });
+    const sample = generateBetaRateData({
+      trials: 4,
+      baselineRate: 0.2,
+      shift: 0.3,
+      priorWeight: 10,
+      seed: 3003,
+    });
     const res = detectBetaRateShift({
       successes: sample.successes,
       trials: sample.trials,
@@ -56,13 +70,24 @@ describe('Beta-binomial rate detector', () => {
     expect(rZero === null || isValidDetectorResult(rZero)).toBeTruthy();
 
     const perfect = perfectRateCase();
-    const rPerf = detectBetaRateShift({ ...perfect, delta: 0.05, minSupport: 5, label: 'Perfect rate' });
+    const rPerf = detectBetaRateShift({
+      ...perfect,
+      delta: 0.05,
+      minSupport: 5,
+      label: 'Perfect rate',
+    });
     expect(rPerf === null || isValidDetectorResult(rPerf)).toBeTruthy();
   });
 
   it('respects Jeffreys prior fallback when prior absent or non-positive', () => {
     // Use jeffreys flag to construct such a sample
-    const sample = generateBetaRateData({ trials: 150, baselineRate: 0.4, shift: 0.2, jeffreys: true, seed: 4004 });
+    const sample = generateBetaRateData({
+      trials: 150,
+      baselineRate: 0.4,
+      shift: 0.2,
+      jeffreys: true,
+      seed: 4004,
+    });
     // Pass an invalid prior to trigger fallback inside detector
     const res = detectBetaRateShift({
       successes: sample.successes,
@@ -76,7 +101,13 @@ describe('Beta-binomial rate detector', () => {
   });
 
   it('sensitivity varies with delta: larger delta makes detection harder', () => {
-    const base = generateBetaRateData({ trials: 300, baselineRate: 0.25, shift: 0.12, priorWeight: 40, seed: 5005 });
+    const base = generateBetaRateData({
+      trials: 300,
+      baselineRate: 0.25,
+      shift: 0.12,
+      priorWeight: 40,
+      seed: 5005,
+    });
     const resLoose = detectBetaRateShift({
       successes: base.successes,
       trials: base.trials,
@@ -96,7 +127,3 @@ describe('Beta-binomial rate detector', () => {
     expect(cLoose).toBeGreaterThanOrEqual(cTight);
   });
 });
-
-
-
-

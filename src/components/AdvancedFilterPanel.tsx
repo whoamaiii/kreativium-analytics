@@ -7,18 +7,29 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategoryBrowser } from '@/components/CategoryBrowser';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import { format, subDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { FilterCriteria, FILTER_PRESETS } from '@/lib/filterUtils';
-import { 
-  Filter, 
+import {
+  Filter,
   Calendar as CalendarIcon,
   Brain,
   Eye,
@@ -46,24 +57,24 @@ export const AdvancedFilterPanel = ({
   onFilterChange,
   savedFilters = [],
   onSaveFilter,
-  onDeleteFilter
+  onDeleteFilter,
 }: AdvancedFilterPanelProps) => {
   const { tAnalytics, tCommon } = useTranslation();
   const [criteria, setCriteria] = useState<FilterCriteria>({
     dateRange: {
       start: null,
-      end: null
+      end: null,
     },
     emotions: {
       types: [],
       intensityRange: [0, 10],
       includeTriggers: [],
-      excludeTriggers: []
+      excludeTriggers: [],
     },
     sensory: {
       types: [],
       responses: [],
-      intensityRange: [0, 10]
+      intensityRange: [0, 10],
     },
     environmental: {
       locations: [],
@@ -71,39 +82,42 @@ export const AdvancedFilterPanel = ({
       conditions: {
         noiseLevel: [0, 10],
         temperature: [15, 30],
-        lighting: []
+        lighting: [],
       },
       weather: [],
-      timeOfDay: []
+      timeOfDay: [],
     },
     patterns: {
       anomaliesOnly: false,
       minConfidence: 0,
-      patternTypes: []
+      patternTypes: [],
     },
-    realtime: false
+    realtime: false,
   });
 
   const [filterName, setFilterName] = useState('');
   const [activeFilters, setActiveFilters] = useState<number>(0);
 
   // Extract unique values from data
-  const uniqueEmotions = [...new Set(emotions.map(e => e.emotion))];
-  const uniqueTriggers = [...new Set(emotions.flatMap(e => e.triggers || []))];
-  const uniqueSensoryTypes = [...new Set(sensoryInputs.map(s => s.sensoryType || s.type || '').filter(Boolean))];
-  const uniqueSensoryResponses = [...new Set(sensoryInputs.map(s => s.response))];
-  
-  const uniqueLocations = [...new Set(
-    trackingEntries.map(t => t.environmentalData?.location).filter(Boolean)
-  )] as string[];
+  const uniqueEmotions = [...new Set(emotions.map((e) => e.emotion))];
+  const uniqueTriggers = [...new Set(emotions.flatMap((e) => e.triggers || []))];
+  const uniqueSensoryTypes = [
+    ...new Set(sensoryInputs.map((s) => s.sensoryType || s.type || '').filter(Boolean)),
+  ];
+  const uniqueSensoryResponses = [...new Set(sensoryInputs.map((s) => s.response))];
+
+  const uniqueLocations = [
+    ...new Set(trackingEntries.map((t) => t.environmentalData?.location).filter(Boolean)),
+  ] as string[];
 
   // Count active filters
   useEffect(() => {
     let count = 0;
-    
+
     if (criteria.dateRange.start || criteria.dateRange.end) count++;
     if (criteria.emotions.types.length > 0) count++;
-    if (criteria.emotions.intensityRange[0] > 0 || criteria.emotions.intensityRange[1] < 10) count++;
+    if (criteria.emotions.intensityRange[0] > 0 || criteria.emotions.intensityRange[1] < 10)
+      count++;
     if (criteria.emotions.includeTriggers.length > 0) count++;
     if (criteria.emotions.excludeTriggers.length > 0) count++;
     if (criteria.sensory.types.length > 0) count++;
@@ -116,49 +130,52 @@ export const AdvancedFilterPanel = ({
     if (criteria.patterns.anomaliesOnly) count++;
     if (criteria.patterns.minConfidence > 0) count++;
     if (criteria.patterns.patternTypes.length > 0) count++;
-    
+
     setActiveFilters(count);
   }, [criteria]);
 
   // Apply preset filter
   const applyPreset = useCallback((preset: Partial<FilterCriteria>) => {
-    setCriteria(prev => ({
+    setCriteria((prev) => ({
       ...prev,
       ...preset,
       emotions: { ...prev.emotions, ...preset.emotions },
       sensory: { ...prev.sensory, ...preset.sensory },
-      environmental: { 
-        ...prev.environmental, 
+      environmental: {
+        ...prev.environmental,
         ...preset.environmental,
         conditions: {
           ...prev.environmental.conditions,
-          ...preset.environmental?.conditions
-        }
+          ...preset.environmental?.conditions,
+        },
       },
-      patterns: { ...prev.patterns, ...preset.patterns }
+      patterns: { ...prev.patterns, ...preset.patterns },
     }));
   }, []);
 
   // Update filter and notify parent
-  const updateFilter = useCallback((updates: Partial<FilterCriteria>) => {
-    const newCriteria = {
-      ...criteria,
-      ...updates,
-      emotions: { ...criteria.emotions, ...updates.emotions },
-      sensory: { ...criteria.sensory, ...updates.sensory },
-      environmental: { 
-        ...criteria.environmental, 
-        ...updates.environmental,
-        conditions: {
-          ...criteria.environmental.conditions,
-          ...updates.environmental?.conditions
-        }
-      },
-      patterns: { ...criteria.patterns, ...updates.patterns }
-    };
-    setCriteria(newCriteria);
-    onFilterChange(newCriteria);
-  }, [criteria, onFilterChange]);
+  const updateFilter = useCallback(
+    (updates: Partial<FilterCriteria>) => {
+      const newCriteria = {
+        ...criteria,
+        ...updates,
+        emotions: { ...criteria.emotions, ...updates.emotions },
+        sensory: { ...criteria.sensory, ...updates.sensory },
+        environmental: {
+          ...criteria.environmental,
+          ...updates.environmental,
+          conditions: {
+            ...criteria.environmental.conditions,
+            ...updates.environmental?.conditions,
+          },
+        },
+        patterns: { ...criteria.patterns, ...updates.patterns },
+      };
+      setCriteria(newCriteria);
+      onFilterChange(newCriteria);
+    },
+    [criteria, onFilterChange],
+  );
 
   // Reset all filters
   const resetFilters = useCallback(() => {
@@ -171,10 +188,10 @@ export const AdvancedFilterPanel = ({
         activities: [],
         conditions: { noiseLevel: [0, 10], temperature: [15, 30], lighting: [] },
         weather: [],
-        timeOfDay: []
+        timeOfDay: [],
       },
       patterns: { anomaliesOnly: false, minConfidence: 0, patternTypes: [] },
-      realtime: false
+      realtime: false,
     };
     setCriteria(defaultCriteria);
     onFilterChange(defaultCriteria);
@@ -196,7 +213,9 @@ export const AdvancedFilterPanel = ({
             <Filter className="h-5 w-5" />
             {String(tAnalytics('filters.title'))}
             {activeFilters > 0 && (
-              <Badge variant="default">{activeFilters} {String(tCommon('active'))}</Badge>
+              <Badge variant="default">
+                {activeFilters} {String(tCommon('active'))}
+              </Badge>
             )}
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -222,7 +241,9 @@ export const AdvancedFilterPanel = ({
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="filters">{String(tCommon('filters'))}</TabsTrigger>
             <TabsTrigger value="presets">{String(tCommon('presets'))}</TabsTrigger>
-            <TabsTrigger value="saved">{String(tCommon('saved'))} ({savedFilters.length})</TabsTrigger>
+            <TabsTrigger value="saved">
+              {String(tCommon('saved'))} ({savedFilters.length})
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="filters" className="space-y-4">
@@ -247,13 +268,13 @@ export const AdvancedFilterPanel = ({
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !criteria.dateRange.start && "text-muted-foreground"
+                              'w-full justify-start text-left font-normal',
+                              !criteria.dateRange.start && 'text-muted-foreground',
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {criteria.dateRange.start ? (
-                              format(criteria.dateRange.start, "PPP")
+                              format(criteria.dateRange.start, 'PPP')
                             ) : (
                               <span>{String(tCommon('pickADate'))}</span>
                             )}
@@ -263,9 +284,11 @@ export const AdvancedFilterPanel = ({
                           <Calendar
                             mode="single"
                             selected={criteria.dateRange.start || undefined}
-                            onSelect={(date) => updateFilter({
-                              dateRange: { ...criteria.dateRange, start: date || null }
-                            })}
+                            onSelect={(date) =>
+                              updateFilter({
+                                dateRange: { ...criteria.dateRange, start: date || null },
+                              })
+                            }
                             initialFocus
                           />
                         </PopoverContent>
@@ -278,13 +301,13 @@ export const AdvancedFilterPanel = ({
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !criteria.dateRange.end && "text-muted-foreground"
+                              'w-full justify-start text-left font-normal',
+                              !criteria.dateRange.end && 'text-muted-foreground',
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {criteria.dateRange.end ? (
-                              format(criteria.dateRange.end, "PPP")
+                              format(criteria.dateRange.end, 'PPP')
                             ) : (
                               <span>{String(tCommon('pickADate'))}</span>
                             )}
@@ -294,9 +317,11 @@ export const AdvancedFilterPanel = ({
                           <Calendar
                             mode="single"
                             selected={criteria.dateRange.end || undefined}
-                            onSelect={(date) => updateFilter({
-                              dateRange: { ...criteria.dateRange, end: date || null }
-                            })}
+                            onSelect={(date) =>
+                              updateFilter({
+                                dateRange: { ...criteria.dateRange, end: date || null },
+                              })
+                            }
                             initialFocus
                           />
                         </PopoverContent>
@@ -307,18 +332,22 @@ export const AdvancedFilterPanel = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => updateFilter({
-                        dateRange: { start: subDays(new Date(), 7), end: new Date() }
-                      })}
+                      onClick={() =>
+                        updateFilter({
+                          dateRange: { start: subDays(new Date(), 7), end: new Date() },
+                        })
+                      }
                     >
                       {String(tCommon('last7Days'))}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => updateFilter({
-                        dateRange: { start: subDays(new Date(), 30), end: new Date() }
-                      })}
+                      onClick={() =>
+                        updateFilter({
+                          dateRange: { start: subDays(new Date(), 30), end: new Date() },
+                        })
+                      }
                     >
                       {String(tCommon('last30Days'))}
                     </Button>
@@ -332,8 +361,8 @@ export const AdvancedFilterPanel = ({
                   <div className="flex items-center gap-2">
                     <Brain className="h-4 w-4" />
                     {String(tAnalytics('filters.emotions'))}
-                    {(criteria.emotions.types.length > 0 || 
-                      criteria.emotions.intensityRange[0] > 0 || 
+                    {(criteria.emotions.types.length > 0 ||
+                      criteria.emotions.intensityRange[0] > 0 ||
                       criteria.emotions.intensityRange[1] < 10) && (
                       <Badge variant="secondary">{String(tCommon('active'))}</Badge>
                     )}
@@ -345,7 +374,9 @@ export const AdvancedFilterPanel = ({
                       label={String(tAnalytics('filters.emotionTypes'))}
                       options={uniqueEmotions}
                       selected={criteria.emotions.types}
-                      onChange={(types) => updateFilter({ emotions: { ...criteria.emotions, types } })}
+                      onChange={(types) =>
+                        updateFilter({ emotions: { ...criteria.emotions, types } })
+                      }
                       columns={3}
                       searchable
                       showCount
@@ -353,12 +384,20 @@ export const AdvancedFilterPanel = ({
                   </div>
 
                   <div>
-                    <Label>{String(tAnalytics('filters.intensityRange'))}: {criteria.emotions.intensityRange[0]} - {criteria.emotions.intensityRange[1]}</Label>
+                    <Label>
+                      {String(tAnalytics('filters.intensityRange'))}:{' '}
+                      {criteria.emotions.intensityRange[0]} - {criteria.emotions.intensityRange[1]}
+                    </Label>
                     <Slider
                       value={criteria.emotions.intensityRange}
-                      onValueChange={(value) => updateFilter({
-                        emotions: { ...criteria.emotions, intensityRange: value as [number, number] }
-                      })}
+                      onValueChange={(value) =>
+                        updateFilter({
+                          emotions: {
+                            ...criteria.emotions,
+                            intensityRange: value as [number, number],
+                          },
+                        })
+                      }
                       min={0}
                       max={10}
                       step={1}
@@ -373,15 +412,15 @@ export const AdvancedFilterPanel = ({
                       onValueChange={(value) => {
                         const triggers = value ? value.split(',') : [];
                         updateFilter({
-                          emotions: { ...criteria.emotions, includeTriggers: triggers }
+                          emotions: { ...criteria.emotions, includeTriggers: triggers },
                         });
                       }}
                     >
-                    <SelectTrigger aria-label="Select triggers to include">
-                      <SelectValue placeholder="Select triggers to include" />
-                    </SelectTrigger>
+                      <SelectTrigger aria-label="Select triggers to include">
+                        <SelectValue placeholder="Select triggers to include" />
+                      </SelectTrigger>
                       <SelectContent>
-                        {uniqueTriggers.map(trigger => (
+                        {uniqueTriggers.map((trigger) => (
                           <SelectItem key={trigger} value={trigger}>
                             {trigger}
                           </SelectItem>
@@ -398,7 +437,7 @@ export const AdvancedFilterPanel = ({
                   <div className="flex items-center gap-2">
                     <Eye className="h-4 w-4" />
                     {String(tAnalytics('filters.sensory'))}
-                    {(criteria.sensory.types.length > 0 || 
+                    {(criteria.sensory.types.length > 0 ||
                       criteria.sensory.responses.length > 0) && (
                       <Badge variant="secondary">{String(tCommon('active'))}</Badge>
                     )}
@@ -410,7 +449,9 @@ export const AdvancedFilterPanel = ({
                       label={String(tAnalytics('filters.sensoryTypes'))}
                       options={uniqueSensoryTypes}
                       selected={criteria.sensory.types}
-                      onChange={(types) => updateFilter({ sensory: { ...criteria.sensory, types } })}
+                      onChange={(types) =>
+                        updateFilter({ sensory: { ...criteria.sensory, types } })
+                      }
                       columns={3}
                       searchable
                       showCount
@@ -420,7 +461,7 @@ export const AdvancedFilterPanel = ({
                   <div>
                     <Label>{String(tAnalytics('filters.responses'))}</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {uniqueSensoryResponses.map(response => (
+                      {uniqueSensoryResponses.map((response) => (
                         <div key={response} className="flex items-center space-x-2">
                           <Checkbox
                             id={`response-${response}`}
@@ -428,9 +469,9 @@ export const AdvancedFilterPanel = ({
                             onCheckedChange={(checked) => {
                               const responses = checked
                                 ? [...criteria.sensory.responses, response]
-                                : criteria.sensory.responses.filter(r => r !== response);
+                                : criteria.sensory.responses.filter((r) => r !== response);
                               updateFilter({
-                                sensory: { ...criteria.sensory, responses }
+                                sensory: { ...criteria.sensory, responses },
                               });
                             }}
                           />
@@ -446,12 +487,20 @@ export const AdvancedFilterPanel = ({
                   </div>
 
                   <div>
-                    <Label>{String(tAnalytics('filters.intensityRange'))}: {criteria.sensory.intensityRange[0]} - {criteria.sensory.intensityRange[1]}</Label>
+                    <Label>
+                      {String(tAnalytics('filters.intensityRange'))}:{' '}
+                      {criteria.sensory.intensityRange[0]} - {criteria.sensory.intensityRange[1]}
+                    </Label>
                     <Slider
                       value={criteria.sensory.intensityRange}
-                      onValueChange={(value) => updateFilter({
-                        sensory: { ...criteria.sensory, intensityRange: value as [number, number] }
-                      })}
+                      onValueChange={(value) =>
+                        updateFilter({
+                          sensory: {
+                            ...criteria.sensory,
+                            intensityRange: value as [number, number],
+                          },
+                        })
+                      }
                       min={0}
                       max={10}
                       step={1}
@@ -467,7 +516,7 @@ export const AdvancedFilterPanel = ({
                   <div className="flex items-center gap-2">
                     <Thermometer className="h-4 w-4" />
                     {String(tAnalytics('filters.environmental'))}
-                    {(criteria.environmental.locations.length > 0 || 
+                    {(criteria.environmental.locations.length > 0 ||
                       criteria.environmental.activities.length > 0) && (
                       <Badge variant="secondary">{String(tCommon('active'))}</Badge>
                     )}
@@ -477,7 +526,7 @@ export const AdvancedFilterPanel = ({
                   <div>
                     <Label>{String(tAnalytics('filters.locations'))}</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {uniqueLocations.map(location => (
+                      {uniqueLocations.map((location) => (
                         <div key={location} className="flex items-center space-x-2">
                           <Checkbox
                             id={`location-${location}`}
@@ -485,9 +534,9 @@ export const AdvancedFilterPanel = ({
                             onCheckedChange={(checked) => {
                               const locations = checked
                                 ? [...criteria.environmental.locations, location]
-                                : criteria.environmental.locations.filter(l => l !== location);
+                                : criteria.environmental.locations.filter((l) => l !== location);
                               updateFilter({
-                                environmental: { ...criteria.environmental, locations }
+                                environmental: { ...criteria.environmental, locations },
                               });
                             }}
                           />
@@ -505,7 +554,7 @@ export const AdvancedFilterPanel = ({
                   <div>
                     <Label>{String(tAnalytics('filters.weatherConditions'))}</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'].map(weather => (
+                      {['sunny', 'cloudy', 'rainy', 'stormy', 'snowy'].map((weather) => (
                         <div key={weather} className="flex items-center space-x-2">
                           <Checkbox
                             id={`weather-${weather}`}
@@ -513,9 +562,9 @@ export const AdvancedFilterPanel = ({
                             onCheckedChange={(checked) => {
                               const weatherList = checked
                                 ? [...criteria.environmental.weather, weather]
-                                : criteria.environmental.weather.filter(w => w !== weather);
+                                : criteria.environmental.weather.filter((w) => w !== weather);
                               updateFilter({
-                                environmental: { ...criteria.environmental, weather: weatherList }
+                                environmental: { ...criteria.environmental, weather: weatherList },
                               });
                             }}
                           />
@@ -531,18 +580,24 @@ export const AdvancedFilterPanel = ({
                   </div>
 
                   <div>
-                    <Label>{String(tAnalytics('filters.noiseLevel'))}: {criteria.environmental.conditions.noiseLevel[0]} - {criteria.environmental.conditions.noiseLevel[1]}</Label>
+                    <Label>
+                      {String(tAnalytics('filters.noiseLevel'))}:{' '}
+                      {criteria.environmental.conditions.noiseLevel[0]} -{' '}
+                      {criteria.environmental.conditions.noiseLevel[1]}
+                    </Label>
                     <Slider
                       value={criteria.environmental.conditions.noiseLevel}
-                      onValueChange={(value) => updateFilter({
-                        environmental: {
-                          ...criteria.environmental,
-                          conditions: {
-                            ...criteria.environmental.conditions,
-                            noiseLevel: value as [number, number]
-                          }
-                        }
-                      })}
+                      onValueChange={(value) =>
+                        updateFilter({
+                          environmental: {
+                            ...criteria.environmental,
+                            conditions: {
+                              ...criteria.environmental.conditions,
+                              noiseLevel: value as [number, number],
+                            },
+                          },
+                        })
+                      }
                       min={0}
                       max={10}
                       step={1}
@@ -558,8 +613,7 @@ export const AdvancedFilterPanel = ({
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     {String(tAnalytics('filters.patternsAndAnalysis'))}
-                    {(criteria.patterns.anomaliesOnly || 
-                      criteria.patterns.minConfidence > 0) && (
+                    {(criteria.patterns.anomaliesOnly || criteria.patterns.minConfidence > 0) && (
                       <Badge variant="secondary">{String(tCommon('active'))}</Badge>
                     )}
                   </div>
@@ -569,20 +623,29 @@ export const AdvancedFilterPanel = ({
                     <Switch
                       id="anomalies"
                       checked={criteria.patterns.anomaliesOnly}
-                      onCheckedChange={(checked) => updateFilter({
-                        patterns: { ...criteria.patterns, anomaliesOnly: checked }
-                      })}
+                      onCheckedChange={(checked) =>
+                        updateFilter({
+                          patterns: { ...criteria.patterns, anomaliesOnly: checked },
+                        })
+                      }
                     />
-                    <Label htmlFor="anomalies">{String(tAnalytics('filters.showAnomaliesOnly'))}</Label>
+                    <Label htmlFor="anomalies">
+                      {String(tAnalytics('filters.showAnomaliesOnly'))}
+                    </Label>
                   </div>
 
                   <div>
-                    <Label>{String(tAnalytics('filters.minimumConfidence'))}: {criteria.patterns.minConfidence}%</Label>
+                    <Label>
+                      {String(tAnalytics('filters.minimumConfidence'))}:{' '}
+                      {criteria.patterns.minConfidence}%
+                    </Label>
                     <Slider
                       value={[criteria.patterns.minConfidence]}
-                      onValueChange={([value]) => updateFilter({
-                        patterns: { ...criteria.patterns, minConfidence: value }
-                      })}
+                      onValueChange={([value]) =>
+                        updateFilter({
+                          patterns: { ...criteria.patterns, minConfidence: value },
+                        })
+                      }
                       min={0}
                       max={100}
                       step={5}
@@ -593,7 +656,7 @@ export const AdvancedFilterPanel = ({
                   <div>
                     <Label>{String(tAnalytics('filters.patternTypes'))}</Label>
                     <div className="grid grid-cols-2 gap-2 mt-2">
-                      {['emotion', 'sensory', 'environmental', 'correlation'].map(type => (
+                      {['emotion', 'sensory', 'environmental', 'correlation'].map((type) => (
                         <div key={type} className="flex items-center space-x-2">
                           <Checkbox
                             id={`pattern-${type}`}
@@ -601,9 +664,9 @@ export const AdvancedFilterPanel = ({
                             onCheckedChange={(checked) => {
                               const types = checked
                                 ? [...criteria.patterns.patternTypes, type]
-                                : criteria.patterns.patternTypes.filter(t => t !== type);
+                                : criteria.patterns.patternTypes.filter((t) => t !== type);
                               updateFilter({
-                                patterns: { ...criteria.patterns, patternTypes: types }
+                                patterns: { ...criteria.patterns, patternTypes: types },
                               });
                             }}
                           />
@@ -638,7 +701,11 @@ export const AdvancedFilterPanel = ({
           <TabsContent value="presets" className="space-y-4">
             <div className="grid gap-4">
               {FILTER_PRESETS.map((preset) => (
-                <Card key={preset.name} className="cursor-pointer hover:bg-accent" onClick={() => applyPreset(preset.criteria)}>
+                <Card
+                  key={preset.name}
+                  className="cursor-pointer hover:bg-accent"
+                  onClick={() => applyPreset(preset.criteria)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -658,7 +725,9 @@ export const AdvancedFilterPanel = ({
           <TabsContent value="saved" className="space-y-4">
             {onSaveFilter && (
               <div className="flex gap-2">
-                <label htmlFor="saved-filter-name" className="sr-only">{String(tCommon('filterName'))}</label>
+                <label htmlFor="saved-filter-name" className="sr-only">
+                  {String(tCommon('filterName'))}
+                </label>
                 <input
                   id="saved-filter-name"
                   type="text"
@@ -668,7 +737,11 @@ export const AdvancedFilterPanel = ({
                   onChange={(e) => setFilterName(e.target.value)}
                   className="flex-1 px-3 py-2 border rounded-md"
                 />
-                <Button aria-label={String(tAnalytics('filters.saveCurrentAria'))} onClick={handleSaveFilter} disabled={!filterName}>
+                <Button
+                  aria-label={String(tAnalytics('filters.saveCurrentAria'))}
+                  onClick={handleSaveFilter}
+                  disabled={!filterName}
+                >
                   <Save className="h-4 w-4 mr-1" />
                   {String(tAnalytics('filters.saveCurrent'))}
                 </Button>
@@ -690,10 +763,14 @@ export const AdvancedFilterPanel = ({
                         <div>
                           <h4 className="font-medium">{filter.name}</h4>
                           <p className="text-sm text-muted-foreground">
-                            {Object.keys(filter.criteria).filter(k => 
-                              JSON.stringify(filter.criteria[k as keyof FilterCriteria]) !== 
-                              JSON.stringify(criteria[k as keyof FilterCriteria])
-                            ).length} {String(tAnalytics('filters.configuredSuffix'))}
+                            {
+                              Object.keys(filter.criteria).filter(
+                                (k) =>
+                                  JSON.stringify(filter.criteria[k as keyof FilterCriteria]) !==
+                                  JSON.stringify(criteria[k as keyof FilterCriteria]),
+                              ).length
+                            }{' '}
+                            {String(tAnalytics('filters.configuredSuffix'))}
                           </p>
                         </div>
                         <div className="flex gap-2">

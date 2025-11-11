@@ -69,7 +69,11 @@ const buildWith = (overrides: Partial<FilterCriteria>): FilterCriteria => ({
   patterns: { ...DEFAULT_CRITERIA.patterns, ...(overrides.patterns || {}) },
 });
 
-const QuickQuestionsComponent = ({ onNavigate, onFiltersApply, className }: QuickQuestionsProps) => {
+const QuickQuestionsComponent = ({
+  onNavigate,
+  onFiltersApply,
+  className,
+}: QuickQuestionsProps) => {
   const { tAnalytics } = useTranslation();
   const [, setTab] = useSyncedTabParam();
   const [, setPreset] = useSyncedExplorePreset();
@@ -86,107 +90,138 @@ const QuickQuestionsComponent = ({ onNavigate, onFiltersApply, className }: Quic
     }
   }, [open]);
 
-  const questions: QuickQuestionItem[] = useMemo(() => [
-    {
-      id: 'peakTiming',
-      preset: 'charts',
-      buildCriteria: () => buildWith({
-        dateRange: { start: subDays(new Date(), 7), end: new Date() },
-        emotions: { ...DEFAULT_CRITERIA.emotions, intensityRange: [4, 5] },
-        sensory: { ...DEFAULT_CRITERIA.sensory, intensityRange: [4, 5] },
-      }),
-    },
-    {
-      id: 'activityLoad',
-      preset: 'correlations',
-      buildCriteria: () => buildWith({
-        environmental: { ...DEFAULT_CRITERIA.environmental, activities: [...CLASSROOM_ACTIVITY_TOKENS] },
-      }),
-    },
-    {
-      id: 'difficultTriggers',
-      preset: 'patterns',
-      buildCriteria: () => buildWith({
-        emotions: { ...DEFAULT_CRITERIA.emotions, types: [...CHALLENGING_EMOTION_TOKENS] },
-        patterns: { anomaliesOnly: false, minConfidence: 40, patternTypes: ['correlation', 'trend'] },
-      }),
-    },
-    {
-      id: 'sensoryChanges',
-      preset: 'charts',
-      buildCriteria: () => buildWith({
-        sensory: { ...DEFAULT_CRITERIA.sensory, types: [...SENSORY_TYPE_TOKENS] },
-      }),
-    },
-    {
-      id: 'timePatterns',
-      preset: 'patterns',
-      buildCriteria: () => buildWith({
-        dateRange: { start: subDays(new Date(), 30), end: new Date() },
-        patterns: { anomaliesOnly: false, minConfidence: 30, patternTypes: ['trend'] },
-      }),
-    },
-    {
-      id: 'bestEnvironments',
-      preset: 'correlations',
-      buildCriteria: () => buildWith({
-        emotions: { ...DEFAULT_CRITERIA.emotions, types: [...POSITIVE_EMOTION_TOKENS_CORE] },
-        environmental: {
-          ...DEFAULT_CRITERIA.environmental,
-          conditions: { ...DEFAULT_CRITERIA.environmental.conditions, noiseLevel: [0, 4], temperature: [18, 24], lighting: [...NATURAL_LIGHTING_TOKENS] },
-        },
-      }),
-    },
-  ], []);
+  const questions: QuickQuestionItem[] = useMemo(
+    () => [
+      {
+        id: 'peakTiming',
+        preset: 'charts',
+        buildCriteria: () =>
+          buildWith({
+            dateRange: { start: subDays(new Date(), 7), end: new Date() },
+            emotions: { ...DEFAULT_CRITERIA.emotions, intensityRange: [4, 5] },
+            sensory: { ...DEFAULT_CRITERIA.sensory, intensityRange: [4, 5] },
+          }),
+      },
+      {
+        id: 'activityLoad',
+        preset: 'correlations',
+        buildCriteria: () =>
+          buildWith({
+            environmental: {
+              ...DEFAULT_CRITERIA.environmental,
+              activities: [...CLASSROOM_ACTIVITY_TOKENS],
+            },
+          }),
+      },
+      {
+        id: 'difficultTriggers',
+        preset: 'patterns',
+        buildCriteria: () =>
+          buildWith({
+            emotions: { ...DEFAULT_CRITERIA.emotions, types: [...CHALLENGING_EMOTION_TOKENS] },
+            patterns: {
+              anomaliesOnly: false,
+              minConfidence: 40,
+              patternTypes: ['correlation', 'trend'],
+            },
+          }),
+      },
+      {
+        id: 'sensoryChanges',
+        preset: 'charts',
+        buildCriteria: () =>
+          buildWith({
+            sensory: { ...DEFAULT_CRITERIA.sensory, types: [...SENSORY_TYPE_TOKENS] },
+          }),
+      },
+      {
+        id: 'timePatterns',
+        preset: 'patterns',
+        buildCriteria: () =>
+          buildWith({
+            dateRange: { start: subDays(new Date(), 30), end: new Date() },
+            patterns: { anomaliesOnly: false, minConfidence: 30, patternTypes: ['trend'] },
+          }),
+      },
+      {
+        id: 'bestEnvironments',
+        preset: 'correlations',
+        buildCriteria: () =>
+          buildWith({
+            emotions: { ...DEFAULT_CRITERIA.emotions, types: [...POSITIVE_EMOTION_TOKENS_CORE] },
+            environmental: {
+              ...DEFAULT_CRITERIA.environmental,
+              conditions: {
+                ...DEFAULT_CRITERIA.environmental.conditions,
+                noiseLevel: [0, 4],
+                temperature: [18, 24],
+                lighting: [...NATURAL_LIGHTING_TOKENS],
+              },
+            },
+          }),
+      },
+    ],
+    [],
+  );
 
   const closePopover = useCallback(() => setOpen(false), []);
 
-  const handleSelect = useCallback((item: QuickQuestionItem) => {
-    setTab('explore');
-    setPreset(item.preset);
-    onNavigate?.('explore', item.preset);
-    const criteria = item.buildCriteria();
-    onFiltersApply?.(criteria);
-    try {
-      announceToScreenReader(
-        String(tAnalytics('quickQuestions.navigatingTo', { preset: String(tAnalytics(`explore.presets.${item.preset}`)) })),
-        'polite'
-      );
-    } catch (_err) {
-      // non-fatal announcement failure
-    }
-    closePopover();
-  }, [closePopover, onFiltersApply, onNavigate, setPreset, setTab, tAnalytics]);
-
-  const onKeyDownList = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    const max = questions.length - 1;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setFocusedIndex((i) => {
-        const next = Math.min(max, i + 1);
-        itemRefs.current[next]?.focus();
-        return next;
-      });
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setFocusedIndex((i) => {
-        const next = Math.max(0, i - 1);
-        itemRefs.current[next]?.focus();
-        return next;
-      });
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      itemRefs.current[0]?.focus();
-      setFocusedIndex(0);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      itemRefs.current[max]?.focus();
-      setFocusedIndex(max);
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
+  const handleSelect = useCallback(
+    (item: QuickQuestionItem) => {
+      setTab('explore');
+      setPreset(item.preset);
+      onNavigate?.('explore', item.preset);
+      const criteria = item.buildCriteria();
+      onFiltersApply?.(criteria);
+      try {
+        announceToScreenReader(
+          String(
+            tAnalytics('quickQuestions.navigatingTo', {
+              preset: String(tAnalytics(`explore.presets.${item.preset}`)),
+            }),
+          ),
+          'polite',
+        );
+      } catch (_err) {
+        // non-fatal announcement failure
+      }
       closePopover();
-    }
-  }, [questions.length, closePopover]);
+    },
+    [closePopover, onFiltersApply, onNavigate, setPreset, setTab, tAnalytics],
+  );
+
+  const onKeyDownList = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const max = questions.length - 1;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setFocusedIndex((i) => {
+          const next = Math.min(max, i + 1);
+          itemRefs.current[next]?.focus();
+          return next;
+        });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setFocusedIndex((i) => {
+          const next = Math.max(0, i - 1);
+          itemRefs.current[next]?.focus();
+          return next;
+        });
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        itemRefs.current[0]?.focus();
+        setFocusedIndex(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        itemRefs.current[max]?.focus();
+        setFocusedIndex(max);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closePopover();
+      }
+    },
+    [questions.length, closePopover],
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -205,9 +240,7 @@ const QuickQuestionsComponent = ({ onNavigate, onFiltersApply, className }: Quic
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
-          <TooltipContent>
-            {String(tAnalytics('quickQuestions.triggerTooltip'))}
-          </TooltipContent>
+          <TooltipContent>{String(tAnalytics('quickQuestions.triggerTooltip'))}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
@@ -219,7 +252,9 @@ const QuickQuestionsComponent = ({ onNavigate, onFiltersApply, className }: Quic
       >
         <div className="p-4 border-b">
           <div className="text-sm font-medium">{String(tAnalytics('quickQuestions.title'))}</div>
-          <div className="text-xs text-muted-foreground mt-1">{String(tAnalytics('quickQuestions.subtitle'))}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {String(tAnalytics('quickQuestions.subtitle'))}
+          </div>
         </div>
 
         <div
@@ -258,10 +293,20 @@ const QuickQuestionsComponent = ({ onNavigate, onFiltersApply, className }: Quic
         </div>
 
         <div className="p-2 border-t flex items-center justify-end gap-2">
-          <Button variant="ghost" size="sm" onClick={closePopover} aria-label={String(tAnalytics('quickQuestions.actions.closeQuestions'))}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={closePopover}
+            aria-label={String(tAnalytics('quickQuestions.actions.closeQuestions'))}
+          >
             {String(tAnalytics('quickQuestions.actions.closeQuestions'))}
           </Button>
-          <Button variant="default" size="sm" disabled aria-label={String(tAnalytics('quickQuestions.actions.viewResults'))}>
+          <Button
+            variant="default"
+            size="sm"
+            disabled
+            aria-label={String(tAnalytics('quickQuestions.actions.viewResults'))}
+          >
             {String(tAnalytics('quickQuestions.actions.viewResults'))}
           </Button>
         </div>
@@ -271,5 +316,3 @@ const QuickQuestionsComponent = ({ onNavigate, onFiltersApply, className }: Quic
 };
 
 export const QuickQuestions = memo(QuickQuestionsComponent);
-
- 

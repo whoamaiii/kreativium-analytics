@@ -52,16 +52,16 @@ export interface Metrics {
 
 export interface CrossValidationMeta {
   strategy: 'k-fold' | 'time-series' | 'holdout' | string;
-  folds?: number;        // for k-fold
-  horizon?: number;      // for time-series CV
-  windowSize?: number;   // for rolling-window strategies
+  folds?: number; // for k-fold
+  horizon?: number; // for time-series CV
+  windowSize?: number; // for rolling-window strategies
 }
 
 export interface EvaluationRun {
   id: string;
   modelType: ModelType;
   timestamp: number; // epoch ms
-  dataSignature: string;   // stable fingerprint of training/validation data
+  dataSignature: string; // stable fingerprint of training/validation data
   configSignature: string; // stable fingerprint of the configuration used
   taskType: 'classification' | 'regression' | string;
   metrics: Metrics;
@@ -91,7 +91,12 @@ function setEvalCacheTTL(ttlMs: number): void {
   evalCacheTTL = Math.max(0, ttlMs);
 }
 
-function makeEvalCacheKey(run: Pick<EvaluationRun, 'modelType' | 'taskType' | 'dataSignature' | 'configSignature' | 'schemaVersion'>): string {
+function makeEvalCacheKey(
+  run: Pick<
+    EvaluationRun,
+    'modelType' | 'taskType' | 'dataSignature' | 'configSignature' | 'schemaVersion'
+  >,
+): string {
   // Include signatures and identifiers; counts are embedded when createCacheKey is used with structured input
   return createCacheKey({
     namespace: EVAL_CACHE_NAMESPACE,
@@ -209,7 +214,10 @@ async function loadAllFromIDB(): Promise<void> {
     }
   } catch (error) {
     idbAvailable = false; // fallback to memory only
-    logger.warn('[modelEvaluation] Failed to initialize from IndexedDB. Falling back to memory only.', error);
+    logger.warn(
+      '[modelEvaluation] Failed to initialize from IndexedDB. Falling back to memory only.',
+      error,
+    );
   }
 }
 
@@ -260,7 +268,10 @@ async function deleteRuns(modelType?: ModelType): Promise<void> {
       cursorReq.onerror = () => reject(cursorReq.error);
       cursorReq.onsuccess = () => {
         const cursor = cursorReq.result as IDBCursorWithValue | null;
-        if (!cursor) { resolve(); return; }
+        if (!cursor) {
+          resolve();
+          return;
+        }
         const val = cursor.value as EvaluationRun;
         if (val?.modelType === modelType) {
           (cursor as IDBCursorWithValue).delete();
@@ -294,17 +305,27 @@ export function recordEvaluation(run: EvaluationRun): void {
   ensureInit();
 
   if (!run || !run.id || !run.modelType || !run.timestamp) {
-    logger.warn('[modelEvaluation] recordEvaluation called with invalid run payload', { hasRun: !!run });
+    logger.warn('[modelEvaluation] recordEvaluation called with invalid run payload', {
+      hasRun: !!run,
+    });
     return;
   }
 
   // Ensure signatures are present; attempt to construct placeholders if missing
   if (!run.dataSignature) {
-    const placeholder = computeStableSignature('model-eval:data', { id: run.id, ts: run.timestamp, mt: run.modelType }, run.schemaVersion);
+    const placeholder = computeStableSignature(
+      'model-eval:data',
+      { id: run.id, ts: run.timestamp, mt: run.modelType },
+      run.schemaVersion,
+    );
     run = { ...run, dataSignature: placeholder };
   }
   if (!run.configSignature) {
-    const placeholder = computeStableSignature('model-eval:config', { id: run.id, task: run.taskType, mt: run.modelType }, run.schemaVersion);
+    const placeholder = computeStableSignature(
+      'model-eval:config',
+      { id: run.id, task: run.taskType, mt: run.modelType },
+      run.schemaVersion,
+    );
     run = { ...run, configSignature: placeholder };
   }
 
@@ -318,7 +339,10 @@ export function recordEvaluation(run: EvaluationRun): void {
       schemaVersion: run.schemaVersion,
     });
     if (isEvalCacheFresh(key)) {
-      logger.debug('[modelEvaluation] Skipping redundant evaluation record (cache fresh)', { key, ttlMs: evalCacheTTL });
+      logger.debug('[modelEvaluation] Skipping redundant evaluation record (cache fresh)', {
+        key,
+        ttlMs: evalCacheTTL,
+      });
       return;
     }
     const tags = [EVAL_CACHE_NAMESPACE, String(run.modelType), String(run.taskType)];
@@ -369,4 +393,3 @@ export function clearEvaluationHistory(modelType?: ModelType): void {
   // Fire-and-forget persistence clearing
   void deleteRuns(modelType);
 }
-

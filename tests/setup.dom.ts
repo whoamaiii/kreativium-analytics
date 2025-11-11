@@ -15,7 +15,8 @@ if (!('matchMedia' in window)) {
       addListener: (cb: (e: MediaQueryListEvent) => void) => listeners.add(cb), // deprecated
       removeListener: (cb: (e: MediaQueryListEvent) => void) => listeners.delete(cb), // deprecated
       addEventListener: (_: string, cb: (e: MediaQueryListEvent) => void) => listeners.add(cb),
-      removeEventListener: (_: string, cb: (e: MediaQueryListEvent) => void) => listeners.delete(cb),
+      removeEventListener: (_: string, cb: (e: MediaQueryListEvent) => void) =>
+        listeners.delete(cb),
       dispatchEvent: (ev: Event) => {
         listeners.forEach((cb) => cb(ev as MediaQueryListEvent));
         return true;
@@ -28,7 +29,8 @@ if (!('matchMedia' in window)) {
 // requestAnimationFrame polyfill to run timers immediately
 if (!('requestAnimationFrame' in window)) {
   // @ts-expect-error jsdom shim
-  window.requestAnimationFrame = (cb: FrameRequestCallback) => setTimeout(() => cb(Date.now()), 0) as unknown as number;
+  window.requestAnimationFrame = (cb: FrameRequestCallback) =>
+    setTimeout(() => cb(Date.now()), 0) as unknown as number;
   // @ts-expect-error jsdom shim
   window.cancelAnimationFrame = (id: number) => clearTimeout(id as unknown as any);
 }
@@ -47,7 +49,7 @@ if (!(HTMLCanvasElement.prototype as any).getContext) {
         clearRect: vi.fn(),
         getImageData: vi.fn(() => ({ data: new Uint8ClampedArray() })),
         putImageData: vi.fn(),
-        createImageData: vi.fn(() => ([] as unknown) as ImageData),
+        createImageData: vi.fn(() => [] as unknown as ImageData),
         setTransform: vi.fn(),
         drawImage: vi.fn(),
         save: vi.fn(),

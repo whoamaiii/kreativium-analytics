@@ -40,7 +40,3 @@ export type DetectorWorkerResult = {
 };
 
 export type DetectorWorkerReady = { type: 'ready' };
-
-
-
-

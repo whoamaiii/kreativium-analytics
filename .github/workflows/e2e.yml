@@ -2,9 +2,9 @@ name: E2E Tests (POC)
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   e2e:
@@ -39,4 +39,3 @@ jobs:
             playwright-report
             test-results
             **/AXE_VIOLATIONS*.log
-

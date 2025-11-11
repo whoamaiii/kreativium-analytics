@@ -5,7 +5,11 @@ import { dataStorage } from '@/lib/dataStorage';
 import { safeGet, safeSet } from '@/lib/storage';
 
 export class InterventionTemplateManager {
-  createFromAlert(alert: AlertEvent, templateId: string, overrides?: Partial<Intervention>): Intervention | null {
+  createFromAlert(
+    alert: AlertEvent,
+    templateId: string,
+    overrides?: Partial<Intervention>,
+  ): Intervention | null {
     const tpl = getInterventionById(templateId);
     if (!tpl) return null;
     const now = new Date();
@@ -48,7 +52,17 @@ export class InterventionTemplateManager {
    * Create a lightweight reminder entry tied to an alert without requiring a template.
    * Stored under per-student key and returns the saved reminder on success.
    */
-  createReminder(alert: AlertEvent, dateISO: string): { id: string; studentId: string; alertId: string; dueAt: string; title: string; createdAt: string } | null {
+  createReminder(
+    alert: AlertEvent,
+    dateISO: string,
+  ): {
+    id: string;
+    studentId: string;
+    alertId: string;
+    dueAt: string;
+    title: string;
+    createdAt: string;
+  } | null {
     try {
       const key = `reminders:list:${alert.studentId}`;
       const raw = safeGet(key);
@@ -66,9 +80,13 @@ export class InterventionTemplateManager {
       // Optionally broadcast an event for consumers
       try {
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('reminders:updated', { detail: { studentId: alert.studentId } }));
+          window.dispatchEvent(
+            new CustomEvent('reminders:updated', { detail: { studentId: alert.studentId } }),
+          );
         }
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
       return reminder;
     } catch {
       return null;
@@ -77,5 +95,3 @@ export class InterventionTemplateManager {
 }
 
 export default InterventionTemplateManager;
-
-

@@ -38,7 +38,9 @@ describe('EntryDetailsDrawer', () => {
 
     const noteSection = screen.getByText(/Notat/i).closest('section');
     expect(noteSection).toBeTruthy();
-    expect(within(noteSection as HTMLElement).getByText(/Kort presentasjon foran klassen/i)).toBeInTheDocument();
+    expect(
+      within(noteSection as HTMLElement).getByText(/Kort presentasjon foran klassen/i),
+    ).toBeInTheDocument();
 
     const envSection = screen.getByText(/Miljødetaljer/i).closest('section');
     expect(envSection).toBeTruthy();

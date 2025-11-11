@@ -33,8 +33,13 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function detectEWMATrend(series: TrendPoint[], options: EWMADetectorOptions = {}): DetectorResult | null {
-  const minPoints = Number.isFinite(options.minPoints) ? Math.max(5, Math.floor(options.minPoints as number)) : 8;
+export function detectEWMATrend(
+  series: TrendPoint[],
+  options: EWMADetectorOptions = {},
+): DetectorResult | null {
+  const minPoints = Number.isFinite(options.minPoints)
+    ? Math.max(5, Math.floor(options.minPoints as number))
+    : 8;
   if (!Array.isArray(series) || series.length < minPoints) {
     return null;
   }
@@ -72,7 +77,9 @@ export function detectEWMATrend(series: TrendPoint[], options: EWMADetectorOptio
   const baseMultiplier = computeEwmaControlMultiplier(options.targetFalseAlertsPerN ?? 336);
   const adaptive = options.adaptive !== false;
   const qualityScore = options.baselineQualityScore;
-  const zMultiplier = adaptive ? adjustMultiplierByBaselineQuality(baseMultiplier, qualityScore) : baseMultiplier;
+  const zMultiplier = adaptive
+    ? adjustMultiplierByBaselineQuality(baseMultiplier, qualityScore)
+    : baseMultiplier;
   const sigmaEwma = sigma0 * Math.sqrt(lambda / (2 - lambda));
   const upperLimit = baselineMedian + zMultiplier * sigmaEwma;
   const lowerLimit = baselineMedian - zMultiplier * sigmaEwma;
@@ -86,8 +93,12 @@ export function detectEWMATrend(series: TrendPoint[], options: EWMADetectorOptio
     ewma[i] = prev;
   }
 
-  const recentWindowSize = Number.isFinite(options.recentWindowSize) ? Math.max(3, Math.floor(options.recentWindowSize as number)) : 5;
-  const sustainedRequired = Number.isFinite(options.sustainedPointsRequired) ? Math.max(2, Math.floor(options.sustainedPointsRequired as number)) : 3;
+  const recentWindowSize = Number.isFinite(options.recentWindowSize)
+    ? Math.max(3, Math.floor(options.recentWindowSize as number))
+    : 5;
+  const sustainedRequired = Number.isFinite(options.sustainedPointsRequired)
+    ? Math.max(2, Math.floor(options.sustainedPointsRequired as number))
+    : 3;
   const recentLength = Math.min(recentWindowSize, ewma.length);
   let upperCount = 0;
   let lowerCount = 0;
@@ -132,9 +143,10 @@ export function detectEWMATrend(series: TrendPoint[], options: EWMADetectorOptio
     },
   ];
 
-  const impactHint = direction === 'increase'
-    ? 'Sustained increase relative to baseline'
-    : 'Sustained decrease relative to baseline';
+  const impactHint =
+    direction === 'increase'
+      ? 'Sustained increase relative to baseline'
+      : 'Sustained decrease relative to baseline';
 
   const ciLower = baselineMedian - zMultiplier * (sigmaEwma || 1);
   const ciUpper = baselineMedian + zMultiplier * (sigmaEwma || 1);

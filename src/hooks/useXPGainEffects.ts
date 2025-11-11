@@ -34,5 +34,3 @@ export function useXPGainEffects(xp: number, level: number): { delta: number; le
 
   return { delta, leveledUp: leveled };
 }
-
-

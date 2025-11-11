@@ -127,7 +127,11 @@ class AlertPerformanceMonitor {
     if (!this.lastSnapshot) return false;
     const next = this.snapshot();
     const prev = this.lastSnapshot;
-    const fields: Array<keyof PerfSnapshot> = ['alertsProcessingP95', 'sparklineGenP95', 'uiUpdateP95'];
+    const fields: Array<keyof PerfSnapshot> = [
+      'alertsProcessingP95',
+      'sparklineGenP95',
+      'uiUpdateP95',
+    ];
     for (const f of fields) {
       const a = (prev as any)[f] as number | null;
       const b = (next as any)[f] as number | null;
@@ -141,9 +145,11 @@ class AlertPerformanceMonitor {
 
   /** Utility timer wrapper for scoped measurements */
   startTimer(): () => number {
-    const t0 = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+    const t0 =
+      typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
     return () => {
-      const t1 = typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
+      const t1 =
+        typeof performance !== 'undefined' && performance.now ? performance.now() : Date.now();
       return t1 - t0;
     };
   }
@@ -151,7 +157,10 @@ class AlertPerformanceMonitor {
 
 export const alertPerf = new AlertPerformanceMonitor();
 
-export async function measureAsync<T>(label: 'alerts' | 'sparkline' | 'ui', fn: () => Promise<T>): Promise<T> {
+export async function measureAsync<T>(
+  label: 'alerts' | 'sparkline' | 'ui',
+  fn: () => Promise<T>,
+): Promise<T> {
   const stop = alertPerf.startTimer();
   try {
     const result = await fn();
@@ -171,9 +180,3 @@ export async function measureAsync<T>(label: 'alerts' | 'sparkline' | 'ui', fn: 
 }
 
 export type { PerfSnapshot };
-
-
-
-
-
-

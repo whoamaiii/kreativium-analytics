@@ -13,7 +13,12 @@ function makeTrackingSeries(values: number[], timestamps: number[]): TrackingEnt
       studentId: 's1',
       timestamp: new Date(timestamps[i]),
       emotions: [
-        { id: `e-${i}`, emotion: 'stress', intensity: Math.max(0, values[i]), timestamp: new Date(timestamps[i]) } as EmotionEntry,
+        {
+          id: `e-${i}`,
+          emotion: 'stress',
+          intensity: Math.max(0, values[i]),
+          timestamp: new Date(timestamps[i]),
+        } as EmotionEntry,
       ],
       sensoryInputs: [] as unknown as SensoryEntry[],
       environmentalData: { roomConditions: { noiseLevel: 40 + (i % 5) } },
@@ -32,7 +37,12 @@ describe('Detectors integration with BaselineService', () => {
     const tracking = makeTrackingSeries(values, timestamps);
 
     const svc = new BaselineService();
-    const baseline = svc.updateBaseline({ studentId: 's1', emotions: tracking.flatMap(t => t.emotions), sensory: [], tracking });
+    const baseline = svc.updateBaseline({
+      studentId: 's1',
+      emotions: tracking.flatMap((t) => t.emotions),
+      sensory: [],
+      tracking,
+    });
 
     const series = toTrendSeries(values, timestamps[0], 60_000);
     const ewmaRes = detectEWMATrend(series, {
@@ -51,5 +61,3 @@ describe('Detectors integration with BaselineService', () => {
     expect(cusumRes === null || cusumRes.confidence >= 0.65).toBeTruthy();
   });
 });
-
-

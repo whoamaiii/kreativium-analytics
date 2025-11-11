@@ -1,8 +1,14 @@
 // Enhanced mock data seeding utilities with realistic variation
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry, EnvironmentalEntry } from "@/types/student";
-import { dataStorage } from "./dataStorage";
-import { POC_MODE } from "./env";
-import { logger } from "./logger";
+import {
+  Student,
+  TrackingEntry,
+  EmotionEntry,
+  SensoryEntry,
+  EnvironmentalEntry,
+} from '@/types/student';
+import { dataStorage } from './dataStorage';
+import { POC_MODE } from './env';
+import { logger } from './logger';
 
 type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
@@ -17,7 +23,7 @@ const DEFAULT_SEED_OPTIONS: SeedOptions = {
   days: 30,
   entriesPerDayRange: [1, 3],
   includeEnvironmental: true,
-  weekendPatterns: true
+  weekendPatterns: true,
 };
 
 const SUB_EMOTIONS: Record<string, string[]> = {
@@ -30,10 +36,18 @@ const SUB_EMOTIONS: Record<string, string[]> = {
   Tired: ['Sleepy', 'Low-energy'],
   Overwhelmed: ['Overstimulated', 'Flooded'],
   Content: ['Satisfied', 'At-ease'],
-  Curious: ['Interested', 'Exploring']
+  Curious: ['Interested', 'Exploring'],
 };
 
-const SENSORY_TYPES = ['Visual', 'Auditory', 'Tactile', 'Vestibular', 'Proprioceptive', 'Olfactory', 'Gustatory'] as const;
+const SENSORY_TYPES = [
+  'Visual',
+  'Auditory',
+  'Tactile',
+  'Vestibular',
+  'Proprioceptive',
+  'Olfactory',
+  'Gustatory',
+] as const;
 
 const SENSORY_RESPONSES: Record<(typeof SENSORY_TYPES)[number], string[]> = {
   Visual: ['Looked closely', 'Avoided gaze', 'Tracked movement'],
@@ -42,21 +56,42 @@ const SENSORY_RESPONSES: Record<(typeof SENSORY_TYPES)[number], string[]> = {
   Vestibular: ['Rocked in chair', 'Spun briefly', 'Sought swinging'],
   Proprioceptive: ['Pushed against wall', 'Squeezed putty', 'Carried heavy books'],
   Olfactory: ['Noticed smell', 'Avoided odor', 'Sought scented object'],
-  Gustatory: ['Chewed gum', 'Sipped water', 'Tasted snack']
+  Gustatory: ['Chewed gum', 'Sipped water', 'Tasted snack'],
 };
 
-const ENVIRONMENTS = ['classroom', 'playground', 'lunchroom', 'hallway', 'home', 'therapy', 'library'] as const;
+const ENVIRONMENTS = [
+  'classroom',
+  'playground',
+  'lunchroom',
+  'hallway',
+  'home',
+  'therapy',
+  'library',
+] as const;
 type ClassroomActivity = 'instruction' | 'transition' | 'free-time' | 'testing' | 'group-work';
-const CLASSROOM_ACTIVITIES: ClassroomActivity[] = ['instruction', 'transition', 'free-time', 'testing', 'group-work'];
+const CLASSROOM_ACTIVITIES: ClassroomActivity[] = [
+  'instruction',
+  'transition',
+  'free-time',
+  'testing',
+  'group-work',
+];
 
 const seededRand = (() => {
   let seed = 1337;
   const rand = () => {
     // xorshift32
-    seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
-    return (seed >>> 0) / 0xFFFFFFFF;
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    return (seed >>> 0) / 0xffffffff;
   };
-  return { setSeed: (s: number) => { seed = s; }, rand };
+  return {
+    setSeed: (s: number) => {
+      seed = s;
+    },
+    rand,
+  };
 })();
 
 function randomInt(min: number, max: number): number {
@@ -113,7 +148,11 @@ function chooseEmotionsForTimeOfDay(tod: TimeOfDay): string[] {
   }
 }
 
-function baseIntensityForContext(tod: TimeOfDay, env: (typeof ENVIRONMENTS)[number], isWeekend: boolean): number {
+function baseIntensityForContext(
+  tod: TimeOfDay,
+  env: (typeof ENVIRONMENTS)[number],
+  isWeekend: boolean,
+): number {
   let base = 3;
   if (tod === 'afternoon') base += 0.5;
   if (tod === 'evening') base -= 0.5;
@@ -122,9 +161,25 @@ function baseIntensityForContext(tod: TimeOfDay, env: (typeof ENVIRONMENTS)[numb
   return clamp(Math.round(base + randomFloat(-1, 1)), 1, 5);
 }
 
-function buildEnvironmentalData(timestamp: Date, env: (typeof ENVIRONMENTS)[number], tod: TimeOfDay): EnvironmentalEntry {
-  const noiseBase = env === 'lunchroom' || env === 'playground' ? randomInt(6, 9) : env === 'library' ? randomInt(1, 3) : randomInt(3, 6);
-  const lighting = env === 'classroom' ? (tod === 'morning' ? 'natural' : 'fluorescent') : env === 'playground' ? 'sunlight' : 'mixed';
+function buildEnvironmentalData(
+  timestamp: Date,
+  env: (typeof ENVIRONMENTS)[number],
+  tod: TimeOfDay,
+): EnvironmentalEntry {
+  const noiseBase =
+    env === 'lunchroom' || env === 'playground'
+      ? randomInt(6, 9)
+      : env === 'library'
+        ? randomInt(1, 3)
+        : randomInt(3, 6);
+  const lighting =
+    env === 'classroom'
+      ? tod === 'morning'
+        ? 'natural'
+        : 'fluorescent'
+      : env === 'playground'
+        ? 'sunlight'
+        : 'mixed';
   const activity = env === 'classroom' ? pickOne(CLASSROOM_ACTIVITIES) : undefined;
   const timeOfDay = tod;
   type WeatherCondition = NonNullable<EnvironmentalEntry['weather']>['condition'];
@@ -138,22 +193,30 @@ function buildEnvironmentalData(timestamp: Date, env: (typeof ENVIRONMENTS)[numb
       temperature: temp,
       humidity: randomInt(30, 60),
       lighting,
-      noiseLevel: noiseBase
+      noiseLevel: noiseBase,
     },
     weather: {
       condition: pickOne(weatherKinds),
       temperature: temp,
-      pressure: randomInt(990, 1025)
+      pressure: randomInt(990, 1025),
     },
-    classroom: activity ? {
-      activity,
-      studentCount: activity === 'testing' ? randomInt(15, 20) : randomInt(20, 30),
-      timeOfDay
-    } : undefined
+    classroom: activity
+      ? {
+          activity,
+          studentCount: activity === 'testing' ? randomInt(15, 20) : randomInt(20, 30),
+          timeOfDay,
+        }
+      : undefined,
   };
 }
 
-function makeEmotion(id: string, studentId: string, emotion: string, timestamp: Date, intensity: number): EmotionEntry {
+function makeEmotion(
+  id: string,
+  studentId: string,
+  emotion: string,
+  timestamp: Date,
+  intensity: number,
+): EmotionEntry {
   const subs = SUB_EMOTIONS[emotion] || [];
   const subEmotion = subs.length ? pickOne(subs) : undefined;
   const patterns: EmotionEntry['escalationPattern'][] = ['sudden', 'gradual', 'unknown'];
@@ -165,13 +228,22 @@ function makeEmotion(id: string, studentId: string, emotion: string, timestamp: 
     intensity,
     duration: randomInt(3, 20),
     timestamp,
-    triggers: pickSome(['noise', 'transition', 'reward', 'task-change', 'peer-interaction', 'hunger', 'fatigue'], [0, 2]),
+    triggers: pickSome(
+      ['noise', 'transition', 'reward', 'task-change', 'peer-interaction', 'hunger', 'fatigue'],
+      [0, 2],
+    ),
     context: 'observed during routine activity',
-    escalationPattern: pickOne(patterns)
+    escalationPattern: pickOne(patterns),
   };
 }
 
-function makeSensory(id: string, studentId: string, type: (typeof SENSORY_TYPES)[number], timestamp: Date, intensity: number): SensoryEntry {
+function makeSensory(
+  id: string,
+  studentId: string,
+  type: (typeof SENSORY_TYPES)[number],
+  timestamp: Date,
+  intensity: number,
+): SensoryEntry {
   const response = pickOne(SENSORY_RESPONSES[type]);
   return {
     id,
@@ -186,31 +258,44 @@ function makeSensory(id: string, studentId: string, type: (typeof SENSORY_TYPES)
     notes: 'auto-generated demo',
     environment: pickOne(ENVIRONMENTS as unknown as string[]),
     context: 'session observation',
-    copingStrategies: pickSome(['deep-breathing', 'quiet-space', 'movement-break', 'fidget-tool', 'noise-cancelling'], [0, 2])
+    copingStrategies: pickSome(
+      ['deep-breathing', 'quiet-space', 'movement-break', 'fidget-tool', 'noise-cancelling'],
+      [0, 2],
+    ),
   };
 }
 
 /**
  * Enhanced seeding with realistic variation over multiple days
  */
-export const seedMinimalDemoData = async (studentId: string, opts?: Partial<SeedOptions>): Promise<void> => {
+export const seedMinimalDemoData = async (
+  studentId: string,
+  opts?: Partial<SeedOptions>,
+): Promise<void> => {
   try {
     const options: SeedOptions = { ...DEFAULT_SEED_OPTIONS, ...(opts || {}) };
     const now = new Date();
     if (POC_MODE) {
       // Stabilize randomness per session for consistent demo outputs
-      const hash = Array.from(studentId).reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0) ^ now.getFullYear();
-      seededRand.setSeed(0xDEADBEEF ^ hash);
+      const hash =
+        Array.from(studentId).reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 0) ^
+        now.getFullYear();
+      seededRand.setSeed(0xdeadbeef ^ hash);
     }
 
     const student: Student = {
       id: studentId,
-      name: studentId.replace(/^mock_?/, "").split(/[_-]/).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Demo Student",
-      dateOfBirth: "2015-01-01",
-      grade: "3",
+      name:
+        studentId
+          .replace(/^mock_?/, '')
+          .split(/[_-]/)
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ') || 'Demo Student',
+      dateOfBirth: '2015-01-01',
+      grade: '3',
       createdAt: now,
       lastUpdated: now,
-      version: 1
+      version: 1,
     };
     dataStorage.saveStudent(student);
 
@@ -230,18 +315,34 @@ export const seedMinimalDemoData = async (studentId: string, opts?: Partial<Seed
         timestamp.setMinutes(timestamp.getMinutes() + randomInt(-15, 15));
 
         const env = pickOne(ENVIRONMENTS);
-        const baseIntensity = baseIntensityForContext(tod, env, options.weekendPatterns && isWeekend);
+        const baseIntensity = baseIntensityForContext(
+          tod,
+          env,
+          options.weekendPatterns && isWeekend,
+        );
 
         const emotionPool = chooseEmotionsForTimeOfDay(tod);
         const emotionNames = pickSome(emotionPool as unknown as string[], [1, 2]);
         const emotions: EmotionEntry[] = emotionNames.map((name, idx) =>
-          makeEmotion(`${studentId}_e_${d}_${i}_${idx}`, student.id, name, timestamp, clamp(baseIntensity + randomInt(-1, 1), 1, 5))
+          makeEmotion(
+            `${studentId}_e_${d}_${i}_${idx}`,
+            student.id,
+            name,
+            timestamp,
+            clamp(baseIntensity + randomInt(-1, 1), 1, 5),
+          ),
         );
 
         const sensoryPool = SENSORY_TYPES as unknown as string[];
         const sensoryNames = pickSome(sensoryPool, [1, 2]) as (typeof SENSORY_TYPES)[number][];
         const sensoryInputs: SensoryEntry[] = sensoryNames.map((typeName, idx) =>
-          makeSensory(`${studentId}_s_${d}_${i}_${idx}`, student.id, typeName, timestamp, clamp(baseIntensity + randomInt(-1, 1), 1, 5))
+          makeSensory(
+            `${studentId}_s_${d}_${i}_${idx}`,
+            student.id,
+            typeName,
+            timestamp,
+            clamp(baseIntensity + randomInt(-1, 1), 1, 5),
+          ),
         );
 
         const environmentalData: EnvironmentalEntry | undefined = options.includeEnvironmental
@@ -256,8 +357,8 @@ export const seedMinimalDemoData = async (studentId: string, opts?: Partial<Seed
           sensoryInputs,
           environmentalData,
           generalNotes: `Observed during ${tod} in ${env}`,
-          notes: emotions.map(e => e.emotion).join(', '),
-          version: 1
+          notes: emotions.map((e) => e.emotion).join(', '),
+          version: 1,
         };
 
         dataStorage.saveTrackingEntry(entry);
@@ -265,9 +366,13 @@ export const seedMinimalDemoData = async (studentId: string, opts?: Partial<Seed
     }
 
     const totalEntries = dataStorage.getEntriesForStudent(studentId).length;
-    logger.info("seedMinimalDemoData: seeded enhanced demo data", { studentId, studentName: student.name, entriesCount: totalEntries });
+    logger.info('seedMinimalDemoData: seeded enhanced demo data', {
+      studentId,
+      studentName: student.name,
+      entriesCount: totalEntries,
+    });
   } catch (error) {
-    logger.error("seedMinimalDemoData: failed to seed demo data", { studentId, error });
+    logger.error('seedMinimalDemoData: failed to seed demo data', { studentId, error });
     throw error;
   }
 };

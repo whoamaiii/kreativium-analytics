@@ -11,7 +11,12 @@ interface StudentsGridProps {
 export const StudentsGrid = ({ students, isLoading, onView, onTrack }: StudentsGridProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 motion-safe:animate-fade-in" data-animation-delay="0.7s" aria-busy="true" aria-live="polite">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 motion-safe:animate-fade-in"
+        data-animation-delay="0.7s"
+        aria-busy="true"
+        aria-live="polite"
+      >
         {[...Array(3)].map((_, i) => (
           <div key={i} className="glass-card rounded-3xl p-6 animate-pulse" aria-hidden="true">
             <div className="flex items-start gap-4 mb-4">
@@ -37,7 +42,11 @@ export const StudentsGrid = ({ students, isLoading, onView, onTrack }: StudentsG
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in" data-animation-delay="0.7s" role="list">
+    <div
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in"
+      data-animation-delay="0.7s"
+      role="list"
+    >
       {students.map((student, index) => (
         <PremiumStudentCard
           key={student.id}
@@ -50,6 +59,3 @@ export const StudentsGrid = ({ students, isLoading, onView, onTrack }: StudentsG
     </div>
   );
 };
-
-
-

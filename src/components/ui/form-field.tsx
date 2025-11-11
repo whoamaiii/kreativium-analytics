@@ -7,7 +7,14 @@
  * @module components/ui/form-field
  */
 
-import { memo, useId, cloneElement, isValidElement, type ReactElement, type ReactNode } from 'react';
+import {
+  memo,
+  useId,
+  cloneElement,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
@@ -62,10 +69,8 @@ const FormFieldComponent = ({
     ? cloneElement(children as ReactElement<any>, {
         id: fieldId,
         'aria-invalid': error ? 'true' : undefined,
-        'aria-describedby': cn(
-          error ? errorId : undefined,
-          helpText ? helpTextId : undefined
-        ) || undefined,
+        'aria-describedby':
+          cn(error ? errorId : undefined, helpText ? helpTextId : undefined) || undefined,
       })
     : children;
 
@@ -83,20 +88,13 @@ const FormFieldComponent = ({
       {childElement}
 
       {error && (
-        <p
-          id={errorId}
-          className="text-sm text-destructive font-medium"
-          role="alert"
-        >
+        <p id={errorId} className="text-sm text-destructive font-medium" role="alert">
           {error}
         </p>
       )}
 
       {helpText && !error && (
-        <p
-          id={helpTextId}
-          className="text-sm text-muted-foreground"
-        >
+        <p id={helpTextId} className="text-sm text-muted-foreground">
           {helpText}
         </p>
       )}

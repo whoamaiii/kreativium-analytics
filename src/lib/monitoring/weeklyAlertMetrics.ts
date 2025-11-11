@@ -82,7 +82,10 @@ function toWeekEnd(start: Date): Date {
 
 // centralized in utils/hash
 
-function calculateGroupMetrics(entries: AlertTelemetryEntry[], groupKey: string): GroupMetrics | null {
+function calculateGroupMetrics(
+  entries: AlertTelemetryEntry[],
+  groupKey: string,
+): GroupMetrics | null {
   const filtered = entries.filter((entry) => entry.groupAssignments?.includes(groupKey));
   if (!filtered.length) return null;
   const withFeedback = filtered.filter((e) => e.feedback?.relevant !== undefined);
@@ -209,12 +212,16 @@ export class WeeklyAlertMetrics {
     writeJSON(GOVERNANCE_AUDIT_KEY, list);
   }
 
-  listGovernanceDecisions(filter?: { policy?: string; alertId?: string }): GovernanceDecisionRecord[] {
+  listGovernanceDecisions(filter?: {
+    policy?: string;
+    alertId?: string;
+  }): GovernanceDecisionRecord[] {
     const list = readJSON<GovernanceDecisionRecord[]>(GOVERNANCE_AUDIT_KEY) ?? [];
     if (!filter) return list;
-    return list.filter((rec) =>
-      (filter.policy ? rec.policy === filter.policy : true) &&
-      (filter.alertId ? rec.alertId === filter.alertId : true)
+    return list.filter(
+      (rec) =>
+        (filter.policy ? rec.policy === filter.policy : true) &&
+        (filter.alertId ? rec.alertId === filter.alertId : true),
     );
   }
 
@@ -231,17 +238,26 @@ export class WeeklyAlertMetrics {
     const withAck = entries.filter((e) => e.acknowledgedAt);
     const ackRate = entries.length ? withAck.length / entries.length : undefined;
     const avgAckLatencyMs = withAck.length
-      ? Math.round(withAck
-        .map((e) => new Date(e.acknowledgedAt as string).getTime() - new Date(e.createdAt).getTime())
-        .reduce((a, b) => a + b, 0) / withAck.length)
+      ? Math.round(
+          withAck
+            .map(
+              (e) =>
+                new Date(e.acknowledgedAt as string).getTime() - new Date(e.createdAt).getTime(),
+            )
+            .reduce((a, b) => a + b, 0) / withAck.length,
+        )
       : undefined;
 
     const withResolve = entries.filter((e) => e.resolvedAt);
     const resolveRate = entries.length ? withResolve.length / entries.length : undefined;
     const avgResolveLatencyMs = withResolve.length
-      ? Math.round(withResolve
-        .map((e) => new Date(e.resolvedAt as string).getTime() - new Date(e.createdAt).getTime())
-        .reduce((a, b) => a + b, 0) / withResolve.length)
+      ? Math.round(
+          withResolve
+            .map(
+              (e) => new Date(e.resolvedAt as string).getTime() - new Date(e.createdAt).getTime(),
+            )
+            .reduce((a, b) => a + b, 0) / withResolve.length,
+        )
       : undefined;
 
     return { alertsPerHour, ackRate, resolveRate, avgAckLatencyMs, avgResolveLatencyMs };
@@ -251,17 +267,33 @@ export class WeeklyAlertMetrics {
   // Enhancements: Export utilities
   // ----------------------------------
   exportReports(format: 'json' | 'csv' = 'json', range?: { start?: string; end?: string }): string {
-    const reports = WeeklyAlertMetrics.listReports().filter((r) =>
-      (!range?.start || r.weekStart >= range.start) && (!range?.end || r.weekStart <= range.end)
+    const reports = WeeklyAlertMetrics.listReports().filter(
+      (r) =>
+        (!range?.start || r.weekStart >= range.start) && (!range?.end || r.weekStart <= range.end),
     );
     if (format === 'json') return JSON.stringify(reports, null, 2);
     const header = [
-      'weekStart','weekEnd','totalCreated','totalAcknowledged','totalResolved','ppvEstimate','falseAlertsPerStudentDay','helpfulnessAvg'
+      'weekStart',
+      'weekEnd',
+      'totalCreated',
+      'totalAcknowledged',
+      'totalResolved',
+      'ppvEstimate',
+      'falseAlertsPerStudentDay',
+      'helpfulnessAvg',
     ];
-    const rows = reports.map((r) => [
-      r.weekStart, r.weekEnd, r.totalCreated, r.totalAcknowledged, r.totalResolved,
-      r.ppvEstimate ?? '', r.falseAlertsPerStudentDay ?? '', r.helpfulnessAvg ?? ''
-    ].join(','));
+    const rows = reports.map((r) =>
+      [
+        r.weekStart,
+        r.weekEnd,
+        r.totalCreated,
+        r.totalAcknowledged,
+        r.totalResolved,
+        r.ppvEstimate ?? '',
+        r.falseAlertsPerStudentDay ?? '',
+        r.helpfulnessAvg ?? '',
+      ].join(','),
+    );
     return [header.join(','), ...rows].join('\n');
   }
 
@@ -271,19 +303,37 @@ export class WeeklyAlertMetrics {
     const entries = this.telemetry.getEntriesBetween(start, end);
     if (format === 'json') return JSON.stringify(entries, null, 2);
     const header = [
-      'alertId','studentHash','createdAt','acknowledgedAt','resolvedAt','predictedRelevance','experimentKey','experimentVariant'
+      'alertId',
+      'studentHash',
+      'createdAt',
+      'acknowledgedAt',
+      'resolvedAt',
+      'predictedRelevance',
+      'experimentKey',
+      'experimentVariant',
     ];
-    const rows = entries.map((e) => [
-      e.alertId, e.studentHash, e.createdAt, e.acknowledgedAt ?? '', e.resolvedAt ?? '',
-      e.predictedRelevance ?? '', e.experimentKey ?? '', e.experimentVariant ?? ''
-    ].join(','));
+    const rows = entries.map((e) =>
+      [
+        e.alertId,
+        e.studentHash,
+        e.createdAt,
+        e.acknowledgedAt ?? '',
+        e.resolvedAt ?? '',
+        e.predictedRelevance ?? '',
+        e.experimentKey ?? '',
+        e.experimentVariant ?? '',
+      ].join(','),
+    );
     return [header.join(','), ...rows].join('\n');
   }
 
   // ----------------------------------
   // Enhancements: Retention and cleanup
   // ----------------------------------
-  cleanupRetention(policy: { maxEntryAgeDays?: number; maxReports?: number }): { prunedEntries: number; prunedReports: number } {
+  cleanupRetention(policy: { maxEntryAgeDays?: number; maxReports?: number }): {
+    prunedEntries: number;
+    prunedReports: number;
+  } {
     let prunedEntries = 0;
     let prunedReports = 0;
 
@@ -303,7 +353,9 @@ export class WeeklyAlertMetrics {
       const index = readJSON<string[]>(REPORT_INDEX_KEY) ?? [];
       if (index.length > policy.maxReports) {
         const toDelete = index.slice(0, index.length - policy.maxReports);
-        toDelete.forEach((wk) => writeJSON(reportKey(wk), null as unknown as WeeklyEvaluationReport));
+        toDelete.forEach((wk) =>
+          writeJSON(reportKey(wk), null as unknown as WeeklyEvaluationReport),
+        );
         const kept = index.slice(index.length - policy.maxReports);
         writeJSON(REPORT_INDEX_KEY, kept);
         prunedReports = toDelete.length;
@@ -316,7 +368,11 @@ export class WeeklyAlertMetrics {
   // ----------------------------------
   // Enhancements: Health monitoring
   // ----------------------------------
-  getHealthStatus(): { status: 'ok' | 'degraded' | 'empty'; lastReportAt?: string; totals?: { entries: number; reports: number } } {
+  getHealthStatus(): {
+    status: 'ok' | 'degraded' | 'empty';
+    lastReportAt?: string;
+    totals?: { entries: number; reports: number };
+  } {
     const entries = this.telemetry.getEntries();
     const reports = WeeklyAlertMetrics.listReports();
     if (entries.length === 0 && reports.length === 0) return { status: 'empty' };
@@ -328,11 +384,19 @@ export class WeeklyAlertMetrics {
   // ----------------------------------
   // Enhancements: Historical batch processing
   // ----------------------------------
-  runHistoricalBatch(range: { start: Date; end: Date; students?: Student[] }): WeeklyEvaluationReport[] {
+  runHistoricalBatch(range: {
+    start: Date;
+    end: Date;
+    students?: Student[];
+  }): WeeklyEvaluationReport[] {
     const out: WeeklyEvaluationReport[] = [];
     const start = toWeekStart(range.start);
     const end = toWeekStart(range.end);
-    for (let cursor = new Date(start); cursor <= end; cursor = new Date(cursor.getTime() + 7 * 24 * 3600_000)) {
+    for (
+      let cursor = new Date(start);
+      cursor <= end;
+      cursor = new Date(cursor.getTime() + 7 * 24 * 3600_000)
+    ) {
       out.push(this.runWeeklyEvaluation({ weekContaining: cursor, students: range.students }));
     }
     return out;
@@ -346,8 +410,9 @@ export class WeeklyAlertMetrics {
   }
 
   static listReportsRange(range: { start?: string; end?: string }): WeeklyEvaluationReport[] {
-    return WeeklyAlertMetrics.listReports().filter((r) =>
-      (!range.start || r.weekStart >= range.start) && (!range.end || r.weekStart <= range.end)
+    return WeeklyAlertMetrics.listReports().filter(
+      (r) =>
+        (!range.start || r.weekStart >= range.start) && (!range.end || r.weekStart <= range.end),
     );
   }
 }

@@ -33,6 +33,7 @@ src/lib/alerts/
 ## Method Flow Comparison
 
 ### BEFORE: Direct Calls
+
 ```
 runDetection()
     ↓
@@ -48,6 +49,7 @@ this.buildAlert()
 ```
 
 ### AFTER: Delegation Pattern
+
 ```
 runDetection()
     ↓
@@ -68,6 +70,7 @@ this.buildAlert()
 ## Code Comparison: Constructor
 
 ### BEFORE (19 lines)
+
 ```typescript
 constructor(opts?: { ... }) {
   this.baselineService = opts?.baselineService ?? new BaselineService();
@@ -86,6 +89,7 @@ constructor(opts?: { ... }) {
 ```
 
 ### AFTER (24 lines - slightly longer but cleaner separation)
+
 ```typescript
 constructor(opts?: { ... }) {
   this.baselineService = opts?.baselineService ?? new BaselineService();
@@ -116,6 +120,7 @@ constructor(opts?: { ... }) {
 ## Code Comparison: Data Building
 
 ### BEFORE (19 lines in engine)
+
 ```typescript
 private buildEmotionSeries(emotions: EmotionEntry[]): Map<string, TrendPoint[]> {
   const map = new Map<string, TrendPoint[]>();
@@ -142,6 +147,7 @@ const emotionSeries = this.buildEmotionSeries(input.emotions);
 ```
 
 ### AFTER (1 line in engine, 19 lines in generator)
+
 ```typescript
 // In runDetection:
 const emotionSeries = this.generator.buildEmotionSeries(input.emotions);
@@ -154,6 +160,7 @@ const emotionSeries = this.generator.buildEmotionSeries(input.emotions);
 ## Code Comparison: Candidate Building
 
 ### BEFORE (68 lines in engine)
+
 ```typescript
 private buildEmotionCandidates(args: {
   emotionSeries: Map<string, TrendPoint[]>;
@@ -194,6 +201,7 @@ const emotionCandidates = this.buildEmotionCandidates({
 ```
 
 ### AFTER (7 lines in engine, 68 lines in generator)
+
 ```typescript
 // In runDetection:
 const emotionCandidates = this.generator.buildEmotionCandidates({
@@ -214,6 +222,7 @@ const emotionCandidates = this.generator.buildEmotionCandidates({
 ## Method Count Comparison
 
 ### BEFORE
+
 ```
 AlertDetectionEngine
 ├── Public Methods (2)
@@ -241,6 +250,7 @@ AlertDetectionEngine
 ```
 
 ### AFTER
+
 ```
 AlertDetectionEngine
 ├── Public Methods (2)
@@ -273,6 +283,7 @@ CandidateGenerator (already exists)
 ```
 
 **Metrics**:
+
 - Engine methods: 20 → 7 (13 removed)
 - Total complexity: Unchanged (logic moved, not deleted)
 - Separation of concerns: Improved
@@ -282,6 +293,7 @@ CandidateGenerator (already exists)
 ## Import Comparison
 
 ### BEFORE (33 imports)
+
 ```typescript
 import { BaselineService, StudentBaseline } from '@/lib/alerts/baseline';
 import { AlertPolicies } from '@/lib/alerts/policies';
@@ -305,6 +317,7 @@ import { aggregateDetectorResults, ... } from '@/lib/alerts/detection';
 ```
 
 ### AFTER (29 imports - 4 fewer)
+
 ```typescript
 import { BaselineService, StudentBaseline } from '@/lib/alerts/baseline';
 import { AlertPolicies } from '@/lib/alerts/policies';
@@ -327,6 +340,7 @@ import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';          // ←
 ```
 
 **Changes**:
+
 - Removed 6 detector function imports
 - Added 2 new imports (CandidateGenerator, MAX_ALERT_SERIES_LENGTH)
 - Changed 3 to type-only imports
@@ -337,6 +351,7 @@ import { MAX_ALERT_SERIES_LENGTH } from '@/constants/analytics';          // ←
 ## Test File Comparison
 
 ### BEFORE (339 lines)
+
 ```typescript
 describe('AlertDetectionEngine', () => {
   // Lines 71-138: Public API tests
@@ -366,23 +381,24 @@ describe('AlertDetectionEngine candidate builders', () => {
 ```
 
 ### AFTER (252 lines - 87 lines removed)
+
 ```typescript
 describe('AlertDetectionEngine', () => {
   // Lines 71-138: Public API tests (UNCHANGED)
-  it('orchestrates detectors and returns alerts with expected metadata')
-  it('applies the scoring formula correctly')
-  it('ranks sources up to S1–S3 when present')
-  it('handles large datasets without errors (performance sanity)')
+  it('orchestrates detectors and returns alerts with expected metadata');
+  it('applies the scoring formula correctly');
+  it('ranks sources up to S1–S3 when present');
+  it('handles large datasets without errors (performance sanity)');
 });
 
 describe('AlertDetectionEngine orchestration', () => {
   // Lines 165-250: More public API tests (UNCHANGED)
-  it('scores alerts with the correct aggregate formula')
-  it('applies baseline and experiment-aware threshold scaling')
-  it('ranks sources S1-S3 when multiple detectors contribute')
-  it('handles association data and produces context association alerts')
-  it('includes Tau-U intervention outcomes')
-  it('gracefully handles detector errors without failing the pipeline')
+  it('scores alerts with the correct aggregate formula');
+  it('applies baseline and experiment-aware threshold scaling');
+  it('ranks sources S1-S3 when multiple detectors contribute');
+  it('handles association data and produces context association alerts');
+  it('includes Tau-U intervention outcomes');
+  it('gracefully handles detector errors without failing the pipeline');
 });
 
 // Lines 252-338 DELETED
@@ -396,6 +412,7 @@ describe('AlertDetectionEngine orchestration', () => {
 ## Complexity Comparison
 
 ### Cyclomatic Complexity
+
 ```
 BEFORE:
 engine.ts total: ~85 (high complexity)
@@ -419,6 +436,7 @@ candidateGenerator.ts: ~55 (moderate complexity)
 ```
 
 ### Maintainability
+
 ```
 BEFORE:
 - Single 832-line file
@@ -438,6 +456,7 @@ AFTER:
 ## Dependency Graph
 
 ### BEFORE
+
 ```
 AlertDetectionEngine
     ├── depends on → BaselineService
@@ -456,6 +475,7 @@ CandidateGenerator (UNUSED)
 ```
 
 ### AFTER
+
 ```
 AlertDetectionEngine
     ├── depends on → BaselineService
@@ -476,6 +496,7 @@ CandidateGenerator
 ```
 
 **Benefits**:
+
 - Clearer dependency hierarchy
 - Engine no longer directly depends on detectors
 - Generator is reusable (could be used by other engines)
@@ -485,6 +506,7 @@ CandidateGenerator
 ## Performance Profile
 
 ### Memory
+
 ```
 BEFORE:
 - Engine instance: ~2KB
@@ -501,6 +523,7 @@ Impact: +60% memory, but negligible in absolute terms
 ```
 
 ### CPU
+
 ```
 BEFORE:
 - Direct method calls: ~0 overhead
@@ -515,6 +538,7 @@ Impact: <0.01% slower, negligible
 ```
 
 ### Bundle Size (TypeScript compilation)
+
 ```
 BEFORE:
 - engine.ts compiles to: ~45KB JS
@@ -533,18 +557,18 @@ Impact: -31% bundle size, better tree-shaking
 
 ## Summary Statistics
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| **engine.ts lines** | 832 | ~380 | -452 (-54%) |
-| **engine.ts methods** | 20 | 7 | -13 (-65%) |
-| **test file lines** | 339 | ~252 | -87 (-26%) |
-| **total imports** | 33 | 29 | -4 (-12%) |
-| **type-only imports** | 1 | 4 | +3 |
-| **complexity (engine)** | ~85 | ~30 | -55 (-65%) |
-| **bundle size** | 45KB | 20KB | -25KB (-56%) |
-| **dependencies (engine)** | 14 | 6 | -8 (-57%) |
-| **public API changes** | 0 | 0 | None |
-| **breaking changes** | 0 | 0 | None |
+| Metric                    | Before | After | Change       |
+| ------------------------- | ------ | ----- | ------------ |
+| **engine.ts lines**       | 832    | ~380  | -452 (-54%)  |
+| **engine.ts methods**     | 20     | 7     | -13 (-65%)   |
+| **test file lines**       | 339    | ~252  | -87 (-26%)   |
+| **total imports**         | 33     | 29    | -4 (-12%)    |
+| **type-only imports**     | 1      | 4     | +3           |
+| **complexity (engine)**   | ~85    | ~30   | -55 (-65%)   |
+| **bundle size**           | 45KB   | 20KB  | -25KB (-56%) |
+| **dependencies (engine)** | 14     | 6     | -8 (-57%)    |
+| **public API changes**    | 0      | 0     | None         |
+| **breaking changes**      | 0      | 0     | None         |
 
 ---
 

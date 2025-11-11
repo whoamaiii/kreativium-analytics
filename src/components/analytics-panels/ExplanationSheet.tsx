@@ -39,18 +39,26 @@ export function ExplanationSheet({
   chatMessages = [],
   onChatChange,
   sourcesRich,
-  dataset
+  dataset,
 }: ExplanationSheetProps): React.ReactElement {
   const enableV2 = React.useMemo(() => {
-    try { return !!analyticsConfig.getConfig().features?.explanationV2; } catch { return false; }
+    try {
+      return !!analyticsConfig.getConfig().features?.explanationV2;
+    } catch {
+      return false;
+    }
   }, []);
   const detailsRef = React.useRef<HTMLDetailsElement | null>(null);
   React.useEffect(() => {
     function handleCollapseAll() {
-      try { if (detailsRef.current) detailsRef.current.open = false; } catch {}
+      try {
+        if (detailsRef.current) detailsRef.current.open = false;
+      } catch {}
     }
     function handleExpandAll() {
-      try { if (detailsRef.current) detailsRef.current.open = true; } catch {}
+      try {
+        if (detailsRef.current) detailsRef.current.open = true;
+      } catch {}
     }
     window.addEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
     window.addEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
@@ -95,7 +103,9 @@ export function ExplanationSheet({
                 />
               </div>
               <div className="border-t pt-2">
-                <h5 className="mb-2 text-sm font-medium text-muted-foreground">Chat om forklaringen</h5>
+                <h5 className="mb-2 text-sm font-medium text-muted-foreground">
+                  Chat om forklaringen
+                </h5>
                 <ExplanationChat
                   aiEnabled={aiEnabled}
                   systemPrompt={systemPrompt}
@@ -105,8 +115,14 @@ export function ExplanationSheet({
                   allowed={(() => {
                     try {
                       if (!dataset) return undefined;
-                      return computeAllowedContexts({ entries: dataset.entries as any, emotions: dataset.emotions as any, sensoryInputs: dataset.sensoryInputs as any });
-                    } catch { return undefined; }
+                      return computeAllowedContexts({
+                        entries: dataset.entries as any,
+                        emotions: dataset.emotions as any,
+                        sensoryInputs: dataset.sensoryInputs as any,
+                      });
+                    } catch {
+                      return undefined;
+                    }
                   })()}
                 />
               </div>
@@ -117,5 +133,3 @@ export function ExplanationSheet({
     </Sheet>
   );
 }
-
-

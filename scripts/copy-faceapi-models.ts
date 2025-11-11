@@ -39,5 +39,3 @@ for (const f of files) {
 }
 
 console.log(`[copy-faceapi-models] Done -> ${dstDir}`);
-
-

@@ -35,7 +35,11 @@ describe('OpenRouterClient integration (mocked fetch)', () => {
   it('handles successful JSON chat call', async () => {
     (global.fetch as any).mockResolvedValueOnce({
       ok: true,
-      json: async () => ({ choices: [{ message: { content: '{"ok":true}' } }], model: 'gpt-4o-mini', usage: { prompt_tokens: 5, completion_tokens: 10, total_tokens: 15 } }),
+      json: async () => ({
+        choices: [{ message: { content: '{"ok":true}' } }],
+        model: 'gpt-4o-mini',
+        usage: { prompt_tokens: 5, completion_tokens: 10, total_tokens: 15 },
+      }),
       headers: new Headers(),
     });
     const client = new OpenRouterClient();
@@ -46,8 +50,20 @@ describe('OpenRouterClient integration (mocked fetch)', () => {
 
   it('retries on 429 with retry-after and eventually succeeds', async () => {
     (global.fetch as any)
-      .mockResolvedValueOnce({ ok: false, status: 429, text: async () => JSON.stringify({ error: { message: 'rate limit' } }), headers: new Headers({ 'retry-after': '1' }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ choices: [{ message: { content: '{"ok":true}' } }], model: 'gpt-4o-mini' }), headers: new Headers() });
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        text: async () => JSON.stringify({ error: { message: 'rate limit' } }),
+        headers: new Headers({ 'retry-after': '1' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: '{"ok":true}' } }],
+          model: 'gpt-4o-mini',
+        }),
+        headers: new Headers(),
+      });
     const client = new OpenRouterClient({ maxRetries: 1, baseDelayMs: 10, maxDelayMs: 50 });
     const { data } = await client.chatJSON('{"user":"hi"}', { ensureJson: true });
     expect(data).toEqual({ ok: true });
@@ -60,7 +76,12 @@ describe('OpenRouterClient integration (mocked fetch)', () => {
   });
 
   it('handles non-retriable 400-level errors', async () => {
-    (global.fetch as any).mockResolvedValueOnce({ ok: false, status: 400, text: async () => 'bad', headers: new Headers() });
+    (global.fetch as any).mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: async () => 'bad',
+      headers: new Headers(),
+    });
     const client = new OpenRouterClient({ maxRetries: 0 });
     await expect(client.chatJSON('{"user":"hi"}')).rejects.toBeTruthy();
   });

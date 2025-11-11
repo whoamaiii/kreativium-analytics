@@ -29,14 +29,19 @@ export async function generateAnalyticsSummary(inputs: {
   const predictiveInsights = inputs.results?.predictiveInsights ?? [];
 
   // Confidence uses confidence slice; insights use insights slice
-  const confidence = calculateConfidence(emotions, inputs.sensoryInputs ?? [], entries, cfg.confidence);
+  const confidence = calculateConfidence(
+    emotions,
+    inputs.sensoryInputs ?? [],
+    entries,
+    cfg.confidence,
+  );
 
   // Prefer canonical insights signature when we have results
   const insights = generateInsights(
     { patterns, correlations, predictiveInsights },
     emotions,
     entries,
-    cfg.insights
+    cfg.insights,
   );
 
   const hasMinimumData = entries.length >= cfg.insights.MIN_SESSIONS_FOR_FULL_ANALYTICS;
@@ -49,4 +54,3 @@ export async function generateAnalyticsSummary(inputs: {
     tags: inputs.tags,
   };
 }
-

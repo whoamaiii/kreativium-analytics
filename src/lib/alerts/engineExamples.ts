@@ -4,9 +4,13 @@ import { AlertPolicies } from '@/lib/alerts/policies';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import type { AlertEvent } from '@/lib/alerts/types';
-import type { EmotionEntry, SensoryEntry, TrackingEntry, Intervention, Goal } from '@/types/student';
-
- 
+import type {
+  EmotionEntry,
+  SensoryEntry,
+  TrackingEntry,
+  Intervention,
+  Goal,
+} from '@/types/student';
 
 /** Example: Run detection for a single student with optional baseline */
 export function runDetectionForStudent(params: {
@@ -24,12 +28,13 @@ export function runDetectionForStudent(params: {
 }): AlertEvent[] {
   const baselineService = params.baselineService ?? new BaselineService();
   // Optionally refresh baseline before running detection
-  const baseline = baselineService.updateBaseline({
-    studentId: params.studentId,
-    emotions: params.emotions,
-    sensory: params.sensory,
-    tracking: params.tracking,
-  }) ?? baselineService.getEmotionBaseline(params.studentId);
+  const baseline =
+    baselineService.updateBaseline({
+      studentId: params.studentId,
+      emotions: params.emotions,
+      sensory: params.sensory,
+      tracking: params.tracking,
+    }) ?? baselineService.getEmotionBaseline(params.studentId);
 
   const engine = new AlertDetectionEngine({
     baselineService,
@@ -52,7 +57,14 @@ export function runDetectionForStudent(params: {
 
 /** Example: Run detection across a cohort in batches */
 export async function runDetectionForCohort(params: {
-  cohort: Array<{ studentId: string; emotions: EmotionEntry[]; sensory: SensoryEntry[]; tracking: TrackingEntry[]; interventions?: Intervention[]; goals?: Goal[] }>;
+  cohort: Array<{
+    studentId: string;
+    emotions: EmotionEntry[];
+    sensory: SensoryEntry[];
+    tracking: TrackingEntry[];
+    interventions?: Intervention[];
+    goals?: Goal[];
+  }>;
   baselineService?: BaselineService;
   policies?: AlertPolicies;
   experiments?: ABTestingService;
@@ -70,12 +82,13 @@ export async function runDetectionForCohort(params: {
   const results: Record<string, AlertEvent[]> = {};
   await Promise.all(
     params.cohort.map(async (entry) => {
-      const baseline = baselineService.updateBaseline({
-        studentId: entry.studentId,
-        emotions: entry.emotions,
-        sensory: entry.sensory,
-        tracking: entry.tracking,
-      }) ?? null;
+      const baseline =
+        baselineService.updateBaseline({
+          studentId: entry.studentId,
+          emotions: entry.emotions,
+          sensory: entry.sensory,
+          tracking: entry.tracking,
+        }) ?? null;
       const alerts = engine.runDetection({
         studentId: entry.studentId,
         emotions: entry.emotions,
@@ -109,27 +122,52 @@ export function analyticsWorkerStep(payload: {
 }
 
 /** Example: Configure A/B testing experiment variants */
-export function withABTesting(studentId: string, data: {
-  emotions: EmotionEntry[];
-  sensory: SensoryEntry[];
-  tracking: TrackingEntry[];
-}): AlertEvent[] {
+export function withABTesting(
+  studentId: string,
+  data: {
+    emotions: EmotionEntry[];
+    sensory: SensoryEntry[];
+    tracking: TrackingEntry[];
+  },
+): AlertEvent[] {
   const experiments = new ABTestingService();
   const engine = new AlertDetectionEngine({ experiments });
   return engine.runDetection({ studentId, ...data });
 }
 
 /** Example: Override thresholds via a custom learner implementation */
-export function withCustomThresholdLearner(studentId: string, data: {
-  emotions: EmotionEntry[];
-  sensory: SensoryEntry[];
-  tracking: TrackingEntry[];
-}): AlertEvent[] {
+export function withCustomThresholdLearner(
+  studentId: string,
+  data: {
+    emotions: EmotionEntry[];
+    sensory: SensoryEntry[];
+    tracking: TrackingEntry[];
+  },
+): AlertEvent[] {
   class StaticLearner extends ThresholdLearner {
-    getThresholdOverrides(): Record<string, { detectorType: string; adjustmentValue: number; confidenceLevel: number; lastUpdatedAt: string; baselineThreshold?: number }> {
+    getThresholdOverrides(): Record<
+      string,
+      {
+        detectorType: string;
+        adjustmentValue: number;
+        confidenceLevel: number;
+        lastUpdatedAt: string;
+        baselineThreshold?: number;
+      }
+    > {
       return {
-        ewma: { detectorType: 'ewma', adjustmentValue: -0.1, confidenceLevel: 0.8, lastUpdatedAt: new Date().toISOString() },
-        cusum: { detectorType: 'cusum', adjustmentValue: -0.05, confidenceLevel: 0.7, lastUpdatedAt: new Date().toISOString() },
+        ewma: {
+          detectorType: 'ewma',
+          adjustmentValue: -0.1,
+          confidenceLevel: 0.8,
+          lastUpdatedAt: new Date().toISOString(),
+        },
+        cusum: {
+          detectorType: 'cusum',
+          adjustmentValue: -0.05,
+          confidenceLevel: 0.7,
+          lastUpdatedAt: new Date().toISOString(),
+        },
       };
     }
   }
@@ -137,5 +175,3 @@ export function withCustomThresholdLearner(studentId: string, data: {
   const engine = new AlertDetectionEngine({ learner });
   return engine.runDetection({ studentId, ...data });
 }
-
-

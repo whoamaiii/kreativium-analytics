@@ -8,15 +8,18 @@ export type ChartExportMethods = {
 };
 
 export function useChartExport(ref: React.RefObject<EChartsComponentRef | null>) {
-  const getImage = useCallback((opts?: { pixelRatio?: number; backgroundColor?: string }) => {
-    const inst = getTypedEChartsInstance(ref);
-    if (!inst) return undefined;
-    return getChartDataURL(inst, {
-      type: 'png',
-      pixelRatio: opts?.pixelRatio ?? 2,
-      backgroundColor: opts?.backgroundColor ?? '#ffffff',
-    });
-  }, [ref]);
+  const getImage = useCallback(
+    (opts?: { pixelRatio?: number; backgroundColor?: string }) => {
+      const inst = getTypedEChartsInstance(ref);
+      if (!inst) return undefined;
+      return getChartDataURL(inst, {
+        type: 'png',
+        pixelRatio: opts?.pixelRatio ?? 2,
+        backgroundColor: opts?.backgroundColor ?? '#ffffff',
+      });
+    },
+    [ref],
+  );
 
   const getSVG = useCallback(() => {
     const inst = getTypedEChartsInstance(ref);

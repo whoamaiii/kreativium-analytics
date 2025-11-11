@@ -57,9 +57,7 @@ describe('useModelManagement', () => {
 
     it('auto-loads model status by default', async () => {
       mockMlModels.getModelStatus.mockResolvedValue(
-        new Map([
-          ['emotion', { accuracy: 0.85, lastTrained: new Date().toISOString() }],
-        ])
+        new Map([['emotion', { accuracy: 0.85, lastTrained: new Date().toISOString() }]]),
       );
 
       const { result } = renderHook(() => useModelManagement());
@@ -95,7 +93,7 @@ describe('useModelManagement', () => {
         new Map([
           ['emotion', mockMetadata],
           ['sensory', mockMetadata],
-        ])
+        ]),
       );
 
       const { result } = renderHook(() => useModelManagement({ autoLoad: false }));
@@ -105,7 +103,9 @@ describe('useModelManagement', () => {
       });
 
       expect(result.current.state.models.size).toBe(2);
-      expect(result.current.state.models.get('emotion' as ModelType)?.metadata).toEqual(mockMetadata);
+      expect(result.current.state.models.get('emotion' as ModelType)?.metadata).toEqual(
+        mockMetadata,
+      );
       expect(result.current.state.isLoading).toBe(false);
       expect(result.current.state.lastError).toBeNull();
     });
@@ -125,7 +125,7 @@ describe('useModelManagement', () => {
         expect.objectContaining({
           title: 'Failed to load ML models',
           variant: 'destructive',
-        })
+        }),
       );
     });
 
@@ -134,9 +134,7 @@ describe('useModelManagement', () => {
       const onError = vi.fn();
       mockMlModels.init.mockRejectedValue(error);
 
-      const { result } = renderHook(() =>
-        useModelManagement({ autoLoad: false, onError })
-      );
+      const { result } = renderHook(() => useModelManagement({ autoLoad: false, onError }));
 
       await act(async () => {
         await result.current.actions.loadModelStatus();
@@ -163,7 +161,7 @@ describe('useModelManagement', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Training emotion model',
-        })
+        }),
       );
 
       // Fast-forward past training duration
@@ -179,7 +177,7 @@ describe('useModelManagement', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'emotion model updated',
-        })
+        }),
       );
     });
 
@@ -187,7 +185,7 @@ describe('useModelManagement', () => {
       const onTrainingComplete = vi.fn();
 
       const { result } = renderHook(() =>
-        useModelManagement({ autoLoad: false, onTrainingComplete })
+        useModelManagement({ autoLoad: false, onTrainingComplete }),
       );
 
       await act(async () => {
@@ -228,7 +226,7 @@ describe('useModelManagement', () => {
 
       // Should only show completion toast once
       const completionToasts = (toast as any).mock.calls.filter((call: any[]) =>
-        call[0]?.title?.includes('model updated')
+        call[0]?.title?.includes('model updated'),
       );
       expect(completionToasts.length).toBe(1);
     });
@@ -246,7 +244,7 @@ describe('useModelManagement', () => {
       expect(toast).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'emotion model deleted',
-        })
+        }),
       );
     });
 
@@ -265,7 +263,7 @@ describe('useModelManagement', () => {
         expect.objectContaining({
           title: 'Deletion failed',
           variant: 'destructive',
-        })
+        }),
       );
     });
 
@@ -303,7 +301,7 @@ describe('useModelManagement', () => {
   describe('Utility Functions', () => {
     it('getModelStatus returns correct status', async () => {
       mockMlModels.getModelStatus.mockResolvedValue(
-        new Map([['emotion', { accuracy: 0.85, lastTrained: new Date().toISOString() }]])
+        new Map([['emotion', { accuracy: 0.85, lastTrained: new Date().toISOString() }]]),
       );
 
       const { result } = renderHook(() => useModelManagement());
@@ -374,7 +372,7 @@ describe('useModelManagement', () => {
 
       // No completion toast should appear
       const completionToasts = (toast as any).mock.calls.filter((call: any[]) =>
-        call[0]?.title?.includes('model updated')
+        call[0]?.title?.includes('model updated'),
       );
       expect(completionToasts.length).toBe(0);
     });

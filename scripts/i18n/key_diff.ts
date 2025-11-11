@@ -8,7 +8,10 @@ const NB_DIR = path.join(ROOT, 'src', 'locales', 'nb');
 
 function listNamespaces(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir).filter(f => f.endsWith('.json')).map(f => f.replace(/\.json$/, ''));
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.json'))
+    .map((f) => f.replace(/\.json$/, ''));
 }
 
 function readJson(p: string): unknown {
@@ -63,11 +66,9 @@ function main() {
     report += `  Extra in nb (${extra.length}):${extra.length ? '\n    - ' + extra.join('\n    - ') : ' none'}\n\n`;
   }
 
-   
   console.log(report.trim());
 
   if (totalMissing > 0) {
-     
     console.error(`nb is missing ${totalMissing} keys present in en.`);
     process.exitCode = 1;
   }

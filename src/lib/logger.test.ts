@@ -74,6 +74,10 @@ describe('Logger', () => {
   it('should handle multiple arguments', () => {
     const obj = { a: 1, b: 2 };
     logger.info('Logging an object:', obj);
-    expect(consoleSpy.info).toHaveBeenCalledWith(expect.stringContaining('INFO'), 'Logging an object:', obj);
+    expect(consoleSpy.info).toHaveBeenCalledWith(
+      expect.stringContaining('INFO'),
+      'Logging an object:',
+      obj,
+    );
   });
 });

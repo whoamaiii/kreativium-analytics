@@ -13,8 +13,8 @@ import { canonicalSerialize } from '@/lib/canonicalSerialize';
  */
 function hashStringToHex64(input: string): string {
   const FNV_OFFSET: bigint = 14695981039346656037n; // 0xcbf29ce484222325
-  const FNV_PRIME: bigint = 1099511628211n;         // 0x100000001b3
-  const MASK64: bigint = (1n << 64n) - 1n;          // 2^64 - 1
+  const FNV_PRIME: bigint = 1099511628211n; // 0x100000001b3
+  const MASK64: bigint = (1n << 64n) - 1n; // 2^64 - 1
 
   let hash: bigint = FNV_OFFSET;
   const bytes = utf8Encode(input);
@@ -36,4 +36,3 @@ export function stableHash(value: unknown): string {
   const serialized: string = canonicalSerialize(value);
   return hashStringToHex64(serialized);
 }
-

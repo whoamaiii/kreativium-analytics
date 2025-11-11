@@ -9,7 +9,7 @@ export const CHAT_CITATION_LIMIT = 10;
 
 export function buildCitationList(
   sources: SourceItem[] | undefined,
-  limit: number = CHAT_CITATION_LIMIT
+  limit: number = CHAT_CITATION_LIMIT,
 ): CitationListItem[] {
   const safeLimit = Math.max(0, limit);
   if (safeLimit === 0) return [];
@@ -18,5 +18,3 @@ export function buildCitationList(
   const windowed = safeSources.slice(-safeLimit);
   return windowed.map((source, idx) => ({ key: `S${idx + 1}`, source }));
 }
-
-

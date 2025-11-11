@@ -29,8 +29,9 @@ const LoadingFallback = () => (
 );
 
 export const LazyReportBuilder = createLazyComponent(
-  () => import('@/components/ReportBuilder').then(module => ({
-    default: module.ReportBuilder
-  })),
-  <LoadingFallback />
+  () =>
+    import('@/components/ReportBuilder').then((module) => ({
+      default: module.ReportBuilder,
+    })),
+  <LoadingFallback />,
 );

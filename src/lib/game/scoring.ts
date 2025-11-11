@@ -38,11 +38,14 @@ export function scoreRound(input: ScoringInput): ScoringResult {
   const base = 12 + (stars - 1) * 4;
   const xp = base + comboBonus + perfectBonus + stabilityBonus + intensityBonus;
 
-  return { stars, xp, bonuses: { combo: comboBonus, perfect: perfectBonus, stability: stabilityBonus, intensity: intensityBonus } };
+  return {
+    stars,
+    xp,
+    bonuses: {
+      combo: comboBonus,
+      perfect: perfectBonus,
+      stability: stabilityBonus,
+      intensity: intensityBonus,
+    },
+  };
 }
-
-
-
-
-
-

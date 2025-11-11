@@ -11,7 +11,8 @@ describe('evidence selection - weighted and top-K fallback', () => {
         id: 's_behavior_1',
         title: 'Behavior Strategies Overview',
         url: 'https://example.org/behavior',
-        shortExcerpt: 'Evidence-based behavior strategies for classroom management and positive outcomes.',
+        shortExcerpt:
+          'Evidence-based behavior strategies for classroom management and positive outcomes.',
         tags: [DomainTag.Behavior],
         year: 2020,
         evidenceLevel: EvidenceLevel.Moderate,
@@ -20,7 +21,8 @@ describe('evidence selection - weighted and top-K fallback', () => {
         id: 's_udl_1',
         title: 'UDL Core Principles',
         url: 'https://example.org/udl',
-        shortExcerpt: 'Universal Design for Learning principles applied to diverse learning environments.',
+        shortExcerpt:
+          'Universal Design for Learning principles applied to diverse learning environments.',
         tags: [DomainTag.UDL],
         year: 2022,
         evidenceLevel: EvidenceLevel.Strong,
@@ -29,7 +31,8 @@ describe('evidence selection - weighted and top-K fallback', () => {
         id: 's_math_1',
         title: 'Math Fluency Interventions',
         url: 'https://example.org/math',
-        shortExcerpt: 'Interventions focused on math fluency and number sense for struggling learners.',
+        shortExcerpt:
+          'Interventions focused on math fluency and number sense for struggling learners.',
         tags: [DomainTag.Math],
         year: 2023,
         evidenceLevel: EvidenceLevel.Strong,
@@ -55,7 +58,7 @@ describe('evidence selection - weighted and top-K fallback', () => {
     // Highest weight (Behavior) should rank first despite lower evidence level
     expect(results[0].id).toBe('s_behavior_1');
     // Next selected likely includes a framework like UDL or top remaining
-    const ids = results.map(r => r.id);
+    const ids = results.map((r) => r.id);
     expect(ids).toContain('s_udl_1');
   });
 
@@ -67,7 +70,3 @@ describe('evidence selection - weighted and top-K fallback', () => {
     expect(results[0].id).toBe('s_behavior_1');
   });
 });
-
-
-
-

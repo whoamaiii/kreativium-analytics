@@ -5,8 +5,13 @@
  * Handles date range filtering, grouping, and metadata calculation.
  */
 
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
-import { ExportDataCollection, ExportMetadata, ExportOptions, ExportProgress } from "./exportOptions";
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
+import {
+  ExportDataCollection,
+  ExportMetadata,
+  ExportOptions,
+  ExportProgress,
+} from './exportOptions';
 
 /**
  * Progress callback for long-running operations
@@ -25,7 +30,7 @@ export function collectExportData(
     goals: Goal[];
   },
   options: ExportOptions,
-  onProgress?: ProgressCallback
+  onProgress?: ProgressCallback,
 ): ExportDataCollection {
   const totalRecords =
     allData.trackingEntries.length +
@@ -43,7 +48,7 @@ export function collectExportData(
         percentage: Math.round((processedRecords / totalRecords) * 100),
         processedRecords,
         totalRecords,
-        currentItem
+        currentItem,
       });
     }
   };
@@ -58,7 +63,7 @@ export function collectExportData(
     emotions: [],
     sensoryInputs: [],
     goals: [],
-    students: []
+    students: [],
   };
 
   // Filter tracking entries
@@ -107,7 +112,7 @@ export function collectExportData(
  */
 export function applyDateRangeFilter<T extends { timestamp: Date }>(
   data: T[],
-  dateRange?: { start: Date; end: Date }
+  dateRange?: { start: Date; end: Date },
 ): T[] {
   if (!dateRange) return data;
 
@@ -116,7 +121,7 @@ export function applyDateRangeFilter<T extends { timestamp: Date }>(
   const endTime = end.getTime();
 
   // Memory-efficient filter - doesn't create intermediate arrays
-  return data.filter(item => {
+  return data.filter((item) => {
     const itemTime = item.timestamp.getTime();
     return itemTime >= startTime && itemTime <= endTime;
   });
@@ -128,7 +133,7 @@ export function applyDateRangeFilter<T extends { timestamp: Date }>(
  */
 export function groupDataBy<T extends { studentId?: string; timestamp?: Date }>(
   data: T[],
-  groupBy: 'student' | 'date' | 'goal'
+  groupBy: 'student' | 'date' | 'goal',
 ): Map<string, T[]> {
   const grouped = new Map<string, T[]>();
 
@@ -175,13 +180,13 @@ export function groupDataBy<T extends { studentId?: string; timestamp?: Date }>(
  */
 export function calculateExportMetadata(
   data: ExportDataCollection,
-  version: string = '1.0.0'
+  version: string = '1.0.0',
 ): ExportMetadata {
   // Collect all timestamps to find date range
   const timestamps: Date[] = [
-    ...data.trackingEntries.map(t => t.timestamp),
-    ...data.emotions.map(e => e.timestamp),
-    ...data.sensoryInputs.map(s => s.timestamp)
+    ...data.trackingEntries.map((t) => t.timestamp),
+    ...data.emotions.map((e) => e.timestamp),
+    ...data.sensoryInputs.map((s) => s.timestamp),
   ];
 
   // Sort timestamps to find earliest and latest
@@ -200,15 +205,15 @@ export function calculateExportMetadata(
     totalRecords,
     dateRange: {
       earliest: timestamps[0] || new Date(),
-      latest: timestamps[timestamps.length - 1] || new Date()
+      latest: timestamps[timestamps.length - 1] || new Date(),
     },
     recordCounts: {
       students: data.students?.length || 0,
       trackingEntries: data.trackingEntries.length,
       emotions: data.emotions.length,
       sensoryInputs: data.sensoryInputs.length,
-      goals: data.goals.length
-    }
+      goals: data.goals.length,
+    },
   };
 }
 
@@ -218,21 +223,18 @@ export function calculateExportMetadata(
  */
 export function filterByStudentIds<T extends { studentId?: string }>(
   data: T[],
-  studentIds: string[]
+  studentIds: string[],
 ): T[] {
   const studentIdSet = new Set(studentIds);
-  return data.filter(item => item.studentId && studentIdSet.has(item.studentId));
+  return data.filter((item) => item.studentId && studentIdSet.has(item.studentId));
 }
 
 /**
  * Filter students by ID list
  */
-export function filterStudents(
-  students: Student[],
-  studentIds: string[]
-): Student[] {
+export function filterStudents(students: Student[], studentIds: string[]): Student[] {
   const studentIdSet = new Set(studentIds);
-  return students.filter(student => studentIdSet.has(student.id));
+  return students.filter((student) => studentIdSet.has(student.id));
 }
 
 /**
@@ -241,19 +243,19 @@ export function filterStudents(
 export function getUniqueStudentIds(data: ExportDataCollection): string[] {
   const studentIds = new Set<string>();
 
-  data.trackingEntries.forEach(entry => {
+  data.trackingEntries.forEach((entry) => {
     if (entry.studentId) studentIds.add(entry.studentId);
   });
 
-  data.emotions.forEach(emotion => {
+  data.emotions.forEach((emotion) => {
     if (emotion.studentId) studentIds.add(emotion.studentId);
   });
 
-  data.sensoryInputs.forEach(sensory => {
+  data.sensoryInputs.forEach((sensory) => {
     if (sensory.studentId) studentIds.add(sensory.studentId);
   });
 
-  data.goals.forEach(goal => {
+  data.goals.forEach((goal) => {
     if (goal.studentId) studentIds.add(goal.studentId);
   });
 
@@ -283,7 +285,7 @@ export async function* streamExportData(
     goals: Goal[];
   },
   options: ExportOptions,
-  chunkSize: number = 1000
+  chunkSize: number = 1000,
 ): AsyncGenerator<{ type: keyof ExportDataCollection; chunk: unknown[] }> {
   const { dateRange } = options;
 
@@ -348,7 +350,7 @@ export function validateCollectedData(data: ExportDataCollection): {
 
   return {
     valid: errors.length === 0,
-    errors
+    errors,
   };
 }
 
@@ -362,9 +364,9 @@ export function getDataStatistics(data: ExportDataCollection): {
   studentCount: number;
 } {
   const timestamps: Date[] = [
-    ...data.trackingEntries.map(t => t.timestamp),
-    ...data.emotions.map(e => e.timestamp),
-    ...data.sensoryInputs.map(s => s.timestamp)
+    ...data.trackingEntries.map((t) => t.timestamp),
+    ...data.emotions.map((e) => e.timestamp),
+    ...data.sensoryInputs.map((s) => s.timestamp),
   ];
 
   timestamps.sort((a, b) => a.getTime() - b.getTime());
@@ -378,15 +380,15 @@ export function getDataStatistics(data: ExportDataCollection): {
       (data.students?.length || 0),
     dateRange: {
       earliest: timestamps[0] || null,
-      latest: timestamps[timestamps.length - 1] || null
+      latest: timestamps[timestamps.length - 1] || null,
     },
     recordsByType: {
       trackingEntries: data.trackingEntries.length,
       emotions: data.emotions.length,
       sensoryInputs: data.sensoryInputs.length,
       goals: data.goals.length,
-      students: data.students?.length || 0
+      students: data.students?.length || 0,
     },
-    studentCount: getUniqueStudentIds(data).length
+    studentCount: getUniqueStudentIds(data).length,
   };
 }

@@ -38,7 +38,12 @@ export function normalizeTimestamp(ts: Date | number | string | undefined): numb
  * buildAlertId('student_123', AlertKind.BehaviorSpike, 'anxiety', 1704067200000)
  * // => 'alert_abc123xyz'
  */
-export function buildAlertId(studentId: string, kind: AlertKind, label: string, timestamp: number): string {
+export function buildAlertId(
+  studentId: string,
+  kind: AlertKind,
+  label: string,
+  timestamp: number,
+): string {
   const base = `${studentId}|${kind}|${label}|${timestamp}`;
   let hash = 2166136261;
   for (let i = 0; i < base.length; i += 1) {
@@ -62,7 +67,10 @@ export function buildAlertId(studentId: string, kind: AlertKind, label: string, 
  * const truncated = truncateSeries(longSeries, 100); // Returns last 100 points
  * truncated.length // => 100
  */
-export function truncateSeries(series: TrendPoint[], limit: number = MAX_ALERT_SERIES_LENGTH): TrendPoint[] {
+export function truncateSeries(
+  series: TrendPoint[],
+  limit: number = MAX_ALERT_SERIES_LENGTH,
+): TrendPoint[] {
   if (series.length <= limit) return series;
   return series.slice(series.length - limit);
 }

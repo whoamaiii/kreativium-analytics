@@ -1,10 +1,12 @@
 # Export Common Utilities
 
-Shared data collection, transformation, and validation utilities for all export formats (PDF, CSV, JSON).
+Shared data collection, transformation, and validation utilities for all export formats (PDF, CSV,
+JSON).
 
 ## Purpose
 
-This module extracts common export logic that was previously duplicated across format-specific exporters. It provides:
+This module extracts common export logic that was previously duplicated across format-specific
+exporters. It provides:
 
 - **Type-safe export options** with validation
 - **Memory-efficient data collection** with streaming support
@@ -27,18 +29,14 @@ src/lib/export/common/
 ## Quick Start
 
 ```typescript
-import {
-  mergeExportOptions,
-  collectExportData,
-  anonymizeData
-} from '@/lib/export/common';
+import { mergeExportOptions, collectExportData, anonymizeData } from '@/lib/export/common';
 
 // 1. Configure export
 const options = mergeExportOptions({
   format: 'csv',
   includeFields: ['emotions', 'sensoryInputs'],
   dateRange: { start: new Date('2024-01-01'), end: new Date('2024-12-31') },
-  anonymize: true
+  anonymize: true,
 });
 
 // 2. Collect data
@@ -54,6 +52,7 @@ const csv = formatAsCSV(anonymized);
 ## Key Features
 
 ### 1. Validation
+
 ```typescript
 const validation = validateExportOptions(options);
 if (!validation.valid) {
@@ -62,24 +61,27 @@ if (!validation.valid) {
 ```
 
 ### 2. Date Range Filtering
+
 ```typescript
 const filtered = applyDateRangeFilter(emotions, {
   start: new Date('2024-01-01'),
-  end: new Date('2024-12-31')
+  end: new Date('2024-12-31'),
 });
 ```
 
 ### 3. Anonymization
+
 ```typescript
 const anonymized = anonymizeData(data, {
   anonymizeNames: true,
   removeDateOfBirth: true,
   truncateIds: true,
-  redactNotes: true  // Redact PII but keep notes
+  redactNotes: true, // Redact PII but keep notes
 });
 ```
 
 ### 4. Streaming (Large Exports)
+
 ```typescript
 for await (const chunk of streamExportData(students, allData, options, 1000)) {
   await processChunk(chunk);
@@ -87,12 +89,14 @@ for await (const chunk of streamExportData(students, allData, options, 1000)) {
 ```
 
 ### 5. Grouping
+
 ```typescript
 const byStudent = groupDataBy(emotions, 'student');
 const byDate = groupDataBy(emotions, 'date');
 ```
 
 ### 6. Progress Tracking
+
 ```typescript
 collectExportData(students, allData, options, (progress) => {
   console.log(`${progress.phase}: ${progress.percentage}%`);
@@ -104,6 +108,7 @@ collectExportData(students, allData, options, (progress) => {
 ### exportOptions.ts
 
 #### Types
+
 - `ExportOptions` - Configuration for exports
 - `ExportDataCollection` - Collected data structure
 - `ExportMetadata` - Export metadata
@@ -111,6 +116,7 @@ collectExportData(students, allData, options, (progress) => {
 - `ValidationResult` - Validation feedback
 
 #### Functions
+
 - `validateExportOptions()` - Validate user options
 - `mergeExportOptions()` - Merge with defaults
 - `validateDateRange()` - Check date range validity
@@ -120,6 +126,7 @@ collectExportData(students, allData, options, (progress) => {
 ### dataCollector.ts
 
 #### Functions
+
 - `collectExportData()` - Primary data collection
 - `applyDateRangeFilter()` - Filter by date range
 - `groupDataBy()` - Group by dimension
@@ -134,6 +141,7 @@ collectExportData(students, allData, options, (progress) => {
 ### dataTransformer.ts
 
 #### Functions
+
 - `anonymizeData()` - Anonymize collection
 - `anonymizeStudent()` - Anonymize student
 - `anonymizeEmotion()` - Anonymize emotion
@@ -148,6 +156,7 @@ collectExportData(students, allData, options, (progress) => {
 - `transformDataBatched()` - Batch transformations
 
 #### Computed Fields
+
 - `STUDENT_COMPUTED_FIELDS` - Age, goal count, account age
 - `GOAL_COMPUTED_FIELDS` - Progress %, days active, overdue flag
 - `EMOTION_COMPUTED_FIELDS` - Positive/negative flags, intensity
@@ -155,17 +164,20 @@ collectExportData(students, allData, options, (progress) => {
 ## Performance
 
 ### Complexity
+
 - Date filtering: O(n)
 - Grouping: O(n) with O(1) lookup
 - Anonymization: O(n)
-- Flattening: O(n*d) where d = depth
+- Flattening: O(n\*d) where d = depth
 
 ### Memory
+
 - Streaming: O(chunk_size)
 - Standard: O(n) where n = filtered records
 - Grouping: O(n + g) where g = group count
 
 ### Optimization Tips
+
 1. Use `streamExportData()` for large datasets (10k+ records)
 2. Apply date range filters early
 3. Minimize `includeFields` to reduce processing
@@ -175,6 +187,7 @@ collectExportData(students, allData, options, (progress) => {
 ## Integration with Format Modules
 
 ### CSV Module
+
 ```typescript
 import { collectExportData, anonymizeData } from '@/lib/export/common';
 
@@ -186,6 +199,7 @@ export function generateCSV(students, allData, options) {
 ```
 
 ### JSON Module
+
 ```typescript
 import { collectExportData, calculateExportMetadata } from '@/lib/export/common';
 
@@ -197,6 +211,7 @@ export function generateJSON(students, allData, options) {
 ```
 
 ### PDF Module
+
 ```typescript
 import { collectExportData, groupDataBy } from '@/lib/export/common';
 
@@ -210,6 +225,7 @@ export function generatePDF(student, allData, options) {
 ## Examples
 
 See `USAGE_EXAMPLES.ts` for comprehensive examples including:
+
 1. Basic validated export
 2. Anonymized export for research
 3. Streaming large export
@@ -236,18 +252,21 @@ npm test -- src/lib/export
 ## Migration from exportSystem.ts
 
 Before:
+
 ```typescript
 const emotionData = this.filterByDateRange(allData.emotions, dateRange);
-const anonymized = emotionData.map(e => this.anonymizeEmotion(e));
+const anonymized = emotionData.map((e) => this.anonymizeEmotion(e));
 ```
 
 After:
+
 ```typescript
 const data = collectExportData(students, allData, options);
 const anonymized = anonymizeData(data);
 ```
 
 Benefits:
+
 - **300+ lines** of duplicate code removed
 - **Consistent behavior** across all formats
 - **Better testability** with focused modules

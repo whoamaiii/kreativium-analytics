@@ -132,11 +132,13 @@ const DEFAULT_MODEL_STATUS: ModelStatus = {
  * }
  * ```
  */
-export function useModelManagement(options: {
-  autoLoad?: boolean;
-  onError?: (error: Error) => void;
-  onTrainingComplete?: (modelType: ModelType) => void;
-} = {}): UseModelManagementReturn {
+export function useModelManagement(
+  options: {
+    autoLoad?: boolean;
+    onError?: (error: Error) => void;
+    onTrainingComplete?: (modelType: ModelType) => void;
+  } = {},
+): UseModelManagementReturn {
   const { autoLoad = true, onError, onTrainingComplete } = options;
 
   // State
@@ -202,139 +204,150 @@ export function useModelManagement(options: {
   /**
    * Train a specific model
    */
-  const trainModel = useCallback(async (modelType: ModelType) => {
-    setLastError(null);
+  const trainModel = useCallback(
+    async (modelType: ModelType) => {
+      setLastError(null);
 
-    // Update state to show training
-    setModels((prev) => {
-      const newModels = new Map(prev);
-      const currentStatus = newModels.get(modelType) || DEFAULT_MODEL_STATUS;
-      newModels.set(modelType, { ...currentStatus, isTraining: true });
-      return newModels;
-    });
-
-    toast({
-      title: `Training ${modelType} model`,
-      description: 'Model training started in background...',
-    });
-
-    try {
-      // Clear any existing timeout for this model
-      const existingTimeout = trainingTimeoutsRef.current.get(modelType);
-      if (existingTimeout) {
-        clearTimeout(existingTimeout);
-      }
-
-      // Simulate training with timeout (replace with actual training in production)
-      const timeout = setTimeout(async () => {
-        try {
-          // Reload model status to get updated metadata
-          await loadModelStatus();
-
-          toast({
-            title: `${modelType} model updated`,
-            description: 'Model training completed successfully',
-          });
-
-          // Call completion callback
-          if (onTrainingComplete) {
-            onTrainingComplete(modelType);
-          }
-
-          // Clear training flag
-          setModels((prev) => {
-            const newModels = new Map(prev);
-            const currentStatus = newModels.get(modelType);
-            if (currentStatus) {
-              newModels.set(modelType, { ...currentStatus, isTraining: false });
-            }
-            return newModels;
-          });
-        } catch (error) {
-          logger.error(`[useModelManagement] Failed to complete training for ${modelType}`, { error });
-        } finally {
-          trainingTimeoutsRef.current.delete(modelType);
-        }
-      }, TRAINING_SIMULATION_MS);
-
-      trainingTimeoutsRef.current.set(modelType, timeout);
-    } catch (error) {
-      const err = error as Error;
-      logger.error(`[useModelManagement] Failed to train ${modelType} model`, { error: err });
-      setLastError(err);
-
-      toast({
-        title: 'Training failed',
-        description: `Failed to train ${modelType} model`,
-        variant: 'destructive',
-      });
-
-      // Clear training flag on error
+      // Update state to show training
       setModels((prev) => {
         const newModels = new Map(prev);
-        const currentStatus = newModels.get(modelType);
-        if (currentStatus) {
-          newModels.set(modelType, { ...currentStatus, isTraining: false });
-        }
+        const currentStatus = newModels.get(modelType) || DEFAULT_MODEL_STATUS;
+        newModels.set(modelType, { ...currentStatus, isTraining: true });
         return newModels;
       });
-    }
-  }, [loadModelStatus, onTrainingComplete]);
+
+      toast({
+        title: `Training ${modelType} model`,
+        description: 'Model training started in background...',
+      });
+
+      try {
+        // Clear any existing timeout for this model
+        const existingTimeout = trainingTimeoutsRef.current.get(modelType);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+        }
+
+        // Simulate training with timeout (replace with actual training in production)
+        const timeout = setTimeout(async () => {
+          try {
+            // Reload model status to get updated metadata
+            await loadModelStatus();
+
+            toast({
+              title: `${modelType} model updated`,
+              description: 'Model training completed successfully',
+            });
+
+            // Call completion callback
+            if (onTrainingComplete) {
+              onTrainingComplete(modelType);
+            }
+
+            // Clear training flag
+            setModels((prev) => {
+              const newModels = new Map(prev);
+              const currentStatus = newModels.get(modelType);
+              if (currentStatus) {
+                newModels.set(modelType, { ...currentStatus, isTraining: false });
+              }
+              return newModels;
+            });
+          } catch (error) {
+            logger.error(`[useModelManagement] Failed to complete training for ${modelType}`, {
+              error,
+            });
+          } finally {
+            trainingTimeoutsRef.current.delete(modelType);
+          }
+        }, TRAINING_SIMULATION_MS);
+
+        trainingTimeoutsRef.current.set(modelType, timeout);
+      } catch (error) {
+        const err = error as Error;
+        logger.error(`[useModelManagement] Failed to train ${modelType} model`, { error: err });
+        setLastError(err);
+
+        toast({
+          title: 'Training failed',
+          description: `Failed to train ${modelType} model`,
+          variant: 'destructive',
+        });
+
+        // Clear training flag on error
+        setModels((prev) => {
+          const newModels = new Map(prev);
+          const currentStatus = newModels.get(modelType);
+          if (currentStatus) {
+            newModels.set(modelType, { ...currentStatus, isTraining: false });
+          }
+          return newModels;
+        });
+      }
+    },
+    [loadModelStatus, onTrainingComplete],
+  );
 
   /**
    * Delete a specific model
    */
-  const deleteModel = useCallback(async (modelType: ModelType) => {
-    setLastError(null);
+  const deleteModel = useCallback(
+    async (modelType: ModelType) => {
+      setLastError(null);
 
-    // Update state to show deleting
-    setModels((prev) => {
-      const newModels = new Map(prev);
-      const currentStatus = newModels.get(modelType) || DEFAULT_MODEL_STATUS;
-      newModels.set(modelType, { ...currentStatus, isDeleting: true });
-      return newModels;
-    });
-
-    try {
-      const ml = await getMlModels();
-      await ml.deleteModel(modelType);
-
-      // Reload status to reflect deletion
-      await loadModelStatus();
-
-      toast({
-        title: `${modelType} model deleted`,
-        description: 'Model has been removed successfully',
-      });
-    } catch (error) {
-      const err = error as Error;
-      logger.error(`[useModelManagement] Failed to delete ${modelType} model`, { error: err });
-      setLastError(err);
-
-      toast({
-        title: 'Deletion failed',
-        description: `Failed to delete ${modelType} model`,
-        variant: 'destructive',
-      });
-
-      // Clear deleting flag on error
+      // Update state to show deleting
       setModels((prev) => {
         const newModels = new Map(prev);
-        const currentStatus = newModels.get(modelType);
-        if (currentStatus) {
-          newModels.set(modelType, { ...currentStatus, isDeleting: false });
-        }
+        const currentStatus = newModels.get(modelType) || DEFAULT_MODEL_STATUS;
+        newModels.set(modelType, { ...currentStatus, isDeleting: true });
         return newModels;
       });
-    }
-  }, [loadModelStatus]);
+
+      try {
+        const ml = await getMlModels();
+        await ml.deleteModel(modelType);
+
+        // Reload status to reflect deletion
+        await loadModelStatus();
+
+        toast({
+          title: `${modelType} model deleted`,
+          description: 'Model has been removed successfully',
+        });
+      } catch (error) {
+        const err = error as Error;
+        logger.error(`[useModelManagement] Failed to delete ${modelType} model`, { error: err });
+        setLastError(err);
+
+        toast({
+          title: 'Deletion failed',
+          description: `Failed to delete ${modelType} model`,
+          variant: 'destructive',
+        });
+
+        // Clear deleting flag on error
+        setModels((prev) => {
+          const newModels = new Map(prev);
+          const currentStatus = newModels.get(modelType);
+          if (currentStatus) {
+            newModels.set(modelType, { ...currentStatus, isDeleting: false });
+          }
+          return newModels;
+        });
+      }
+    },
+    [loadModelStatus],
+  );
 
   /**
    * Get status for a specific model
    */
-  const getModelStatus = useCallback((modelType: ModelType): ModelStatus | undefined => {
-    return models.get(modelType);
-  }, [models]);
+  const getModelStatus = useCallback(
+    (modelType: ModelType): ModelStatus | undefined => {
+      return models.get(modelType);
+    },
+    [models],
+  );
 
   /**
    * Check if any model is currently training

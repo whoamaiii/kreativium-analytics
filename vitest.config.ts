@@ -14,7 +14,7 @@ export default defineConfig({
       'tests/setup.dom.ts',
       'tests/setup.radix.ts',
       'src/setupTests.ts',
-      'tests/setup.ts'
+      'tests/setup.ts',
     ],
     // Use jsdom for React component testing
     environment: 'jsdom',

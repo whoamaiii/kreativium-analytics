@@ -34,4 +34,3 @@ export interface AnalyticsWorkerTask {
   tags?: string[];
   data: AnalyticsData; // payload sent to worker
 }
-

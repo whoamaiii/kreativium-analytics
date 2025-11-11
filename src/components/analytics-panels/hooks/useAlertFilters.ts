@@ -116,7 +116,9 @@ export const useAlertFilterState = ({
 }: UseAlertFiltersOptions = {}): UseAlertFilterStateResult => {
   const [selectedSeverities, setSelectedSeverities] = useState<AlertSeverity[]>(initialSeverities);
   const [selectedKinds, setSelectedKinds] = useState<AlertKind[]>([]);
-  const [timeWindowHours, setTimeWindowHours] = useState<number | undefined>(defaultTimeWindowHours);
+  const [timeWindowHours, setTimeWindowHours] = useState<number | undefined>(
+    defaultTimeWindowHours,
+  );
   const [minConfidence, setMinConfidence] = useState<number>(defaultMinConfidence);
   const [sourceFilters, setSourceFilters] = useState<string[]>([]);
   const [sourceLabelFilters, setSourceLabelFilters] = useState<string[]>([]);
@@ -128,11 +130,15 @@ export const useAlertFilterState = ({
   const [sortMode, setSortMode] = useState<AlertSortMode>(defaultSortMode);
 
   const toggleSourceFilter = useCallback((type: string) => {
-    setSourceFilters((prev) => (prev.includes(type) ? prev.filter((item) => item !== type) : [...prev, type]));
+    setSourceFilters((prev) =>
+      prev.includes(type) ? prev.filter((item) => item !== type) : [...prev, type],
+    );
   }, []);
 
   const toggleSourceLabelFilter = useCallback((label: string) => {
-    setSourceLabelFilters((prev) => (prev.includes(label) ? prev.filter((item) => item !== label) : [...prev, label]));
+    setSourceLabelFilters((prev) =>
+      prev.includes(label) ? prev.filter((item) => item !== label) : [...prev, label],
+    );
   }, []);
 
   const resetSourceFilters = useCallback(() => setSourceFilters([]), []);
@@ -195,21 +201,23 @@ export const useAlertDerivedData = (
         counts.set(src.type, labels);
       });
     });
-    return Array.from(counts.entries()).map(([type, labels]) => {
-      const sampleLabel = labels.size ? Array.from(labels)[0] : undefined;
-      return {
-        type,
-        labels: Array.from(labels).sort(),
-        display: sampleLabel ? `${type} (${sampleLabel})` : type,
-      };
-    }).sort((a, b) => a.type.localeCompare(b.type));
+    return Array.from(counts.entries())
+      .map(([type, labels]) => {
+        const sampleLabel = labels.size ? Array.from(labels)[0] : undefined;
+        return {
+          type,
+          labels: Array.from(labels).sort(),
+          display: sampleLabel ? `${type} (${sampleLabel})` : type,
+        };
+      })
+      .sort((a, b) => a.type.localeCompare(b.type));
   }, [alerts]);
 
   const availableSourceLabels = useMemo<string[]>(() => {
     const set = new Set<string>();
     alerts.forEach((alert) => {
       (alert.sources ?? []).forEach((src) => {
-        const label = (src.label ?? src.type) ?? '';
+        const label = src.label ?? src.type ?? '';
         if (label) set.add(label);
       });
     });
@@ -221,12 +229,18 @@ export const useAlertDerivedData = (
       const confidenceOk = (alert.confidence ?? 0) >= state.minConfidence;
       if (!confidenceOk) return false;
       const sources = alert.sources ?? [];
-      const passesType = state.sourceFilters.length === 0 || sources.some((source) => state.sourceFilters.includes(source.type));
+      const passesType =
+        state.sourceFilters.length === 0 ||
+        sources.some((source) => state.sourceFilters.includes(source.type));
       if (!passesType) return false;
-      const passesLabel = state.sourceLabelFilters.length === 0
-        || sources.some((source) => state.sourceLabelFilters.includes((source.label ?? source.type) ?? ''));
+      const passesLabel =
+        state.sourceLabelFilters.length === 0 ||
+        sources.some((source) =>
+          state.sourceLabelFilters.includes(source.label ?? source.type ?? ''),
+        );
       if (!passesLabel) return false;
-      if (state.hasInterventionOnly && !(alert.metadata && (alert.metadata as any).interventionId)) return false;
+      if (state.hasInterventionOnly && !(alert.metadata && (alert.metadata as any).interventionId))
+        return false;
       if (state.dateStart) {
         const startMs = new Date(state.dateStart).getTime();
         if (new Date(alert.createdAt).getTime() < startMs) return false;
@@ -242,13 +256,24 @@ export const useAlertDerivedData = (
           alert.severity,
           alert.metadata?.summary,
           alert.metadata?.label,
-          ...(sources.map((s) => `${s.type} ${s.label ?? ''}`)),
-        ].join(' ').toLowerCase();
+          ...sources.map((s) => `${s.type} ${s.label ?? ''}`),
+        ]
+          .join(' ')
+          .toLowerCase();
         if (!isFuzzyMatch(q, hay)) return false;
       }
       return true;
     });
-  }, [alerts, state.minConfidence, state.sourceFilters, state.sourceLabelFilters, state.hasInterventionOnly, state.dateStart, state.dateEnd, state.searchQuery]);
+  }, [
+    alerts,
+    state.minConfidence,
+    state.sourceFilters,
+    state.sourceLabelFilters,
+    state.hasInterventionOnly,
+    state.dateStart,
+    state.dateEnd,
+    state.searchQuery,
+  ]);
 
   const counts = useMemo<AlertCounts>(() => {
     const bySeverity: Record<AlertSeverity, number> = {
@@ -278,7 +303,7 @@ export const useAlertDerivedData = (
 
     activeAlerts.forEach((alert) => {
       bySeverity[alert.severity].push(alert);
-      const type = (alert.sources?.[0]?.type ?? 'unknown');
+      const type = alert.sources?.[0]?.type ?? 'unknown';
       bySource[type] = bySource[type] || [];
       bySource[type].push(alert);
       const status = alert.status ?? 'new';
@@ -286,7 +311,10 @@ export const useAlertDerivedData = (
       byStatus[status].push(alert);
     });
 
-    const sorters: Record<AlertSortMode, (x: AlertWithGovernance, y: AlertWithGovernance) => number> = {
+    const sorters: Record<
+      AlertSortMode,
+      (x: AlertWithGovernance, y: AlertWithGovernance) => number
+    > = {
       newest: (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       confidence: (a, b) => (b.confidence ?? 0) - (a.confidence ?? 0),
       severity: (a, b) => severityOrder[b.severity] - severityOrder[a.severity],

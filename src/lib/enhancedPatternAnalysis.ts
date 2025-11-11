@@ -28,8 +28,8 @@
  * - Avoid blocking the main thread; yield in UI layers if long operations are needed
  * - Log via logger (no console.* in shipped code)
  */
-import { EmotionEntry, SensoryEntry, TrackingEntry, Goal } from "@/types/student";
-import { getMlModels, BaselineCluster } from "@/lib/mlModels";
+import { EmotionEntry, SensoryEntry, TrackingEntry, Goal } from '@/types/student';
+import { getMlModels, BaselineCluster } from '@/lib/mlModels';
 import { logger } from '@/lib/logger';
 import {
   type TrendAnalysis,
@@ -40,7 +40,7 @@ import {
   generateConfidenceExplanation,
   detectAnomalies,
   generateCorrelationMatrix,
-  generatePredictiveInsights
+  generatePredictiveInsights,
 } from '@/lib/patternAnalysis';
 
 // Re-export types for backward compatibility
@@ -81,7 +81,7 @@ class EnhancedPatternAnalysisEngine {
     emotions: EmotionEntry[],
     sensoryInputs: SensoryEntry[],
     trackingEntries: TrackingEntry[],
-    goals: Goal[] = []
+    goals: Goal[] = [],
   ): Promise<PredictiveInsight[]> {
     // Delegate to extracted module function
     return generatePredictiveInsights(
@@ -90,7 +90,7 @@ class EnhancedPatternAnalysisEngine {
       trackingEntries,
       goals,
       this.mlModelsInstance,
-      this.mlModelsInitialized
+      this.mlModelsInitialized,
     );
   }
 
@@ -105,7 +105,7 @@ class EnhancedPatternAnalysisEngine {
     dataPoints: number,
     timeSpanDays: number,
     rSquared: number,
-    confidence: number
+    confidence: number,
   ): { level: 'low' | 'medium' | 'high'; explanation: string; factors: string[] } {
     // Delegate to extracted module function
     return generateConfidenceExplanation(dataPoints, timeSpanDays, rSquared, confidence);
@@ -115,7 +115,7 @@ class EnhancedPatternAnalysisEngine {
   detectAnomalies(
     emotions: EmotionEntry[],
     sensoryInputs: SensoryEntry[],
-    trackingEntries: TrackingEntry[]
+    trackingEntries: TrackingEntry[],
   ): AnomalyDetection[] {
     // Delegate to extracted module function
     return detectAnomalies(emotions, sensoryInputs, trackingEntries);

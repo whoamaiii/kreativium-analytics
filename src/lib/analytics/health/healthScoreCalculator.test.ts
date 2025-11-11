@@ -27,7 +27,7 @@ describe('calculateHealthScore', () => {
         patterns: [{ type: 'test', description: 'test' } as any],
       };
       const score = calculateHealthScore(results);
-      expect(score).toBe(20); // PATTERNS weight only
+      expect(score).toBe(40); // PATTERNS (20) + inferred MINIMUM_DATA (20)
     });
 
     it('should award points for correlations only', () => {
@@ -36,7 +36,7 @@ describe('calculateHealthScore', () => {
         correlations: [{ factor1: 'test', factor2: 'test', coefficient: 0.5 } as any],
       };
       const score = calculateHealthScore(results);
-      expect(score).toBe(20); // CORRELATIONS weight only
+      expect(score).toBe(40); // CORRELATIONS (20) + inferred MINIMUM_DATA (20)
     });
 
     it('should award points for predictive insights only', () => {
@@ -116,8 +116,8 @@ describe('calculateHealthScore', () => {
         },
       } as AnalyticsResultsCompat;
       const score = calculateHealthScore(results);
-      // Base: 20 + 20 = 40, scaled: 40 * 0.8 = 32
-      expect(score).toBe(32);
+      // Base: 20 + 20 = 40, scaled: 40 * 0.8 = 32, AI bonus: +5 = 37
+      expect(score).toBe(37);
     });
 
     it('should use 1.0 confidence when none provided', () => {
@@ -299,8 +299,18 @@ describe('calculateHealthScore', () => {
     it('should handle high-quality AI analysis scenario', () => {
       const results = {
         ...createBaseResults(),
-        patterns: [{ type: 'test' }, { type: 'test2' }, { type: 'test3' }, { type: 'test4' }, { type: 'test5' }] as any[],
-        correlations: [{ factor1: 'test', factor2: 'test', coefficient: 0.5 }, { factor1: 'test2', factor2: 'test2', coefficient: 0.6 }, { factor1: 'test3', factor2: 'test3', coefficient: 0.7 }] as any[],
+        patterns: [
+          { type: 'test' },
+          { type: 'test2' },
+          { type: 'test3' },
+          { type: 'test4' },
+          { type: 'test5' },
+        ] as any[],
+        correlations: [
+          { factor1: 'test', factor2: 'test', coefficient: 0.5 },
+          { factor1: 'test2', factor2: 'test2', coefficient: 0.6 },
+          { factor1: 'test3', factor2: 'test3', coefficient: 0.7 },
+        ] as any[],
         predictiveInsights: [{ prediction: 'test' }, { prediction: 'test2' }] as any[],
         anomalies: [{ type: 'test' }] as any[],
         hasMinimumData: true,
@@ -334,7 +344,10 @@ describe('calculateHealthScore', () => {
       const results = {
         ...createBaseResults(),
         patterns: [{ type: 'test' }, { type: 'test2' }, { type: 'test3' }] as any[],
-        correlations: [{ factor1: 'test', factor2: 'test', coefficient: 0.5 }, { factor1: 'test2', factor2: 'test2', coefficient: 0.6 }] as any[],
+        correlations: [
+          { factor1: 'test', factor2: 'test', coefficient: 0.5 },
+          { factor1: 'test2', factor2: 'test2', coefficient: 0.6 },
+        ] as any[],
         predictiveInsights: [{ prediction: 'test' }] as any[],
         anomalies: [{ type: 'test' }] as any[],
         hasMinimumData: true,

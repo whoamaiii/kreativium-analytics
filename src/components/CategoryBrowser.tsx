@@ -52,11 +52,12 @@ const CategoryBrowserComponent = ({
 
   const clearAll = () => onChange([]);
 
-  const colsCls = columns === 4
-    ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
-    : columns === 2
-      ? 'grid-cols-2'
-      : 'grid-cols-2 md:grid-cols-3';
+  const colsCls =
+    columns === 4
+      ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
+      : columns === 2
+        ? 'grid-cols-2'
+        : 'grid-cols-2 md:grid-cols-3';
 
   return (
     <div className={cn('space-y-3', className)}>
@@ -64,9 +65,7 @@ const CategoryBrowserComponent = ({
         {label && (
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-foreground">{label}</span>
-            {showCount && (
-              <Badge variant="secondary">{selected.length}</Badge>
-            )}
+            {showCount && <Badge variant="secondary">{selected.length}</Badge>}
           </div>
         )}
         {selected.length > 0 && (
@@ -88,7 +87,10 @@ const CategoryBrowserComponent = ({
 
       <div className={cn('grid gap-2', colsCls)}>
         {filtered.map((opt) => (
-          <label key={opt} className="flex items-center gap-2 rounded-md px-2 py-2 border hover:bg-accent/40 cursor-pointer">
+          <label
+            key={opt}
+            className="flex items-center gap-2 rounded-md px-2 py-2 border hover:bg-accent/40 cursor-pointer"
+          >
             <Checkbox
               checked={selected.includes(opt)}
               onCheckedChange={(c) => toggle(opt, c)}
@@ -107,5 +109,3 @@ const CategoryBrowserComponent = ({
 
 export const CategoryBrowser = React.memo(CategoryBrowserComponent);
 export default CategoryBrowser;
-
-

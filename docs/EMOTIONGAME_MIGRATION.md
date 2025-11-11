@@ -2,7 +2,8 @@
 
 ## Overview
 
-This guide documents the migration of EmotionGame from 26+ `useState` hooks to a single `useGameState` reducer-based state machine.
+This guide documents the migration of EmotionGame from 26+ `useState` hooks to a single
+`useGameState` reducer-based state machine.
 
 ## Before: The Problem
 
@@ -35,6 +36,7 @@ const [fpsBuckets, setFpsBuckets] = useState<Record<string, number>>({});
 ```
 
 **Problems:**
+
 - 26 separate useState calls = complex state dependencies
 - Difficult to reason about state transitions
 - Hard to test (component-level testing required)
@@ -65,6 +67,7 @@ export default function EmotionGame() {
 ```
 
 **Benefits:**
+
 - Single state object = predictable state transitions
 - Testable pure reducer function
 - Better performance (batched updates)
@@ -76,12 +79,14 @@ export default function EmotionGame() {
 ### Step 1: Replace Simple State Updates
 
 **Before:**
+
 ```typescript
 const [combo, setCombo] = useState<number>(1);
 setCombo(combo + 1);
 ```
 
 **After:**
+
 ```typescript
 const { state, dispatch } = useGameState();
 dispatch({ type: 'INCREMENT_COMBO' });
@@ -92,12 +97,14 @@ incrementCombo();
 ### Step 2: Replace Boolean Flags
 
 **Before:**
+
 ```typescript
 const [showTutorial, setShowTutorial] = useState<boolean>(true);
 setShowTutorial(false);
 ```
 
 **After:**
+
 ```typescript
 const { state, dispatch } = useGameState();
 dispatch({ type: 'SHOW_TUTORIAL', payload: false });
@@ -106,23 +113,26 @@ dispatch({ type: 'SHOW_TUTORIAL', payload: false });
 ### Step 3: Replace Complex Object Updates
 
 **Before:**
+
 ```typescript
 const [difficulty, setDifficulty] = useState({ threshold: 0.6, holdMs: 900, streak: 0 });
 setDifficulty({ ...difficulty, threshold: 0.75, streak: 5 });
 ```
 
 **After:**
+
 ```typescript
 const { state, dispatch } = useGameState();
 dispatch({
   type: 'SET_DIFFICULTY',
-  payload: { threshold: 0.75, streak: 5 }
+  payload: { threshold: 0.75, streak: 5 },
 });
 ```
 
 ### Step 4: Replace Compound Updates
 
 **Before:**
+
 ```typescript
 setRoundTimerMs(0);
 setTimerActive(true);
@@ -132,6 +142,7 @@ setLastPerfect(false);
 ```
 
 **After:**
+
 ```typescript
 dispatch({ type: 'START_NEW_ROUND' });
 // Or use helper
@@ -141,6 +152,7 @@ startNewRound();
 ## Complete Action Reference
 
 ### Progress Actions
+
 - `SET_WORLD_INDEX` - Change current world
 - `SET_COMBO` - Set combo value directly
 - `INCREMENT_COMBO` - Increment combo by 1
@@ -149,6 +161,7 @@ startNewRound();
 - `SET_PRACTICE` - Change practice mode
 
 ### UI Modal Actions
+
 - `SHOW_TUTORIAL` - Show/hide tutorial overlay
 - `SHOW_CALIBRATION` - Show/hide calibration overlay
 - `SHOW_LEVEL_COMPLETE` - Show/hide level complete modal
@@ -159,6 +172,7 @@ startNewRound();
 - `SHOW_LEVEL_UP` - Show/hide level up animation
 
 ### Round State Actions
+
 - `SET_ROUND_TIMER` - Update round timer (ms)
 - `START_TIMER` - Start the round timer
 - `STOP_TIMER` - Stop the round timer
@@ -167,19 +181,23 @@ startNewRound();
 - `RESET_HINT_FLAG` - Reset the "used hint this round" flag
 
 ### Effects Actions
+
 - `SET_EFFECT_PARAMS` - Update visual effect parameters
 - `SET_LAST_PERFECT` - Mark if last round was perfect
 - `RELOAD_HINTS` - Reload hint count
 
 ### Settings Actions
+
 - `SET_THEME` - Change visual theme
 - `SET_CAMERA_ACTIVE` - Enable/disable camera
 
 ### Performance Actions
+
 - `UPDATE_FPS_BUCKETS` - Update FPS histogram
 - `SET_CONFIDENCE_VALUE` - Update confidence threshold
 
 ### Compound Actions
+
 - `START_NEW_ROUND` - Reset all round-specific state
 - `COMPLETE_ROUND` - Handle round completion (updates combo, shows summary)
 - `RESET_GAME` - Reset entire game state
@@ -239,7 +257,7 @@ setEffectParams({ ...effectParams, particleCount: 100 });
 // After
 dispatch({
   type: 'SET_EFFECT_PARAMS',
-  payload: { particleCount: 100 }
+  payload: { particleCount: 100 },
 });
 ```
 
@@ -262,7 +280,7 @@ it('completes round with perfect score', () => {
   const state = { ...createInitialGameState(), combo: 5 };
   const newState = gameReducer(state, {
     type: 'COMPLETE_ROUND',
-    payload: { perfect: true, timeMs: 4500 }
+    payload: { perfect: true, timeMs: 4500 },
   });
 
   expect(newState.lastPerfect).toBe(true);
@@ -291,16 +309,18 @@ it('increments combo using helper', () => {
 ## Performance Improvements
 
 ### Before: Cascading Updates
+
 ```typescript
 // 5 separate state updates = 5 re-renders
-setRoundTimerMs(0);        // render 1
-setTimerActive(true);      // render 2
-setUsedHint(false);        // render 3
-setShowSummary(null);      // render 4
-setLastPerfect(false);     // render 5
+setRoundTimerMs(0); // render 1
+setTimerActive(true); // render 2
+setUsedHint(false); // render 3
+setShowSummary(null); // render 4
+setLastPerfect(false); // render 5
 ```
 
 ### After: Single Update
+
 ```typescript
 // 1 state update = 1 re-render
 dispatch({ type: 'START_NEW_ROUND' });
@@ -320,6 +340,7 @@ dispatch({ type: 'START_NEW_ROUND' });
 ## Backwards Compatibility
 
 The new hook **does not break** existing code. You can:
+
 - Use both systems in parallel during migration
 - Migrate incrementally, one feature at a time
 - Keep existing useState hooks for state not in the reducer
@@ -342,6 +363,7 @@ The new hook **does not break** existing code. You can:
 ## Questions?
 
 If you encounter any issues during migration:
+
 1. Check if the action exists in `GameAction` type
 2. Verify payload shape matches action definition
 3. Test reducer function in isolation

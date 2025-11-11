@@ -4,7 +4,7 @@
  * Type definitions for PDF report generation functionality.
  */
 
-import type { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
+import type { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
 
 /**
  * Report content structure for PDF generation

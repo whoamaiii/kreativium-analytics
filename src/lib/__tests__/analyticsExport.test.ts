@@ -29,6 +29,3 @@ describe('analyticsExport', () => {
     spyPdf.mockRestore();
   });
 });
-
-
-

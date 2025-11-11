@@ -11,7 +11,13 @@ export function backoffDelay(attempt: number, base: number, max: number, jitter 
 }
 
 export function isRetriableStatus(status: number): boolean {
-  return status === 408 || status === 409 || status === 425 || status === 429 || (status >= 500 && status < 600);
+  return (
+    status === 408 ||
+    status === 409 ||
+    status === 425 ||
+    status === 429 ||
+    (status >= 500 && status < 600)
+  );
 }
 
 export async function retryWithExponentialBackoff<T>(
@@ -27,13 +33,14 @@ export async function retryWithExponentialBackoff<T>(
     } catch (error) {
       lastError = error;
       if (attempt === retries) break;
-      
+
       // Prefer retryAfterMs from error details if available
       const retryAfterMs = (error as any)?.details?.retryAfterMs;
-      const delayMs = typeof retryAfterMs === 'number' && retryAfterMs > 0
-        ? Math.min(retryAfterMs, maxDelayMs)
-        : backoffDelay(attempt, baseDelayMs, maxDelayMs, true);
-      
+      const delayMs =
+        typeof retryAfterMs === 'number' && retryAfterMs > 0
+          ? Math.min(retryAfterMs, maxDelayMs)
+          : backoffDelay(attempt, baseDelayMs, maxDelayMs, true);
+
       onRetry?.(attempt, error, delayMs);
       await delay(delayMs);
     }
@@ -41,10 +48,15 @@ export async function retryWithExponentialBackoff<T>(
   throw lastError;
 }
 
-export function sanitizeHeadersForLog(headers: Record<string, string | undefined> | Headers | undefined): Record<string, string> {
+export function sanitizeHeadersForLog(
+  headers: Record<string, string | undefined> | Headers | undefined,
+): Record<string, string> {
   const out: Record<string, string> = {};
   if (!headers) return out;
-  const entries: [string, string][] = headers instanceof Headers ? Array.from(headers.entries()) : Object.entries(headers).filter(([, v]) => typeof v === 'string') as [string, string][];
+  const entries: [string, string][] =
+    headers instanceof Headers
+      ? Array.from(headers.entries())
+      : (Object.entries(headers).filter(([, v]) => typeof v === 'string') as [string, string][]);
   for (const [k, v] of entries) {
     const key = k.toLowerCase();
     if (key === 'authorization' || key === 'x-api-key') {
@@ -107,7 +119,10 @@ const PRICE_PER_1K: Record<string, { input: number; output: number }> = {
   'claude-3.5-sonnet': { input: 3.0, output: 15.0 },
 };
 
-export function calculateCostEstimate(model: string, usage?: OpenRouterUsage): CostEstimate | undefined {
+export function calculateCostEstimate(
+  model: string,
+  usage?: OpenRouterUsage,
+): CostEstimate | undefined {
   if (!usage) return undefined;
   const price = PRICE_PER_1K[model] || PRICE_PER_1K[model.toLowerCase()];
   const inputTokens = usage.prompt_tokens ?? 0;
@@ -137,7 +152,9 @@ export function calculateCostEstimate(model: string, usage?: OpenRouterUsage): C
   };
 }
 
-export function safeJSONParse<T = unknown>(text: string): { ok: true; value: T } | { ok: false; error: Error } {
+export function safeJSONParse<T = unknown>(
+  text: string,
+): { ok: true; value: T } | { ok: false; error: Error } {
   try {
     return { ok: true, value: JSON.parse(text) as T };
   } catch (error) {
@@ -150,7 +167,9 @@ export function safeJSONParse<T = unknown>(text: string): { ok: true; value: T }
  * Handles common cases like code fences (```json ... ```), leading/trailing prose,
  * and nested braces within quoted strings.
  */
-export function extractFirstJsonObject<T = unknown>(text: string): { ok: true; value: T } | { ok: false; error: Error } {
+export function extractFirstJsonObject<T = unknown>(
+  text: string,
+): { ok: true; value: T } | { ok: false; error: Error } {
   try {
     const s = (text || '').trim();
     if (!s) return { ok: false, error: new Error('Empty text') };
@@ -172,16 +191,30 @@ export function extractFirstJsonObject<T = unknown>(text: string): { ok: true; v
       for (let i = 0; i < s.length; i++) {
         const ch = s[i];
         if (start === -1) {
-          if (ch === '{') { start = i; depth = 1; inString = false; escape = false; }
+          if (ch === '{') {
+            start = i;
+            depth = 1;
+            inString = false;
+            escape = false;
+          }
           continue;
         }
-        if (escape) { escape = false; continue; }
+        if (escape) {
+          escape = false;
+          continue;
+        }
         if (inString) {
-          if (ch === '\\') { escape = true; }
-          else if (ch === '"') { inString = false; }
+          if (ch === '\\') {
+            escape = true;
+          } else if (ch === '"') {
+            inString = false;
+          }
           continue;
         }
-        if (ch === '"') { inString = true; continue; }
+        if (ch === '"') {
+          inString = true;
+          continue;
+        }
         if (ch === '{') depth++;
         else if (ch === '}') {
           depth--;
@@ -210,9 +243,11 @@ export function extractFirstJsonObject<T = unknown>(text: string): { ok: true; v
   }
 }
 
-export function buildAbortController(timeoutMs: number): { controller: AbortController; timeoutId: ReturnType<typeof setTimeout> } {
+export function buildAbortController(timeoutMs: number): {
+  controller: AbortController;
+  timeoutId: ReturnType<typeof setTimeout>;
+} {
   const controller = new AbortController();
   const timeoutId = globalThis.setTimeout(() => controller.abort(), Math.max(1, timeoutMs));
   return { controller, timeoutId };
 }
-

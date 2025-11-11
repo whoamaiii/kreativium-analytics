@@ -1,3 +1,5 @@
+import { STORAGE_KEYS } from '@/lib/storage/keys';
+
 export type StickerId = 'hold-master' | 'name-hero' | 'streak-star';
 
 export interface DailyProgress {
@@ -17,22 +19,23 @@ function todayKey(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-const STORAGE_KEY = 'emotion.dailyProgress'; // legacy global
-const STUDENT_PREFIX = 'progress:'; // progress:<studentId>
-
 function storageKeyForStudent(studentId: string): string {
-  return `${STUDENT_PREFIX}${studentId}`;
+  return `${STORAGE_KEYS.PROGRESS_PREFIX}${studentId}`;
 }
 
 function getCurrentStudentId(): string {
-  try { return localStorage.getItem('current.studentId') || 'anonymous'; } catch { return 'anonymous'; }
+  try {
+    return localStorage.getItem(STORAGE_KEYS.CURRENT_STUDENT_ID) || 'anonymous';
+  } catch {
+    return 'anonymous';
+  }
 }
 
 function migrateGlobalToStudentOnce(studentId: string): void {
   try {
-    const marker = `progress.migratedFor:${studentId}`;
+    const marker = `${STORAGE_KEYS.PROGRESS_MIGRATION_PREFIX}${studentId}`;
     if (localStorage.getItem(marker) === '1') return;
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEYS.PROGRESS_DAILY);
     if (!raw) return;
     const legacy = JSON.parse(raw) as Record<string, DailyProgress>;
     const existingRaw = localStorage.getItem(storageKeyForStudent(studentId));
@@ -42,7 +45,9 @@ function migrateGlobalToStudentOnce(studentId: string): void {
   } catch {}
 }
 
-export function loadStudentProgress(studentId: string = getCurrentStudentId()): Record<string, DailyProgress> {
+export function loadStudentProgress(
+  studentId: string = getCurrentStudentId(),
+): Record<string, DailyProgress> {
   try {
     migrateGlobalToStudentOnce(studentId);
     const raw = localStorage.getItem(storageKeyForStudent(studentId));
@@ -53,7 +58,9 @@ export function loadStudentProgress(studentId: string = getCurrentStudentId()): 
 }
 
 export function saveStudentProgress(studentId: string, map: Record<string, DailyProgress>): void {
-  try { localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(map)); } catch {}
+  try {
+    localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(map));
+  } catch {}
 }
 
 // Backwards‑compatible aliases now scoped to current student
@@ -62,13 +69,22 @@ export function loadProgress(): Record<string, DailyProgress> {
 }
 
 export function saveProgress(map: Record<string, DailyProgress>): void {
-  try { saveStudentProgress(getCurrentStudentId(), map); } catch {}
+  try {
+    saveStudentProgress(getCurrentStudentId(), map);
+  } catch {}
 }
 
 function ensureToday(map: Record<string, DailyProgress>): DailyProgress {
   const key = todayKey();
   if (!map[key]) {
-    map[key] = { date: key, neutralHolds: 0, correctChoices: 0, nameItCorrect: 0, streak: 0, stickers: [] };
+    map[key] = {
+      date: key,
+      neutralHolds: 0,
+      correctChoices: 0,
+      nameItCorrect: 0,
+      streak: 0,
+      stickers: [],
+    };
   }
   return map[key];
 }
@@ -99,6 +115,3 @@ export function incNeutralHold(studentId?: string): void {
   t.streak += 1;
   saveStudentProgress(sid, map);
 }
-
-
-

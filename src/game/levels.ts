@@ -1,6 +1,13 @@
 import { GAME_HOLD_DURATIONS } from '@/constants/game';
 
-export type ExpressionKey = 'neutral' | 'happy' | 'sad' | 'angry' | 'fearful' | 'disgusted' | 'surprised';
+export type ExpressionKey =
+  | 'neutral'
+  | 'happy'
+  | 'sad'
+  | 'angry'
+  | 'fearful'
+  | 'disgusted'
+  | 'surprised';
 
 export interface GameRound {
   target: ExpressionKey;
@@ -44,6 +51,3 @@ export const STAR_HOLD_WORLD: World = {
 };
 
 export const DEFAULT_WORLDS: World[] = [MVP_WORLD, STAR_HOLD_WORLD];
-
-
-

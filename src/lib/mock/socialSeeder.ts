@@ -31,5 +31,3 @@ export async function seedSocialDemoData(studentId: string, count = 6): Promise<
   }
   return count;
 }
-
-

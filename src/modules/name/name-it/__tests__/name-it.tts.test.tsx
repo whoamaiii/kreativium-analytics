@@ -20,9 +20,3 @@ describe('NameIt', () => {
     expect((window as any).speechSynthesis.speak).toHaveBeenCalledTimes(1);
   });
 });
-
-
-
-
-
-

@@ -13,14 +13,21 @@ function buildCalibrationFromTelemetry(): { buckets: Bucket[]; brier: number | n
   for (let i = 0; i < events.length; i += 1) {
     const ev = events[i] as any;
     if (ev?.kind === 'confidence_reported') {
-      const predicted = typeof ev.confidence === 'number' ? Math.max(0, Math.min(1, ev.confidence)) : null;
-      const actual = typeof ev.actualProb === 'number' ? Math.max(0, Math.min(1, ev.actualProb)) : null;
+      const predicted =
+        typeof ev.confidence === 'number' ? Math.max(0, Math.min(1, ev.confidence)) : null;
+      const actual =
+        typeof ev.actualProb === 'number' ? Math.max(0, Math.min(1, ev.actualProb)) : null;
       if (predicted != null && actual != null) pairs.push({ predicted, actual });
     }
   }
   if (pairs.length === 0) return { buckets: [], brier: null };
   const bucketSize = 0.1;
-  const buckets: Bucket[] = Array.from({ length: 10 }, (_, i) => ({ bucket: i * bucketSize, predicted: 0, actual: 0, count: 0 }));
+  const buckets: Bucket[] = Array.from({ length: 10 }, (_, i) => ({
+    bucket: i * bucketSize,
+    predicted: 0,
+    actual: 0,
+    count: 0,
+  }));
   for (const p of pairs) {
     const idx = Math.min(9, Math.max(0, Math.floor(p.predicted / bucketSize)));
     const b = buckets[idx];
@@ -49,17 +56,35 @@ function buildOption(buckets: Bucket[], brier: number | null): EChartsOption | n
   return {
     tooltip: { trigger: 'axis' },
     legend: { data: ['Actual', 'Predicted', 'Count'] },
-    xAxis: { type: 'category', name: 'Predicted bucket', data: buckets.map(b => (b.bucket + 0.05).toFixed(2)) },
+    xAxis: {
+      type: 'category',
+      name: 'Predicted bucket',
+      data: buckets.map((b) => (b.bucket + 0.05).toFixed(2)),
+    },
     yAxis: [
       { type: 'value', min: 0, max: 1, name: 'Probability' },
       { type: 'value', min: 0, name: 'Count', position: 'right' },
     ],
     series: [
-      { name: 'Actual', type: 'line', smooth: true, data: buckets.map(b => Number(b.actual.toFixed(3))) },
-      { name: 'Predicted', type: 'line', smooth: true, data: buckets.map(b => Number(b.predicted.toFixed(3))), lineStyle: { type: 'dashed' } },
-      { name: 'Count', type: 'bar', yAxisIndex: 1, data: buckets.map(b => b.count) },
+      {
+        name: 'Actual',
+        type: 'line',
+        smooth: true,
+        data: buckets.map((b) => Number(b.actual.toFixed(3))),
+      },
+      {
+        name: 'Predicted',
+        type: 'line',
+        smooth: true,
+        data: buckets.map((b) => Number(b.predicted.toFixed(3))),
+        lineStyle: { type: 'dashed' },
+      },
+      { name: 'Count', type: 'bar', yAxisIndex: 1, data: buckets.map((b) => b.count) },
     ],
-    title: brier != null ? { text: `Calibration (Brier: ${brier.toFixed(3)})`, left: 'center', top: 0 } : undefined,
+    title:
+      brier != null
+        ? { text: `Calibration (Brier: ${brier.toFixed(3)})`, left: 'center', top: 0 }
+        : undefined,
   } as EChartsOption;
 }
 
@@ -72,20 +97,24 @@ export default function ConfidenceCalibration() {
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{String(tCommon('charts.calibration', { defaultValue: 'Confidence Calibration' }))}</h1>
+          <h1 className="text-2xl font-bold">
+            {String(tCommon('charts.calibration', { defaultValue: 'Confidence Calibration' }))}
+          </h1>
         </div>
         <Card className="p-4">
           {option ? (
             <EChartContainer option={option} height={420} />
           ) : (
-            <div className="text-sm text-muted-foreground">{String(tCommon('charts.noData', { defaultValue: 'No calibration data yet. Play Confidence Mode to collect data.' }))}</div>
+            <div className="text-sm text-muted-foreground">
+              {String(
+                tCommon('charts.noData', {
+                  defaultValue: 'No calibration data yet. Play Confidence Mode to collect data.',
+                }),
+              )}
+            </div>
           )}
         </Card>
       </div>
     </div>
   );
 }
-
-
-
-

@@ -149,10 +149,7 @@ const DEFAULT_RUNTIME_BASE: SchemaAnalyticsConfig = analyticsConfigSchema.parse(
   },
 });
 
-const DEFAULT_RUNTIME_EXTENSIONS: Omit<
-  RuntimeAnalyticsConfig,
-  keyof SchemaAnalyticsConfig
-> = {
+const DEFAULT_RUNTIME_EXTENSIONS: Omit<RuntimeAnalyticsConfig, keyof SchemaAnalyticsConfig> = {
   advancedThresholds: {
     dynamic: {
       // Example: anomaly score threshold adapts to std dev
@@ -271,7 +268,9 @@ function deepMerge<T extends object>(base: T, overrides: Partial<T> | undefined 
 function readRuntimeOverrides(): Partial<RuntimeAnalyticsConfig> | null {
   try {
     // Pull any overrides that may have been stored via analyticsConfig manager.
-    const cfg = analyticsConfig.getConfig() as unknown as { runtime?: Partial<RuntimeAnalyticsConfig> };
+    const cfg = analyticsConfig.getConfig() as unknown as {
+      runtime?: Partial<RuntimeAnalyticsConfig>;
+    };
     if (cfg && typeof cfg === 'object' && cfg.runtime) {
       return cfg.runtime;
     }
@@ -336,4 +335,3 @@ export function getRuntimeAnalyticsConfig(): RuntimeAnalyticsConfig {
 }
 
 // Removed unused getters per plan; consumers should use getRuntimeAnalyticsConfig directly
-

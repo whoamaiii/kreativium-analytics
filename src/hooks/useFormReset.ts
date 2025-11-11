@@ -127,6 +127,6 @@ export function useFormReset<T>(initialState: T): FormResetReturn<T> {
       reset,
       setValues,
     }),
-    [values, reset, setValues]
+    [values, reset, setValues],
   );
 }

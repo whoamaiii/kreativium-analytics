@@ -1,7 +1,7 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import { logger } from '@/lib/logger'
-import type { TrackingEntry } from '@/types/student'
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { logger } from '@/lib/logger';
+import type { TrackingEntry } from '@/types/student';
 
 /**
  * A utility function that merges Tailwind CSS classes with clsx for conditional class handling.
@@ -14,7 +14,7 @@ import type { TrackingEntry } from '@/types/student'
  * @returns The merged class string.
  */
 export function cn(...inputs: ClassValue[]): string {
-  return twMerge(clsx(...inputs))
+  return twMerge(clsx(...inputs));
 }
 
 /**
@@ -34,7 +34,7 @@ export const downloadBlob = (blob: Blob, filename: string) => {
   let url: string | undefined;
 
   try {
-url = window.URL.createObjectURL(blob);
+    url = window.URL.createObjectURL(blob);
     logger.debug('[BLOB_URL] Created URL', { url, filename: safeName, blobSize: blob.size });
     const link = document.createElement('a');
     link.href = url;
@@ -48,7 +48,7 @@ url = window.URL.createObjectURL(blob);
   } finally {
     if (url) {
       // Defer revocation to avoid timing races in some browsers
-setTimeout(() => {
+      setTimeout(() => {
         URL.revokeObjectURL(url!);
         logger.debug('[BLOB_URL] Revoked URL', { url, filename: safeName });
       }, 0);

@@ -32,7 +32,10 @@ import type { ModelStorage } from './storage';
  * Generic dataset preparation result.
  * Contains input/output tensors and preprocessing metadata.
  */
-export interface DatasetResult<TInput extends tf.Tensor = tf.Tensor, TOutput extends tf.Tensor = tf.Tensor> {
+export interface DatasetResult<
+  TInput extends tf.Tensor = tf.Tensor,
+  TOutput extends tf.Tensor = tf.Tensor,
+> {
   inputs: TInput;
   outputs: TOutput;
   meta: {
@@ -67,9 +70,9 @@ export interface MetricsExtractor {
    * Extract validation metrics from training history.
    */
   extract(history: tf.History): {
-    primary?: number;  // Main metric (e.g., val_mse or val_accuracy)
+    primary?: number; // Main metric (e.g., val_mse or val_accuracy)
     secondary?: number; // Secondary metric (e.g., mae)
-    loss?: number;      // Training loss
+    loss?: number; // Training loss
   };
 
   /**
@@ -82,9 +85,9 @@ export interface MetricsExtractor {
  * Model architecture metadata for persistence.
  */
 export interface ArchitectureMetadata {
-  name: string;           // e.g., 'LSTM', 'Dense'
-  inputShape: number[];   // e.g., [7, 13] or [12]
-  outputShape: number[];  // e.g., [7] or [15]
+  name: string; // e.g., 'LSTM', 'Dense'
+  inputShape: number[]; // e.g., [7, 13] or [12]
+  outputShape: number[]; // e.g., [7] or [15]
 }
 
 /**
@@ -145,10 +148,12 @@ export interface TrainingResult {
 export const regressionMetrics: MetricsExtractor = {
   extract(history: tf.History) {
     const finalLoss = history.history.loss?.[history.history.loss.length - 1] as number | undefined;
-    const finalValMSE = (history.history.val_mse?.[history.history.val_mse.length - 1] as number | undefined)
-      ?? (history.history.mse?.[history.history.mse.length - 1] as number | undefined);
-    const finalValMAE = (history.history.val_mae?.[history.history.val_mae.length - 1] as number | undefined)
-      ?? (history.history.mae?.[history.history.mae.length - 1] as number | undefined);
+    const finalValMSE =
+      (history.history.val_mse?.[history.history.val_mse.length - 1] as number | undefined) ??
+      (history.history.mse?.[history.history.mse.length - 1] as number | undefined);
+    const finalValMAE =
+      (history.history.val_mae?.[history.history.val_mae.length - 1] as number | undefined) ??
+      (history.history.mae?.[history.history.mae.length - 1] as number | undefined);
 
     return {
       primary: finalValMSE,
@@ -162,9 +167,9 @@ export const regressionMetrics: MetricsExtractor = {
       regression: {
         mse: extracted.primary,
         mae: extracted.secondary,
-      }
+      },
     };
-  }
+  },
 };
 
 /**
@@ -173,9 +178,12 @@ export const regressionMetrics: MetricsExtractor = {
 export const classificationMetrics: MetricsExtractor = {
   extract(history: tf.History) {
     const finalLoss = history.history.loss?.[history.history.loss.length - 1] as number | undefined;
-    const finalValAcc = (history.history.val_accuracy?.[history.history.val_accuracy.length - 1] as number | undefined)
-      ?? (history.history.accuracy?.[history.history.accuracy.length - 1] as number | undefined)
-      ?? (history.history.acc?.[history.history.acc.length - 1] as number | undefined);
+    const finalValAcc =
+      (history.history.val_accuracy?.[history.history.val_accuracy.length - 1] as
+        | number
+        | undefined) ??
+      (history.history.accuracy?.[history.history.accuracy.length - 1] as number | undefined) ??
+      (history.history.acc?.[history.history.acc.length - 1] as number | undefined);
 
     return {
       primary: finalValAcc,
@@ -187,9 +195,9 @@ export const classificationMetrics: MetricsExtractor = {
     return {
       classification: {
         accuracy: extracted.primary,
-      }
+      },
     };
-  }
+  },
 };
 
 // ============================================================================
@@ -228,7 +236,7 @@ export const classificationMetrics: MetricsExtractor = {
  * ```
  */
 export async function trainModel<T extends DatasetResult>(
-  config: TrainingConfig<T>
+  config: TrainingConfig<T>,
 ): Promise<TrainingResult> {
   const {
     modelType,
@@ -338,7 +346,6 @@ export async function trainModel<T extends DatasetResult>(
     });
 
     return { model, metadata, history };
-
   } finally {
     // Step 10: Clean up tensors (always execute)
     logger.debug(`[trainModel] Cleaning up tensors for ${modelType}`);
@@ -458,7 +465,7 @@ async function performCrossValidation(params: {
     // Determine default window size based on data
     const defaultWindowSize = Math.min(
       taskType === 'regression' ? 7 : 8,
-      Math.max(3, Math.floor(inputs.shape[0] / 3) || 3)
+      Math.max(3, Math.floor(inputs.shape[0] / 3) || 3),
     );
 
     const tsCfg: TimeSeriesValidationConfig = {
@@ -473,7 +480,7 @@ async function performCrossValidation(params: {
     const tsResults = await validator.validateTimeSeriesModel(
       createModel,
       { features: inputs, labels: outputs },
-      tsCfg
+      tsCfg,
     );
 
     // Create signatures for CV run

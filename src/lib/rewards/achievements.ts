@@ -21,9 +21,3 @@ export function evaluateAchievements(): StickerId[] {
   if (unlocked.length > 0) saveProgress(map);
   return unlocked;
 }
-
-
-
-
-
-

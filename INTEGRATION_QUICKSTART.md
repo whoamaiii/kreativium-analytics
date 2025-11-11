@@ -8,11 +8,13 @@ For full details, see: `INTEGRATION_PLAN_AGENT_10.md`
 
 ## TL;DR
 
-**Goal**: Modularize ExportSystem (827 lines) and AlertDetectionEngine (874 lines) using 9 agents coordinated by Agent 10.
+**Goal**: Modularize ExportSystem (827 lines) and AlertDetectionEngine (874 lines) using 9 agents
+coordinated by Agent 10.
 
 **Timeline**: 7 days (~56 hours of agent work)
 
 **Result**:
+
 - ExportSystem: 827 → 150 lines (82% reduction)
 - AlertEngine: 874 → 200 lines (77% reduction)
 - +1,200 LOC new modules
@@ -55,24 +57,28 @@ Agent 10: Integration verification (6h, final)
 ## Quick Validation Checklist
 
 After each agent:
+
 ```bash
 npm run typecheck  # Must pass
 npm test           # Must pass
 ```
 
 After Agent 5 (ExportSystem complete):
+
 ```bash
 npm test -- src/workers/reports.worker.test.ts
 npm test -- src/pages/StudentProfile.test.tsx
 ```
 
 After Agent 8 (AlertEngine complete):
+
 ```bash
 npm test -- src/workers/analytics.worker.test.ts
 npm test -- src/lib/alerts/__tests__/engine.test.ts
 ```
 
 Final validation:
+
 ```bash
 npm run typecheck && npm test && npm run lint
 npm run test:performance
@@ -133,6 +139,7 @@ git bisect good <last-known-good>
 ## File Structure Preview
 
 ### ExportSystem (After)
+
 ```
 src/lib/exportSystem/
 ├── ExportSystem.ts (~150 lines)
@@ -144,6 +151,7 @@ src/lib/exportSystem/
 ```
 
 ### AlertDetectionEngine (After)
+
 ```
 src/lib/alerts/
 ├── engine.ts (~200 lines)
@@ -157,18 +165,18 @@ src/lib/alerts/
 
 ## Agent Task Summary
 
-| Agent | Task | Time | Critical Path |
-|-------|------|------|---------------|
-| 1 | Export utilities | 4h | Yes (foundation) |
-| 2 | Export format handlers | 6h | Yes |
-| 3 | Export processors | 6h | Yes |
-| 4 | Export templates | 4h | Yes |
-| 5 | Export facade | 6h | Yes (checkpoint) |
-| 6 | Alert builders | 5h | Yes |
-| 7 | Alert aggregation | 6h | Yes |
-| 8 | Alert orchestration | 5h | Yes (checkpoint) |
-| 9 | Cross-module coord | 8h | No (parallel) |
-| 10 | Integration coord | 6h | Yes (final) |
+| Agent | Task                   | Time | Critical Path    |
+| ----- | ---------------------- | ---- | ---------------- |
+| 1     | Export utilities       | 4h   | Yes (foundation) |
+| 2     | Export format handlers | 6h   | Yes              |
+| 3     | Export processors      | 6h   | Yes              |
+| 4     | Export templates       | 4h   | Yes              |
+| 5     | Export facade          | 6h   | Yes (checkpoint) |
+| 6     | Alert builders         | 5h   | Yes              |
+| 7     | Alert aggregation      | 6h   | Yes              |
+| 8     | Alert orchestration    | 5h   | Yes (checkpoint) |
+| 9     | Cross-module coord     | 8h   | No (parallel)    |
+| 10    | Integration coord      | 6h   | Yes (final)      |
 
 ---
 
@@ -186,6 +194,7 @@ src/lib/alerts/
 ## Questions or Issues?
 
 Refer to full integration plan sections:
+
 - **Part 1**: Dependency Graph
 - **Part 2**: Detailed Extraction Plans
 - **Part 3**: Integration Points
@@ -195,6 +204,5 @@ Refer to full integration plan sections:
 
 ---
 
-**Generated**: 2025-11-09
-**Coordinator**: Agent 10
-**Full Plan**: `INTEGRATION_PLAN_AGENT_10.md` (10,000+ words)
+**Generated**: 2025-11-09 **Coordinator**: Agent 10 **Full Plan**: `INTEGRATION_PLAN_AGENT_10.md`
+(10,000+ words)

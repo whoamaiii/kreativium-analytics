@@ -24,7 +24,7 @@ export interface AssociationDataset extends AssociationDetectorInput {
  */
 export function buildEmotionSeries(
   emotions: EmotionEntry[],
-  seriesLimit: number
+  seriesLimit: number,
 ): Map<string, TrendPoint[]> {
   const map = new Map<string, TrendPoint[]>();
   for (let i = 0; i < emotions.length; i += 1) {
@@ -57,9 +57,12 @@ export function buildEmotionSeries(
  */
 export function buildSensoryAggregates(
   sensory: SensoryEntry[],
-  seriesLimit: number
+  seriesLimit: number,
 ): Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }> {
-  const map = new Map<string, { successes: number; trials: number; delta: number; series: TrendPoint[] }>();
+  const map = new Map<
+    string,
+    { successes: number; trials: number; delta: number; series: TrendPoint[] }
+  >();
   for (let i = 0; i < sensory.length; i += 1) {
     const entry = sensory[i]!;
     const ts = normalizeTimestamp(entry.timestamp);
@@ -131,7 +134,8 @@ export function buildAssociationDataset(tracking: TrackingEntry[]): AssociationD
     timestamps.push(ts);
   }
 
-  const total = highNoiseHighEmotion + highNoiseLowEmotion + lowNoiseHighEmotion + lowNoiseLowEmotion;
+  const total =
+    highNoiseHighEmotion + highNoiseLowEmotion + lowNoiseHighEmotion + lowNoiseLowEmotion;
   if (total < 5) return null;
 
   return {
@@ -190,7 +194,9 @@ export function buildBurstEvents(emotions: EmotionEntry[], sensory: SensoryEntry
       const n = Number(nearbySensory[j]!.intensity ?? 0);
       if (Number.isFinite(n)) paired.push(n);
     }
-    const pairedValue = paired.length ? paired.reduce((sum, val) => sum + val, 0) / paired.length : 0;
+    const pairedValue = paired.length
+      ? paired.reduce((sum, val) => sum + val, 0) / paired.length
+      : 0;
     events.push({ timestamp: ts, value: intensity, pairedValue });
   }
 

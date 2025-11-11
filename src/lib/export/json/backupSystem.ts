@@ -1,4 +1,4 @@
-import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from "@/types/student";
+import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
 
 /**
  * Backup metadata
@@ -82,13 +82,13 @@ export class BackupSystem {
       emotions: EmotionEntry[];
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
-    }
+    },
   ): BackupData {
     // Collect all timestamps to determine date range
     const dates = [
-      ...allData.trackingEntries.map(t => t.timestamp),
-      ...allData.emotions.map(e => e.timestamp),
-      ...allData.sensoryInputs.map(s => s.timestamp)
+      ...allData.trackingEntries.map((t) => t.timestamp),
+      ...allData.emotions.map((e) => e.timestamp),
+      ...allData.sensoryInputs.map((s) => s.timestamp),
     ].sort((a, b) => a.getTime() - b.getTime());
 
     // Calculate total records
@@ -111,9 +111,9 @@ export class BackupSystem {
         totalRecords,
         dateRange: {
           earliest: dates[0] || new Date(),
-          latest: dates[dates.length - 1] || new Date()
-        }
-      }
+          latest: dates[dates.length - 1] || new Date(),
+        },
+      },
     };
   }
 
@@ -127,14 +127,14 @@ export class BackupSystem {
       emotions: EmotionEntry[];
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
-    }
+    },
   ): BackupData {
     // Filter data for this student only
     const studentData = {
-      trackingEntries: allData.trackingEntries.filter(t => t.studentId === student.id),
-      emotions: allData.emotions.filter(e => e.studentId === student.id),
-      sensoryInputs: allData.sensoryInputs.filter(s => s.studentId === student.id),
-      goals: allData.goals.filter(g => g.studentId === student.id)
+      trackingEntries: allData.trackingEntries.filter((t) => t.studentId === student.id),
+      emotions: allData.emotions.filter((e) => e.studentId === student.id),
+      sensoryInputs: allData.sensoryInputs.filter((s) => s.studentId === student.id),
+      goals: allData.goals.filter((g) => g.studentId === student.id),
     };
 
     return this.createFullBackup([student], studentData);
@@ -152,25 +152,25 @@ export class BackupSystem {
       emotions: EmotionEntry[];
       sensoryInputs: SensoryEntry[];
       goals: Goal[];
-    }
+    },
   ): BackupData {
     // Filter for data created/modified after last backup
     const incrementalData = {
-      trackingEntries: allData.trackingEntries.filter(t => t.timestamp > lastBackupTimestamp),
-      emotions: allData.emotions.filter(e => e.timestamp > lastBackupTimestamp),
-      sensoryInputs: allData.sensoryInputs.filter(s => s.timestamp > lastBackupTimestamp),
-      goals: allData.goals.filter(g => g.createdDate > lastBackupTimestamp)
+      trackingEntries: allData.trackingEntries.filter((t) => t.timestamp > lastBackupTimestamp),
+      emotions: allData.emotions.filter((e) => e.timestamp > lastBackupTimestamp),
+      sensoryInputs: allData.sensoryInputs.filter((s) => s.timestamp > lastBackupTimestamp),
+      goals: allData.goals.filter((g) => g.createdDate > lastBackupTimestamp),
     };
 
     // Filter students that have new data
     const affectedStudentIds = new Set([
-      ...incrementalData.trackingEntries.map(t => t.studentId),
-      ...incrementalData.emotions.map(e => e.studentId),
-      ...incrementalData.sensoryInputs.map(s => s.studentId),
-      ...incrementalData.goals.map(g => g.studentId)
+      ...incrementalData.trackingEntries.map((t) => t.studentId),
+      ...incrementalData.emotions.map((e) => e.studentId),
+      ...incrementalData.sensoryInputs.map((s) => s.studentId),
+      ...incrementalData.goals.map((g) => g.studentId),
     ]);
 
-    const affectedStudents = students.filter(s => affectedStudentIds.has(s.id));
+    const affectedStudents = students.filter((s) => affectedStudentIds.has(s.id));
 
     return this.createFullBackup(affectedStudents, incrementalData);
   }
@@ -179,9 +179,7 @@ export class BackupSystem {
    * Serialize backup to JSON string
    */
   serializeBackup(backup: BackupData, prettyPrint: boolean = true): string {
-    return prettyPrint
-      ? JSON.stringify(backup, null, 2)
-      : JSON.stringify(backup);
+    return prettyPrint ? JSON.stringify(backup, null, 2) : JSON.stringify(backup);
   }
 
   /**
@@ -198,39 +196,39 @@ export class BackupSystem {
         students: data.students.map((s: Student) => ({
           ...s,
           createdAt: new Date(s.createdAt),
-          dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : undefined
+          dateOfBirth: s.dateOfBirth ? new Date(s.dateOfBirth) : undefined,
         })),
         trackingEntries: data.trackingEntries.map((t: TrackingEntry) => ({
           ...t,
-          timestamp: new Date(t.timestamp)
+          timestamp: new Date(t.timestamp),
         })),
         emotions: data.emotions.map((e: EmotionEntry) => ({
           ...e,
-          timestamp: new Date(e.timestamp)
+          timestamp: new Date(e.timestamp),
         })),
         sensoryInputs: data.sensoryInputs.map((s: SensoryEntry) => ({
           ...s,
-          timestamp: new Date(s.timestamp)
+          timestamp: new Date(s.timestamp),
         })),
         goals: data.goals.map((g: Goal) => ({
           ...g,
           createdDate: new Date(g.createdDate),
           targetDate: g.targetDate ? new Date(g.targetDate) : undefined,
-          dataPoints: g.dataPoints?.map(dp => ({
+          dataPoints: g.dataPoints?.map((dp) => ({
             ...dp,
-            date: new Date(dp.date)
-          }))
+            date: new Date(dp.date),
+          })),
         })),
         metadata: {
           ...data.metadata,
           dateRange: {
             earliest: new Date(data.metadata.dateRange.earliest),
-            latest: new Date(data.metadata.dateRange.latest)
-          }
-        }
+            latest: new Date(data.metadata.dateRange.latest),
+          },
+        },
       };
     } catch (error) {
-      console.error('Failed to deserialize backup:', error);
+      // logger.error('Failed to deserialize backup:', error);
       return null;
     }
   }
@@ -245,14 +243,14 @@ export class BackupSystem {
       trackingEntries: 0,
       emotions: 0,
       sensoryInputs: 0,
-      goals: 0
+      goals: 0,
     };
 
     try {
       // Validate backup version compatibility
       if (!this.isVersionCompatible(backupData.version)) {
         errors.push(
-          `Backup version ${backupData.version} is not compatible with current version ${this.CURRENT_VERSION}`
+          `Backup version ${backupData.version} is not compatible with current version ${this.CURRENT_VERSION}`,
         );
         return { success: false, errors, imported };
       }
@@ -276,7 +274,7 @@ export class BackupSystem {
       return {
         success: errors.length === 0 && imported.students > 0,
         errors,
-        imported
+        imported,
       };
     } catch (error) {
       errors.push(`Restore failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -302,7 +300,7 @@ export class BackupSystem {
       current: this.CURRENT_VERSION,
       backup: backupData.version,
       compatible,
-      requiresMigration
+      requiresMigration,
     };
   }
 
@@ -330,29 +328,21 @@ export class BackupSystem {
     const validTrackingEntries = this.validateTrackingEntries(
       backupData.trackingEntries,
       validStudents,
-      errors
+      errors,
     );
 
     // Validate emotions
-    const validEmotions = this.validateEmotions(
-      backupData.emotions,
-      validStudents,
-      errors
-    );
+    const validEmotions = this.validateEmotions(backupData.emotions, validStudents, errors);
 
     // Validate sensory inputs
     const validSensoryInputs = this.validateSensoryInputs(
       backupData.sensoryInputs,
       validStudents,
-      errors
+      errors,
     );
 
     // Validate goals
-    const validGoals = this.validateGoals(
-      backupData.goals,
-      validStudents,
-      errors
-    );
+    const validGoals = this.validateGoals(backupData.goals, validStudents, errors);
 
     return {
       validStudents,
@@ -360,7 +350,7 @@ export class BackupSystem {
       validEmotions,
       validSensoryInputs,
       validGoals,
-      errors
+      errors,
     };
   }
 
@@ -395,10 +385,10 @@ export class BackupSystem {
   private validateTrackingEntries(
     entries: TrackingEntry[],
     validStudents: Student[],
-    errors: string[]
+    errors: string[],
   ): TrackingEntry[] {
     const valid: TrackingEntry[] = [];
-    const studentIds = new Set(validStudents.map(s => s.id));
+    const studentIds = new Set(validStudents.map((s) => s.id));
 
     entries.forEach((entry, index) => {
       if (!entry.id) {
@@ -425,10 +415,10 @@ export class BackupSystem {
   private validateEmotions(
     emotions: EmotionEntry[],
     validStudents: Student[],
-    errors: string[]
+    errors: string[],
   ): EmotionEntry[] {
     const valid: EmotionEntry[] = [];
-    const studentIds = new Set(validStudents.map(s => s.id));
+    const studentIds = new Set(validStudents.map((s) => s.id));
 
     emotions.forEach((emotion, index) => {
       if (!emotion.id) {
@@ -459,10 +449,10 @@ export class BackupSystem {
   private validateSensoryInputs(
     sensoryInputs: SensoryEntry[],
     validStudents: Student[],
-    errors: string[]
+    errors: string[],
   ): SensoryEntry[] {
     const valid: SensoryEntry[] = [];
-    const studentIds = new Set(validStudents.map(s => s.id));
+    const studentIds = new Set(validStudents.map((s) => s.id));
 
     sensoryInputs.forEach((sensory, index) => {
       if (!sensory.id) {
@@ -490,13 +480,9 @@ export class BackupSystem {
   /**
    * Validate goal entries
    */
-  private validateGoals(
-    goals: Goal[],
-    validStudents: Student[],
-    errors: string[]
-  ): Goal[] {
+  private validateGoals(goals: Goal[], validStudents: Student[], errors: string[]): Goal[] {
     const valid: Goal[] = [];
-    const studentIds = new Set(validStudents.map(s => s.id));
+    const studentIds = new Set(validStudents.map((s) => s.id));
 
     goals.forEach((goal, index) => {
       if (!goal.id) {
@@ -542,7 +528,7 @@ export class BackupSystem {
       goals: backup.goals.length,
       totalRecords: backup.metadata.totalRecords,
       dateRange: backup.metadata.dateRange,
-      estimatedSize: this.estimateBackupSize(backup)
+      estimatedSize: this.estimateBackupSize(backup),
     };
   }
 }

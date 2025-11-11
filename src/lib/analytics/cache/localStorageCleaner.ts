@@ -22,10 +22,17 @@
  * - Browser: Full localStorage access
  * - SSR/Node: Gracefully handles missing localStorage
  * - Tests: Safe with mocked localStorage
+ *
+ * **Direct localStorage Access**:
+ * This module retains direct localStorage access for iteration and removal operations
+ * because it's a low-level cache cleanup utility. It uses storage abstraction utilities
+ * where possible but needs direct access to enumerate all keys for pattern matching.
  */
 
-import { STORAGE_KEYS } from '@/lib/analyticsConfig';
+import { STORAGE_KEYS as ANALYTICS_STORAGE_KEYS } from '@/lib/analyticsConfig';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 import { logger } from '@/lib/logger';
+import { storageKeys, storageClearKeys } from '@/lib/storage/storageHelpers';
 
 /**
  * Result summary from localStorage clearing operations.
@@ -89,51 +96,38 @@ export interface LocalStorageClearResult {
 export function clearAnalyticsLocalStorage(): LocalStorageClearResult {
   const keysCleared: string[] = [];
 
-  // Return early if localStorage is not available (SSR, tests)
-  if (typeof localStorage === 'undefined') {
-    return { keysCleared };
-  }
-
   try {
     // Define relevant prefixes and exact keys to clear
     const relevantPrefixes = [
-      STORAGE_KEYS.cachePrefix,      // "analytics-cache"
-      STORAGE_KEYS.performancePrefix, // "performance-cache"
+      ANALYTICS_STORAGE_KEYS.cachePrefix, // "analytics-cache"
+      ANALYTICS_STORAGE_KEYS.performancePrefix, // "performance-cache"
     ];
 
     const exactKeys = [
-      STORAGE_KEYS.analyticsConfig,   // "sensory-compass-analytics-config"
-      STORAGE_KEYS.analyticsProfiles, // "sensoryTracker_analyticsProfiles"
-      'kreativium_ai_metrics_v1',     // AI metrics key from @/lib/ai/metrics
+      ANALYTICS_STORAGE_KEYS.analyticsConfig, // "sensory-compass-analytics-config"
+      ANALYTICS_STORAGE_KEYS.analyticsProfiles, // "sensoryTracker_analyticsProfiles"
+      STORAGE_KEYS.AI_METRICS, // AI metrics key from @/lib/ai/metrics
     ];
 
-    // Collect keys to remove (iterate once to avoid mutations during iteration)
+    // Collect keys to remove using storage helpers
     const keysToRemove: string[] = [];
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
+    // Get all keys from storage
+    const allKeys = storageKeys();
 
-      // Check if key contains any of the relevant prefixes
-      const hasRelevantPrefix = relevantPrefixes.some(prefix => key.includes(prefix));
-
-      // Check if key exactly matches any of the exact keys
+    // Filter keys matching prefixes or exact matches
+    allKeys.forEach((key) => {
+      const hasRelevantPrefix = relevantPrefixes.some((prefix) => key.includes(prefix));
       const isExactMatch = exactKeys.includes(key);
 
       if (hasRelevantPrefix || isExactMatch) {
         keysToRemove.push(key);
       }
-    }
-
-    // Remove collected keys with individual error handling
-    keysToRemove.forEach(key => {
-      try {
-        localStorage.removeItem(key);
-        keysCleared.push(key);
-      } catch (e) {
-        logger.warn(`[localStorageCleaner] Failed to remove key: ${key}`, e as Error);
-      }
     });
+
+    // Remove collected keys using storage helper
+    const removed = storageClearKeys(keysToRemove);
+    keysCleared.push(...removed);
   } catch (e) {
     logger.warn('[localStorageCleaner] clearAnalyticsLocalStorage encountered issues', e as Error);
   }
@@ -170,13 +164,9 @@ export function clearAnalyticsLocalStorage(): LocalStorageClearResult {
  * ```
  */
 export function clearSpecificKey(key: string): boolean {
-  if (typeof localStorage === 'undefined') {
-    return false;
-  }
-
   try {
-    localStorage.removeItem(key);
-    return true;
+    const removed = storageClearKeys([key]);
+    return removed.length > 0;
   } catch (e) {
     logger.warn(`[localStorageCleaner] Failed to remove key: ${key}`, e as Error);
     return false;
@@ -215,30 +205,13 @@ export function clearSpecificKey(key: string): boolean {
 export function clearByPrefix(prefix: string): LocalStorageClearResult {
   const keysCleared: string[] = [];
 
-  if (typeof localStorage === 'undefined') {
-    return { keysCleared };
-  }
-
   try {
-    const keysToRemove: string[] = [];
+    // Get all keys matching prefix using storage helper
+    const matchingKeys = storageKeys(prefix);
 
-    // Collect keys matching prefix
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.includes(prefix)) {
-        keysToRemove.push(key);
-      }
-    }
-
-    // Remove collected keys
-    keysToRemove.forEach(key => {
-      try {
-        localStorage.removeItem(key);
-        keysCleared.push(key);
-      } catch (e) {
-        logger.warn(`[localStorageCleaner] Failed to remove key: ${key}`, e as Error);
-      }
-    });
+    // Remove collected keys using storage helper
+    const removed = storageClearKeys(matchingKeys);
+    keysCleared.push(...removed);
   } catch (e) {
     logger.warn(`[localStorageCleaner] clearByPrefix("${prefix}") encountered issues`, e as Error);
   }
@@ -271,35 +244,31 @@ export function clearByPrefix(prefix: string): LocalStorageClearResult {
  * ```
  */
 export function getAnalyticsCacheCount(): number {
-  if (typeof localStorage === 'undefined') {
-    return 0;
-  }
-
   try {
     const relevantPrefixes = [
-      STORAGE_KEYS.cachePrefix,
-      STORAGE_KEYS.performancePrefix,
+      ANALYTICS_STORAGE_KEYS.cachePrefix,
+      ANALYTICS_STORAGE_KEYS.performancePrefix,
     ];
 
     const exactKeys = [
-      STORAGE_KEYS.analyticsConfig,
-      STORAGE_KEYS.analyticsProfiles,
-      'kreativium_ai_metrics_v1',
+      ANALYTICS_STORAGE_KEYS.analyticsConfig,
+      ANALYTICS_STORAGE_KEYS.analyticsProfiles,
+      STORAGE_KEYS.AI_METRICS,
     ];
 
     let count = 0;
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
+    // Get all keys using storage helper
+    const allKeys = storageKeys();
 
-      const hasRelevantPrefix = relevantPrefixes.some(prefix => key.includes(prefix));
+    allKeys.forEach((key) => {
+      const hasRelevantPrefix = relevantPrefixes.some((prefix) => key.includes(prefix));
       const isExactMatch = exactKeys.includes(key);
 
       if (hasRelevantPrefix || isExactMatch) {
         count++;
       }
-    }
+    });
 
     return count;
   } catch (e) {

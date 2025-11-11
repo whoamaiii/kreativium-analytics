@@ -3,6 +3,7 @@
  */
 import { logger } from '@/lib/logger';
 import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
+import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export const storageUtils = {
   /**
@@ -17,7 +18,7 @@ export const storageUtils = {
     }
     return {
       used,
-      available: used < MAX_LOCAL_STORAGE_BYTES // 5MB approximate limit
+      available: used < MAX_LOCAL_STORAGE_BYTES, // 5MB approximate limit
     };
   },
 
@@ -30,7 +31,7 @@ export const storageUtils = {
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
       // Clear old tracking entries
-      const entriesKey = 'sensoryTracker_entries';
+      const entriesKey = STORAGE_KEYS.ENTRIES;
       const entriesData = localStorage.getItem(entriesKey);
       if (entriesData) {
         const entries = JSON.parse(entriesData);
@@ -42,7 +43,7 @@ export const storageUtils = {
       }
 
       // Clear old alerts
-      const alertsKey = 'sensoryTracker_alerts';
+      const alertsKey = STORAGE_KEYS.ALERTS;
       const alertsData = localStorage.getItem(alertsKey);
       if (alertsData) {
         const alerts = JSON.parse(alertsData);
@@ -72,15 +73,16 @@ export const storageUtils = {
     try {
       localStorage.setItem(key, value);
     } catch (e) {
-      if (e instanceof DOMException && (
-        e.code === 22 || // Quota exceeded
-        e.code === 1014 || // NS_ERROR_DOM_QUOTA_REACHED (Firefox)
-        e.name === 'QuotaExceededError' ||
-        e.name === 'NS_ERROR_DOM_QUOTA_REACHED'
-      )) {
+      if (
+        e instanceof DOMException &&
+        (e.code === 22 || // Quota exceeded
+          e.code === 1014 || // NS_ERROR_DOM_QUOTA_REACHED (Firefox)
+          e.name === 'QuotaExceededError' ||
+          e.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+      ) {
         // Try to clear old data and retry
         this.clearOldTrackingData();
-        
+
         try {
           localStorage.setItem(key, value);
         } catch (retryError) {
@@ -98,18 +100,16 @@ export const storageUtils = {
    * Clear non-essential data when storage is full
    */
   clearNonEssentialData(): void {
-    const essentialKeys = [
-      'sensoryTracker_students',
-      'sensoryTracker_goals',
-      'sensoryTracker_dataVersion'
-    ];
+    const essentialKeys = [STORAGE_KEYS.STUDENTS, STORAGE_KEYS.GOALS, STORAGE_KEYS.DATA_VERSION];
 
     for (const key in localStorage) {
-      if (localStorage.hasOwnProperty(key) && 
-          key.startsWith('sensoryTracker_') && 
-          !essentialKeys.includes(key)) {
+      if (
+        localStorage.hasOwnProperty(key) &&
+        key.startsWith('sensoryTracker_') &&
+        !essentialKeys.includes(key)
+      ) {
         localStorage.removeItem(key);
       }
     }
-  }
+  },
 };

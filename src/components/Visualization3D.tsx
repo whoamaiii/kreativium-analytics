@@ -5,7 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Eye, RotateCcw, ZoomIn, ZoomOut, Move3d } from 'lucide-react';
 import * as THREE from 'three';
@@ -45,7 +51,7 @@ interface TooltipProps {
 // Tooltip component for data points
 const Tooltip3D = ({ point, onClose }: TooltipProps) => {
   const { tAnalytics } = useTranslation();
-  
+
   return (
     <Html>
       <div className="bg-background border rounded-lg shadow-lg p-3 min-w-[200px]">
@@ -53,7 +59,7 @@ const Tooltip3D = ({ point, onClose }: TooltipProps) => {
           <Badge variant="outline" className="capitalize">
             {point.category}
           </Badge>
-          <button 
+          <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors motion-reduce:transition-none"
           >
@@ -62,10 +68,20 @@ const Tooltip3D = ({ point, onClose }: TooltipProps) => {
         </div>
         <p className="font-medium">{point.label}</p>
         <div className="text-sm text-muted-foreground mt-1 space-y-1">
-          <p>{tAnalytics('visualization3d.tooltip.xAxis')}: {point.x.toFixed(2)}</p>
-          <p>{tAnalytics('visualization3d.tooltip.yAxis')}: {point.y.toFixed(2)}</p>
-          <p>{tAnalytics('visualization3d.tooltip.zAxis')}: {point.z.toFixed(2)}</p>
-          {point.intensity && <p>{tAnalytics('visualization3d.tooltip.intensity')}: {point.intensity}</p>}
+          <p>
+            {tAnalytics('visualization3d.tooltip.xAxis')}: {point.x.toFixed(2)}
+          </p>
+          <p>
+            {tAnalytics('visualization3d.tooltip.yAxis')}: {point.y.toFixed(2)}
+          </p>
+          <p>
+            {tAnalytics('visualization3d.tooltip.zAxis')}: {point.z.toFixed(2)}
+          </p>
+          {point.intensity && (
+            <p>
+              {tAnalytics('visualization3d.tooltip.intensity')}: {point.intensity}
+            </p>
+          )}
         </div>
       </div>
     </Html>
@@ -73,7 +89,15 @@ const Tooltip3D = ({ point, onClose }: TooltipProps) => {
 };
 
 // Data point component
-const DataPoint = ({ position, color, size, point, onHover, isHighlighted, reducedMotion = false }: {
+const DataPoint = ({
+  position,
+  color,
+  size,
+  point,
+  onHover,
+  isHighlighted,
+  reducedMotion = false,
+}: {
   position: [number, number, number];
   color: string;
   size: number;
@@ -88,14 +112,14 @@ const DataPoint = ({ position, color, size, point, onHover, isHighlighted, reduc
   useFrame((state) => {
     if (meshRef.current) {
       const scale = hovered || isHighlighted ? 1.5 : 1;
-      
+
       if (reducedMotion) {
         // Instant scaling for reduced motion
         meshRef.current.scale.set(scale, scale, scale);
       } else {
         // Smooth animation
         meshRef.current.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.1);
-        
+
         // Only rotate on hover if motion is allowed
         if (hovered) {
           meshRef.current.rotation.y += 0.02;
@@ -120,9 +144,9 @@ const DataPoint = ({ position, color, size, point, onHover, isHighlighted, reduc
       }}
     >
       <sphereGeometry args={[size, 32, 16]} />
-      <meshStandardMaterial 
-        color={color} 
-        emissive={color} 
+      <meshStandardMaterial
+        color={color}
+        emissive={color}
         emissiveIntensity={hovered || isHighlighted ? 0.5 : 0.2}
         metalness={0.3}
         roughness={0.4}
@@ -132,22 +156,21 @@ const DataPoint = ({ position, color, size, point, onHover, isHighlighted, reduc
 };
 
 // Axis labels
-const AxisLabels = ({ 
-  xLabel, 
-  yLabel, 
-  zLabel 
-}: { xLabel: string; yLabel: string; zLabel: string }) => {
+const AxisLabels = ({
+  xLabel,
+  yLabel,
+  zLabel,
+}: {
+  xLabel: string;
+  yLabel: string;
+  zLabel: string;
+}) => {
   const size = 5;
-  
+
   return (
     <>
       {/* X Axis */}
-      <Text
-        position={[size + 0.5, 0, 0]}
-        fontSize={0.5}
-        color={colorForeground()}
-        anchorX="left"
-      >
+      <Text position={[size + 0.5, 0, 0]} fontSize={0.5} color={colorForeground()} anchorX="left">
         {xLabel}
       </Text>
       <mesh position={[size / 2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
@@ -156,12 +179,7 @@ const AxisLabels = ({
       </mesh>
 
       {/* Y Axis */}
-      <Text
-        position={[0, size + 0.5, 0]}
-        fontSize={0.5}
-        color={colorForeground()}
-        anchorX="center"
-      >
+      <Text position={[0, size + 0.5, 0]} fontSize={0.5} color={colorForeground()} anchorX="center">
         {yLabel}
       </Text>
       <mesh position={[0, size / 2, 0]}>
@@ -170,12 +188,7 @@ const AxisLabels = ({
       </mesh>
 
       {/* Z Axis */}
-      <Text
-        position={[0, 0, size + 0.5]}
-        fontSize={0.5}
-        color={colorForeground()}
-        anchorX="center"
-      >
+      <Text position={[0, 0, size + 0.5]} fontSize={0.5} color={colorForeground()} anchorX="center">
         {zLabel}
       </Text>
       <mesh position={[0, 0, size / 2]} rotation={[Math.PI / 2, 0, 0]}>
@@ -212,7 +225,7 @@ export const Visualization3D = ({
   emotions,
   sensoryInputs,
   trackingEntries,
-  correlationData
+  correlationData,
 }: Visualization3DProps) => {
   const prefersReducedMotion = useReducedMotion();
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint3D | null>(null);
@@ -238,54 +251,73 @@ export const Visualization3D = ({
   // Process data into 3D points
   const dataPoints = useMemo((): DataPoint3D[] => {
     const points: DataPoint3D[] = [];
-    
+
     // Create a map of timestamps to aggregate data
-    const timeMap = new Map<string, {
-      emotions: EmotionEntry[];
-      sensory: SensoryEntry[];
-      tracking: TrackingEntry;
-    }>();
+    const timeMap = new Map<
+      string,
+      {
+        emotions: EmotionEntry[];
+        sensory: SensoryEntry[];
+        tracking: TrackingEntry;
+      }
+    >();
 
     // Aggregate data by timestamp
-    trackingEntries.forEach(entry => {
+    trackingEntries.forEach((entry) => {
       const key = entry.timestamp.toISOString();
-      const relatedEmotions = emotions.filter(e => 
-        Math.abs(e.timestamp.getTime() - entry.timestamp.getTime()) < 3600000 // Within 1 hour
+      const relatedEmotions = emotions.filter(
+        (e) => Math.abs(e.timestamp.getTime() - entry.timestamp.getTime()) < 3600000, // Within 1 hour
       );
-      const relatedSensory = sensoryInputs.filter(s =>
-        Math.abs(s.timestamp.getTime() - entry.timestamp.getTime()) < 3600000
+      const relatedSensory = sensoryInputs.filter(
+        (s) => Math.abs(s.timestamp.getTime() - entry.timestamp.getTime()) < 3600000,
       );
-      
+
       timeMap.set(key, {
         emotions: relatedEmotions,
         sensory: relatedSensory,
-        tracking: entry
+        tracking: entry,
       });
     });
 
     // Convert to 3D points
     timeMap.forEach((data, key) => {
-      const avgEmotionIntensity = data.emotions.length > 0
-        ? data.emotions.reduce((sum, e) => sum + e.intensity, 0) / data.emotions.length
-        : 5;
-      
-      const sensorySeeking = data.sensory.filter(s => s.response.includes('seeking')).length;
-      const sensoryAvoiding = data.sensory.filter(s => s.response.includes('avoiding')).length;
+      const avgEmotionIntensity =
+        data.emotions.length > 0
+          ? data.emotions.reduce((sum, e) => sum + e.intensity, 0) / data.emotions.length
+          : 5;
+
+      const sensorySeeking = data.sensory.filter((s) => s.response.includes('seeking')).length;
+      const sensoryAvoiding = data.sensory.filter((s) => s.response.includes('avoiding')).length;
       const sensoryScore = sensorySeeking - sensoryAvoiding;
-      
+
       const timeValue = new Date(key).getTime() / 1000 / 3600; // Convert to hours
-      
+
       points.push({
         id: `tracking-${key}`,
-        x: xAxis === 'emotionIntensity' ? avgEmotionIntensity : 
-           xAxis === 'sensoryResponse' ? sensoryScore :
-           xAxis === 'time' ? timeValue : 0,
-        y: yAxis === 'emotionIntensity' ? avgEmotionIntensity :
-           yAxis === 'sensoryResponse' ? sensoryScore :
-           yAxis === 'time' ? timeValue : 0,
-        z: zAxis === 'emotionIntensity' ? avgEmotionIntensity :
-           zAxis === 'sensoryResponse' ? sensoryScore :
-           zAxis === 'time' ? timeValue : 0,
+        x:
+          xAxis === 'emotionIntensity'
+            ? avgEmotionIntensity
+            : xAxis === 'sensoryResponse'
+              ? sensoryScore
+              : xAxis === 'time'
+                ? timeValue
+                : 0,
+        y:
+          yAxis === 'emotionIntensity'
+            ? avgEmotionIntensity
+            : yAxis === 'sensoryResponse'
+              ? sensoryScore
+              : yAxis === 'time'
+                ? timeValue
+                : 0,
+        z:
+          zAxis === 'emotionIntensity'
+            ? avgEmotionIntensity
+            : zAxis === 'sensoryResponse'
+              ? sensoryScore
+              : zAxis === 'time'
+                ? timeValue
+                : 0,
         label: `Session ${new Date(key).toLocaleDateString()}`,
         category: 'environmental',
         intensity: avgEmotionIntensity,
@@ -294,8 +326,8 @@ export const Visualization3D = ({
           emotions: data.emotions.length,
           sensory: data.sensory.length,
           avgIntensity: avgEmotionIntensity,
-          sensoryScore
-        }
+          sensoryScore,
+        },
       });
     });
 
@@ -304,12 +336,12 @@ export const Visualization3D = ({
       const min = Math.min(...values);
       const max = Math.max(...values);
       const range = max - min || 1;
-      return values.map(v => ((v - min) / range) * 10 - 5);
+      return values.map((v) => ((v - min) / range) * 10 - 5);
     };
 
-    const xValues = points.map(p => p.x);
-    const yValues = points.map(p => p.y);
-    const zValues = points.map(p => p.z);
+    const xValues = points.map((p) => p.x);
+    const yValues = points.map((p) => p.y);
+    const zValues = points.map((p) => p.z);
 
     const normalizedX = normalize(xValues);
     const normalizedY = normalize(yValues);
@@ -327,17 +359,21 @@ export const Visualization3D = ({
   // Filter points based on category
   const filteredPoints = useMemo(() => {
     if (filterCategory === 'all') return dataPoints;
-    return dataPoints.filter(p => p.category === filterCategory);
+    return dataPoints.filter((p) => p.category === filterCategory);
   }, [dataPoints, filterCategory]);
 
   // Get color for data point
   const getPointColor = (point: DataPoint3D): string => {
     if (colorBy === 'category') {
       switch (point.category) {
-        case 'emotion': return '#10B981';
-        case 'sensory': return '#3B82F6';
-        case 'environmental': return '#F59E0B';
-        default: return '#6B7280';
+        case 'emotion':
+          return '#10B981';
+        case 'sensory':
+          return '#3B82F6';
+        case 'environmental':
+          return '#F59E0B';
+        default:
+          return '#6B7280';
       }
     } else if (colorBy === 'intensity' && point.intensity) {
       const intensity = point.intensity / 10;
@@ -349,7 +385,7 @@ export const Visualization3D = ({
   const axisOptions = [
     { value: 'emotionIntensity', label: 'Emotion Intensity' },
     { value: 'sensoryResponse', label: 'Sensory Response' },
-    { value: 'time', label: 'Time' }
+    { value: 'time', label: 'Time' },
   ];
 
   return (
@@ -377,7 +413,7 @@ export const Visualization3D = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {axisOptions.map(opt => (
+                  {axisOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>
@@ -385,7 +421,7 @@ export const Visualization3D = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label
                 id={yAxisLabelId}
@@ -399,7 +435,7 @@ export const Visualization3D = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {axisOptions.map(opt => (
+                  {axisOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>
@@ -407,7 +443,7 @@ export const Visualization3D = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label
                 id={zAxisLabelId}
@@ -421,7 +457,7 @@ export const Visualization3D = ({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {axisOptions.map(opt => (
+                  {axisOptions.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
                       {opt.label}
                     </SelectItem>
@@ -450,7 +486,7 @@ export const Visualization3D = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label
                 id={filterCategoryLabelId}
@@ -471,7 +507,7 @@ export const Visualization3D = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <p id={pointSizeLabelId} className="text-sm font-medium mb-1 block">
                 Point Size: {pointSize.toFixed(2)}
@@ -514,17 +550,17 @@ export const Visualization3D = ({
             <ambientLight intensity={0.5} />
             <pointLight position={[10, 10, 10]} />
             <pointLight position={[-10, -10, -10]} intensity={0.5} />
-            
+
             {/* Grid helper */}
             <gridHelper args={[20, 20, 0x888888, 0xcccccc]} />
-            
+
             {/* Axes */}
-            <AxisLabels 
-              xLabel={axisOptions.find(o => o.value === xAxis)?.label || ''}
-              yLabel={axisOptions.find(o => o.value === yAxis)?.label || ''}
-              zLabel={axisOptions.find(o => o.value === zAxis)?.label || ''}
+            <AxisLabels
+              xLabel={axisOptions.find((o) => o.value === xAxis)?.label || ''}
+              yLabel={axisOptions.find((o) => o.value === yAxis)?.label || ''}
+              zLabel={axisOptions.find((o) => o.value === zAxis)?.label || ''}
             />
-            
+
             {/* Data points */}
             {filteredPoints.map((point) => (
               <DataPoint
@@ -538,25 +574,19 @@ export const Visualization3D = ({
                 reducedMotion={prefersReducedMotion}
               />
             ))}
-            
+
             {/* Tooltip */}
             {hoveredPoint && !selectedPoint && (
-              <Tooltip3D 
-                point={hoveredPoint} 
-                onClose={() => setHoveredPoint(null)} 
-              />
+              <Tooltip3D point={hoveredPoint} onClose={() => setHoveredPoint(null)} />
             )}
-            
+
             {/* Selected point tooltip */}
             {selectedPoint && (
-              <Tooltip3D 
-                point={selectedPoint} 
-                onClose={() => setSelectedPoint(null)} 
-              />
+              <Tooltip3D point={selectedPoint} onClose={() => setSelectedPoint(null)} />
             )}
-            
+
             {/* Controls */}
-            <OrbitControls 
+            <OrbitControls
               enableDamping={!prefersReducedMotion}
               dampingFactor={prefersReducedMotion ? 0 : 0.05}
               enablePan
@@ -566,14 +596,16 @@ export const Visualization3D = ({
               minDistance={5}
               maxDistance={50}
             />
-            
-            <CameraControls onReset={() => {
-              setHoveredPoint(null);
-              setSelectedPoint(null);
-            }} />
+
+            <CameraControls
+              onReset={() => {
+                setHoveredPoint(null);
+                setSelectedPoint(null);
+              }}
+            />
           </Canvas>
-          
-        <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
+
+          <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
             <h4 className="font-medium text-sm mb-2">Legend</h4>
             <div className="space-y-1">
               {colorBy === 'category' && (
@@ -600,7 +632,7 @@ export const Visualization3D = ({
               )}
             </div>
           </div>
-          
+
           <div className="absolute bottom-4 left-4 bg-background/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
             <div className="text-xs space-y-1">
               <p>Points: {filteredPoints.length}</p>
@@ -608,7 +640,7 @@ export const Visualization3D = ({
             </div>
           </div>
         </div>
-        </CardContent>
-      </Card>
+      </CardContent>
+    </Card>
   );
 };

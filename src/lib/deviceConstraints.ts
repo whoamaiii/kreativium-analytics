@@ -4,6 +4,3 @@ export async function canPrecompute(cfg?: unknown): Promise<boolean> {
 }
 
 export const deviceConstraints = { canPrecompute } as const;
-
-
-

@@ -199,9 +199,10 @@ export class BaselineService {
         for (let i = 0; i < tsAll.length; i++) {
           if (!outlierIndices.includes(i)) tsFiltered.push(tsAll[i]!);
         }
-        const trend = cleaned.length >= 2 && tsFiltered.length === cleaned.length
-          ? detectTrendInBaseline(tsFiltered, cleaned)
-          : undefined;
+        const trend =
+          cleaned.length >= 2 && tsFiltered.length === cleaned.length
+            ? detectTrendInBaseline(tsFiltered, cleaned)
+            : undefined;
 
         emotionStats[`${name}:${windowDays}`] = {
           emotion: name,
@@ -212,7 +213,12 @@ export class BaselineService {
           trend,
         };
         if (outlierIndices.length > 0) {
-          logger.debug('Emotion outliers detected', { studentId, name, windowDays, outliers: outlierIndices.length });
+          logger.debug('Emotion outliers detected', {
+            studentId,
+            name,
+            windowDays,
+            outliers: outlierIndices.length,
+          });
         }
       });
     });
@@ -220,8 +226,12 @@ export class BaselineService {
     // Sensory behaviors using beta-binomial priors on session/day rates
     WINDOWS.forEach((windowDays) => {
       const cutoff = daysAgo(windowDays);
-      const windowedTracking = tracking.filter((t) => new Date(t.timestamp as unknown as string | number | Date).getTime() >= cutoff);
-      const windowedSensory = sensory.filter((s) => new Date(s.timestamp as unknown as string | number | Date).getTime() >= cutoff);
+      const windowedTracking = tracking.filter(
+        (t) => new Date(t.timestamp as unknown as string | number | Date).getTime() >= cutoff,
+      );
+      const windowedSensory = sensory.filter(
+        (s) => new Date(s.timestamp as unknown as string | number | Date).getTime() >= cutoff,
+      );
 
       const addBehavior = (set: Set<string>, s: any) => {
         const b = s?.behavior ?? s?.response ?? s?.type ?? s?.sensoryType ?? 'unknown';
@@ -230,7 +240,9 @@ export class BaselineService {
 
       const behaviors = new Set<string>();
       if (windowedTracking.length > 0) {
-        windowedTracking.forEach((t) => (t.sensoryInputs ?? []).forEach((si) => addBehavior(behaviors, si)));
+        windowedTracking.forEach((t) =>
+          (t.sensoryInputs ?? []).forEach((si) => addBehavior(behaviors, si)),
+        );
       } else {
         windowedSensory.forEach((s) => addBehavior(behaviors, s as any));
       }
@@ -243,7 +255,11 @@ export class BaselineService {
           trials = windowedTracking.length;
           windowedTracking.forEach((t) => {
             const occurred = (t.sensoryInputs ?? []).some((si) => {
-              const b = (si as any)?.behavior ?? (si as any)?.response ?? (si as any)?.type ?? (si as any)?.sensoryType;
+              const b =
+                (si as any)?.behavior ??
+                (si as any)?.response ??
+                (si as any)?.type ??
+                (si as any)?.sensoryType;
               return b === behavior;
             });
             if (occurred) successes += 1;
@@ -253,7 +269,11 @@ export class BaselineService {
           const byDay = new Map<string, { hasBehavior: boolean }>();
           windowedSensory.forEach((s) => {
             const day = toDayString(s.timestamp as unknown as string | number | Date);
-            const b = (s as any)?.behavior ?? (s as any)?.response ?? (s as any)?.type ?? (s as any)?.sensoryType;
+            const b =
+              (s as any)?.behavior ??
+              (s as any)?.response ??
+              (s as any)?.type ??
+              (s as any)?.sensoryType;
             const entry = byDay.get(day) ?? { hasBehavior: false };
             if (b === behavior) entry.hasBehavior = true;
             byDay.set(day, entry);
@@ -269,7 +289,12 @@ export class BaselineService {
         const variance = betaPosteriorVariance(prior);
         const z = 1.96;
         const std = Math.sqrt(Math.max(0, variance));
-        const ci = { lower: Math.max(0, mean - z * std), upper: Math.min(1, mean + z * std), level: 0.95, n: trials };
+        const ci = {
+          lower: Math.max(0, mean - z * std),
+          upper: Math.min(1, mean + z * std),
+          level: 0.95,
+          n: trials,
+        };
         sensoryStats[`${behavior}:${windowDays}`] = {
           behavior,
           ratePrior: prior,
@@ -373,7 +398,9 @@ export class BaselineService {
       Object.entries(emotionStats).forEach(([k, stat]) => {
         const windowDays = stat.windowDays;
         const cutoff = daysAgo(windowDays);
-        const relevant = emotions.filter((e) => new Date(e.timestamp as unknown as string | number | Date).getTime() >= cutoff);
+        const relevant = emotions.filter(
+          (e) => new Date(e.timestamp as unknown as string | number | Date).getTime() >= cutoff,
+        );
         const vals = relevant
           .filter((e) => ((e as any).emotion ?? (e as any).name ?? 'unknown') === stat.emotion)
           .map((e) => Number((e as any).intensity ?? 0))
@@ -391,7 +418,9 @@ export class BaselineService {
         const env = envStats[factorKey];
         if (!env) return 1;
         const cutoff = daysAgo(WINDOWS[0]);
-        const windowed = tracking.filter((t) => new Date(t.timestamp as unknown as string | number | Date).getTime() >= cutoff);
+        const windowed = tracking.filter(
+          (t) => new Date(t.timestamp as unknown as string | number | Date).getTime() >= cutoff,
+        );
         const timestamps: number[] = [];
         const values: number[] = [];
         windowed.forEach((t) => {
@@ -406,7 +435,13 @@ export class BaselineService {
         const st = validateBaselineStability({ timestamps, values });
         return 1 - st.score; // stability is inverse of shift score
       })();
-      const reliabilityScore = Math.max(0, Math.min(1, (suff.isSufficient ? 0.8 : 0.4) * (1 - 0.5 * outlierRate) * (0.5 + 0.5 * stability)));
+      const reliabilityScore = Math.max(
+        0,
+        Math.min(
+          1,
+          (suff.isSufficient ? 0.8 : 0.4) * (1 - 0.5 * outlierRate) * (0.5 + 0.5 * stability),
+        ),
+      );
       const quality: BaselineQualityMetrics = {
         reliabilityScore,
         outlierRate,
@@ -426,4 +461,3 @@ export class BaselineService {
 }
 
 export type { StudentBaseline };
-

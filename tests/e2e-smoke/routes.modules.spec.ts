@@ -17,9 +17,3 @@ for (const path of routes) {
     await expect(page).toHaveURL(/.+/);
   });
 }
-
-
-
-
-
-

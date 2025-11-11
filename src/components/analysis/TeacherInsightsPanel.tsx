@@ -7,10 +7,28 @@ import { TrendingUp, AlertTriangle, Target, Lightbulb, ArrowLeftRight } from 'lu
 import { stableKeyFromPattern } from '@/lib/key';
 
 type AnalysisBundle = {
-  patterns?: Array<{ pattern?: string; description?: string; confidence?: number; type?: string; dataPoints?: number }>;
-  predictiveInsights?: Array<{ title?: string; description?: string; confidence?: number; timeframe?: string }>;
-  anomalies?: Array<{ description: string; timestamp: Date; severity: 'low'|'medium'|'high' }>;
-  correlationMatrix?: { significantPairs?: Array<{ factor1: string; factor2: string; correlation: number; significance: string }> } | null;
+  patterns?: Array<{
+    pattern?: string;
+    description?: string;
+    confidence?: number;
+    type?: string;
+    dataPoints?: number;
+  }>;
+  predictiveInsights?: Array<{
+    title?: string;
+    description?: string;
+    confidence?: number;
+    timeframe?: string;
+  }>;
+  anomalies?: Array<{ description: string; timestamp: Date; severity: 'low' | 'medium' | 'high' }>;
+  correlationMatrix?: {
+    significantPairs?: Array<{
+      factor1: string;
+      factor2: string;
+      correlation: number;
+      significance: string;
+    }>;
+  } | null;
   isAnalyzing?: boolean;
 };
 
@@ -48,19 +66,24 @@ export const TeacherInsightsPanel = ({
   onScheduleBreak,
   onJumpToTracking,
   onOpenPattern,
-  className = ''
+  className = '',
 }: Props) => {
   const sessions = filteredData?.entries?.length ?? 0;
   const emotions = filteredData?.emotions?.length ?? 0;
 
-  const limited = sessions < 10 || new Set(filteredData.entries.map(e => e.timestamp.toDateString())).size < 7;
+  const limited =
+    sessions < 10 || new Set(filteredData.entries.map((e) => e.timestamp.toDateString())).size < 7;
   const pairs = analysis.correlationMatrix?.significantPairs || [];
   const topCorr = pairs[0];
-  const topPattern = (analysis.patterns || []).sort((a,b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0];
+  const topPattern = (analysis.patterns || []).sort(
+    (a, b) => (b.confidence ?? 0) - (a.confidence ?? 0),
+  )[0];
   const anomaly = (analysis.anomalies || [])[0];
 
   return (
-    <Card className={`w-full md:w-[360px] lg:w-[400px] bg-card/60 border border-border/60 ${className}`}>
+    <Card
+      className={`w-full md:w-[360px] lg:w-[400px] bg-card/60 border border-border/60 ${className}`}
+    >
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2">
           <Lightbulb className="h-5 w-5" />
@@ -68,16 +91,16 @@ export const TeacherInsightsPanel = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-
         {activePreset && (
           <div className="text-sm text-muted-foreground">
-            You’re viewing: <span className="font-medium">{activePreset.replaceAll('_',' ')}</span>
+            You’re viewing: <span className="font-medium">{activePreset.replaceAll('_', ' ')}</span>
           </div>
         )}
 
         {limited && (
           <div className="p-3 rounded-lg bg-muted/40 text-sm">
-            Limited data — results may change as more sessions are recorded. Try tracking for at least 7 days and 10 sessions for stronger findings.
+            Limited data — results may change as more sessions are recorded. Try tracking for at
+            least 7 days and 10 sessions for stronger findings.
           </div>
         )}
 
@@ -115,7 +138,9 @@ export const TeacherInsightsPanel = ({
               <span className="sr-only">correlates with</span>
               <span>{topCorr.factor2}</span>
             </div>
-            <div className="text-xs text-muted-foreground">r = {topCorr.correlation.toFixed(2)} ({topCorr.significance})</div>
+            <div className="text-xs text-muted-foreground">
+              r = {topCorr.correlation.toFixed(2)} ({topCorr.significance})
+            </div>
           </div>
         )}
 
@@ -129,10 +154,19 @@ export const TeacherInsightsPanel = ({
         )}
 
         <div className="pt-2 grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" onClick={onCreateGoal}><Target className="h-4 w-4 mr-1" />Create Goal</Button>
-          <Button variant="outline" size="sm" onClick={onAddIntervention}>Add Intervention</Button>
-          <Button variant="outline" size="sm" onClick={onScheduleBreak}>Schedule Break</Button>
-          <Button variant="outline" size="sm" onClick={onJumpToTracking}>Track Now</Button>
+          <Button variant="outline" size="sm" onClick={onCreateGoal}>
+            <Target className="h-4 w-4 mr-1" />
+            Create Goal
+          </Button>
+          <Button variant="outline" size="sm" onClick={onAddIntervention}>
+            Add Intervention
+          </Button>
+          <Button variant="outline" size="sm" onClick={onScheduleBreak}>
+            Schedule Break
+          </Button>
+          <Button variant="outline" size="sm" onClick={onJumpToTracking}>
+            Track Now
+          </Button>
         </div>
 
         <div className="text-xs text-muted-foreground pt-2">
@@ -142,5 +176,3 @@ export const TeacherInsightsPanel = ({
     </Card>
   );
 };
-
-

@@ -6,7 +6,9 @@ import { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/stud
 import { useTranslation } from '@/hooks/useTranslation';
 
 // Lazy load the heavy analytics dashboard component
-const AnalyticsDashboard = lazy(() => import('@/components/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
+const AnalyticsDashboard = lazy(() =>
+  import('@/components/AnalyticsDashboard').then((m) => ({ default: m.AnalyticsDashboard })),
+);
 
 interface LazyAnalyticsDashboardProps {
   student: Student;

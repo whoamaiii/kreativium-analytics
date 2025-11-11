@@ -1,13 +1,16 @@
 # UI/UX Implementation Plan - Kreativium Sensory Tracker
+
 **Date**: September 30, 2025  
 **Based on**: UI_UX_IMPROVEMENT_REPORT.md  
-**Target Completion**: 6-8 weeks  
+**Target Completion**: 6-8 weeks
 
 ---
 
 ## Overview
 
-This document provides a detailed, actionable implementation plan for the UI/UX improvements identified in the audit report. The plan is organized into three phases with specific tasks, acceptance criteria, and technical implementation details.
+This document provides a detailed, actionable implementation plan for the UI/UX improvements
+identified in the audit report. The plan is organized into three phases with specific tasks,
+acceptance criteria, and technical implementation details.
 
 ---
 
@@ -22,11 +25,13 @@ This document provides a detailed, actionable implementation plan for the UI/UX 
 **Priority**: 🔴 Critical  
 **Estimated Effort**: 4-6 hours  
 **Files to Modify**:
+
 - `src/components/AnalyticsDashboard.tsx` (lines 575-679)
 
 **Implementation Steps**:
 
 1. **Create Action Menu Component** (`src/components/analytics/AnalyticsActions.tsx`):
+
 ```typescript
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
@@ -45,15 +50,15 @@ export function AnalyticsActions({ onExport, onSettings, onRefresh, onFilters, i
   return (
     <div className="flex items-center gap-2">
       {/* Primary: Filters - Most used action */}
-      <Button 
-        variant="default" 
+      <Button
+        variant="default"
         onClick={onFilters}
         className="gap-2"
       >
         <Filter className="h-4 w-4" />
         <span className="hidden sm:inline">Filters</span>
       </Button>
-      
+
       {/* Secondary: More Actions */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -92,6 +97,7 @@ export function AnalyticsActions({ onExport, onSettings, onRefresh, onFilters, i
 ```
 
 2. **Replace Button Row in AnalyticsDashboard**:
+
 ```typescript
 // Replace lines 575-679 with:
 <div className="flex justify-between items-center mb-6">
@@ -113,6 +119,7 @@ export function AnalyticsActions({ onExport, onSettings, onRefresh, onFilters, i
 ```
 
 **Acceptance Criteria**:
+
 - [ ] All export options accessible from dropdown
 - [ ] Primary "Filters" button prominently displayed
 - [ ] Toolbar responsive on mobile (doesn't wrap awkwardly)
@@ -126,16 +133,19 @@ export function AnalyticsActions({ onExport, onSettings, onRefresh, onFilters, i
 **Priority**: 🔴 Critical  
 **Estimated Effort**: 8-12 hours  
 **Files to Modify**:
+
 - `src/components/AnalyticsDashboard.tsx` (lines 763-825)
 - `src/components/analytics-panels/ExplorePanel.tsx`
 
 **Current Structure**:
+
 ```
 Main Tabs: Overview | Explore | Alerts | Monitoring
     └─ Explore Tab Contains: Charts | Patterns | Correlations (nested tabs)
 ```
 
 **New Structure**:
+
 ```
 Single Level: Overview | Charts | Patterns | Correlations | Alerts | Monitoring
 ```
@@ -143,20 +153,27 @@ Single Level: Overview | Charts | Patterns | Correlations | Alerts | Monitoring
 **Implementation Steps**:
 
 1. **Create New Tab Configuration** (`src/config/analyticsTabs.ts`):
+
 ```typescript
 export const ANALYTICS_TABS = [
   { key: 'overview', labelKey: 'tabs.overview', icon: 'Eye', testId: 'tab-overview' },
   { key: 'charts', labelKey: 'tabs.charts', icon: 'BarChart3', testId: 'tab-charts' },
   { key: 'patterns', labelKey: 'tabs.patterns', icon: 'Brain', testId: 'tab-patterns' },
-  { key: 'correlations', labelKey: 'tabs.correlations', icon: 'TrendingUp', testId: 'tab-correlations' },
+  {
+    key: 'correlations',
+    labelKey: 'tabs.correlations',
+    icon: 'TrendingUp',
+    testId: 'tab-correlations',
+  },
   { key: 'alerts', labelKey: 'tabs.alerts', icon: 'AlertTriangle', testId: 'tab-alerts' },
   { key: 'monitoring', labelKey: 'tabs.monitoring', icon: 'Gauge', testId: 'tab-monitoring' },
 ] as const;
 
-export type AnalyticsTab = typeof ANALYTICS_TABS[number]['key'];
+export type AnalyticsTab = (typeof ANALYTICS_TABS)[number]['key'];
 ```
 
 2. **Update AnalyticsDashboard Tab Rendering**:
+
 ```typescript
 // Replace lines 763-825
 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -183,15 +200,15 @@ export type AnalyticsTab = typeof ANALYTICS_TABS[number]['key'];
   <TabsContent value="overview">
     <LazyOverviewPanel {...props} />
   </TabsContent>
-  
+
   <TabsContent value="charts">
     <LazyChartsPanel {...props} />
   </TabsContent>
-  
+
   <TabsContent value="patterns">
     <LazyPatternsPanel {...props} />
   </TabsContent>
-  
+
   {/* ... other tabs */}
 </Tabs>
 ```
@@ -199,6 +216,7 @@ export type AnalyticsTab = typeof ANALYTICS_TABS[number]['key'];
 3. **Remove ExplorePanel Tab Logic** - Convert to direct panel components
 
 **Acceptance Criteria**:
+
 - [ ] Only one tab level visible
 - [ ] All content accessible from main tab bar
 - [ ] Tab state persisted in URL (`?tab=patterns`)
@@ -213,6 +231,7 @@ export type AnalyticsTab = typeof ANALYTICS_TABS[number]['key'];
 **Priority**: 🟡 Important  
 **Estimated Effort**: 3-4 hours  
 **Files to Modify**:
+
 - `src/pages/Dashboard.tsx` (lines 126-169)
 
 **Implementation**:
@@ -221,22 +240,22 @@ export type AnalyticsTab = typeof ANALYTICS_TABS[number]['key'];
 // Primary action area
 <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
   {/* Hero CTA */}
-  <Button 
-    size="lg" 
+  <Button
+    size="lg"
     onClick={handleNewEntry}
     className="text-lg py-6 shadow-lg hover:shadow-xl transition-shadow"
   >
     <Plus className="mr-2 h-5 w-5" />
     New Entry
   </Button>
-  
+
   {/* Secondary actions in compact group */}
   <div className="flex gap-2">
     <Button variant="outline" onClick={() => navigate('/kreativium-ai')}>
       <Sparkles className="mr-2 h-4 w-4" />
       <span className="hidden sm:inline">AI Insights</span>
     </Button>
-    
+
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline">
@@ -260,6 +279,7 @@ export type AnalyticsTab = typeof ANALYTICS_TABS[number]['key'];
 ```
 
 **Acceptance Criteria**:
+
 - [ ] "New Entry" is clearly the primary action (larger, more prominent)
 - [ ] Secondary actions grouped logically
 - [ ] Mobile: Stack vertically without wrapping issues
@@ -272,12 +292,14 @@ export type AnalyticsTab = typeof ANALYTICS_TABS[number]['key'];
 **Priority**: 🟡 Important  
 **Estimated Effort**: 6-8 hours  
 **Files to Create**:
+
 - `src/components/ui/breadcrumbs.tsx` (already exists, enhance it)
 - `src/hooks/useBreadcrumbs.ts`
 
 **Implementation**:
 
 1. **Enhanced Breadcrumbs Component**:
+
 ```typescript
 // src/components/ui/breadcrumbs.tsx (enhance existing)
 import { ChevronRight, Home } from 'lucide-react';
@@ -295,7 +317,7 @@ interface BreadcrumbsProps {
 }
 
 export function Breadcrumbs({ items, showHome = true }: BreadcrumbsProps) {
-  const allItems = showHome 
+  const allItems = showHome
     ? [{ label: 'Home', href: '/' }, ...items]
     : items;
 
@@ -325,28 +347,30 @@ export function Breadcrumbs({ items, showHome = true }: BreadcrumbsProps) {
 ```
 
 2. **Add to All Major Pages**:
+
 ```typescript
 // StudentProfile.tsx
-<Breadcrumbs 
+<Breadcrumbs
   items={[
     { label: 'Students', href: '/' },
     { label: student.name, href: `/student/${student.id}` },
     { label: getSectionLabel(activeSection), current: true }
-  ]} 
+  ]}
 />
 
 // AnalyticsDashboard (when embedded in StudentProfile)
-<Breadcrumbs 
+<Breadcrumbs
   items={[
     { label: 'Students', href: '/' },
     { label: student.name, href: `/student/${student.id}` },
     { label: 'Analytics', href: `/student/${student.id}?section=analytics` },
     { label: activeTab, current: true }
-  ]} 
+  ]}
 />
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Breadcrumbs visible on all major pages
 - [ ] Clickable links navigate correctly
 - [ ] Current page highlighted (non-clickable)
@@ -366,12 +390,14 @@ export function Breadcrumbs({ items, showHome = true }: BreadcrumbsProps) {
 **Priority**: 🔴 Critical  
 **Estimated Effort**: 12-16 hours  
 **Files to Modify**:
+
 - `src/components/analytics/FiltersDrawer.tsx`
 - `src/lib/filterUtils.ts` (enhance FILTER_PRESETS)
 
 **Implementation**:
 
 1. **Create Intelligent Preset System**:
+
 ```typescript
 // src/lib/smartFilterPresets.ts
 export interface SmartPreset {
@@ -403,8 +429,8 @@ export const SMART_PRESETS: SmartPreset[] = [
     description: 'Focus on high-intensity anxiety episodes',
     icon: 'AlertCircle',
     criteria: {
-      emotions: { 
-        types: ['anxious', 'overwhelmed', 'frustrated'], 
+      emotions: {
+        types: ['anxious', 'overwhelmed', 'frustrated'],
         intensityRange: [4, 5],
         includeTriggers: [],
         excludeTriggers: [],
@@ -434,9 +460,9 @@ export const SMART_PRESETS: SmartPreset[] = [
     description: 'Highlight successful moments and improvements',
     icon: 'TrendingUp',
     criteria: {
-      emotions: { 
-        types: ['happy', 'calm', 'content', 'focused'], 
-        intensityRange: [3, 5] 
+      emotions: {
+        types: ['happy', 'calm', 'content', 'focused'],
+        intensityRange: [3, 5],
       },
       patterns: { patternTypes: ['trend'] },
     },
@@ -446,6 +472,7 @@ export const SMART_PRESETS: SmartPreset[] = [
 ```
 
 2. **Redesign Filter Drawer UI**:
+
 ```typescript
 // src/components/analytics/FiltersDrawer.tsx - Top section
 <SheetContent>
@@ -502,6 +529,7 @@ export const SMART_PRESETS: SmartPreset[] = [
 ```
 
 **Acceptance Criteria**:
+
 - [ ] 4-6 smart presets prominently displayed
 - [ ] One-click application of presets
 - [ ] Advanced filters hidden until requested
@@ -516,16 +544,20 @@ export const SMART_PRESETS: SmartPreset[] = [
 **Priority**: 🟡 Important  
 **Estimated Effort**: 6-8 hours  
 **Files to Modify**:
+
 - `src/pages/StudentProfile.tsx`
 - `src/hooks/useStudentData.ts`
 
 **Current Problem**:
+
 ```typescript
 // Loads EVERYTHING upfront
-const { student, trackingEntries, allEmotions, allSensoryInputs, goals } = useStudentData(studentId);
+const { student, trackingEntries, allEmotions, allSensoryInputs, goals } =
+  useStudentData(studentId);
 ```
 
 **New Approach**:
+
 ```typescript
 // Load only what's needed
 const { student } = useStudentData(studentId); // Minimal data
@@ -535,6 +567,7 @@ const sectionData = useSectionData(studentId, activeSection); // Load per sectio
 **Implementation**:
 
 1. **Create Section-Specific Data Hooks**:
+
 ```typescript
 // src/hooks/useSectionData.ts
 export function useSectionData(studentId: string, section: string) {
@@ -545,7 +578,7 @@ export function useSectionData(studentId: string, section: string) {
     if (!studentId || !section) return;
 
     setIsLoading(true);
-    
+
     // Load only data needed for active section
     const loadSectionData = async () => {
       switch (section) {
@@ -580,18 +613,19 @@ export function useSectionData(studentId: string, section: string) {
 ```
 
 2. **Update StudentProfile to Use Lazy Loading**:
+
 ```typescript
 // src/pages/StudentProfile.tsx
 const StudentProfile = () => {
   const { studentId } = useParams();
   const [activeSection, setActiveSection] = useState('dashboard');
-  
+
   // Load minimal student info immediately
   const { student, isLoading: isLoadingStudent } = useStudentData(studentId);
-  
+
   // Load section-specific data only when needed
   const { data: sectionData, isLoading: isLoadingSection } = useSectionData(
-    studentId, 
+    studentId,
     activeSection
   );
 
@@ -601,12 +635,12 @@ const StudentProfile = () => {
 
   return (
     <div>
-      <StudentProfileSidebar 
+      <StudentProfileSidebar
         student={student}
         activeSection={activeSection}
         onSectionChange={setActiveSection}
       />
-      
+
       <main>
         {isLoadingSection ? (
           <SectionLoadingSkeleton section={activeSection} />
@@ -628,6 +662,7 @@ const StudentProfile = () => {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Initial page load <1s (only student info)
 - [ ] Section switching <500ms
 - [ ] Loading skeletons for better perceived performance
@@ -641,11 +676,13 @@ const StudentProfile = () => {
 **Priority**: 🟡 Important  
 **Estimated Effort**: 8-10 hours  
 **Files to Modify**:
+
 - `src/pages/KreativiumAI.tsx`
 
 **Implementation**:
 
 1. **Single "Smart Analysis" Button**:
+
 ```typescript
 // Simplified initial UI
 <Card>
@@ -662,7 +699,7 @@ const StudentProfile = () => {
         <AlertDescription>
           {dataQuality.completeness < 50 ? (
             <>
-              ⚠️ Limited data available ({dataQuality.total} entries). 
+              ⚠️ Limited data available ({dataQuality.total} entries).
               Consider collecting more data for better insights.
             </>
           ) : (
@@ -695,9 +732,9 @@ const StudentProfile = () => {
     </div>
 
     {/* Primary Action */}
-    <Button 
-      size="lg" 
-      className="w-full" 
+    <Button
+      size="lg"
+      className="w-full"
       onClick={handleSmartAnalysis}
       disabled={isAnalyzing || !studentId}
     >
@@ -737,6 +774,7 @@ const StudentProfile = () => {
 ```
 
 2. **Progressive Results Display**:
+
 ```typescript
 // Show quick insights first, then detailed analysis
 {results && (
@@ -769,6 +807,7 @@ const StudentProfile = () => {
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Single "Generate Insights" button with smart defaults
 - [ ] Pre-analysis data quality check with recommendations
 - [ ] Advanced options hidden by default
@@ -783,6 +822,7 @@ const StudentProfile = () => {
 **Priority**: 🟡 Important  
 **Estimated Effort**: 6-8 hours  
 **Files to Modify**:
+
 - `src/components/StudentProfileSidebar.tsx`
 
 **Implementation**:
@@ -825,7 +865,7 @@ const menuItems = [
 {menuItems.map((item) => {
   const previewText = item.preview?.();
   const badgeCount = item.badge?.();
-  
+
   return (
     <SidebarMenuItem key={item.section}>
       <SidebarMenuButton
@@ -853,6 +893,7 @@ const menuItems = [
 ```
 
 **Acceptance Criteria**:
+
 - [ ] Navigation shows contextual previews (e.g., "3 new patterns")
 - [ ] Badges indicate items needing attention
 - [ ] Previews update when data changes
@@ -872,6 +913,7 @@ const menuItems = [
 **Priority**: 🟢 Enhancement  
 **Estimated Effort**: 10-12 hours  
 **Files to Create**:
+
 - `src/lib/exportTemplates.ts`
 - `src/components/ExportTemplateSelector.tsx`
 
@@ -955,6 +997,7 @@ export const EXPORT_TEMPLATES: ExportTemplate[] = [
 ```
 
 **UI Component**:
+
 ```typescript
 // src/components/ExportTemplateSelector.tsx
 export function ExportTemplateSelector({ onSelect }: { onSelect: (template: ExportTemplate) => void }) {
@@ -992,6 +1035,7 @@ export function ExportTemplateSelector({ onSelect }: { onSelect: (template: Expo
 ```
 
 **Acceptance Criteria**:
+
 - [ ] 4-6 common export templates available
 - [ ] Templates auto-configure format, date range, and options
 - [ ] Users can still customize after selecting template
@@ -1005,6 +1049,7 @@ export function ExportTemplateSelector({ onSelect }: { onSelect: (template: Expo
 **Priority**: 🟢 Enhancement  
 **Estimated Effort**: 12-16 hours  
 **Files to Modify**:
+
 - `src/pages/Settings.tsx`
 
 **Implementation Structure**:
@@ -1066,6 +1111,7 @@ const settingsSections = [
 ```
 
 **Acceptance Criteria**:
+
 - [ ] All setting categories implemented
 - [ ] Settings persist across sessions
 - [ ] Changes take effect immediately
@@ -1103,6 +1149,7 @@ const settingsSections = [
    - Progressive disclosure
 
 **Acceptance Criteria**:
+
 - [ ] All pages usable on 375px width (iPhone SE)
 - [ ] No horizontal scrolling
 - [ ] Touch targets ≥44x44px
@@ -1114,37 +1161,41 @@ const settingsSections = [
 ## Testing Strategy
 
 ### Unit Tests
+
 - [ ] New components have >80% coverage
 - [ ] All utility functions tested
 - [ ] Hook behavior verified
 
 ### Integration Tests
+
 - [ ] Tab navigation flows
 - [ ] Filter application
 - [ ] Export generation
 - [ ] Section switching
 
 ### E2E Tests (Playwright)
+
 ```typescript
 // tests/e2e/analytics-navigation.spec.ts
 test('can navigate through analytics tabs without confusion', async ({ page }) => {
   await page.goto('/student/mock_student_1');
   await page.click('[data-testid="nav-analytics"]');
-  
+
   // Verify only one level of tabs visible
   const tabsCount = await page.locator('[role="tablist"]').count();
   expect(tabsCount).toBe(1);
-  
+
   // Can access all content areas
   await page.click('[data-testid="tab-charts"]');
   await expect(page.locator('[data-testid="charts-panel"]')).toBeVisible();
-  
+
   await page.click('[data-testid="tab-patterns"]');
   await expect(page.locator('[data-testid="patterns-panel"]')).toBeVisible();
 });
 ```
 
 ### User Acceptance Testing
+
 - [ ] Task completion time measured
 - [ ] User satisfaction survey (1-5)
 - [ ] Confusion points identified
@@ -1155,21 +1206,25 @@ test('can navigate through analytics tabs without confusion', async ({ page }) =
 ## Rollout Plan
 
 ### Week 1-2: Phase 1 (Foundation)
+
 - Deploy to development environment
 - Internal team testing
 - Gather feedback
 
 ### Week 3-4: Phase 2 (Major Changes)
+
 - Deploy to staging
 - Beta user testing (5-10 users)
 - Iterate based on feedback
 
 ### Week 5-6: Phase 3 (Polish)
+
 - Final refinements
 - Performance optimization
 - Accessibility audit
 
 ### Week 7: Production Rollout
+
 - Gradual rollout (10% → 50% → 100%)
 - Monitor analytics and error rates
 - Support team briefing
@@ -1178,21 +1233,22 @@ test('can navigate through analytics tabs without confusion', async ({ page }) =
 
 ## Success Metrics (Target vs Baseline)
 
-| Metric | Baseline | Target | Measurement |
-|--------|----------|--------|-------------|
-| Task completion time | 3-5 min | <2 min | Analytics tracking |
-| Clicks to reach analytics view | 5-7 | 2-3 | User flow analysis |
-| Filter usage rate | Unknown | >60% | Feature analytics |
-| Page load time (StudentProfile) | 2-3s | <1s | Performance monitoring |
-| User satisfaction | N/A | >4.0/5 | Post-rollout survey |
-| Mobile usability score | N/A | >85 | Lighthouse audit |
-| Support tickets (navigation confusion) | N/A | -50% | Ticket analysis |
+| Metric                                 | Baseline | Target | Measurement            |
+| -------------------------------------- | -------- | ------ | ---------------------- |
+| Task completion time                   | 3-5 min  | <2 min | Analytics tracking     |
+| Clicks to reach analytics view         | 5-7      | 2-3    | User flow analysis     |
+| Filter usage rate                      | Unknown  | >60%   | Feature analytics      |
+| Page load time (StudentProfile)        | 2-3s     | <1s    | Performance monitoring |
+| User satisfaction                      | N/A      | >4.0/5 | Post-rollout survey    |
+| Mobile usability score                 | N/A      | >85    | Lighthouse audit       |
+| Support tickets (navigation confusion) | N/A      | -50%   | Ticket analysis        |
 
 ---
 
 ## Risk Mitigation
 
 ### Potential Risks:
+
 1. **User resistance to change**
    - Mitigation: In-app tooltips explaining new features
    - Provide "What's New" guide
@@ -1218,12 +1274,14 @@ test('can navigate through analytics tabs without confusion', async ({ page }) =
 ## Maintenance & Iteration
 
 ### Post-Launch (Weeks 7-8):
+
 - Monitor user behavior analytics
 - Collect user feedback
 - Track error rates and performance
 - Identify new pain points
 
 ### Quarterly Reviews:
+
 - Analyze success metrics
 - Prioritize new improvements
 - Update this implementation plan
@@ -1234,6 +1292,7 @@ test('can navigate through analytics tabs without confusion', async ({ page }) =
 ## Appendix: Component Refactoring Checklist
 
 ### Before Refactoring:
+
 - [ ] Read and understand existing code
 - [ ] Review related tests
 - [ ] Check for dependencies (other components using this)
@@ -1241,6 +1300,7 @@ test('can navigate through analytics tabs without confusion', async ({ page }) =
 - [ ] Create backup branch
 
 ### During Refactoring:
+
 - [ ] Write/update tests first (TDD approach)
 - [ ] Make incremental changes
 - [ ] Test after each change
@@ -1248,6 +1308,7 @@ test('can navigate through analytics tabs without confusion', async ({ page }) =
 - [ ] Check TypeScript types
 
 ### After Refactoring:
+
 - [ ] Run full test suite
 - [ ] Check bundle size impact
 - [ ] Test in multiple browsers

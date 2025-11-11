@@ -22,6 +22,7 @@ import { AlertTriangle, RefreshCw, Wifi, WifiOff, HardDrive, Clock } from 'lucid
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { classifyError, getErrorSuggestions, logErrorForReporting } from '@/lib/errorRecovery';
+import { clearStorageKeys } from '@/lib/storage/useStorageState';
 
 interface Props {
   children: ReactNode;
@@ -49,7 +50,7 @@ export class DataErrorBoundary extends Component<Props, State> {
     hasError: false,
     retryCount: 0,
     isRetrying: false,
-    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
   };
 
   public static getDerivedStateFromError(error: Error): Pick<State, 'hasError' | 'error'> {
@@ -85,13 +86,13 @@ export class DataErrorBoundary extends Component<Props, State> {
       boundaryType: 'DataErrorBoundary',
       operationName,
       errorType,
-      isOnline: this.state.isOnline
+      isOnline: this.state.isOnline,
     });
 
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       error,
       errorInfo,
-      retryCount: prevState.retryCount + 1
+      retryCount: prevState.retryCount + 1,
     }));
 
     this.props.onError?.(error, errorInfo);
@@ -157,7 +158,7 @@ export class DataErrorBoundary extends Component<Props, State> {
         hasError: false,
         error: undefined,
         errorInfo: undefined,
-        isRetrying: false
+        isRetrying: false,
       });
 
       logger.info(`[DataErrorBoundary] ${operationName} succeeded after retry`);
@@ -182,7 +183,7 @@ export class DataErrorBoundary extends Component<Props, State> {
           window.indexedDB.deleteDatabase(db.name);
         }
       }
-      localStorage.clear();
+      clearStorageKeys(''); // Clear all keys with empty prefix
 
       this.setState({ hasError: false, retryCount: 0 });
       toast.success('Storage cleared. Please refresh the page.');
@@ -260,7 +261,9 @@ export class DataErrorBoundary extends Component<Props, State> {
             {/* Suggestions */}
             {suggestions.length > 0 && (
               <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">Suggestions:</p>
+                <p className="text-xs font-medium text-blue-900 dark:text-blue-100 mb-2">
+                  Suggestions:
+                </p>
                 <ul className="text-xs text-blue-900 dark:text-blue-100 space-y-1">
                   {suggestions.slice(0, 3).map((suggestion, idx) => (
                     <li key={idx} className="flex items-start gap-2">
@@ -294,7 +297,9 @@ export class DataErrorBoundary extends Component<Props, State> {
                 variant="default"
                 disabled={this.state.isRetrying || !this.state.isOnline}
               >
-                <RefreshCw className={`h-4 w-4 mr-2 ${this.state.isRetrying ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${this.state.isRetrying ? 'animate-spin' : ''}`}
+                />
                 {this.state.isRetrying ? 'Retrying...' : 'Retry'}
               </Button>
 

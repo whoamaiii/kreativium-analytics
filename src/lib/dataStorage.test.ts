@@ -28,7 +28,14 @@ describe('DataStorage', () => {
     localStorageMock.clear();
     // Re-initialize the storage for each test.
     // This is a simplified approach. In a real scenario, you might have a more robust way to reset the singleton.
-    dataStorage['storageIndex'] = { students: {}, trackingEntries: {}, goals: {}, interventions: {}, alerts: {}, lastUpdated: new Date() };
+    dataStorage['storageIndex'] = {
+      students: {},
+      trackingEntries: {},
+      goals: {},
+      interventions: {},
+      alerts: {},
+      lastUpdated: new Date(),
+    };
   });
 
   it('should save and retrieve a student', () => {
@@ -64,7 +71,7 @@ describe('DataStorage', () => {
       targetDate: new Date(),
       updatedAt: new Date(),
       measurableObjective: 'Read 10 pages per day',
-      progress: 20
+      progress: 20,
     };
     dataStorage.saveGoal(goal);
     const goals = dataStorage.getGoals();
@@ -73,10 +80,25 @@ describe('DataStorage', () => {
   });
 
   it('should save and retrieve a tracking entry', () => {
-    const emotionEntry: EmotionEntry = { id: 'e1', studentId: '1', timestamp: new Date(), emotion: 'happy', intensity: 4, triggers: [], context: '' };
-    
-    const sensoryEntry: SensoryEntry = { id: 's1', studentId: '1', timestamp: new Date(), sensoryType: 'auditory', response: 'seeking', context: '' };
-    
+    const emotionEntry: EmotionEntry = {
+      id: 'e1',
+      studentId: '1',
+      timestamp: new Date(),
+      emotion: 'happy',
+      intensity: 4,
+      triggers: [],
+      context: '',
+    };
+
+    const sensoryEntry: SensoryEntry = {
+      id: 's1',
+      studentId: '1',
+      timestamp: new Date(),
+      sensoryType: 'auditory',
+      response: 'seeking',
+      context: '',
+    };
+
     const trackingEntry: TrackingEntry = {
       id: 't1',
       studentId: '1',

@@ -1,10 +1,7 @@
 import { alertSystem } from '@/lib/alertSystem';
 import { safeGet, safeSet } from '@/lib/storage';
 import { logger } from '@/lib/logger';
-import {
-  AlertEvent,
-  AlertWithGovernance,
-} from '@/lib/alerts/types';
+import { AlertEvent, AlertWithGovernance } from '@/lib/alerts/types';
 import {
   alertHistoryToAlertEvent,
   alertEventToAlertHistory,
@@ -46,7 +43,9 @@ function writeNew(studentId: string, events: AlertEvent[]): void {
   try {
     safeSet(alertsKey(studentId), JSON.stringify(events));
   } catch (err) {
-    try { logger.warn('[AlertSystemBridge] Failed to persist new alerts', err as Error); } catch {}
+    try {
+      logger.warn('[AlertSystemBridge] Failed to persist new alerts', err as Error);
+    } catch {}
   }
 }
 
@@ -69,17 +68,26 @@ export class AlertSystemBridge {
 
   public convertLegacyToNew(studentId?: string): AlertEvent[] {
     try {
-      const legacy = studentId ? alertSystem.getStudentAlerts(studentId) : alertSystem.getAllAlerts();
+      const legacy = studentId
+        ? alertSystem.getStudentAlerts(studentId)
+        : alertSystem.getAllAlerts();
       const mapped = legacy.map(alertHistoryToAlertEvent);
       if (studentId) return mapped.filter((e) => e.studentId === studentId);
       return mapped;
     } catch (err) {
-      try { logger.error('[AlertSystemBridge] convertLegacyToNew failed', err as Error); } catch {}
+      try {
+        logger.error('[AlertSystemBridge] convertLegacyToNew failed', err as Error);
+      } catch {}
       return [];
     }
   }
 
-  public migrateStorageFormat(studentId?: string): { ok: boolean; added: number; hadLegacy: boolean; error?: string } {
+  public migrateStorageFormat(studentId?: string): {
+    ok: boolean;
+    added: number;
+    hadLegacy: boolean;
+    error?: string;
+  } {
     const statusRaw = safeGet(MIGRATION_STATUS_KEY);
     const status = parseJSON<MigrationStatus>(statusRaw) ?? { version: BRIDGE_VERSION };
     const hadLegacy = this.detectLegacyPresent();
@@ -91,7 +99,9 @@ export class AlertSystemBridge {
     try {
       // Backup legacy payload for rollback/debug
       backupLegacyAlerts();
-    } catch { /* noop */ }
+    } catch {
+      /* noop */
+    }
 
     try {
       let totalAdded = 0;
@@ -103,14 +113,18 @@ export class AlertSystemBridge {
         for (const e of legacyNew) {
           if (!dedupMap.has(e.id)) dedupMap.set(e.id, e);
         }
-        const combined = Array.from(dedupMap.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const combined = Array.from(dedupMap.values()).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
         writeNew(sid, combined);
         return combined.length - current.length;
       };
 
       if (studentId) {
         totalAdded += migrateFor(studentId);
-        status.migratedStudents = Array.from(new Set([...(status.migratedStudents ?? []), studentId]));
+        status.migratedStudents = Array.from(
+          new Set([...(status.migratedStudents ?? []), studentId]),
+        );
       } else {
         // Best-effort: infer student ids from legacy entries
         const all = this.convertLegacyToNew();
@@ -131,13 +145,19 @@ export class AlertSystemBridge {
       status.hadLegacy = true;
       safeSet(MIGRATION_STATUS_KEY, JSON.stringify(status));
 
-      try { dispatchAlertsUpdated(studentId); } catch { /* noop */ }
+      try {
+        dispatchAlertsUpdated(studentId);
+      } catch {
+        /* noop */
+      }
       return { ok: true, added: totalAdded, hadLegacy: true };
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown';
       status.errors = Array.from(new Set([...(status.errors ?? []), msg]));
       safeSet(MIGRATION_STATUS_KEY, JSON.stringify(status));
-      try { logger.error('[AlertSystemBridge] migrateStorageFormat failed', err as Error); } catch {}
+      try {
+        logger.error('[AlertSystemBridge] migrateStorageFormat failed', err as Error);
+      } catch {}
       return { ok: false, added: 0, hadLegacy: hadLegacy, error: msg };
     }
   }
@@ -161,13 +181,17 @@ export class AlertSystemBridge {
         }
       }
       if (added > 0) {
-        const combined = Array.from(map.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const combined = Array.from(map.values()).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
         writeNew(studentId, combined.slice(0, 200));
         dispatchAlertsUpdated(studentId);
       }
       return { added };
     } catch (err) {
-      try { logger.warn('[AlertSystemBridge] syncLegacyAlerts failed', err as Error); } catch {}
+      try {
+        logger.warn('[AlertSystemBridge] syncLegacyAlerts failed', err as Error);
+      } catch {}
       return { added: 0 };
     }
   }
@@ -180,7 +204,9 @@ export class AlertSystemBridge {
       safeSet('sensoryTracker_alerts_v2', JSON.stringify(legacyMirror));
       return { ok: true };
     } catch (err) {
-      try { logger.warn('[AlertSystemBridge] syncNewToLegacy failed', err as Error); } catch {}
+      try {
+        logger.warn('[AlertSystemBridge] syncNewToLegacy failed', err as Error);
+      } catch {}
       return { ok: false };
     }
   }
@@ -192,16 +218,18 @@ export class AlertSystemBridge {
       try {
         const { added } = this.syncLegacyAlerts(studentId);
         if (added > 0) dispatchAlertsUpdated(studentId);
-      } catch { /* noop */ }
+      } catch {
+        /* noop */
+      }
       if (!stopped) {
         setTimeout(tick, intervalMs);
       }
     };
     setTimeout(tick, intervalMs);
-    return () => { stopped = true; };
+    return () => {
+      stopped = true;
+    };
   }
 }
 
 export default AlertSystemBridge;
-
-

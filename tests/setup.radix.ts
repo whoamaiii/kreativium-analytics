@@ -4,7 +4,8 @@ import { vi } from 'vitest';
 // Render portal children inline in tests
 vi.mock('@radix-ui/react-portal', async () => {
   const React = await import('react');
-  const passThrough = ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children);
+  const passThrough = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(React.Fragment, null, children);
   return {
     __esModule: true,
     Root: passThrough,
@@ -16,7 +17,8 @@ vi.mock('@radix-ui/react-portal', async () => {
 // Presence: render children immediately without mount/unmount animations
 vi.mock('@radix-ui/react-presence', async () => {
   const React = await import('react');
-  const passThrough = ({ children }: { children: React.ReactNode }) => React.createElement(React.Fragment, null, children);
+  const passThrough = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(React.Fragment, null, children);
   return {
     __esModule: true,
     Presence: passThrough,

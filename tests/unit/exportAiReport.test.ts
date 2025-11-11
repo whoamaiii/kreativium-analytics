@@ -6,11 +6,22 @@ vi.mock('@/lib/evidence', async (orig) => {
   const mod = await (orig() as Promise<typeof import('@/lib/evidence')>);
   return {
     ...mod,
-    resolveSources: vi.fn(async (ids: string[]) => ids.map((id) => ({ id, title: `Source ${id}`, url: 'https://example.com', shortExcerpt: 'Excerpt', tags: ['udl'], year: 2021 }))),
+    resolveSources: vi.fn(async (ids: string[]) =>
+      ids.map((id) => ({
+        id,
+        title: `Source ${id}`,
+        url: 'https://example.com',
+        shortExcerpt: 'Excerpt',
+        tags: ['udl'],
+        year: 2021,
+      })),
+    ),
   } satisfies typeof mod;
 });
 
-const createAnalyticsResult = (overrides: Partial<AnalyticsResultsAI> = {}): AnalyticsResultsAI => ({
+const createAnalyticsResult = (
+  overrides: Partial<AnalyticsResultsAI> = {},
+): AnalyticsResultsAI => ({
   patterns: [],
   correlations: [],
   environmentalCorrelations: [],
@@ -64,7 +75,9 @@ describe('exportAiReport.formatAiReportText', () => {
 
   it('omits sources section gracefully when resolve fails', async () => {
     const evidence = await import('@/lib/evidence');
-    vi.mocked(evidence.resolveSources).mockImplementationOnce(async () => { throw new Error('fail'); });
+    vi.mocked(evidence.resolveSources).mockImplementationOnce(async () => {
+      throw new Error('fail');
+    });
     const { formatAiReportText } = await import('@/lib/ai/exportAiReport');
     const result = createAnalyticsResult({
       suggestedInterventions: [
@@ -97,4 +110,3 @@ describe('exportAiReport.formatAiReportText', () => {
     expect(text).not.toMatch(/# Källor/);
   });
 });
-

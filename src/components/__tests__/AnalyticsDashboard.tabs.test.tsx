@@ -25,7 +25,9 @@ vi.mock('@/hooks/useAnalyticsWorker', () => ({
 }));
 
 // Lazy panels are code-split; mock them
-vi.mock('@/components/lazy/LazyOverviewPanel', () => ({ LazyOverviewPanel: () => <div data-testid="overview-panel" /> }));
+vi.mock('@/components/lazy/LazyOverviewPanel', () => ({
+  LazyOverviewPanel: () => <div data-testid="overview-panel" />,
+}));
 vi.mock('@/components/lazy/LazyExplorePanel', () => ({
   LazyExplorePanel: () => {
     // Simulate preset deep-linking and switching within Explore
@@ -45,9 +47,11 @@ vi.mock('@/components/lazy/LazyExplorePanel', () => ({
         <button onClick={() => setPreset('correlations')}>preset:correlations</button>
       </div>
     );
-  }
+  },
 }));
-vi.mock('@/components/lazy/LazyAlertsPanel', () => ({ LazyAlertsPanel: () => <div data-testid="alerts-panel" /> }));
+vi.mock('@/components/lazy/LazyAlertsPanel', () => ({
+  LazyAlertsPanel: () => <div data-testid="alerts-panel" />,
+}));
 
 // Sync tab param hook: interact with window.location.search
 vi.mock('@/hooks/useSyncedTabParam', () => {
@@ -99,9 +103,7 @@ describe('AnalyticsDashboard tabs', () => {
   test('URL param tab=alerts mounts only AlertsPanel; switching updates URL', async () => {
     // Set real URL since the hook reads window.location
     window.history.replaceState({}, '', '/?tab=alerts');
-    renderWithRouter(
-      <AnalyticsDashboard student={student} filteredData={filteredData} />
-    );
+    renderWithRouter(<AnalyticsDashboard student={student} filteredData={filteredData} />);
 
     // Only alerts content
     expect(await screen.findByTestId('alerts-panel')).toBeInTheDocument();
@@ -120,9 +122,7 @@ describe('AnalyticsDashboard tabs', () => {
 
   test('reloading with tab=explore shows explore tab active', async () => {
     window.history.replaceState({}, '', '/?tab=explore');
-    renderWithRouter(
-      <AnalyticsDashboard student={student} filteredData={filteredData} />
-    );
+    renderWithRouter(<AnalyticsDashboard student={student} filteredData={filteredData} />);
     expect(await screen.findByTestId('explore-panel')).toBeInTheDocument();
     // Ensure overview not mounted
     expect(screen.queryByTestId('overview-panel')).toBeNull();
@@ -130,9 +130,7 @@ describe('AnalyticsDashboard tabs', () => {
 
   test('deep-linking: tab=explore&preset=patterns selects Explore and patterns preset', async () => {
     window.history.replaceState({}, '', '/?tab=explore&preset=patterns');
-    renderWithRouter(
-      <AnalyticsDashboard student={student} filteredData={filteredData} />
-    );
+    renderWithRouter(<AnalyticsDashboard student={student} filteredData={filteredData} />);
     expect(await screen.findByTestId('explore-panel')).toBeInTheDocument();
     const presetIndicator = await screen.findByTestId('explore-preset');
     expect(presetIndicator.textContent).toBe('patterns');
@@ -143,9 +141,7 @@ describe('AnalyticsDashboard tabs', () => {
 
   test('Explore preset switching updates URL and stays on Explore tab', async () => {
     window.history.replaceState({}, '', '/?tab=explore&preset=charts');
-    renderWithRouter(
-      <AnalyticsDashboard student={student} filteredData={filteredData} />
-    );
+    renderWithRouter(<AnalyticsDashboard student={student} filteredData={filteredData} />);
     expect(await screen.findByTestId('explore-panel')).toBeInTheDocument();
 
     // Switch between presets via the mocked Explore panel buttons
@@ -186,7 +182,7 @@ describe('AnalyticsDashboard tabs', () => {
     // Switch to explore
     await userEvent.click(screen.getByTestId('dashboard-explore-tab'));
     await waitFor(() => {
-      expect((liveRegion.textContent || '')).toMatch(/tabs\.explore/);
+      expect(liveRegion.textContent || '').toMatch(/tabs\.explore/);
     });
   });
 

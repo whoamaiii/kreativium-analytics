@@ -1,9 +1,9 @@
-import * as React from "react";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface TagInputProps {
   /** Current array of tags */
@@ -63,19 +63,19 @@ const TagInputComponent = ({
   onChange,
   onAddTag,
   onRemoveTag,
-  placeholder = "Add a tag...",
+  placeholder = 'Add a tag...',
   suggestions = [],
-  label = "Add tag",
+  label = 'Add tag',
   id,
   className,
   showAddButton = true,
-  addButtonText = "Add",
+  addButtonText = 'Add',
   maxTags,
   disabled = false,
   inputClassName,
   tagsClassName,
 }: TagInputProps) => {
-  const [inputValue, setInputValue] = React.useState("");
+  const [inputValue, setInputValue] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   /**
@@ -93,7 +93,7 @@ const TagInputComponent = ({
     const newTags = [...value, trimmedValue];
     onChange(newTags);
     onAddTag?.(trimmedValue);
-    setInputValue("");
+    setInputValue('');
 
     // Refocus input for better UX
     inputRef.current?.focus();
@@ -102,41 +102,50 @@ const TagInputComponent = ({
   /**
    * Handles removing a tag from the list
    */
-  const handleRemoveTag = React.useCallback((tag: string) => {
-    const newTags = value.filter((t) => t !== tag);
-    onChange(newTags);
-    onRemoveTag?.(tag);
-  }, [value, onChange, onRemoveTag]);
+  const handleRemoveTag = React.useCallback(
+    (tag: string) => {
+      const newTags = value.filter((t) => t !== tag);
+      onChange(newTags);
+      onRemoveTag?.(tag);
+    },
+    [value, onChange, onRemoveTag],
+  );
 
   /**
    * Handles keyboard events on the input field
    * Adds tag on Enter key press
    */
-  const handleKeyDown = React.useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddTag();
-    }
-  }, [handleAddTag]);
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddTag();
+      }
+    },
+    [handleAddTag],
+  );
 
   /**
    * Handles clicking on a suggestion to add it as a tag
    */
-  const handleSuggestionClick = React.useCallback((suggestion: string) => {
-    if (value.includes(suggestion)) return;
-    if (maxTags && value.length >= maxTags) return;
+  const handleSuggestionClick = React.useCallback(
+    (suggestion: string) => {
+      if (value.includes(suggestion)) return;
+      if (maxTags && value.length >= maxTags) return;
 
-    const newTags = [...value, suggestion];
-    onChange(newTags);
-    onAddTag?.(suggestion);
-  }, [value, onChange, onAddTag, maxTags]);
+      const newTags = [...value, suggestion];
+      onChange(newTags);
+      onAddTag?.(suggestion);
+    },
+    [value, onChange, onAddTag, maxTags],
+  );
 
   const isMaxReached = maxTags ? value.length >= maxTags : false;
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn('space-y-2', className)}>
       {/* Input field with optional add button */}
-      <div className={cn("flex gap-2", inputClassName)}>
+      <div className={cn('flex gap-2', inputClassName)}>
         <Input
           ref={inputRef}
           id={id}
@@ -173,8 +182,8 @@ const TagInputComponent = ({
                 key={suggestion}
                 variant="outline"
                 className={cn(
-                  "cursor-pointer text-xs font-dyslexia transition-all duration-200 hover-lift",
-                  isAlreadyAdded && "opacity-50 cursor-not-allowed"
+                  'cursor-pointer text-xs font-dyslexia transition-all duration-200 hover-lift',
+                  isAlreadyAdded && 'opacity-50 cursor-not-allowed',
                 )}
                 onClick={() => !isAlreadyAdded && !disabled && handleSuggestionClick(suggestion)}
                 role="button"
@@ -182,7 +191,7 @@ const TagInputComponent = ({
                 aria-label={`Add suggestion: ${suggestion}`}
                 aria-disabled={isAlreadyAdded || disabled}
                 onKeyDown={(e) => {
-                  if ((e.key === "Enter" || e.key === " ") && !isAlreadyAdded && !disabled) {
+                  if ((e.key === 'Enter' || e.key === ' ') && !isAlreadyAdded && !disabled) {
                     e.preventDefault();
                     handleSuggestionClick(suggestion);
                   }
@@ -198,7 +207,7 @@ const TagInputComponent = ({
       {/* Selected tags */}
       {value.length > 0 && (
         <div
-          className={cn("flex flex-wrap gap-2", tagsClassName)}
+          className={cn('flex flex-wrap gap-2', tagsClassName)}
           role="list"
           aria-label="Selected tags"
         >
@@ -212,7 +221,7 @@ const TagInputComponent = ({
               tabIndex={disabled ? -1 : 0}
               aria-label={`Remove tag: ${tag}`}
               onKeyDown={(e) => {
-                if ((e.key === "Enter" || e.key === " ") && !disabled) {
+                if ((e.key === 'Enter' || e.key === ' ') && !disabled) {
                   e.preventDefault();
                   handleRemoveTag(tag);
                 }
@@ -231,6 +240,6 @@ const TagInputComponent = ({
   );
 };
 
-TagInputComponent.displayName = "TagInput";
+TagInputComponent.displayName = 'TagInput';
 
 export const TagInput = React.memo(TagInputComponent);

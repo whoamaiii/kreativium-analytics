@@ -4,7 +4,9 @@ const store = new Map<string, string>();
 
 vi.mock('@/lib/storage', () => ({
   safeGet: (key: string) => store.get(key) ?? null,
-  safeSet: (key: string, value: string) => { store.set(key, value); },
+  safeSet: (key: string, value: string) => {
+    store.set(key, value);
+  },
 }));
 
 import { AlertTelemetryService } from '@/lib/alerts/telemetry';
@@ -180,7 +182,12 @@ describe('AlertTelemetryService', () => {
         status: AlertStatus.New,
         metadata: { experimentKey: 'exp-ppv', experimentVariant: variant, detectorTypes: ['ewma'] },
       };
-      telemetry.logAlertCreated(a, { predictedRelevance: a.confidence, detectorTypes: ['ewma'], experimentKey: 'exp-ppv', experimentVariant: variant });
+      telemetry.logAlertCreated(a, {
+        predictedRelevance: a.confidence,
+        detectorTypes: ['ewma'],
+        experimentKey: 'exp-ppv',
+        experimentVariant: variant,
+      });
       telemetry.logFeedback(a.id, { relevant });
     };
     for (let i = 0; i < 10; i += 1) create('A' + i, 'A', true);
@@ -189,7 +196,7 @@ describe('AlertTelemetryService', () => {
     const exp = (report.experiments ?? []).find((e) => e.key === 'exp-ppv');
     expect(exp?.winningVariant).toBe('A');
     expect(typeof exp?.significance).toBe('number');
-    expect((exp?.significance ?? 0)).toBeGreaterThan(0.8);
+    expect(exp?.significance ?? 0).toBeGreaterThan(0.8);
   });
 
   it('computes calibration reliability bins', () => {
@@ -265,10 +272,18 @@ describe('AlertTelemetryService', () => {
         status: AlertStatus.New,
         metadata: {
           detectorTypes: ['ewma'],
-          thresholdTrace: { ewma: { adjustment: 0, appliedThreshold: 0.6, baselineThreshold: 0.55 } },
+          thresholdTrace: {
+            ewma: { adjustment: 0, appliedThreshold: 0.6, baselineThreshold: 0.55 },
+          },
         },
       };
-      telemetry.logAlertCreated(alert, { predictedRelevance: 0.6, detectorTypes: ['ewma'], thresholdAdjustments: { ewma: { adjustment: 0, appliedThreshold: 0.6, baselineThreshold: 0.55 } } });
+      telemetry.logAlertCreated(alert, {
+        predictedRelevance: 0.6,
+        detectorTypes: ['ewma'],
+        thresholdAdjustments: {
+          ewma: { adjustment: 0, appliedThreshold: 0.6, baselineThreshold: 0.55 },
+        },
+      });
       telemetry.logFeedback(alert.id, { relevant: i % 3 !== 0 });
     }
     const metrics = new WeeklyAlertMetrics({ telemetry });
@@ -326,7 +341,11 @@ describe('AlertTelemetryService', () => {
 
   it('records governance audit decisions and supports filtering', () => {
     const metrics = new WeeklyAlertMetrics();
-    metrics.logGovernanceDecision({ policy: 'quiet_hours', decision: 'suppressed', alertId: 'qa-1' });
+    metrics.logGovernanceDecision({
+      policy: 'quiet_hours',
+      decision: 'suppressed',
+      alertId: 'qa-1',
+    });
     metrics.logGovernanceDecision({ policy: 'daily_caps', decision: 'blocked', alertId: 'dc-1' });
     const all = metrics.listGovernanceDecisions();
     const quiet = metrics.listGovernanceDecisions({ policy: 'quiet_hours' });
@@ -393,11 +412,23 @@ describe('AlertTelemetryService', () => {
     // Old event (> 30 days)
     const old = new Date(Date.now() - 40 * 24 * 3600_000).toISOString();
     telemetry.logAlertCreated({
-      id: 'old', studentId: 's-old', kind: AlertKind.DataQuality, severity: AlertSeverity.Low, confidence: 0.1, createdAt: old, status: AlertStatus.New,
+      id: 'old',
+      studentId: 's-old',
+      kind: AlertKind.DataQuality,
+      severity: AlertSeverity.Low,
+      confidence: 0.1,
+      createdAt: old,
+      status: AlertStatus.New,
     });
     // New event
     telemetry.logAlertCreated({
-      id: 'new', studentId: 's-new', kind: AlertKind.DataQuality, severity: AlertSeverity.Low, confidence: 0.1, createdAt: new Date().toISOString(), status: AlertStatus.New,
+      id: 'new',
+      studentId: 's-new',
+      kind: AlertKind.DataQuality,
+      severity: AlertSeverity.Low,
+      confidence: 0.1,
+      createdAt: new Date().toISOString(),
+      status: AlertStatus.New,
     });
     metrics.runWeeklyEvaluation();
     metrics.runWeeklyEvaluation({ weekContaining: new Date(Date.now() - 7 * 24 * 3600_000) });

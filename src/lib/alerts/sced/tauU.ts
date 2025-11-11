@@ -38,9 +38,8 @@ function erf(x: number): number {
   const sign = x >= 0 ? 1 : -1;
   const abs = Math.abs(x);
   const t = 1 / (1 + 0.3275911 * abs);
-  const poly = (
-    (((0.254829592 * t - 0.284496736) * t + 1.421413741) * t - 1.453152027) * t + 1.061405429
-  ) * t;
+  const poly =
+    ((((0.254829592 * t - 0.284496736) * t + 1.421413741) * t - 1.453152027) * t + 1.061405429) * t;
   const expTerm = Math.exp(-abs * abs);
   return sign * (1 - poly * expTerm);
 }
@@ -83,7 +82,8 @@ export class TauUEvaluator {
     const adjustedS = s - trendAdjustment;
     const effectSize = adjustedS / comparisons;
 
-    const variance = (baseline.length * intervention.length * (baseline.length + intervention.length + 1)) / 3;
+    const variance =
+      (baseline.length * intervention.length * (baseline.length + intervention.length + 1)) / 3;
     const zScore = variance > 0 ? adjustedS / Math.sqrt(variance) : 0;
     const pValue = Math.max(0, Math.min(1, 2 * (1 - normalCdf(Math.abs(zScore)))));
 
@@ -178,25 +178,34 @@ export class TauUEvaluator {
     return 'no_change';
   }
 
-  generateReport(effectSize: number, pValue: number, improvementProbability: number, outcome: TauUResult['outcome']): {
+  generateReport(
+    effectSize: number,
+    pValue: number,
+    improvementProbability: number,
+    outcome: TauUResult['outcome'],
+  ): {
     headline: string;
     summary: string;
     recommendations: string[];
   } {
-    const headline = outcome === 'improving'
-      ? 'Intervention shows improving trend'
-      : outcome === 'worsening'
-        ? 'Outcome trending down'
-        : 'Outcome stable';
+    const headline =
+      outcome === 'improving'
+        ? 'Intervention shows improving trend'
+        : outcome === 'worsening'
+          ? 'Outcome trending down'
+          : 'Outcome stable';
 
-    const summary = `Tau-U effect size ${effectSize.toFixed(2)} with p ≈ ${pValue.toFixed(3)}.`
-      + ` Improvement probability ${(improvementProbability * 100).toFixed(1)}%.`;
+    const summary =
+      `Tau-U effect size ${effectSize.toFixed(2)} with p ≈ ${pValue.toFixed(3)}.` +
+      ` Improvement probability ${(improvementProbability * 100).toFixed(1)}%.`;
 
     const recommendations: string[] = [];
     if (outcome === 'improving') {
       recommendations.push('Continue intervention and monitor for sustained gains.');
     } else if (outcome === 'worsening') {
-      recommendations.push('Review fidelity of implementation and consider alternative strategies.');
+      recommendations.push(
+        'Review fidelity of implementation and consider alternative strategies.',
+      );
     } else {
       recommendations.push('Maintain current plan and gather additional data next week.');
     }

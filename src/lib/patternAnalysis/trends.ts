@@ -7,9 +7,9 @@
  * - Trend-based recommendations
  */
 
-import { EmotionEntry, SensoryEntry } from "@/types/student";
-import { differenceInDays } from "date-fns";
-import { analyticsConfig } from "@/lib/analyticsConfig";
+import { EmotionEntry, SensoryEntry } from '@/types/student';
+import { differenceInDays } from 'date-fns';
+import { analyticsConfig } from '@/lib/analyticsConfig';
 import { huberRegression } from '@/lib/statistics';
 
 export interface TrendAnalysis {
@@ -33,7 +33,7 @@ export interface TrendAnalysis {
  * @returns Trend analysis with forecasts or null if insufficient data
  */
 export function analyzeTrendsWithStatistics(
-  data: { value: number; timestamp: Date }[]
+  data: { value: number; timestamp: Date }[],
 ): TrendAnalysis | null {
   const cfg = analyticsConfig.getConfig();
   const { enhancedAnalysis, analytics, timeWindows } = cfg;
@@ -46,7 +46,7 @@ export function analyzeTrendsWithStatistics(
   // Robust linear regression (Huber) for slope/intercept on x=0..n-1, y=values
   const n = sortedData.length;
   const x = sortedData.map((_, i) => i);
-  const y = sortedData.map(d => d.value);
+  const y = sortedData.map((d) => d.value);
 
   const huberCfg = enhancedAnalysis?.huber || { delta: 1.345, maxIter: 50, tol: 1e-6 };
   const { slope, intercept } = huberRegression(x, y, {
@@ -71,7 +71,7 @@ export function analyzeTrendsWithStatistics(
   const yPred: number[] = new Array(n);
   for (let i = 0; i < n; i++) {
     const xi = x[i];
-    const pred = (Number.isFinite(slope) ? slope * xi + interceptSafe : interceptSafe);
+    const pred = Number.isFinite(slope) ? slope * xi + interceptSafe : interceptSafe;
     yPred[i] = Number.isFinite(pred) ? pred : 0;
   }
   let rSquared = 0;
@@ -92,7 +92,7 @@ export function analyzeTrendsWithStatistics(
   // Time span and daily rate (safe timespan guards)
   const timeSpanDays = differenceInDays(
     sortedData[sortedData.length - 1].timestamp,
-    sortedData[0].timestamp
+    sortedData[0].timestamp,
   );
   const safeTimeSpanDays = Math.max(1, timeSpanDays || 0);
   const dailyRate = Number.isFinite(slope) ? slope * (n / safeTimeSpanDays) : 0;
@@ -100,15 +100,20 @@ export function analyzeTrendsWithStatistics(
   // Data and timespan quality from configured targets
   const pointsTarget = Number(enhancedAnalysis?.qualityTargets?.pointsTarget);
   const timeSpanTarget = Number(enhancedAnalysis?.qualityTargets?.timeSpanDaysTarget);
-  const dataQuality = Number.isFinite(pointsTarget) && pointsTarget > 0 ? Math.min(1, n / pointsTarget) : 0;
-  const timeSpanQuality = Number.isFinite(timeSpanTarget) && timeSpanTarget > 0 ? Math.min(1, timeSpanDays / timeSpanTarget) : 0;
+  const dataQuality =
+    Number.isFinite(pointsTarget) && pointsTarget > 0 ? Math.min(1, n / pointsTarget) : 0;
+  const timeSpanQuality =
+    Number.isFinite(timeSpanTarget) && timeSpanTarget > 0
+      ? Math.min(1, timeSpanDays / timeSpanTarget)
+      : 0;
   const patternStrength = Math.max(0, rSquared);
   const enhancedConfidenceRaw = dataQuality * 0.3 + timeSpanQuality * 0.3 + patternStrength * 0.4;
   const enhancedConfidence = Number.isFinite(enhancedConfidenceRaw) ? enhancedConfidenceRaw : 0;
 
   // Determine direction using configured threshold
   const threshold = Number(enhancedAnalysis?.trendThreshold) || 0;
-  const direction = Math.abs(dailyRate) < threshold ? 'stable' : dailyRate > 0 ? 'increasing' : 'decreasing';
+  const direction =
+    Math.abs(dailyRate) < threshold ? 'stable' : dailyRate > 0 ? 'increasing' : 'decreasing';
 
   // Forecasts (ensure finite values)
   const lastPred = yPred[yPred.length - 1] ?? 0;
@@ -137,9 +142,9 @@ export function analyzeTrendsWithStatistics(
  * @returns Trend analysis or null if insufficient data
  */
 export function analyzeEmotionTrend(emotions: EmotionEntry[]): TrendAnalysis | null {
-  const emotionData = emotions.map(e => ({
+  const emotionData = emotions.map((e) => ({
     value: e.intensity,
-    timestamp: e.timestamp
+    timestamp: e.timestamp,
   }));
 
   return analyzeTrendsWithStatistics(emotionData);
@@ -154,10 +159,13 @@ export function analyzeEmotionTrend(emotions: EmotionEntry[]): TrendAnalysis | n
  */
 export function analyzeSensoryTrend(sensoryInputs: SensoryEntry[]): TrendAnalysis | null {
   // Convert sensory responses to numeric values for trend analysis
-  const sensoryData = sensoryInputs.map(s => ({
-    value: s.response.toLowerCase().includes('seeking') ? 1 :
-           s.response.toLowerCase().includes('avoiding') ? -1 : 0,
-    timestamp: s.timestamp
+  const sensoryData = sensoryInputs.map((s) => ({
+    value: s.response.toLowerCase().includes('seeking')
+      ? 1
+      : s.response.toLowerCase().includes('avoiding')
+        ? -1
+        : 0,
+    timestamp: s.timestamp,
   }));
 
   return analyzeTrendsWithStatistics(sensoryData);
@@ -176,7 +184,7 @@ export function generateConfidenceExplanation(
   dataPoints: number,
   timeSpanDays: number,
   rSquared: number,
-  confidence: number
+  confidence: number,
 ): { level: 'low' | 'medium' | 'high'; explanation: string; factors: string[] } {
   const cfg = analyticsConfig.getConfig();
   const { enhancedAnalysis, timeWindows, insights, patternAnalysis } = cfg;
@@ -197,25 +205,33 @@ export function generateConfidenceExplanation(
 
   // Time window factor: compare against shortTermDays, label with defaultAnalysisDays if available
   if (typeof timeWindows?.shortTermDays === 'number') {
-    const defaultDays = typeof timeWindows?.defaultAnalysisDays === 'number' ? timeWindows.defaultAnalysisDays : undefined;
+    const defaultDays =
+      typeof timeWindows?.defaultAnalysisDays === 'number'
+        ? timeWindows.defaultAnalysisDays
+        : undefined;
     if (timeSpanDays < timeWindows.shortTermDays) {
       factors.push(
         defaultDays != null
           ? `shortTimespan:${timeSpanDays}:${defaultDays}`
-          : `shortTimespan:${timeSpanDays}`
+          : `shortTimespan:${timeSpanDays}`,
       );
     } else {
       factors.push(
         defaultDays != null
           ? `adequateTimespan:${timeSpanDays}:${defaultDays}`
-          : `adequateTimespan:${timeSpanDays}`
+          : `adequateTimespan:${timeSpanDays}`,
       );
     }
   }
 
   // rSquared strength bands using configured significance thresholds (guard missing)
   const sig = enhancedAnalysis?.correlationSignificance;
-  if (sig && typeof sig.low === 'number' && typeof sig.moderate === 'number' && typeof sig.high === 'number') {
+  if (
+    sig &&
+    typeof sig.low === 'number' &&
+    typeof sig.moderate === 'number' &&
+    typeof sig.high === 'number'
+  ) {
     if (rSquared < sig.low) {
       factors.push(`weakPattern:${rSquared.toFixed(3)}:low=${sig.low}`);
     } else if (rSquared >= sig.high) {
@@ -302,20 +318,20 @@ export function getEmotionTrendRecommendations(trend: TrendAnalysis): string[] {
       'Increase positive reinforcement strategies',
       'Review environmental factors that may be contributing to stress',
       'Consider additional sensory support tools',
-      'Schedule more frequent check-ins'
+      'Schedule more frequent check-ins',
     ];
   } else if (trend.direction === 'increasing') {
     return [
       'Continue current successful strategies',
       'Document what is working well',
       'Gradually introduce new challenges',
-      'Share progress with student and family'
+      'Share progress with student and family',
     ];
   }
   return [
     'Monitor for changes in patterns',
     'Maintain current support level',
-    'Be prepared to adjust strategies as needed'
+    'Be prepared to adjust strategies as needed',
   ];
 }
 
@@ -326,24 +342,26 @@ export function getEmotionTrendRecommendations(trend: TrendAnalysis): string[] {
  * @returns Array of recommendation strings
  */
 export function getSensoryTrendRecommendations(trend: TrendAnalysis): string[] {
-  if (trend.rate > 0) { // Increasing seeking
+  if (trend.rate > 0) {
+    // Increasing seeking
     return [
       'Provide more structured sensory breaks',
       'Introduce additional sensory tools',
       'Consider sensory diet adjustments',
-      'Monitor for overstimulation'
+      'Monitor for overstimulation',
     ];
-  } else if (trend.rate < 0) { // Increasing avoiding
+  } else if (trend.rate < 0) {
+    // Increasing avoiding
     return [
       'Reduce environmental stimuli',
       'Provide more quiet spaces',
       'Gradually reintroduce sensory experiences',
-      'Focus on calming strategies'
+      'Focus on calming strategies',
     ];
   }
   return [
     'Maintain current sensory support level',
     'Continue monitoring sensory preferences',
-    'Be responsive to daily variations'
+    'Be responsive to daily variations',
   ];
 }

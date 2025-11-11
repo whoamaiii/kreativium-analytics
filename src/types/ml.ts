@@ -124,5 +124,13 @@ export interface EarlyStoppingConfig {
   /** Minimum change to qualify as improvement. Default: 0 */
   minDelta?: number;
   /** Metric to monitor. If validation data is provided, prefer val_* metrics. */
-  monitor?: 'loss' | 'val_loss' | 'accuracy' | 'val_accuracy' | 'mae' | 'val_mae' | 'mse' | 'val_mse';
+  monitor?:
+    | 'loss'
+    | 'val_loss'
+    | 'accuracy'
+    | 'val_accuracy'
+    | 'mae'
+    | 'val_mae'
+    | 'mse'
+    | 'val_mse';
 }

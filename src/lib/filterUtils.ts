@@ -37,12 +37,12 @@ export interface FilterCriteria {
 }
 
 // Enhanced smart filter presets with better UX
-export const FILTER_PRESETS: Array<{ 
-  name: string; 
-  description: string; 
-  icon: string; 
+export const FILTER_PRESETS: Array<{
+  name: string;
+  description: string;
+  icon: string;
   category: 'concern' | 'positive' | 'context' | 'time';
-  criteria: Partial<FilterCriteria> 
+  criteria: Partial<FilterCriteria>;
 }> = [
   {
     name: '😰 High Anxiety Moments',
@@ -54,14 +54,14 @@ export const FILTER_PRESETS: Array<{
         types: ['anxious', 'overwhelmed', 'frustrated'],
         intensityRange: [3, 5],
         includeTriggers: [],
-        excludeTriggers: []
+        excludeTriggers: [],
       },
       sensory: {
         types: [],
         responses: [],
-        intensityRange: [0, 5]
-      }
-    }
+        intensityRange: [0, 5],
+      },
+    },
   },
   {
     name: '🏫 Classroom Challenges',
@@ -75,18 +75,18 @@ export const FILTER_PRESETS: Array<{
         conditions: {
           noiseLevel: [0, 10],
           temperature: [-10, 40],
-          lighting: []
+          lighting: [],
         },
         weather: [],
-        timeOfDay: []
+        timeOfDay: [],
       },
       emotions: {
         types: ['anxious', 'overwhelmed', 'frustrated', 'tired'],
         intensityRange: [2, 5],
         includeTriggers: [],
-        excludeTriggers: []
-      }
-    }
+        excludeTriggers: [],
+      },
+    },
   },
   {
     name: '⭐ Positive Progress',
@@ -98,14 +98,14 @@ export const FILTER_PRESETS: Array<{
         types: ['happy', 'calm', 'focused', 'content'],
         intensityRange: [0, 5],
         includeTriggers: [],
-        excludeTriggers: []
+        excludeTriggers: [],
       },
       sensory: {
         types: [],
         responses: [],
-        intensityRange: [0, 5]
-      }
-    }
+        intensityRange: [0, 5],
+      },
+    },
   },
   {
     name: '🔍 Sensory Seeking',
@@ -116,15 +116,15 @@ export const FILTER_PRESETS: Array<{
       sensory: {
         types: [],
         responses: ['seeking'],
-        intensityRange: [0, 5]
+        intensityRange: [0, 5],
       },
       emotions: {
         types: [],
         intensityRange: [0, 5],
         includeTriggers: [],
-        excludeTriggers: []
-      }
-    }
+        excludeTriggers: [],
+      },
+    },
   },
   {
     name: '🚫 Sensory Avoidance',
@@ -135,15 +135,15 @@ export const FILTER_PRESETS: Array<{
       sensory: {
         types: [],
         responses: ['avoiding'],
-        intensityRange: [0, 5]
+        intensityRange: [0, 5],
       },
       emotions: {
         types: [],
         intensityRange: [0, 5],
         includeTriggers: [],
-        excludeTriggers: []
-      }
-    }
+        excludeTriggers: [],
+      },
+    },
   },
   {
     name: '🔄 Transition Times',
@@ -157,18 +157,18 @@ export const FILTER_PRESETS: Array<{
         conditions: {
           noiseLevel: [0, 10],
           temperature: [-10, 40],
-          lighting: []
+          lighting: [],
         },
         weather: [],
-        timeOfDay: []
+        timeOfDay: [],
       },
       emotions: {
         types: [],
         intensityRange: [0, 5],
         includeTriggers: ['transition', 'task-change'],
-        excludeTriggers: []
-      }
-    }
+        excludeTriggers: [],
+      },
+    },
   },
   {
     name: '📊 This Week',
@@ -178,22 +178,22 @@ export const FILTER_PRESETS: Array<{
     criteria: {
       dateRange: {
         start: subDays(new Date(), 7),
-        end: new Date()
-      }
-    }
+        end: new Date(),
+      },
+    },
   },
   {
     name: '📅 Today',
-    description: 'Only today\'s entries',
+    description: "Only today's entries",
     icon: '📅',
     category: 'time',
     criteria: {
       dateRange: {
         start: startOfDay(new Date()),
-        end: new Date()
-      }
-    }
-  }
+        end: new Date(),
+      },
+    },
+  },
 ];
 
 // Helper function to apply filters to data
@@ -202,14 +202,16 @@ export const applyFilters = <T extends { timestamp: Date }>(
   criteria: FilterCriteria,
   getEmotionData?: (item: T) => EmotionEntry | null,
   getSensoryData?: (item: T) => SensoryEntry | null,
-  getEnvironmentalData?: (item: T) => EnvironmentalEntry | null
+  getEnvironmentalData?: (item: T) => EnvironmentalEntry | null,
 ): T[] => {
-  return data.filter(item => {
+  return data.filter((item) => {
     // Date range filter: normalize to half-open [start, end)
     if (criteria.dateRange.start || criteria.dateRange.end) {
       const start = criteria.dateRange.start ? startOfDay(criteria.dateRange.start) : new Date(0);
       // Use endExclusive as startOfDay(end) + 1 day for whole-day selection
-      const endExclusive = criteria.dateRange.end ? addDays(startOfDay(criteria.dateRange.end), 1) : new Date(8640000000000000);
+      const endExclusive = criteria.dateRange.end
+        ? addDays(startOfDay(criteria.dateRange.end), 1)
+        : new Date(8640000000000000);
       const ts = item.timestamp;
       if (!(ts >= start && ts < endExclusive)) return false;
     }
@@ -218,19 +220,28 @@ export const applyFilters = <T extends { timestamp: Date }>(
     if (getEmotionData) {
       const emotion = getEmotionData(item);
       if (emotion) {
-        if (criteria.emotions.types.length > 0 && !criteria.emotions.types.includes(emotion.emotion)) {
+        if (
+          criteria.emotions.types.length > 0 &&
+          !criteria.emotions.types.includes(emotion.emotion)
+        ) {
           return false;
         }
-        if (emotion.intensity < criteria.emotions.intensityRange[0] ||
-            emotion.intensity > criteria.emotions.intensityRange[1]) {
+        if (
+          emotion.intensity < criteria.emotions.intensityRange[0] ||
+          emotion.intensity > criteria.emotions.intensityRange[1]
+        ) {
           return false;
         }
-        if (criteria.emotions.includeTriggers.length > 0 &&
-            !emotion.triggers?.some(t => criteria.emotions.includeTriggers.includes(t))) {
+        if (
+          criteria.emotions.includeTriggers.length > 0 &&
+          !emotion.triggers?.some((t) => criteria.emotions.includeTriggers.includes(t))
+        ) {
           return false;
         }
-        if (criteria.emotions.excludeTriggers.length > 0 &&
-            emotion.triggers?.some(t => criteria.emotions.excludeTriggers.includes(t))) {
+        if (
+          criteria.emotions.excludeTriggers.length > 0 &&
+          emotion.triggers?.some((t) => criteria.emotions.excludeTriggers.includes(t))
+        ) {
           return false;
         }
       }
@@ -244,12 +255,17 @@ export const applyFilters = <T extends { timestamp: Date }>(
         if (criteria.sensory.types.length > 0 && !criteria.sensory.types.includes(sensoryType)) {
           return false;
         }
-        if (criteria.sensory.responses.length > 0 && !criteria.sensory.responses.includes(sensory.response)) {
+        if (
+          criteria.sensory.responses.length > 0 &&
+          !criteria.sensory.responses.includes(sensory.response)
+        ) {
           return false;
         }
-        if (sensory.intensity &&
-            (sensory.intensity < criteria.sensory.intensityRange[0] ||
-             sensory.intensity > criteria.sensory.intensityRange[1])) {
+        if (
+          sensory.intensity &&
+          (sensory.intensity < criteria.sensory.intensityRange[0] ||
+            sensory.intensity > criteria.sensory.intensityRange[1])
+        ) {
           return false;
         }
       }
@@ -259,21 +275,32 @@ export const applyFilters = <T extends { timestamp: Date }>(
     if (getEnvironmentalData) {
       const env = getEnvironmentalData(item);
       if (env) {
-        if (criteria.environmental.locations.length > 0 &&
-            env.location && !criteria.environmental.locations.includes(env.location)) {
+        if (
+          criteria.environmental.locations.length > 0 &&
+          env.location &&
+          !criteria.environmental.locations.includes(env.location)
+        ) {
           return false;
         }
-        if (criteria.environmental.activities.length > 0 &&
-            env.classroom?.activity && !criteria.environmental.activities.includes(env.classroom.activity)) {
+        if (
+          criteria.environmental.activities.length > 0 &&
+          env.classroom?.activity &&
+          !criteria.environmental.activities.includes(env.classroom.activity)
+        ) {
           return false;
         }
-        if (criteria.environmental.weather.length > 0 &&
-            env.weather?.condition && !criteria.environmental.weather.includes(env.weather.condition)) {
+        if (
+          criteria.environmental.weather.length > 0 &&
+          env.weather?.condition &&
+          !criteria.environmental.weather.includes(env.weather.condition)
+        ) {
           return false;
         }
-        if (env.roomConditions?.noiseLevel &&
-            (env.roomConditions.noiseLevel < criteria.environmental.conditions.noiseLevel[0] ||
-             env.roomConditions.noiseLevel > criteria.environmental.conditions.noiseLevel[1])) {
+        if (
+          env.roomConditions?.noiseLevel &&
+          (env.roomConditions.noiseLevel < criteria.environmental.conditions.noiseLevel[0] ||
+            env.roomConditions.noiseLevel > criteria.environmental.conditions.noiseLevel[1])
+        ) {
           return false;
         }
       }

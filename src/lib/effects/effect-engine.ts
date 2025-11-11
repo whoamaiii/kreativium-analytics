@@ -31,10 +31,6 @@ export function mapEffects(input: EffectInput): EffectParams {
   return { particleCount, colorSaturation, glowStrength, sfxGain };
 }
 
-function clamp01(x: number): number { return Math.max(0, Math.min(1, x)); }
-
-
-
-
-
-
+function clamp01(x: number): number {
+  return Math.max(0, Math.min(1, x));
+}

@@ -20,29 +20,29 @@ export function createEmotionModel(): tf.Sequential {
       tf.layers.lstm({
         units: 64,
         returnSequences: true,
-        inputShape: [7, 13] // 7 days, 13 features (7 emotions + 6 time features)
+        inputShape: [7, 13], // 7 days, 13 features (7 emotions + 6 time features)
       }),
       tf.layers.dropout({ rate: 0.2 }),
       tf.layers.lstm({
         units: 32,
-        returnSequences: false
+        returnSequences: false,
       }),
       tf.layers.dropout({ rate: 0.2 }),
       tf.layers.dense({
         units: 16,
-        activation: 'relu'
+        activation: 'relu',
       }),
       tf.layers.dense({
         units: 7,
-        activation: 'sigmoid' // Output emotions normalized to 0-1
-      })
-    ]
+        activation: 'sigmoid', // Output emotions normalized to 0-1
+      }),
+    ],
   });
 
   model.compile({
     optimizer: tf.train.adam(0.001),
     loss: 'meanSquaredError',
-    metrics: ['mse', 'mae']
+    metrics: ['mse', 'mae'],
   });
 
   return model;
@@ -67,25 +67,25 @@ export function createSensoryModel(): tf.Sequential {
       tf.layers.dense({
         units: 32,
         activation: 'relu',
-        inputShape: [12] // 6 environment + 6 time features
+        inputShape: [12], // 6 environment + 6 time features
       }),
       tf.layers.dropout({ rate: 0.2 }),
       tf.layers.dense({
         units: 16,
-        activation: 'relu'
+        activation: 'relu',
       }),
       tf.layers.dropout({ rate: 0.2 }),
       tf.layers.dense({
         units: 15,
-        activation: 'softmax' // 5 senses × 3 responses (seeking/avoiding/neutral)
-      })
-    ]
+        activation: 'softmax', // 5 senses × 3 responses (seeking/avoiding/neutral)
+      }),
+    ],
   });
 
   model.compile({
     optimizer: tf.train.adam(0.001),
     loss: 'categoricalCrossentropy',
-    metrics: ['accuracy']
+    metrics: ['accuracy'],
   });
 
   return model;

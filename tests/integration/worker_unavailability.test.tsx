@@ -81,7 +81,11 @@ const createEmotionEntry = (overrides: Partial<EmotionEntry> = {}): EmotionEntry
   escalationPattern: overrides.escalationPattern,
 });
 
-const createTrackingEntry = (id: string, studentId: string, overrides: Partial<TrackingEntry> = {}): TrackingEntry => ({
+const createTrackingEntry = (
+  id: string,
+  studentId: string,
+  overrides: Partial<TrackingEntry> = {},
+): TrackingEntry => ({
   id,
   studentId,
   timestamp: overrides.timestamp ?? new Date(),
@@ -112,13 +116,12 @@ const getWorkerInstances = (): Array<{ postMessage: Mock }> => {
 
 // Make worker import controllable per test via globals
 declare global {
-   
   var __WORKER_THROW_CONSTRUCTOR__: boolean | undefined;
-   
+
   var __WORKER_BEHAVIOR__: 'error' | 'timeout' | 'readySoon' | undefined;
-   
+
   var __WORKER_INSTANCES__: any[] | undefined;
-   
+
   var __WORKER_CTOR_CALLS__: number | undefined;
 }
 
@@ -142,11 +145,15 @@ vi.mock('@/workers/analytics.worker?worker', () => {
       TestWorker.instances.push(this);
       const bh = globalThis.__WORKER_BEHAVIOR__;
       if (bh === 'error') {
-        setTimeout(() => { this.onerror && this.onerror(new ErrorEvent('error', { message: 'boom' })); }, 0);
+        setTimeout(() => {
+          this.onerror && this.onerror(new ErrorEvent('error', { message: 'boom' }));
+        }, 0);
       } else if (bh === 'readySoon') {
         setTimeout(() => {
           if (!this.onmessage) return;
-          this.onmessage({ data: { type: 'progress' } } as unknown as MessageEvent<AnalyticsWorkerMessage>);
+          this.onmessage({
+            data: { type: 'progress' },
+          } as unknown as MessageEvent<AnalyticsWorkerMessage>);
         }, 0);
       } else {
         // 'timeout' => do nothing
@@ -162,13 +169,29 @@ const getStudentAnalyticsSpy = vi.spyOn(analyticsManager, 'getStudentAnalytics')
 const getGoalsSpy = vi.spyOn(dataStorage, 'getGoalsForStudent');
 
 // Harness component that triggers runAnalysis on mount and whenever inputs change
-function Harness({ data, options, onUpdate }: { data: AnalyticsData; options?: { useAI?: boolean; student?: Student }; onUpdate?: (payload: { error: string | null }) => void }) {
+function Harness({
+  data,
+  options,
+  onUpdate,
+}: {
+  data: AnalyticsData;
+  options?: { useAI?: boolean; student?: Student };
+  onUpdate?: (payload: { error: string | null }) => void;
+}) {
   const { runAnalysis, error } = useAnalyticsWorker({ precomputeOnIdle: false });
   useEffect(() => {
-    runAnalysis(data, options || { student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any, useAI: false });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    runAnalysis(
+      data,
+      options || {
+        student: { id: 's1', name: 'Test Student', createdAt: new Date() } as any,
+        useAI: false,
+      },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(data), JSON.stringify(options)]);
-  useEffect(() => { onUpdate?.({ error }); }, [error, onUpdate]);
+  useEffect(() => {
+    onUpdate?.({ error });
+  }, [error, onUpdate]);
   return <div data-testid="status">{error || 'ok'}</div>;
 }
 
@@ -205,12 +228,22 @@ describe('Integration: worker unavailability scenarios', () => {
     processAnalyticsSpy.mockResolvedValue(baseResults);
 
     render(<Harness data={makeData()} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
 
     // Trigger a second run quickly (circuit open window)
-    render(<Harness data={makeData({ emotions: [createEmotionEntry({ id: 'e1', emotion: 'joy', intensity: 5 })] })} />);
-    await act(async () => { await Promise.resolve(); });
+    render(
+      <Harness
+        data={makeData({
+          emotions: [createEmotionEntry({ id: 'e1', emotion: 'joy', intensity: 5 })],
+        })}
+      />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(2);
     // Worker constructor attempted once during initial init effect
     expect(globalThis.__WORKER_CTOR_CALLS__).toBe(1);
@@ -221,7 +254,9 @@ describe('Integration: worker unavailability scenarios', () => {
     processAnalyticsSpy.mockResolvedValue(baseResults);
 
     render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
   });
 
@@ -229,9 +264,16 @@ describe('Integration: worker unavailability scenarios', () => {
     globalThis.__WORKER_BEHAVIOR__ = 'timeout';
     processAnalyticsSpy.mockResolvedValue(baseResults);
     const updates: Array<string | null> = [];
-    render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} onUpdate={({ error }) => updates.push(error)} />);
+    render(
+      <Harness
+        data={makeData({ entries: [createTrackingEntry('t1', 's1')] })}
+        onUpdate={({ error }) => updates.push(error)}
+      />,
+    );
     // watchdog upper bound is 20s; advance past it
-    await act(async () => { vi.advanceTimersByTime(21_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(21_000);
+    });
     expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
     // Last update contains timeout message
     const last = updates.filter(Boolean).pop();
@@ -246,17 +288,37 @@ describe('Integration: worker unavailability scenarios', () => {
       expect(data.goals?.[0]).toMatchObject({ id: 'g1' });
       return baseResults;
     });
-    render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 'stu-1')] })} options={{ student: createStudent('stu-1', { name: 'S' }) }} />);
-    await act(async () => { await Promise.resolve(); });
+    render(
+      <Harness
+        data={makeData({ entries: [createTrackingEntry('t1', 'stu-1')] })}
+        options={{ student: createStudent('stu-1', { name: 'S' }) }}
+      />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
   });
 
   it('respects configuration: routes AI preference to analyticsManager when useAI=true', async () => {
     globalThis.__WORKER_THROW_CONSTRUCTOR__ = true; // still fine; AI path bypasses
-    getStudentAnalyticsSpy.mockResolvedValue({ ...baseResults, ai: { provider: 'mock', model: 'x', latencyMs: 1 } });
-    render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 'stu-2')] })} options={{ useAI: true, student: createStudent('stu-2', { name: 'S2' }) }} />);
-    await act(async () => { await Promise.resolve(); });
-    expect(analyticsManager.getStudentAnalytics).toHaveBeenCalledWith(expect.objectContaining({ id: 'stu-2' }), { useAI: true });
+    getStudentAnalyticsSpy.mockResolvedValue({
+      ...baseResults,
+      ai: { provider: 'mock', model: 'x', latencyMs: 1 },
+    });
+    render(
+      <Harness
+        data={makeData({ entries: [createTrackingEntry('t1', 'stu-2')] })}
+        options={{ useAI: true, student: createStudent('stu-2', { name: 'S2' }) }}
+      />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(analyticsManager.getStudentAnalytics).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'stu-2' }),
+      { useAI: true },
+    );
     expect(analyticsWorkerFallback.processAnalytics).not.toHaveBeenCalled();
   });
 
@@ -264,13 +326,24 @@ describe('Integration: worker unavailability scenarios', () => {
     globalThis.__WORKER_BEHAVIOR__ = 'readySoon';
     // Let fallback resolve just in case, but we expect worker to receive a postMessage
     processAnalyticsSpy.mockResolvedValue(baseResults);
-    render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')], emotions: [createEmotionEntry({ id: 'e1', emotion: 'joy', intensity: 5 })] })} />);
-    await act(async () => { await Promise.resolve(); });
+    render(
+      <Harness
+        data={makeData({
+          entries: [createTrackingEntry('t1', 's1')],
+          emotions: [createEmotionEntry({ id: 'e1', emotion: 'joy', intensity: 5 })],
+        })}
+      />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
     // After readySoon, at least one worker instance should exist and have received a postMessage
     const inst = getWorkerInstances()[0];
     expect(inst).toBeTruthy();
     // Allow time for queue flush
-    await act(async () => { vi.advanceTimersByTime(5); });
+    await act(async () => {
+      vi.advanceTimersByTime(5);
+    });
     expect(inst.postMessage).toHaveBeenCalled();
   });
 
@@ -278,22 +351,30 @@ describe('Integration: worker unavailability scenarios', () => {
     // Step 1: runtime error opens 60s circuit
     globalThis.__WORKER_BEHAVIOR__ = 'error';
     render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     const ctorCallsBefore = globalThis.__WORKER_CTOR_CALLS__ || 0;
 
     // Step 2: within cooldown, no new worker attempts on remount/trigger
     cleanup();
     render(<Harness data={makeData({ entries: [createTrackingEntry('t2', 's1')] })} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     const ctorCallsDuring = globalThis.__WORKER_CTOR_CALLS__ || 0;
     expect(ctorCallsDuring).toBe(ctorCallsBefore); // no new attempt while circuit open
 
     // Step 3: advance time beyond 60s, set behavior to readySoon => should attempt again
-    await act(async () => { vi.advanceTimersByTime(61_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(61_000);
+    });
     cleanup();
     globalThis.__WORKER_BEHAVIOR__ = 'readySoon';
     render(<Harness data={makeData({ entries: [createTrackingEntry('t3', 's1')] })} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     const ctorCallsAfter = globalThis.__WORKER_CTOR_CALLS__ || 0;
     expect(ctorCallsAfter).toBeGreaterThan(ctorCallsDuring);
   });
@@ -305,20 +386,28 @@ describe('Integration: worker unavailability scenarios', () => {
 
     // First mount -> should toast
     render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(toastMock).toHaveBeenCalledTimes(1);
 
     // Second mount within same minute -> should not toast again
     cleanup();
     render(<Harness data={makeData({ entries: [createTrackingEntry('t2', 's1')] })} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(toastMock).toHaveBeenCalledTimes(1);
 
     // Advance beyond 60s -> should toast again
-    await act(async () => { vi.advanceTimersByTime(61_000); });
+    await act(async () => {
+      vi.advanceTimersByTime(61_000);
+    });
     cleanup();
     render(<Harness data={makeData({ entries: [createTrackingEntry('t3', 's1')] })} />);
-    await act(async () => { await Promise.resolve(); });
+    await act(async () => {
+      await Promise.resolve();
+    });
     expect(toastMock).toHaveBeenCalledTimes(2);
   });
 });

@@ -7,7 +7,7 @@ test.describe('CSV export smoke (POC)', () => {
       const orig = URL.createObjectURL;
       (window as any).__exportHook = { urls: [] as string[] };
       // @ts-expect-error Override URL.createObjectURL in test context to capture blob URLs
-      URL.createObjectURL = function(blob: Blob) {
+      URL.createObjectURL = function (blob: Blob) {
         const url = orig.call(URL, blob);
         (window as any).__exportHook.urls.push(url);
         return url;
@@ -24,9 +24,13 @@ test.describe('CSV export smoke (POC)', () => {
     await page.getByTestId('export-csv').click();
 
     // Assert that createObjectURL was invoked (blob created for CSV)
-    await expect.poll(async () => {
-      return await page.evaluate(() => (window as any).__exportHook?.urls?.length || 0);
-    }, { timeout: 5000, intervals: [200, 300, 500, 1000, 3000] }).toBeGreaterThan(0);
+    await expect
+      .poll(
+        async () => {
+          return await page.evaluate(() => (window as any).__exportHook?.urls?.length || 0);
+        },
+        { timeout: 5000, intervals: [200, 300, 500, 1000, 3000] },
+      )
+      .toBeGreaterThan(0);
   });
 });
-

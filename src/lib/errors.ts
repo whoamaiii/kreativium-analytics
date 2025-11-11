@@ -20,4 +20,3 @@ export function toError(input: unknown): Error {
     return new Error('Unknown error');
   }
 }
-

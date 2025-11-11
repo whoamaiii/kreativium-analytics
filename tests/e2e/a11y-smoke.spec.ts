@@ -10,7 +10,9 @@ async function runAxe(page: import('@playwright/test').Page) {
     // .disableRules(['color-contrast'])
     .analyze();
 
-  const seriousOrWorse = results.violations.filter(v => (v.impact === 'serious' || v.impact === 'critical'));
+  const seriousOrWorse = results.violations.filter(
+    (v) => v.impact === 'serious' || v.impact === 'critical',
+  );
   expect(seriousOrWorse, JSON.stringify(seriousOrWorse, null, 2)).toHaveLength(0);
 }
 
@@ -26,7 +28,7 @@ for (const path of routes) {
       await page.goto(path);
       const mains = await page.locator('main').count();
       expect(mains).toBe(1);
-      
+
       // Allow for NotFound page to have appropriate error message
       if (path === '/this-route-does-not-exist') {
         // NotFound page should still have an h1

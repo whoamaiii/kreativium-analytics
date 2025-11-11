@@ -106,10 +106,7 @@ export interface StudentCacheClearResult {
  * clearManagerCache(cache);
  * ```
  */
-export function clearManagerCache(
-  analyticsCache: Map<string, any>,
-  studentId?: string
-): boolean {
+export function clearManagerCache(analyticsCache: Map<string, any>, studentId?: string): boolean {
   try {
     if (studentId) {
       analyticsCache.delete(studentId);
@@ -211,7 +208,7 @@ export function notifyWorkers(studentId?: string): boolean {
  */
 export async function clearAllCaches(
   analyticsCache: Map<string, any>,
-  broadcast = true
+  broadcast = true,
 ): Promise<CacheClearResult> {
   const summary: CacheClearSummary = {
     errors: [],
@@ -220,7 +217,9 @@ export async function clearAllCaches(
   try {
     // 1. Clear manager TTL cache (deprecated)
     try {
-      logger.warn('[cacheCoordinator] Clearing deprecated manager TTL cache as part of global cache clear.');
+      logger.warn(
+        '[cacheCoordinator] Clearing deprecated manager TTL cache as part of global cache clear.',
+      );
       const cleared = clearManagerCache(analyticsCache);
       summary.managerCacheCleared = cleared;
     } catch (e) {
@@ -337,7 +336,7 @@ export async function clearAllCaches(
  */
 export async function clearStudentCaches(
   studentId: string,
-  analyticsCache: Map<string, any>
+  analyticsCache: Map<string, any>,
 ): Promise<StudentCacheClearResult> {
   try {
     // Validate input
@@ -348,7 +347,9 @@ export async function clearStudentCaches(
 
     // 1. Clear manager-level TTL cache
     try {
-      logger.warn('[cacheCoordinator] Clearing deprecated manager TTL cache for student', { studentId });
+      logger.warn('[cacheCoordinator] Clearing deprecated manager TTL cache for student', {
+        studentId,
+      });
       clearManagerCache(analyticsCache, studentId);
     } catch (e) {
       logger.warn('[cacheCoordinator] Manager cache clear failed for student', e as Error);
