@@ -196,7 +196,9 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
         {/* Body Location */}
         {selectedType && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">Body Location (Optional)</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              {String(tTracking('sensory.bodyLocation'))}
+            </h3>
             <div className="flex flex-wrap gap-2">
               {bodyLocations.map((loc) => (
                 <Badge
@@ -225,15 +227,17 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
         {/* Coping Strategies */}
         {selectedResponse && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">Coping Strategies Used</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              {String(tTracking('sensory.copingStrategies'))}
+            </h3>
             <div className="flex gap-2 mb-2">
               <input
                 type="text"
                 value={newCopingStrategy}
                 onChange={(e) => setNewCopingStrategy(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddCopingStrategy()}
-                placeholder="Add a coping strategy..."
-                aria-label="Legg til mestringsstrategi"
+                placeholder={String(tTracking('sensory.copingStrategyPlaceholder'))}
+                aria-label={String(tTracking('sensory.copingStrategyAriaLabel'))}
                 className="flex-1 px-3 py-2 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               <Button onClick={handleAddCopingStrategy} size="sm" variant="outline">
@@ -273,13 +277,15 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
 
         {/* Environment */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">Miljø (Valgfritt)</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            {String(tTracking('sensory.environment'))}
+          </h3>
           <input
             type="text"
             value={environment}
             onChange={(e) => setEnvironment(e.target.value)}
-            placeholder="f.eks. Klasserom, Lekeplass, Bibliotek..."
-            aria-label="Beskriv miljøet"
+            placeholder={String(tTracking('sensory.environmentPlaceholder'))}
+            aria-label={String(tTracking('sensory.environmentAriaLabel'))}
             className="w-full px-3 py-2 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent"
           />
         </div>
@@ -292,7 +298,7 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Ytterligere observasjoner om den sensoriske responsen..."
+            placeholder={String(tTracking('sensory.notesPlaceholder'))}
             className="font-dyslexia bg-input border-border focus:ring-ring"
             rows={3}
           />

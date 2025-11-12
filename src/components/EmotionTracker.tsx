@@ -127,7 +127,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
         {selectedEmotion && subEmotions[selectedEmotion] && (
           <div>
             <h3 className="text-sm font-medium text-foreground mb-3">
-              Specific Feeling (Optional)
+              {String(tTracking('emotions.specificFeeling'))}
             </h3>
             <div className="flex flex-wrap gap-2">
               {subEmotions[selectedEmotion].map((subEmotion) => (
@@ -172,7 +172,9 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
         {/* Duration */}
         {selectedEmotion && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">Duration (minutes)</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              {String(tTracking('emotions.duration'))}
+            </h3>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -190,11 +192,11 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                     setDuration(Math.max(0, Math.min(999, parsed))); // Cap at 999 minutes
                   }
                 }}
-                placeholder="How long did it last?"
+                placeholder={String(tTracking('emotions.durationPlaceholder'))}
                 className="w-32 px-3 py-2 border border-border rounded-lg font-dyslexia bg-input focus:ring-2 focus:ring-ring focus:border-transparent"
                 min="0"
                 max="999"
-                aria-label="Duration in minutes"
+                aria-label={String(tTracking('emotions.durationAriaLabel'))}
                 aria-describedby="duration-help"
               />
               <div className="flex gap-1">
@@ -217,7 +219,9 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
         {/* Escalation Pattern */}
         {selectedEmotion && (
           <div>
-            <h3 className="text-sm font-medium text-foreground mb-3">How did it develop?</h3>
+            <h3 className="text-sm font-medium text-foreground mb-3">
+              {String(tTracking('emotions.escalation'))}
+            </h3>
             <div className="flex gap-2">
               <Button
                 variant={escalationPattern === 'sudden' ? 'default' : 'outline'}
@@ -225,7 +229,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                 onClick={() => setEscalationPattern('sudden')}
                 className="font-dyslexia"
               >
-                Sudden
+                {String(tTracking('emotions.escalationSudden'))}
               </Button>
               <Button
                 variant={escalationPattern === 'gradual' ? 'default' : 'outline'}
@@ -233,7 +237,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                 onClick={() => setEscalationPattern('gradual')}
                 className="font-dyslexia"
               >
-                Gradual
+                {String(tTracking('emotions.escalationGradual'))}
               </Button>
               <Button
                 variant={escalationPattern === 'unknown' ? 'default' : 'outline'}
@@ -241,7 +245,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                 onClick={() => setEscalationPattern('unknown')}
                 className="font-dyslexia"
               >
-                Unknown
+                {String(tTracking('emotions.escalationUnknown'))}
               </Button>
             </div>
           </div>
@@ -249,12 +253,14 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
 
         {/* Triggers */}
         <div>
-          <h3 className="text-sm font-medium text-foreground mb-3">Utløsere (Valgfritt)</h3>
+          <h3 className="text-sm font-medium text-foreground mb-3">
+            {String(tTracking('emotions.triggers'))}
+          </h3>
           <TagInput
             value={triggers}
             onChange={setTriggers}
-            placeholder="Legg til en utløser..."
-            label="Legg til ny utløser"
+            placeholder={String(tTracking('emotions.triggersPlaceholder'))}
+            label={String(tTracking('emotions.triggersLabel'))}
             addButtonText={String(tCommon('buttons.add'))}
             className="font-dyslexia"
           />
@@ -268,7 +274,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Ytterligere observasjoner..."
+            placeholder={String(tTracking('emotions.notesPlaceholder'))}
             className="font-dyslexia bg-input border-border focus:ring-ring"
             rows={3}
           />

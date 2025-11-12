@@ -6,7 +6,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { LanguageSettings } from '@/components/LanguageSettings';
 import { POCBadge } from '@/components/POCBadge';
 import { POC_MODE } from '@/lib/env';
-import { Download, Plus, Users, CalendarDays, BarChart3, Hand, Sparkles } from 'lucide-react';
+import { Download, Plus, Users, CalendarDays, BarChart3 } from 'lucide-react';
 import { HelpAndSupport } from '@/components/HelpAndSupport';
 import { GlobalMenu } from '@/components/GlobalMenu';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -159,17 +159,6 @@ const Dashboard = () => {
               </h2>
               <div className="flex items-center space-x-4">
                 <Button
-                  variant="glass"
-                  size="lg"
-                  onClick={() => navigate('/kreativium-ai')}
-                  className="flex items-center justify-center group"
-                  aria-label={tCommon('navigation.kreativiumAI')}
-                  data-testid="dashboard-kreativium-ai-button"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  {String(tCommon('navigation.kreativiumAI'))}
-                </Button>
-                <Button
                   variant="outline"
                   onClick={() => navigate('/reports')}
                   className="flex items-center justify-center group"
@@ -178,28 +167,6 @@ const Dashboard = () => {
                 >
                   <Download className="mr-2 h-4 w-4" />
                   {String(tSettings('data.export'))}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/emotion-game')}
-                  className="flex items-center justify-center group"
-                  aria-label={tCommon('navigation.emotionGame')}
-                  data-testid="dashboard-emotion-game-button"
-                >
-                  {/* Reuse Sparkles for now to avoid new icon import */}
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  {String(tCommon('navigation.emotionGame'))}
-                </Button>
-                <Button
-                  variant="glass"
-                  size="lg"
-                  onClick={() => navigate('/tegn')}
-                  className="flex items-center justify-center group"
-                  aria-label={tCommon('navigation.tegnTilTale')}
-                  data-testid="dashboard-tegn-button"
-                >
-                  <Hand className="mr-2 h-4 w-4" />
-                  {String(tCommon('navigation.tegnTilTale'))}
                 </Button>
                 <Button
                   variant="default"
