@@ -141,7 +141,7 @@ export const QuickTrack = ({ student, open, onOpenChange, onSuccess }: QuickTrac
                 <Badge variant="secondary">{String(tTracking(`emotions.types.${selectedEmotion}`))}</Badge>
               )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {emotions.map((emotion) => {
                 const Icon = emotion.icon;
                 const isSelected = selectedEmotion === emotion.type;
@@ -149,14 +149,14 @@ export const QuickTrack = ({ student, open, onOpenChange, onSuccess }: QuickTrac
                   <Button
                     key={emotion.type}
                     variant={isSelected ? 'default' : 'outline'}
-                    className={`h-24 flex-col gap-2 transition-all duration-200 ${
-                      isSelected ? 'ring-2 ring-primary shadow-lg scale-105' : 'hover:scale-102'
+                    className={`min-h-[120px] h-auto p-4 flex-col gap-3 transition-all duration-200 touch-manipulation ${
+                      isSelected ? 'ring-2 ring-primary shadow-lg scale-105' : 'hover:scale-102 active:scale-95'
                     }`}
                     onClick={() => handleEmotionSelect(emotion.type)}
                     disabled={step > 1 && !isSelected}
                   >
-                    <Icon className={`h-8 w-8 ${isSelected ? '' : emotion.color}`} />
-                    <span className="text-sm font-medium">
+                    <Icon className={`h-10 w-10 md:h-8 md:w-8 ${isSelected ? '' : emotion.color}`} />
+                    <span className="text-base md:text-sm font-medium">
                       {String(tTracking(`emotions.types.${emotion.type}`))}
                     </span>
                   </Button>
@@ -223,7 +223,7 @@ export const QuickTrack = ({ student, open, onOpenChange, onSuccess }: QuickTrac
                 variant="outline"
                 onClick={handleReset}
                 disabled={isSaving}
-                className="flex-1"
+                className="flex-1 min-h-[48px] touch-manipulation"
               >
                 {String(tCommon('buttons.reset'))}
               </Button>
@@ -231,7 +231,7 @@ export const QuickTrack = ({ student, open, onOpenChange, onSuccess }: QuickTrac
                 variant="default"
                 onClick={handleSave}
                 disabled={isSaving || !selectedEmotion}
-                className="flex-1 bg-gradient-primary"
+                className="flex-1 min-h-[48px] bg-gradient-primary touch-manipulation"
               >
                 {isSaving ? (
                   <>
@@ -240,7 +240,7 @@ export const QuickTrack = ({ student, open, onOpenChange, onSuccess }: QuickTrac
                   </>
                 ) : (
                   <>
-                    <Save className="mr-2 h-4 w-4" />
+                    <Save className="mr-2 h-5 w-5" />
                     {String(tTracking('quickTrack.saveObservation'))}
                   </>
                 )}

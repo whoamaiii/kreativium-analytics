@@ -159,30 +159,31 @@ const Dashboard = () => {
           <main>
             {/* Overview section with buttons */}
             <div
-              className="flex justify-between items-center mb-8 motion-safe:animate-fade-in"
+              className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 motion-safe:animate-fade-in"
               data-animation-delay="0.2s"
             >
-              <h2 className="text-3xl font-bold tracking-tight text-foreground">
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                 {String(overviewCopy('title'))}
               </h2>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 <Button
                   variant="outline"
                   onClick={() => navigate('/reports')}
-                  className="flex items-center justify-center group"
+                  className="flex-1 sm:flex-none min-h-[44px] flex items-center justify-center group touch-manipulation"
                   aria-label={tSettings('data.export')}
                   data-testid="dashboard-export-link"
                 >
-                  <Download className="mr-2 h-4 w-4" />
-                  {String(tSettings('data.export'))}
+                  <Download className="mr-2 h-5 w-5" />
+                  <span className="hidden sm:inline">{String(tSettings('data.export'))}</span>
+                  <span className="sm:hidden">Export</span>
                 </Button>
                 <Button
                   variant="default"
                   onClick={handleNewEntry}
                   size="lg"
-                  className="flex items-center justify-center group"
+                  className="flex-1 sm:flex-none min-h-[48px] flex items-center justify-center group touch-manipulation"
                 >
-                  <Plus className="mr-2 h-4 w-4 group-hover:animate-bounce" />
+                  <Plus className="mr-2 h-5 w-5 group-hover:animate-bounce" />
                   {String(actionsCopy('newEntry'))}
                 </Button>
               </div>
