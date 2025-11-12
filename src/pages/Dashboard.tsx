@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Student } from '@/types/student';
 import { useNavigate } from 'react-router-dom';
@@ -13,6 +13,8 @@ import { useDashboardData } from '@/hooks/useDashboardData';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { StudentsGrid } from '@/components/dashboard/StudentsGrid';
 import { EmptyState } from '@/components/dashboard/EmptyState';
+import { QuickTrack } from '@/components/QuickTrack';
+import { Onboarding } from '@/components/Onboarding';
 
 /**
  * Dashboard component - Main landing page with modern glassmorphism design
@@ -22,6 +24,8 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { tDashboard, tCommon, tSettings } = useTranslation();
   const { students, isLoading, todayEntries, totalEntries, weeklyTrend } = useDashboardData();
+  const [quickTrackOpen, setQuickTrackOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const createScopedDashboardTranslator = useCallback(
     (prefix: string) => (key: string, options?: Record<string, unknown>) =>
@@ -48,10 +52,17 @@ const Dashboard = () => {
 
   const handleNewEntry = () => {
     if (students.length > 0) {
-      navigate(`/track/${students[0].id}`);
+      // Open quick track for first student
+      setSelectedStudent(students[0]);
+      setQuickTrackOpen(true);
     } else {
       navigate('/add-student');
     }
+  };
+
+  const handleQuickTrack = (student: Student) => {
+    setSelectedStudent(student);
+    setQuickTrackOpen(true);
   };
 
   // Removed system-wide export from Dashboard. A dedicated Reports page now handles exports.
@@ -61,7 +72,8 @@ const Dashboard = () => {
   };
 
   const handleTrackStudent = (student: Student) => {
-    navigate(`/track/${student.id}`);
+    // Use quick track by default, option to go to full tracking
+    handleQuickTrack(student);
   };
 
   return (
@@ -253,6 +265,22 @@ const Dashboard = () => {
           </main>
         </div>
       </div>
+
+      {/* Onboarding for first-time users */}
+      <Onboarding />
+
+      {/* Quick Track Modal */}
+      {selectedStudent && (
+        <QuickTrack
+          student={selectedStudent}
+          open={quickTrackOpen}
+          onOpenChange={setQuickTrackOpen}
+          onSuccess={() => {
+            // Optionally reload dashboard data
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 };
