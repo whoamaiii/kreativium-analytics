@@ -4,8 +4,6 @@ import { Student } from '@/types/student';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LanguageSettings } from '@/components/LanguageSettings';
-import { POCBadge } from '@/components/POCBadge';
-import { POC_MODE } from '@/lib/env';
 import { Download, Plus, Users, CalendarDays, BarChart3 } from 'lucide-react';
 import { HelpAndSupport } from '@/components/HelpAndSupport';
 import { GlobalMenu } from '@/components/GlobalMenu';
@@ -144,8 +142,6 @@ const Dashboard = () => {
 
                 {/* Action buttons with glassmorphism */}
                 <div className="flex items-center gap-3">
-                  {POC_MODE && <POCBadge />}
-
                   <div
                     className="flex items-center gap-2"
                     role="toolbar"
