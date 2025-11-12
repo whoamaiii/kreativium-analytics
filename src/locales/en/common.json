@@ -463,5 +463,72 @@
     "replay": "Replay",
     "freePlay": "Free play",
     "pickActivity": "Pick an activity"
+  },
+  "aiDisclaimer": {
+    "title": "AI Analytics Disclaimer",
+    "subtitle": "Important information before proceeding",
+    "criticalNotice": "Critical Notice:",
+    "criticalMessage": "AI-generated insights must be reviewed by qualified professionals before making any IEP decisions.",
+    "whatItDoes": {
+      "title": "What AI Analytics Does",
+      "point1": "Identifies patterns in tracked observations",
+      "point2": "Suggests potential correlations and triggers",
+      "point3": "Generates summary insights from data",
+      "point4": "Provides intervention recommendations"
+    },
+    "limitations": {
+      "title": "Important Limitations",
+      "notLegallyBinding": {
+        "label": "Not legally binding:",
+        "description": "AI insights do not constitute legal advice or IEP requirements"
+      },
+      "requiresReview": {
+        "label": "Requires human review:",
+        "description": "All recommendations must be validated by qualified special education professionals"
+      },
+      "mayBeInaccurate": {
+        "label": "May be inaccurate:",
+        "description": "AI can make mistakes, miss context, or suggest inappropriate interventions"
+      },
+      "notDiagnostic": {
+        "label": "Not diagnostic:",
+        "description": "Cannot diagnose conditions or replace professional assessments"
+      },
+      "judgmentPrevails": {
+        "label": "Your judgment prevails:",
+        "description": "Teacher professional judgment always supersedes AI recommendations"
+      }
+    },
+    "privacy": {
+      "title": "Data Privacy & Security",
+      "externalProcessing": {
+        "label": "External processing:",
+        "description": "Data is sent to third-party AI services (OpenRouter)"
+      },
+      "anonymize": "Student data should be anonymized before using AI features",
+      "checkPolicy": "Check your school/district policy before enabling",
+      "localOnly": "Local-only analysis available in Settings (reduces AI accuracy)"
+    },
+    "bestPractices": {
+      "title": "Best Practices",
+      "supplementary": "Use AI as a supplementary tool, not primary decision-maker",
+      "reviewWithTeam": "Always review AI suggestions with your special education team",
+      "crossReference": "Cross-reference AI insights with direct observations",
+      "document": "Document which insights you implement and why",
+      "disableIfProhibited": "Disable AI features if your district policy prohibits external data sharing"
+    },
+    "consent": {
+      "label": "I understand and accept these terms:",
+      "requireReview": "AI insights require professional review before acting",
+      "notBinding": "AI recommendations are not legally binding",
+      "judgmentSupersedes": "My professional judgment supersedes AI suggestions",
+      "complyPolicy": "I will comply with my school/district policies",
+      "anonymizeData": "I will anonymize student data appropriately"
+    },
+    "buttons": {
+      "cancel": "Cancel - Don't Enable AI",
+      "accept": "I Accept - Enable AI Analytics"
+    },
+    "footer": "You can disable AI features anytime in Settings → Advanced"
   }
 }

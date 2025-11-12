@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertTriangle, Sparkles } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from '@/hooks/useTranslation';
 
 const AI_DISCLAIMER_KEY = 'kreativium_ai_disclaimer_accepted';
 const AI_ENABLED_KEY = 'kreativium_ai_enabled';
@@ -34,6 +35,7 @@ interface AiDisclaimerProps {
  * - Data privacy considerations
  */
 export const AiDisclaimer = ({ open, onOpenChange, onAccept }: AiDisclaimerProps) => {
+  const { tCommon } = useTranslation();
   const [understood, setUnderstood] = useState(false);
 
   const handleAccept = () => {
@@ -54,8 +56,8 @@ export const AiDisclaimer = ({ open, onOpenChange, onAccept }: AiDisclaimerProps
               <AlertTriangle className="h-6 w-6 text-amber-500" />
             </div>
             <div>
-              <DialogTitle className="text-2xl">AI Analytics Disclaimer</DialogTitle>
-              <DialogDescription>Important information before proceeding</DialogDescription>
+              <DialogTitle className="text-2xl">{String(tCommon('aiDisclaimer.title'))}</DialogTitle>
+              <DialogDescription>{String(tCommon('aiDisclaimer.subtitle'))}</DialogDescription>
             </div>
           </div>
         </DialogHeader>
@@ -65,8 +67,7 @@ export const AiDisclaimer = ({ open, onOpenChange, onAccept }: AiDisclaimerProps
           <Alert variant="destructive" className="border-amber-500 bg-amber-50 dark:bg-amber-950/20">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription className="text-amber-900 dark:text-amber-100">
-              <strong>Critical Notice:</strong> AI-generated insights must be reviewed by qualified
-              professionals before making any IEP decisions.
+              <strong>{String(tCommon('aiDisclaimer.criticalNotice'))}</strong> {String(tCommon('aiDisclaimer.criticalMessage'))}
             </AlertDescription>
           </Alert>
 
@@ -75,69 +76,63 @@ export const AiDisclaimer = ({ open, onOpenChange, onAccept }: AiDisclaimerProps
             <div className="bg-muted/50 p-4 rounded-lg">
               <h4 className="font-semibold mb-2 flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
-                What AI Analytics Does
+                {String(tCommon('aiDisclaimer.whatItDoes.title'))}
               </h4>
               <ul className="space-y-1 text-muted-foreground">
-                <li>• Identifies patterns in tracked observations</li>
-                <li>• Suggests potential correlations and triggers</li>
-                <li>• Generates summary insights from data</li>
-                <li>• Provides intervention recommendations</li>
+                <li>• {String(tCommon('aiDisclaimer.whatItDoes.point1'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.whatItDoes.point2'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.whatItDoes.point3'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.whatItDoes.point4'))}</li>
               </ul>
             </div>
 
             <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-900">
               <h4 className="font-semibold mb-2 text-red-900 dark:text-red-100">
-                Important Limitations
+                {String(tCommon('aiDisclaimer.limitations.title'))}
               </h4>
               <ul className="space-y-1 text-red-800 dark:text-red-200 text-sm">
                 <li>
-                  ⚠️ <strong>Not legally binding:</strong> AI insights do not constitute legal
-                  advice or IEP requirements
+                  ⚠️ <strong>{String(tCommon('aiDisclaimer.limitations.notLegallyBinding.label'))}</strong> {String(tCommon('aiDisclaimer.limitations.notLegallyBinding.description'))}
                 </li>
                 <li>
-                  ⚠️ <strong>Requires human review:</strong> All recommendations must be validated
-                  by qualified special education professionals
+                  ⚠️ <strong>{String(tCommon('aiDisclaimer.limitations.requiresReview.label'))}</strong> {String(tCommon('aiDisclaimer.limitations.requiresReview.description'))}
                 </li>
                 <li>
-                  ⚠️ <strong>May be inaccurate:</strong> AI can make mistakes, miss context, or
-                  suggest inappropriate interventions
+                  ⚠️ <strong>{String(tCommon('aiDisclaimer.limitations.mayBeInaccurate.label'))}</strong> {String(tCommon('aiDisclaimer.limitations.mayBeInaccurate.description'))}
                 </li>
                 <li>
-                  ⚠️ <strong>Not diagnostic:</strong> Cannot diagnose conditions or replace
-                  professional assessments
+                  ⚠️ <strong>{String(tCommon('aiDisclaimer.limitations.notDiagnostic.label'))}</strong> {String(tCommon('aiDisclaimer.limitations.notDiagnostic.description'))}
                 </li>
                 <li>
-                  ⚠️ <strong>Your judgment prevails:</strong> Teacher professional judgment always
-                  supersedes AI recommendations
+                  ⚠️ <strong>{String(tCommon('aiDisclaimer.limitations.judgmentPrevails.label'))}</strong> {String(tCommon('aiDisclaimer.limitations.judgmentPrevails.description'))}
                 </li>
               </ul>
             </div>
 
             <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
               <h4 className="font-semibold mb-2 text-blue-900 dark:text-blue-100">
-                Data Privacy & Security
+                {String(tCommon('aiDisclaimer.privacy.title'))}
               </h4>
               <ul className="space-y-1 text-blue-800 dark:text-blue-200 text-sm">
                 <li>
-                  • <strong>External processing:</strong> Data is sent to third-party AI services
-                  (OpenRouter)
+                  • <strong>{String(tCommon('aiDisclaimer.privacy.externalProcessing.label'))}</strong> {String(tCommon('aiDisclaimer.privacy.externalProcessing.description'))}
                 </li>
-                <li>• Student data should be anonymized before using AI features</li>
-                <li>• Check your school/district policy before enabling</li>
-                <li>• Local-only analysis available in Settings (reduces AI accuracy)</li>
+                <li>• {String(tCommon('aiDisclaimer.privacy.anonymize'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.privacy.checkPolicy'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.privacy.localOnly'))}</li>
               </ul>
             </div>
 
             <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-900">
               <h4 className="font-semibold mb-2 text-green-900 dark:text-green-100">
-                Best Practices
+                {String(tCommon('aiDisclaimer.bestPractices.title'))}
               </h4>
               <ul className="space-y-1 text-green-800 dark:text-green-200 text-sm">
-                <li>✓ Use AI as a supplementary tool, not primary decision-maker</li>
-                <li>✓ Always review AI suggestions with your special education team</li>
-                <li>✓ Cross-reference AI insights with direct observations</li>
-                <li>✓ Document which insights you implement and why</li>
-                <li>✓ Disable AI features if your district policy prohibits external data sharing</li>
+                <li>✓ {String(tCommon('aiDisclaimer.bestPractices.supplementary'))}</li>
+                <li>✓ {String(tCommon('aiDisclaimer.bestPractices.reviewWithTeam'))}</li>
+                <li>✓ {String(tCommon('aiDisclaimer.bestPractices.crossReference'))}</li>
+                <li>✓ {String(tCommon('aiDisclaimer.bestPractices.document'))}</li>
+                <li>✓ {String(tCommon('aiDisclaimer.bestPractices.disableIfProhibited'))}</li>
               </ul>
             </div>
           </div>
@@ -151,13 +146,13 @@ export const AiDisclaimer = ({ open, onOpenChange, onAccept }: AiDisclaimerProps
               className="mt-1"
             />
             <label htmlFor="ai-disclaimer-accept" className="text-sm cursor-pointer">
-              <strong>I understand and accept these terms:</strong>
+              <strong>{String(tCommon('aiDisclaimer.consent.label'))}</strong>
               <ul className="mt-2 space-y-1 text-muted-foreground">
-                <li>• AI insights require professional review before acting</li>
-                <li>• AI recommendations are not legally binding</li>
-                <li>• My professional judgment supersedes AI suggestions</li>
-                <li>• I will comply with my school/district policies</li>
-                <li>• I will anonymize student data appropriately</li>
+                <li>• {String(tCommon('aiDisclaimer.consent.requireReview'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.consent.notBinding'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.consent.judgmentSupersedes'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.consent.complyPolicy'))}</li>
+                <li>• {String(tCommon('aiDisclaimer.consent.anonymizeData'))}</li>
               </ul>
             </label>
           </div>
@@ -165,15 +160,15 @@ export const AiDisclaimer = ({ open, onOpenChange, onAccept }: AiDisclaimerProps
 
         <DialogFooter className="flex gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel - Don't Enable AI
+            {String(tCommon('aiDisclaimer.buttons.cancel'))}
           </Button>
           <Button onClick={handleAccept} disabled={!understood} className="bg-gradient-primary">
-            I Accept - Enable AI Analytics
+            {String(tCommon('aiDisclaimer.buttons.accept'))}
           </Button>
         </DialogFooter>
 
         <p className="text-xs text-center text-muted-foreground mt-4">
-          You can disable AI features anytime in Settings → Advanced
+          {String(tCommon('aiDisclaimer.footer'))}
         </p>
       </DialogContent>
     </Dialog>
