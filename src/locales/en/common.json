@@ -36,7 +36,8 @@
     "tryAgain": "Try Again",
     "reload": "Reload",
     "home": "Home",
-    "help": "Help"
+    "help": "Help",
+    "reset": "Reset"
   },
   "achievements": {
     "title": "Stickers",
