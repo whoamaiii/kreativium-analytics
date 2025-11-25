@@ -27,6 +27,7 @@ function getCurrentStudentId(): string {
   try {
     return localStorage.getItem(STORAGE_KEYS.CURRENT_STUDENT_ID) || 'anonymous';
   } catch {
+    // @silent-ok: localStorage unavailable, use fallback
     return 'anonymous';
   }
 }
@@ -42,7 +43,9 @@ function migrateGlobalToStudentOnce(studentId: string): void {
     const merged = existingRaw ? { ...JSON.parse(existingRaw), ...legacy } : legacy;
     localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(merged));
     localStorage.setItem(marker, '1');
-  } catch {}
+  } catch {
+    // @silent-ok: migration failure is non-critical
+  }
 }
 
 export function loadStudentProgress(
@@ -53,6 +56,7 @@ export function loadStudentProgress(
     const raw = localStorage.getItem(storageKeyForStudent(studentId));
     return raw ? JSON.parse(raw) : {};
   } catch {
+    // @silent-ok: localStorage/JSON parse errors return empty progress
     return {};
   }
 }
@@ -60,7 +64,9 @@ export function loadStudentProgress(
 export function saveStudentProgress(studentId: string, map: Record<string, DailyProgress>): void {
   try {
     localStorage.setItem(storageKeyForStudent(studentId), JSON.stringify(map));
-  } catch {}
+  } catch {
+    // @silent-ok: localStorage write failure is non-fatal
+  }
 }
 
 // Backwards‑compatible aliases now scoped to current student
@@ -71,7 +77,9 @@ export function loadProgress(): Record<string, DailyProgress> {
 export function saveProgress(map: Record<string, DailyProgress>): void {
   try {
     saveStudentProgress(getCurrentStudentId(), map);
-  } catch {}
+  } catch {
+    // @silent-ok: progress save failure is non-fatal
+  }
 }
 
 /**

@@ -77,7 +77,9 @@ export function recordGameEvent(event: GameEvent): void {
     // Cap to last 1000 events to avoid unbounded growth
     const trimmed = arr.slice(Math.max(0, arr.length - 1000));
     localStorage.setItem(STORAGE_KEYS.EMOTION_TELEMETRY, JSON.stringify(trimmed));
-  } catch {}
+  } catch {
+    // @silent-ok: telemetry storage failure is non-fatal
+  }
   // Stream to analytics worker if available (fire-and-forget)
   try {
     // Reduce noise: do not stream high-frequency probability samples
@@ -87,7 +89,9 @@ export function recordGameEvent(event: GameEvent): void {
         (worker as any).postMessage({ type: 'game:event', payload: event });
       }
     }
-  } catch {}
+  } catch {
+    // @silent-ok: worker streaming is fire-and-forget
+  }
 }
 
 export function readGameTelemetry(): GameEvent[] {
@@ -95,6 +99,7 @@ export function readGameTelemetry(): GameEvent[] {
     const raw = localStorage.getItem(STORAGE_KEYS.EMOTION_TELEMETRY);
     return raw ? (JSON.parse(raw) as GameEvent[]) : [];
   } catch {
+    // @silent-ok: telemetry read failure returns empty array
     return [];
   }
 }
@@ -102,7 +107,9 @@ export function readGameTelemetry(): GameEvent[] {
 export function clearGameTelemetry(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.EMOTION_TELEMETRY);
-  } catch {}
+  } catch {
+    // @silent-ok: telemetry clear failure is non-fatal
+  }
 }
 
 export function computeEmotionTrends(): Record<
