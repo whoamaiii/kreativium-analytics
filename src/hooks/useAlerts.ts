@@ -11,12 +11,14 @@ import { AlertTelemetryService } from '@/lib/alerts/telemetry';
 import { AlertSystemBridge } from '@/lib/alerts/bridge';
 import { safeGet, safeSet } from '@/lib/storage';
 import { ALERT_POLL_INTERVAL_MS } from '@/constants/analytics';
+import { logger } from '@/lib/logger';
 
 function readStorage<T>(key: string): T | null {
   try {
     const raw = safeGet(key);
     return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
+  } catch (e) {
+    logger.debug('[useAlerts] Failed to read storage', { key, error: e });
     return null;
   }
 }
@@ -25,8 +27,8 @@ function writeStorage<T>(key: string, value: T): void {
   try {
     const raw = JSON.stringify(value);
     safeSet(key, raw);
-  } catch {
-    // no-op
+  } catch (e) {
+    logger.warn('[useAlerts] Failed to write storage', { key, error: e });
   }
 }
 
@@ -86,7 +88,8 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
           } else {
             raw = readStorage<AlertEvent[]>(alertsKey(studentId)) ?? [];
           }
-        } catch {
+        } catch (e) {
+          logger.debug('[useAlerts] Failed to aggregate alerts from localStorage', { error: e });
           raw = readStorage<AlertEvent[]>(alertsKey(studentId)) ?? [];
         }
       } else {
@@ -112,8 +115,8 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
             }
             raw = migrated;
           }
-        } catch {
-          // soft-fail
+        } catch (e) {
+          logger.debug('[useAlerts] Legacy migration failed', { studentId, error: e });
         }
       }
       const now = Date.now();
@@ -132,8 +135,10 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
         : filteredSeverity;
       const governed = applyGovernance(filteredKinds);
       setAlerts(governed);
-    } catch (e: any) {
-      setError(e?.message ?? 'Failed to load alerts');
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load alerts';
+      logger.warn('[useAlerts] Failed to load alerts', { studentId, error: e });
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -160,8 +165,8 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
         );
         window.dispatchEvent(new CustomEvent('alerts:updated', { detail: { studentId } }));
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      logger.debug('[useAlerts] Storage format migration failed', { studentId, error: e });
     }
 
     // Start lightweight legacy polling to capture new alerts emitted by pattern engine
@@ -173,15 +178,16 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
       if (!aggregate) {
         stopPollingRef.current = bridge.startLegacyPolling(studentId, 15_000);
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      logger.debug('[useAlerts] Failed to start legacy polling', { studentId, error: e });
     }
 
     return () => {
       try {
         stopPollingRef.current?.();
-      } catch {
-        /* noop */
+      } catch (e) {
+        // @silent-ok: cleanup failure is non-fatal
+        logger.debug('[useAlerts] Cleanup stopPolling failed', { error: e });
       }
       stopPollingRef.current = null;
     };
@@ -242,8 +248,8 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
           }
           load();
         }
-      } catch {
-        // soft-fail
+      } catch (e) {
+        logger.warn('[useAlerts] Failed to acknowledge alert in aggregate mode', { alertId: id, error: e });
       }
     },
     [studentId, aggregate, persist, applyGovernance, load],
@@ -302,8 +308,8 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
           }
           load();
         }
-      } catch {
-        // soft-fail
+      } catch (e) {
+        logger.warn('[useAlerts] Failed to snooze alert in aggregate mode', { alertId: id, error: e });
       }
     },
     [studentId, aggregate, applyGovernance, settings?.snoozePreferences?.defaultHours, load],
@@ -352,8 +358,8 @@ export function useAlerts({ studentId, aggregate, settings, filters }: UseAlerts
           }
           load();
         }
-      } catch {
-        // soft-fail
+      } catch (e) {
+        logger.warn('[useAlerts] Failed to resolve alert in aggregate mode', { alertId: id, error: e });
       }
     },
     [studentId, aggregate, persist, applyGovernance, load],

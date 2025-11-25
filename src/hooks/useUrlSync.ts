@@ -67,11 +67,10 @@ export function useUrlSync<T>(options: UseUrlSyncOptions<T>): [T, Dispatch<SetSt
     try {
       const params = new URLSearchParams(window.location.search);
       const value = read(params);
-      try {
-        logger.debug(`[${loggerName}] Read from URL`, { value });
-      } catch {}
+      logger.debug(`[${loggerName}] Read from URL`, { value });
       return value;
-    } catch {
+    } catch (e) {
+      logger.debug(`[${loggerName}] Failed to read from URL, using default`, { error: e });
       return defaultValue;
     }
   }, [read, defaultValue, loggerName]);
@@ -82,9 +81,7 @@ export function useUrlSync<T>(options: UseUrlSyncOptions<T>): [T, Dispatch<SetSt
   useEffect(() => {
     const onPop = () => {
       const next = getFromLocation();
-      try {
-        logger.debug(`[${loggerName}] popstate -> sync`, { value: next });
-      } catch {}
+      logger.debug(`[${loggerName}] popstate -> sync`, { value: next });
       setValue(next);
     };
     window.addEventListener('popstate', onPop);
@@ -100,13 +97,12 @@ export function useUrlSync<T>(options: UseUrlSyncOptions<T>): [T, Dispatch<SetSt
           const url = new URL(window.location.href);
           write(nextValue, url.searchParams);
           window.history.replaceState(window.history.state, '', url.toString());
-          try {
-            logger.debug(`[${loggerName}] URL sync via history.replaceState`, {
-              value: nextValue,
-            });
-          } catch {}
-        } catch {
-          // no-op: never throw in URL sync
+          logger.debug(`[${loggerName}] URL sync via history.replaceState`, {
+            value: nextValue,
+          });
+        } catch (e) {
+          // @silent-ok: URL sync failures are non-fatal, app continues working
+          logger.debug(`[${loggerName}] URL sync failed`, { error: e });
         }
       };
       if (debounceTimer.current) {
@@ -126,9 +122,7 @@ export function useUrlSync<T>(options: UseUrlSyncOptions<T>): [T, Dispatch<SetSt
   useEffect(() => {
     return () => {
       if (debounceTimer.current) {
-        try {
-          window.clearTimeout(debounceTimer.current);
-        } catch {}
+        window.clearTimeout(debounceTimer.current);
         debounceTimer.current = undefined;
       }
     };
