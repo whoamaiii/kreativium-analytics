@@ -8,7 +8,9 @@ describe('detector selector', () => {
   beforeEach(() => {
     try {
       localStorage.removeItem('emotion.detectorType');
-    } catch {}
+    } catch {
+      // @silent-ok: test cleanup in environments without localStorage
+    }
   });
 
   it('defaults to faceapi-worker when unset', () => {
@@ -25,7 +27,9 @@ describe('detector selector', () => {
   it('uses mediapipe when set', () => {
     try {
       localStorage.setItem('emotion.detectorType', 'mediapipe');
-    } catch {}
+    } catch {
+      // @silent-ok: test setup in environments without localStorage
+    }
     const value = ((): string => {
       try {
         return localStorage.getItem('emotion.detectorType') || 'faceapi-worker';
@@ -39,7 +43,9 @@ describe('detector selector', () => {
   it('uses faceapi-main when set', () => {
     try {
       localStorage.setItem('emotion.detectorType', 'faceapi-main');
-    } catch {}
+    } catch {
+      // @silent-ok: test setup in environments without localStorage
+    }
     const value = ((): string => {
       try {
         return localStorage.getItem('emotion.detectorType') || 'faceapi-worker';

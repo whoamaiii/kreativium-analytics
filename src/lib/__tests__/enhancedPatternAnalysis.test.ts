@@ -53,7 +53,9 @@ beforeAll(() => {
 afterEach(() => {
   try {
     analyticsConfig.resetToDefaults();
-  } catch {}
+  } catch {
+    // @silent-ok: test cleanup reset is best-effort
+  }
 });
 
 function isFiniteNumber(n: unknown): n is number {
