@@ -29,6 +29,7 @@ function parseJSON<T>(raw: string | null): T | null {
   try {
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
+    // @silent-ok: JSON parse errors are non-fatal, return null to signal invalid data
     return null;
   }
 }
@@ -43,9 +44,8 @@ function writeNew(studentId: string, events: AlertEvent[]): void {
   try {
     safeSet(alertsKey(studentId), JSON.stringify(events));
   } catch (err) {
-    try {
-      logger.warn('[AlertSystemBridge] Failed to persist new alerts', err as Error);
-    } catch {}
+    // @silent-ok: storage errors are non-fatal; logger may also fail if storage is unavailable
+    logger.warn('[AlertSystemBridge] Failed to persist new alerts', err as Error);
   }
 }
 
@@ -54,7 +54,9 @@ function dispatchAlertsUpdated(studentId?: string): void {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('alerts:updated', { detail: { studentId } }));
     }
-  } catch {}
+  } catch {
+    // @silent-ok: event dispatch failures are non-fatal, UI will update on next poll
+  }
 }
 
 export class AlertSystemBridge {
@@ -62,6 +64,7 @@ export class AlertSystemBridge {
     try {
       return !!safeGet(LEGACY_STORAGE_KEY);
     } catch {
+      // @silent-ok: storage access errors are non-fatal, assume no legacy data
       return false;
     }
   }
@@ -75,9 +78,8 @@ export class AlertSystemBridge {
       if (studentId) return mapped.filter((e) => e.studentId === studentId);
       return mapped;
     } catch (err) {
-      try {
-        logger.error('[AlertSystemBridge] convertLegacyToNew failed', err as Error);
-      } catch {}
+      // @silent-ok: conversion errors are non-fatal, return empty array
+      logger.error('[AlertSystemBridge] convertLegacyToNew failed', err as Error);
       return [];
     }
   }
@@ -100,7 +102,7 @@ export class AlertSystemBridge {
       // Backup legacy payload for rollback/debug
       backupLegacyAlerts();
     } catch {
-      /* noop */
+      // @silent-ok: backup failure is non-fatal, migration can proceed without it
     }
 
     try {
@@ -148,16 +150,15 @@ export class AlertSystemBridge {
       try {
         dispatchAlertsUpdated(studentId);
       } catch {
-        /* noop */
+        // @silent-ok: event dispatch failure is non-fatal, UI will update on next poll
       }
       return { ok: true, added: totalAdded, hadLegacy: true };
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'unknown';
       status.errors = Array.from(new Set([...(status.errors ?? []), msg]));
       safeSet(MIGRATION_STATUS_KEY, JSON.stringify(status));
-      try {
-        logger.error('[AlertSystemBridge] migrateStorageFormat failed', err as Error);
-      } catch {}
+      // @silent-ok: migration errors are logged but non-fatal
+      logger.error('[AlertSystemBridge] migrateStorageFormat failed', err as Error);
       return { ok: false, added: 0, hadLegacy: hadLegacy, error: msg };
     }
   }
@@ -189,9 +190,8 @@ export class AlertSystemBridge {
       }
       return { added };
     } catch (err) {
-      try {
-        logger.warn('[AlertSystemBridge] syncLegacyAlerts failed', err as Error);
-      } catch {}
+      // @silent-ok: sync errors are non-fatal, will retry on next poll
+      logger.warn('[AlertSystemBridge] syncLegacyAlerts failed', err as Error);
       return { added: 0 };
     }
   }
@@ -204,9 +204,8 @@ export class AlertSystemBridge {
       safeSet('sensoryTracker_alerts_v2', JSON.stringify(legacyMirror));
       return { ok: true };
     } catch (err) {
-      try {
-        logger.warn('[AlertSystemBridge] syncNewToLegacy failed', err as Error);
-      } catch {}
+      // @silent-ok: legacy sync errors are non-fatal, new format is authoritative
+      logger.warn('[AlertSystemBridge] syncNewToLegacy failed', err as Error);
       return { ok: false };
     }
   }
@@ -219,7 +218,7 @@ export class AlertSystemBridge {
         const { added } = this.syncLegacyAlerts(studentId);
         if (added > 0) dispatchAlertsUpdated(studentId);
       } catch {
-        /* noop */
+        // @silent-ok: poll tick errors are non-fatal, will retry on next tick
       }
       if (!stopped) {
         setTimeout(tick, intervalMs);
