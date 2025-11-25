@@ -300,12 +300,15 @@ export const PatternsPanel = memo(function PatternsPanel({
     const allSensory = filteredData.sensoryInputs || [];
     const sensory = allSensory.slice(-160);
 
-    // Basic compactors
-    const fmtEntry = (e: any) =>
+    // Basic compactors - using intersection types to handle variations in entry shapes
+    type EntryLike = TrackingEntry & { time?: string; title?: string };
+    type EmotionLike = EmotionEntry & { emotion?: string; value?: number };
+    type SensoryLike = SensoryEntry & { kind?: string; level?: number };
+    const fmtEntry = (e: EntryLike) =>
       `${e.timestamp || e.time || ''} · ${e.activity || e.title || 'økt'}${e.note ? ` · ${String(e.note).slice(0, 80)}` : ''}`.trim();
-    const fmtEmotion = (e: any) =>
+    const fmtEmotion = (e: EmotionLike) =>
       `${e.type || e.emotion}:${e.intensity ?? e.value ?? ''}@${e.timestamp || ''}`;
-    const fmtSensory = (s: any) => `${s.type || s.kind}:${s.level ?? ''}@${s.timestamp || ''}`;
+    const fmtSensory = (s: SensoryLike) => `${s.type || s.kind}:${s.level ?? ''}@${s.timestamp || ''}`;
 
     const evidence = buildEvidenceForPattern({
       entries: filteredData.entries as any,
@@ -377,7 +380,7 @@ export const PatternsPanel = memo(function PatternsPanel({
         : 0;
 
     // Summaries of detected patterns/correlations (when available)
-    const detectedPatterns = (results?.patterns || []).slice(0, 8).map((p: any) => {
+    const detectedPatterns = (results?.patterns || []).slice(0, 8).map((p: PatternResult) => {
       const name = (p.pattern || p.name || '').toString();
       const pct = typeof p.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '';
       const freq =

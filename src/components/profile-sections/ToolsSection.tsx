@@ -8,6 +8,14 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { Search, Zap, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+interface SearchResults {
+  students: Student[];
+  entries: TrackingEntry[];
+  emotions: EmotionEntry[];
+  sensoryInputs: SensoryEntry[];
+  goals: Goal[];
+}
+
 interface ToolsSectionProps {
   student: Student;
   trackingEntries: TrackingEntry[];
@@ -16,7 +24,7 @@ interface ToolsSectionProps {
   goals: Goal[];
   activeToolSection: string;
   onToolSectionChange: (section: string) => void;
-  onSearchResults?: (results: any) => void;
+  onSearchResults?: (results: SearchResults) => void;
 }
 
 export function ToolsSection({
@@ -32,10 +40,13 @@ export function ToolsSection({
   const { tStudent } = useTranslation();
   const navigate = useNavigate();
 
-  const handleQuickTemplateApply = (template: any) => {
+  const handleQuickTemplateApply = (
+    emotions: Partial<EmotionEntry>[],
+    sensoryInputs: Partial<SensoryEntry>[],
+  ) => {
     navigate(`/track/${student.id}`, {
       state: {
-        prefilledData: template,
+        prefilledData: { emotions, sensoryInputs },
       },
     });
   };

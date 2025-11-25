@@ -6,6 +6,7 @@ import {
   diffCorrelations,
   diffInterventions,
   diffKeyFindings,
+  type InterventionsDiffResult,
 } from '@/lib/analysis/compareUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -169,8 +170,9 @@ function ComparisonSummaryComponent({
       const rows: string[] = ['type,title,delta_confidence'];
       content.interventions.added.forEach((i) => rows.push(`added,"${i.title}",`));
       content.interventions.removed.forEach((i) => rows.push(`removed,"${i.title}",`));
-      (content.interventions.changed || []).forEach((i: any) =>
-        rows.push(`changed,"${i.title}",${(i.deltaConfidence ?? '').toString()}`),
+      (content.interventions.changed || []).forEach(
+        (i: InterventionsDiffResult['changed'][number]) =>
+          rows.push(`changed,"${i.title}",${(i.deltaConfidence ?? '').toString()}`),
       );
       return rows.join('\n');
     };
@@ -822,7 +824,7 @@ function ComparisonSummaryComponent({
                         <div>
                           <div className="text-sm font-medium mb-1">Endret tillit</div>
                           <ul className="text-sm space-y-1">
-                            {changed.map((c: any) => (
+                            {changed.map((c) => (
                               <li key={c.title}>
                                 {c.title}: Δ {(c.deltaConfidence ?? 0).toFixed(2)}
                               </li>
