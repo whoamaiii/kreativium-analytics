@@ -23,7 +23,9 @@ export default function CalmPause() {
           if (next === goalMs) {
             try {
               incNeutralHold();
-            } catch {}
+            } catch {
+              // @silent-ok: progress tracking failure is non-critical
+            }
           }
           return next;
         });
@@ -55,7 +57,9 @@ export default function CalmPause() {
         streamRef.current = stream;
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
-      } catch {}
+      } catch {
+        // @silent-ok: camera/video access failure is handled gracefully
+      }
     }
     if (cameraEnabled) start();
     return () => {
@@ -64,7 +68,9 @@ export default function CalmPause() {
       if (videoRef.current) {
         try {
           videoRef.current.pause();
-        } catch {}
+        } catch {
+          // @silent-ok: video pause failure during cleanup is non-critical
+        }
         videoRef.current.srcObject = null;
       }
     };

@@ -26,7 +26,9 @@ export function StickerMachine({ visible, onPayout }: StickerMachineProps) {
       setSpinning(false);
       try {
         payoutRef.current?.(pick);
-      } catch {}
+      } catch {
+        // @silent-ok: payout callback failure is non-critical
+      }
     }, 1200);
     return () => window.clearTimeout(id);
   }, [visible, stickers]);

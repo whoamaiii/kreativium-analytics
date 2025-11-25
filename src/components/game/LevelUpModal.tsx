@@ -15,7 +15,9 @@ export function LevelUpModal({ visible, level, onClose }: LevelUpModalProps) {
     // One-shot side-effect; no state updates here beyond sound
     try {
       playLevelUpFanfare(0.16);
-    } catch {}
+    } catch {
+      // @silent-ok: sound playback failure is non-critical
+    }
   }, [visible]);
   return (
     <AnimatePresence>
