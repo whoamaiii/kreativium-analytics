@@ -479,7 +479,13 @@ export class SessionManager {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.SESSION_HISTORY);
       if (data) {
-        this.sessionHistory = JSON.parse(data).map((s: any) => ({
+        // Type for JSON-serialized session metadata where dates are strings
+        type SerializedSessionMetadata = Omit<SessionMetadata, 'startTime' | 'endTime'> & {
+          startTime: string;
+          endTime?: string;
+        };
+        const parsed = JSON.parse(data) as SerializedSessionMetadata[];
+        this.sessionHistory = parsed.map((s) => ({
           ...s,
           startTime: new Date(s.startTime),
           endTime: s.endTime ? new Date(s.endTime) : undefined,
