@@ -58,6 +58,7 @@ export function AnalyticsSection({
       try {
         return analyticsConfig.getConfig();
       } catch {
+        // @silent-ok: config access failure returns null as fallback
         return null;
       }
     })();
@@ -88,7 +89,9 @@ export function AnalyticsSection({
         enabledByConfig,
         available,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
     return { enabledByConfig, available };
   }, [lsModelName, lsApiKeyOld, lsApiKeyNew]);
 

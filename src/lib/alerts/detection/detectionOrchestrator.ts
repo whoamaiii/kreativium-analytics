@@ -151,7 +151,9 @@ export class DetectionOrchestrator {
       logger.debug?.('[DetectionOrchestrator] orchestrateDetection:start', {
         studentId: input.studentId,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
 
     // Stage 2: Retrieve baseline and threshold overrides
     const thresholdOverrides = this.learner.getThresholdOverrides();
@@ -236,7 +238,9 @@ export class DetectionOrchestrator {
         studentId: input.studentId,
         alerts: deduped.length,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
 
     return deduped;
   }
