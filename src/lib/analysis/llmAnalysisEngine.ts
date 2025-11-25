@@ -257,7 +257,7 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       const found = cache.get(key);
       if (!options?.bypassCache && found && found.expires > now) {
         // Return a shallow copy with a cache hint in metadata
-        const cached = JSON.parse(JSON.stringify(found.data)) as AnalyticsResultsAI;
+        const cached = structuredClone(found.data) as AnalyticsResultsAI;
         if (cached.ai) {
           cached.ai.caveats = Array.from(
             new Set([...(cached.ai.caveats || []), 'Resultater hentet fra cache']),

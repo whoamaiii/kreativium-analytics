@@ -273,6 +273,17 @@ const SensoryTrackerComponent = ({ onSensoryAdd }: SensoryTrackerProps) => {
                       setCopingStrategies([...copingStrategies, strategy]);
                     }
                   }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Add coping strategy: ${strategy}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      if (!copingStrategies.includes(strategy)) {
+                        setCopingStrategies([...copingStrategies, strategy]);
+                      }
+                    }
+                  }}
                 >
                   + {strategy}
                 </Badge>
@@ -285,6 +296,15 @@ const SensoryTrackerComponent = ({ onSensoryAdd }: SensoryTrackerProps) => {
                   variant="secondary"
                   className="font-dyslexia cursor-pointer"
                   onClick={() => handleRemoveCopingStrategy(strategy)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Remove coping strategy: ${strategy}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleRemoveCopingStrategy(strategy);
+                    }
+                  }}
                 >
                   {strategy} ×
                 </Badge>

@@ -107,26 +107,17 @@ export const useFilteredData = (
         );
       }
 
-      const parsedEmotions = filteredEmotions
-        .map((e) => {
-          const ts = parseTimestamp(e);
-          return ts ? { ...e, timestamp: ts } : null;
-        })
-        .filter((e): e is EmotionEntry => e !== null);
+      const parseAndFilter = <T extends { timestamp: string | Date }>(items: T[]): T[] => {
+        return items.reduce<T[]>((acc, item) => {
+          const ts = parseTimestamp(item);
+          if (ts) acc.push({ ...item, timestamp: ts } as T);
+          return acc;
+        }, []);
+      };
 
-      const parsedSensory = filteredSensory
-        .map((s) => {
-          const ts = parseTimestamp(s);
-          return ts ? { ...s, timestamp: ts } : null;
-        })
-        .filter((s): s is SensoryEntry => s !== null);
-
-      const parsedTracking = filteredTracking
-        .map((t) => {
-          const ts = parseTimestamp(t);
-          return ts ? { ...t, timestamp: ts } : null;
-        })
-        .filter((t): t is TrackingEntry => t !== null);
+      const parsedEmotions = parseAndFilter(filteredEmotions);
+      const parsedSensory = parseAndFilter(filteredSensory);
+      const parsedTracking = parseAndFilter(filteredTracking);
 
       return {
         emotions: parsedEmotions,

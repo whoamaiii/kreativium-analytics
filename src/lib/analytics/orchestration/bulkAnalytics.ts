@@ -402,23 +402,25 @@ export function getStatusForAll(
     });
 
     // Apply health score filters if specified
-    let filtered = statuses;
+    const filtered = statuses.filter((s) => {
+      // Check minHealthScore
+      if (options?.minHealthScore !== undefined && s.healthScore < options.minHealthScore) {
+        return false;
+      }
 
-    if (options?.minHealthScore !== undefined) {
-      filtered = filtered.filter((s) => s.healthScore >= options.minHealthScore!);
-    }
+      // Check maxHealthScore
+      if (options?.maxHealthScore !== undefined && s.healthScore > options.maxHealthScore) {
+        return false;
+      }
 
-    if (options?.maxHealthScore !== undefined) {
-      filtered = filtered.filter((s) => s.healthScore <= options.maxHealthScore!);
-    }
-
-    // Apply lastAnalyzed filter if specified
-    if (options?.notAnalyzedSince) {
-      filtered = filtered.filter((s) => {
+      // Check notAnalyzedSince
+      if (options?.notAnalyzedSince) {
         if (!s.lastAnalyzed) return true; // Include never-analyzed students
-        return s.lastAnalyzed < options.notAnalyzedSince!;
-      });
-    }
+        if (s.lastAnalyzed >= options.notAnalyzedSince) return false;
+      }
+
+      return true;
+    });
 
     logger.info('[bulkAnalytics] Status report complete', {
       totalStatuses: statuses.length,
@@ -463,28 +465,44 @@ export function getStatusForAll(
  * ```
  */
 export function partitionStudentsByStatus(statuses: StudentAnalyticsStatus[]) {
-  return {
-    /** Students with health score >= 80 */
-    highHealth: statuses.filter((s) => s.healthScore >= 80),
+  return statuses.reduce(
+    (acc, s) => {
+      // Health score partitions
+      if (s.healthScore >= 80) {
+        acc.highHealth.push(s);
+      } else if (s.healthScore >= 50) {
+        acc.mediumHealth.push(s);
+      } else {
+        acc.lowHealth.push(s);
+      }
 
-    /** Students with health score 50-79 */
-    mediumHealth: statuses.filter((s) => s.healthScore >= 50 && s.healthScore < 80),
+      // Status partitions
+      if (!s.lastAnalyzed) acc.neverAnalyzed.push(s);
+      if (!s.hasMinimumData) acc.insufficientData.push(s);
+      if (!s.isInitialized) acc.notInitialized.push(s);
 
-    /** Students with health score < 50 */
-    lowHealth: statuses.filter((s) => s.healthScore < 50),
+      // Composite partition
+      if (s.healthScore < 50 || !s.hasMinimumData || !s.isInitialized) {
+        acc.needsAnalysis.push(s);
+      }
 
-    /** Students never analyzed */
-    neverAnalyzed: statuses.filter((s) => !s.lastAnalyzed),
-
-    /** Students without minimum data */
-    insufficientData: statuses.filter((s) => !s.hasMinimumData),
-
-    /** Students not initialized */
-    notInitialized: statuses.filter((s) => !s.isInitialized),
-
-    /** Students needing attention (low health or insufficient data) */
-    needsAnalysis: statuses.filter(
-      (s) => s.healthScore < 50 || !s.hasMinimumData || !s.isInitialized,
-    ),
-  };
+      return acc;
+    },
+    {
+      /** Students with health score >= 80 */
+      highHealth: [] as StudentAnalyticsStatus[],
+      /** Students with health score 50-79 */
+      mediumHealth: [] as StudentAnalyticsStatus[],
+      /** Students with health score < 50 */
+      lowHealth: [] as StudentAnalyticsStatus[],
+      /** Students never analyzed */
+      neverAnalyzed: [] as StudentAnalyticsStatus[],
+      /** Students without minimum data */
+      insufficientData: [] as StudentAnalyticsStatus[],
+      /** Students not initialized */
+      notInitialized: [] as StudentAnalyticsStatus[],
+      /** Students needing attention (low health or insufficient data) */
+      needsAnalysis: [] as StudentAnalyticsStatus[],
+    },
+  );
 }

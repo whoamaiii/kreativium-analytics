@@ -625,7 +625,7 @@ export class AnalyticsConfigManager {
     source: Partial<AnalyticsConfiguration>,
   ): AnalyticsConfiguration {
     // Create a deep copy of the target
-    const result = JSON.parse(JSON.stringify(target)) as AnalyticsConfiguration;
+    const result = structuredClone(target) as AnalyticsConfiguration;
 
     // Merge source into result
     const merge = (targetObj: Record<string, unknown>, sourceObj: Record<string, unknown>) => {

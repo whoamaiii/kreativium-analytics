@@ -10,9 +10,9 @@ import { getRuntimeAnalyticsConfig } from '@/config/analytics.config';
 // Tests can set globalThis.__analyticsTestEnv to override environment variables
 function getEnv(): Record<string, string | boolean | undefined> {
   // First check if tests have set an override (for test compatibility)
-  const testOverride = (globalThis as any).__analyticsTestEnv;
+  const testOverride = (globalThis as Record<string, unknown>).__analyticsTestEnv;
   if (testOverride) {
-    return testOverride;
+    return testOverride as Record<string, string | boolean | undefined>;
   }
 
   // Otherwise use import.meta.env
@@ -156,11 +156,11 @@ function readEnvOverrides(): Partial<SchemaAnalyticsConfig> | null {
 
   // Clean undefined leaves to respect deep-merge semantics later
   function prune<T extends object>(obj: T): T {
-    const out: any = Array.isArray(obj) ? [...(obj as any)] : { ...(obj as any) };
+    const out: Record<string, unknown> = Array.isArray(obj) ? [...obj] : { ...obj };
     for (const k of Object.keys(out)) {
       const v = out[k];
       if (v && typeof v === 'object' && !Array.isArray(v)) {
-        out[k] = prune(v);
+        out[k] = prune(v as object);
       }
       if (out[k] === undefined) delete out[k];
     }
@@ -176,11 +176,11 @@ let cacheStamp = 0;
 
 function deepMerge<T extends object>(base: T, overrides?: Partial<T> | null): T {
   if (!overrides) return base;
-  const output: any = Array.isArray(base) ? [...(base as any)] : { ...(base as any) };
+  const output: Record<string, unknown> = Array.isArray(base) ? [...base] : { ...base };
   for (const key of Object.keys(overrides) as Array<keyof T>) {
-    const ov: any = (overrides as any)[key];
+    const ov = (overrides as Record<string, unknown>)[key];
     if (ov === undefined) continue;
-    const bv: any = (base as any)[key];
+    const bv = (base as Record<string, unknown>)[key];
     if (
       bv &&
       typeof bv === 'object' &&
@@ -189,9 +189,9 @@ function deepMerge<T extends object>(base: T, overrides?: Partial<T> | null): T 
       typeof ov === 'object' &&
       !Array.isArray(ov)
     ) {
-      output[key] = deepMerge(bv, ov);
+      output[key as string] = deepMerge(bv as object, ov as Partial<object>);
     } else {
-      output[key] = ov;
+      output[key as string] = ov;
     }
   }
   return output as T;

@@ -52,7 +52,7 @@ const ORDER: StepKind[] = ['cleaning', 'scaling', 'encoding', 'feature_engineeri
 
 /** Utility: deep clone plain JSON values */
 function deepCloneJSON<T>(v: T): T {
-  return JSON.parse(JSON.stringify(v));
+  return structuredClone(v);
 }
 
 /** Profiling utilities to drive conditional steps */

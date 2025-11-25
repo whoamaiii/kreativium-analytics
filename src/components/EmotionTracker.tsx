@@ -88,7 +88,11 @@ const EmotionTrackerComponent = ({ onEmotionAdd }: EmotionTrackerProps) => {
     }
 
     const trimmedNotes = notes.trim();
-    const trimmedTriggers = triggers.map((trigger) => trigger.trim()).filter(Boolean);
+    const trimmedTriggers = triggers.reduce<string[]>((acc, trigger) => {
+      const trimmed = trigger.trim();
+      if (trimmed) acc.push(trimmed);
+      return acc;
+    }, []);
     const contextPieces: string[] = [];
     if (trimmedNotes) {
       contextPieces.push(trimmedNotes);

@@ -309,12 +309,15 @@ class PatternAnalysisEngine {
       }));
 
     if (noiseEmotionData.length >= this.config.patternAnalysis.minDataPoints) {
-      const noiseArray: number[] = noiseEmotionData
-        .map((d) => d.noise)
-        .filter((v): v is number => typeof v === 'number' && !isNaN(v));
-      const intensityArray: number[] = noiseEmotionData
-        .map((d) => d.avgEmotionIntensity)
-        .filter((v): v is number => typeof v === 'number' && !isNaN(v));
+      const { noiseArray, intensityArray } = noiseEmotionData.reduce(
+        (acc, d) => {
+          if (typeof d.noise === 'number' && !isNaN(d.noise)) acc.noiseArray.push(d.noise);
+          if (typeof d.avgEmotionIntensity === 'number' && !isNaN(d.avgEmotionIntensity))
+            acc.intensityArray.push(d.avgEmotionIntensity);
+          return acc;
+        },
+        { noiseArray: [] as number[], intensityArray: [] as number[] },
+      );
       const len = Math.min(noiseArray.length, intensityArray.length);
       const x = noiseArray.slice(0, len);
       const y = intensityArray.slice(0, len);
@@ -510,11 +513,16 @@ class PatternAnalysisEngine {
     const n = x.length;
     if (n === 0 || n !== y.length) return 0;
 
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.map((xi, i) => xi * y[i]).reduce((a, b) => a + b, 0);
-    const sumXX = x.map((xi) => xi * xi).reduce((a, b) => a + b, 0);
-    const sumYY = y.map((yi) => yi * yi).reduce((a, b) => a + b, 0);
+    const { sumX, sumY, sumXY, sumXX, sumYY } = x.reduce(
+      (acc, xi, i) => ({
+        sumX: acc.sumX + xi,
+        sumY: acc.sumY + y[i],
+        sumXY: acc.sumXY + xi * y[i],
+        sumXX: acc.sumXX + xi * xi,
+        sumYY: acc.sumYY + y[i] * y[i],
+      }),
+      { sumX: 0, sumY: 0, sumXY: 0, sumXX: 0, sumYY: 0 },
+    );
 
     const numerator = n * sumXY - sumX * sumY;
     const denominator = Math.sqrt((n * sumXX - sumX * sumX) * (n * sumYY - sumY * sumY));

@@ -199,6 +199,16 @@ export function SmartDataEntry({
                           variant={selectedEmotion === emotion ? 'default' : 'outline'}
                           className="cursor-pointer"
                           onClick={() => handleQuickEmotion(emotion)}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={`Select emotion: ${emotion}`}
+                          aria-pressed={selectedEmotion === emotion}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleQuickEmotion(emotion);
+                            }
+                          }}
                         >
                           {emotion}
                         </Badge>
@@ -214,6 +224,16 @@ export function SmartDataEntry({
                         variant={selectedEmotion === emotion ? 'default' : 'secondary'}
                         className="cursor-pointer"
                         onClick={() => handleQuickEmotion(emotion)}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Select emotion: ${emotion}`}
+                        aria-pressed={selectedEmotion === emotion}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleQuickEmotion(emotion);
+                          }
+                        }}
                       >
                         {emotion}
                       </Badge>
@@ -321,6 +341,16 @@ export function SmartDataEntry({
                         variant={sensoryType === value ? 'default' : 'outline'}
                         className="cursor-pointer"
                         onClick={() => handleQuickSensory(value)}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Select sensory type: ${label}`}
+                        aria-pressed={sensoryType === value}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleQuickSensory(value);
+                          }
+                        }}
                       >
                         <Icon className="h-3 w-3 mr-1" />
                         {label}

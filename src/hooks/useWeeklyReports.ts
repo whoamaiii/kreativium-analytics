@@ -19,10 +19,11 @@ function reportKey(weekStart: string): string {
 
 function loadReportsFromStorage(): WeeklyEvaluationReport[] {
   const index = readJSON<string[]>(REPORT_INDEX_KEY) ?? [];
-  return index
-    .map((weekStart) => readJSON<WeeklyEvaluationReport>(reportKey(weekStart)))
-    .filter((report): report is WeeklyEvaluationReport => !!report)
-    .sort((a, b) => new Date(a.weekStart).getTime() - new Date(b.weekStart).getTime());
+  return index.reduce<WeeklyEvaluationReport[]>((acc, weekStart) => {
+    const report = readJSON<WeeklyEvaluationReport>(reportKey(weekStart));
+    if (report) acc.push(report);
+    return acc;
+  }, []).sort((a, b) => new Date(a.weekStart).getTime() - new Date(b.weekStart).getTime());
 }
 
 interface TrendSummary {

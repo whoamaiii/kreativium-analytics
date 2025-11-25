@@ -792,9 +792,19 @@ export const ReportBuilder = ({
           <Card
             key={template.id}
             className="bg-gradient-card border-0 shadow-soft cursor-pointer hover:shadow-lg transition-shadow"
+            role="button"
+            tabIndex={0}
+            aria-label={`Create ${tCommon(template.name as unknown as string)} report`}
             onClick={() => {
               handleTemplateChange(template.id);
               setShowBuilder(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleTemplateChange(template.id);
+                setShowBuilder(true);
+              }
             }}
           >
             <CardHeader className="pb-2">

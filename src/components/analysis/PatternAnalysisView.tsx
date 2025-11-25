@@ -110,9 +110,18 @@ const PatternAnalysisViewComponent = ({
                     pattern.type === 'emotion' &&
                     'ring-2 ring-primary',
                 )}
+                role="button"
+                tabIndex={0}
+                aria-label={`Highlight ${pattern.type} pattern with ${Math.round(pattern.confidence * 100)}% confidence`}
                 onClick={() =>
                   handleHighlight('emotion', `pattern-${pattern.type}-${pattern.pattern}`)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleHighlight('emotion', `pattern-${pattern.type}-${pattern.pattern}`);
+                  }
+                }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
@@ -264,12 +273,24 @@ const PatternAnalysisViewComponent = ({
                       `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}` &&
                     'ring-2 ring-orange-500',
                 )}
+                role="button"
+                tabIndex={0}
+                aria-label={`Highlight ${anomaly.type} anomaly with ${anomaly.severity} severity`}
                 onClick={() =>
                   handleHighlight(
                     'anomaly',
                     `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}`,
                   )
                 }
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleHighlight(
+                      'anomaly',
+                      `anomaly-${anomaly.type}-${anomaly.timestamp.getTime()}`,
+                    );
+                  }
+                }}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">

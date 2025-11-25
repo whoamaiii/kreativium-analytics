@@ -1,5 +1,6 @@
 import type { AnalyticsResultsAI } from '@/lib/analysis/analysisEngine';
 import type { AiIntervention as AiInterventionType } from '@/lib/analysis/aiSchema';
+import type { PatternResult, CorrelationResult } from '@/lib/patternAnalysis';
 
 // Local re-typed shapes to normalize across AI and heuristic forms
 type Severity = 'low' | 'medium' | 'high';
@@ -213,8 +214,8 @@ export function diffSummary(
 }
 
 export function diffPatterns(
-  currentPatterns: Array<any>,
-  baselinePatterns: Array<any>,
+  currentPatterns: Array<PatternResult>,
+  baselinePatterns: Array<PatternResult>,
 ): PatternsDiffResult {
   const currentMap = new Map<string, NormalizedPattern>();
   for (const p of currentPatterns || []) {
@@ -257,8 +258,8 @@ export function diffPatterns(
 }
 
 export function diffCorrelations(
-  current: Array<any>,
-  baseline: Array<any>,
+  current: Array<CorrelationResult>,
+  baseline: Array<CorrelationResult>,
 ): CorrelationsDiffResult {
   const currentMap = new Map<string, NormalizedCorrelation>();
   for (const c of current || []) {

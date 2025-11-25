@@ -173,19 +173,29 @@ export function evaluateFairness(
 
   const byGroup = computeGroupStats(records);
 
-  const predictedRates = Object.values(byGroup).map((g) => g.predictedPositiveRate);
-  const truePositiveRates = Object.values(byGroup).map((g) => g.truePositiveRate);
-  const falsePositiveRates = Object.values(byGroup).map((g) => g.falsePositiveRate);
+  const { predictedRates, truePositiveRates, falsePositiveRates, avgOddsPerGroup } = Object.values(
+    byGroup,
+  ).reduce<{
+    predictedRates: number[];
+    truePositiveRates: number[];
+    falsePositiveRates: number[];
+    avgOddsPerGroup: number[];
+  }>(
+    (acc, g) => {
+      acc.predictedRates.push(g.predictedPositiveRate);
+      acc.truePositiveRates.push(g.truePositiveRate);
+      acc.falsePositiveRates.push(g.falsePositiveRate);
+      acc.avgOddsPerGroup.push((g.truePositiveRate + g.falsePositiveRate) / 2);
+      return acc;
+    },
+    { predictedRates: [], truePositiveRates: [], falsePositiveRates: [], avgOddsPerGroup: [] },
+  );
 
   const demographicParityDiff = differenceRange(predictedRates);
   const demographicParityRatio = ratioRange(predictedRates);
   const equalOpportunityDiff = differenceRange(truePositiveRates);
   const maxFalsePositiveGap = differenceRange(falsePositiveRates);
   const equalizedOddsDiff = Math.max(equalOpportunityDiff, maxFalsePositiveGap);
-
-  const avgOddsPerGroup = Object.values(byGroup).map(
-    (g) => (g.truePositiveRate + g.falsePositiveRate) / 2,
-  );
   const averageOddsDiff = differenceRange(avgOddsPerGroup);
 
   const calibrationDiff = computeCalibrationDiff(byGroup);
@@ -201,16 +211,15 @@ export function evaluateFairness(
   };
 
   const tolerance = options?.tolerance ?? 0.1;
-  const flaggedMetrics = Object.entries(metrics)
-    .filter(([key, value]) => {
-      if (value === undefined) return false;
-      if (typeof value !== 'number') return false;
-      if (key === 'demographicParityRatio') {
-        return Math.abs(value - 1) > tolerance;
-      }
-      return value > tolerance;
-    })
-    .map(([key]) => key);
+  const flaggedMetrics = Object.entries(metrics).reduce<string[]>((acc, [key, value]) => {
+    if (value === undefined || typeof value !== 'number') return acc;
+    if (key === 'demographicParityRatio') {
+      if (Math.abs(value - 1) > tolerance) acc.push(key);
+    } else if (value > tolerance) {
+      acc.push(key);
+    }
+    return acc;
+  }, []);
 
   return { metrics, byGroup, flaggedMetrics };
 }

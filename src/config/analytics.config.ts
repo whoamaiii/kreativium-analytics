@@ -249,7 +249,7 @@ function deepMerge<T extends object>(base: T, overrides: Partial<T> | undefined 
   for (const key of Object.keys(overrides) as Array<keyof T>) {
     const overrideVal = overrides[key];
     if (overrideVal === undefined) continue;
-    const baseVal = (base as any)[key];
+    const baseVal = (base as Record<string, unknown>)[key];
     if (
       baseVal &&
       typeof baseVal === 'object' &&
@@ -257,9 +257,9 @@ function deepMerge<T extends object>(base: T, overrides: Partial<T> | undefined 
       typeof overrideVal === 'object' &&
       !Array.isArray(overrideVal)
     ) {
-      (output as any)[key] = deepMerge(baseVal, overrideVal as any);
+      (output as Record<string, unknown>)[key] = deepMerge(baseVal as object, overrideVal as object);
     } else {
-      (output as any)[key] = overrideVal as any;
+      (output as Record<string, unknown>)[key] = overrideVal;
     }
   }
   return output;
@@ -292,8 +292,8 @@ export function getRuntimeAnalyticsConfig(): RuntimeAnalyticsConfig {
         version: overrides.version,
         thresholds: overrides.thresholds,
         rules: overrides.rules,
-        charts: overrides.charts as any, // charts core defaults validated via schema
-        worker: overrides.worker as any, // worker core defaults validated via schema
+        charts: overrides.charts as Record<string, unknown>, // charts core defaults validated via schema
+        worker: overrides.worker as Record<string, unknown>, // worker core defaults validated via schema
         features: overrides.features,
       }
     : undefined;
@@ -319,13 +319,13 @@ export function getRuntimeAnalyticsConfig(): RuntimeAnalyticsConfig {
     charts: {
       // Preserve non-schema extensions from merged first (e.g., colorPalette, animations),
       // then enforce schema-validated core values to avoid invalid overrides leaking through.
-      ...(merged as any).charts,
+      ...(merged as Record<string, unknown>).charts,
       ...safeSchema.charts,
     },
     worker: {
       // Preserve non-schema extensions from merged first (e.g., pool),
       // then enforce schema-validated core values.
-      ...(merged as any).worker,
+      ...(merged as Record<string, unknown>).worker,
       ...safeSchema.worker,
     },
     features: safeSchema.features,

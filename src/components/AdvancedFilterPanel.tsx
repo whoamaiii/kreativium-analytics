@@ -704,7 +704,16 @@ export const AdvancedFilterPanel = ({
                 <Card
                   key={preset.name}
                   className="cursor-pointer hover:bg-accent"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Apply ${preset.name} filter preset`}
                   onClick={() => applyPreset(preset.criteria)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      applyPreset(preset.criteria);
+                    }
+                  }}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">

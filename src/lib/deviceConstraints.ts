@@ -1,5 +1,13 @@
 import { logger } from '@/lib/logger';
 
+declare global {
+  interface Navigator {
+    getBattery?: () => Promise<{ level: number; charging: boolean }>;
+    connection?: { effectiveType: string; downlink?: number; rtt?: number; saveData?: boolean };
+    deviceMemory?: number;
+  }
+}
+
 export async function canPrecompute(cfg?: unknown): Promise<boolean> {
   // Check if configuration exists and has expected properties
   if (!cfg || typeof cfg !== 'object') {
@@ -25,22 +33,24 @@ export async function canPrecompute(cfg?: unknown): Promise<boolean> {
   try {
     // Check battery constraints
     if (config.respectBatteryLevel !== false && 'getBattery' in navigator) {
-      const battery = await (navigator as any).getBattery();
+      const battery = await navigator.getBattery?.();
 
-      // Don't precompute if battery is low (< 20%)
-      if (battery.level < 0.2) {
-        return false;
-      }
+      if (battery) {
+        // Don't precompute if battery is low (< 20%)
+        if (battery.level < 0.2) {
+          return false;
+        }
 
-      // If not charging and battery mode is restricted
-      if (!battery.charging && config.enableOnBattery === false) {
-        return false;
+        // If not charging and battery mode is restricted
+        if (!battery.charging && config.enableOnBattery === false) {
+          return false;
+        }
       }
     }
 
     // Check network conditions
     if (config.respectNetworkConditions !== false && 'connection' in navigator) {
-      const connection = (navigator as any).connection;
+      const connection = navigator.connection;
 
       if (connection) {
         // Check if we're on a slow connection
@@ -60,7 +70,7 @@ export async function canPrecompute(cfg?: unknown): Promise<boolean> {
 
     // Check memory pressure
     if ('deviceMemory' in navigator) {
-      const deviceMemory = (navigator as any).deviceMemory;
+      const deviceMemory = navigator.deviceMemory;
       // Don't precompute on low-memory devices (< 2GB)
       if (deviceMemory && deviceMemory < 2) {
         return false;

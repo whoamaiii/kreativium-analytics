@@ -152,9 +152,11 @@ export class WeeklyAlertMetrics {
       (entry.groupAssignments ?? []).forEach((group) => groupKeys.add(group));
     });
 
-    const fairness = Array.from(groupKeys)
-      .map((key) => calculateGroupMetrics(groupEntries, key))
-      .filter((metric): metric is GroupMetrics => metric !== null);
+    const fairness = Array.from(groupKeys).reduce<GroupMetrics[]>((acc, key) => {
+      const metric = calculateGroupMetrics(groupEntries, key);
+      if (metric !== null) acc.push(metric);
+      return acc;
+    }, []);
 
     const overrides = this.learner.getThresholdOverrides();
 
@@ -230,35 +232,34 @@ export class WeeklyAlertMetrics {
   // ----------------------------------
   computePerformanceMetrics(entries: AlertTelemetryEntry[]): PerformanceMetricsSummary {
     if (!entries.length) return {};
-    const startMs = Math.min(...entries.map((e) => new Date(e.createdAt).getTime()));
-    const endMs = Math.max(...entries.map((e) => new Date(e.createdAt).getTime()));
+
+    let startMs = Number.MAX_VALUE;
+    let endMs = 0;
+    let ackSum = 0;
+    let ackCount = 0;
+    let resolveSum = 0;
+    let resolveCount = 0;
+
+    for (const e of entries) {
+      const createdMs = new Date(e.createdAt).getTime();
+      if (createdMs < startMs) startMs = createdMs;
+      if (createdMs > endMs) endMs = createdMs;
+      if (e.acknowledgedAt) {
+        ackSum += new Date(e.acknowledgedAt).getTime() - createdMs;
+        ackCount++;
+      }
+      if (e.resolvedAt) {
+        resolveSum += new Date(e.resolvedAt).getTime() - createdMs;
+        resolveCount++;
+      }
+    }
+
     const hours = Math.max(1, (endMs - startMs) / 3600_000);
     const alertsPerHour = entries.length / hours;
-
-    const withAck = entries.filter((e) => e.acknowledgedAt);
-    const ackRate = entries.length ? withAck.length / entries.length : undefined;
-    const avgAckLatencyMs = withAck.length
-      ? Math.round(
-          withAck
-            .map(
-              (e) =>
-                new Date(e.acknowledgedAt as string).getTime() - new Date(e.createdAt).getTime(),
-            )
-            .reduce((a, b) => a + b, 0) / withAck.length,
-        )
-      : undefined;
-
-    const withResolve = entries.filter((e) => e.resolvedAt);
-    const resolveRate = entries.length ? withResolve.length / entries.length : undefined;
-    const avgResolveLatencyMs = withResolve.length
-      ? Math.round(
-          withResolve
-            .map(
-              (e) => new Date(e.resolvedAt as string).getTime() - new Date(e.createdAt).getTime(),
-            )
-            .reduce((a, b) => a + b, 0) / withResolve.length,
-        )
-      : undefined;
+    const ackRate = entries.length ? ackCount / entries.length : undefined;
+    const avgAckLatencyMs = ackCount ? Math.round(ackSum / ackCount) : undefined;
+    const resolveRate = entries.length ? resolveCount / entries.length : undefined;
+    const avgResolveLatencyMs = resolveCount ? Math.round(resolveSum / resolveCount) : undefined;
 
     return { alertsPerHour, ackRate, resolveRate, avgAckLatencyMs, avgResolveLatencyMs };
   }

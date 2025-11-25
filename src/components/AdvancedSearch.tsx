@@ -329,7 +329,19 @@ const AdvancedSearchComponent = ({
             {filters.query && (
               <Badge variant="secondary" className="flex items-center gap-1">
                 {formatFilterTag('interface.search', filters.query, { quoted: true })}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('query')} />
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => removeFilter('query')}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Remove search filter"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      removeFilter('query');
+                    }
+                  }}
+                />
               </Badge>
             )}
             {filters.emotions.map((emotion) => (
@@ -338,6 +350,15 @@ const AdvancedSearchComponent = ({
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter('emotion', emotion)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Remove emotion filter: ${emotion}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      removeFilter('emotion', emotion);
+                    }
+                  }}
                 />
               </Badge>
             ))}
@@ -347,6 +368,15 @@ const AdvancedSearchComponent = ({
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter('sensory', sensory)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Remove sensory filter: ${sensory}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      removeFilter('sensory', sensory);
+                    }
+                  }}
                 />
               </Badge>
             ))}
@@ -354,7 +384,19 @@ const AdvancedSearchComponent = ({
               <Badge variant="secondary" className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 {formatDateRangeTag(filters.dateRange.from, filters.dateRange.to)}
-                <X className="h-3 w-3 cursor-pointer" onClick={() => removeFilter('date')} />
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => removeFilter('date')}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Remove date filter"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      removeFilter('date');
+                    }
+                  }}
+                />
               </Badge>
             )}
             {filters.goalStatus.map((status) => (
@@ -363,6 +405,15 @@ const AdvancedSearchComponent = ({
                 <X
                   className="h-3 w-3 cursor-pointer"
                   onClick={() => removeFilter('goal', status)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Remove goal status filter: ${status}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      removeFilter('goal', status);
+                    }
+                  }}
                 />
               </Badge>
             ))}

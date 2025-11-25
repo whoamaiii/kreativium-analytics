@@ -153,7 +153,7 @@ const workerCache = {
   createKey(prefix: string, params: Record<string, unknown>): string {
     const sorted = Object.keys(params)
       .sort()
-      .map((k) => `${k}:${JSON.stringify((params as any)[k])}`)
+      .map((k) => `${k}:${JSON.stringify(params[k as keyof typeof params])}`)
       .join(':');
     return `${prefix}:${sorted}`;
   },
@@ -247,8 +247,7 @@ const enqueueMessage = (msg: AnalyticsWorkerMessage) => {
     setTimeout(() => {
       try {
         while (outgoingQueue.length) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (postMessage as any)(outgoingQueue.shift());
+          (postMessage as (message: unknown) => void)(outgoingQueue.shift());
         }
       } finally {
         flushScheduled = false;
@@ -541,7 +540,7 @@ export async function handleMessage(e: MessageEvent<unknown>) {
         filteredData.emotions,
         filteredData.sensoryInputs,
         filteredData.entries,
-        (filteredData as any).goals ?? [],
+        filteredData.goals ?? [],
       );
 
       // Send partial update for predictive insights
@@ -583,14 +582,18 @@ export async function handleMessage(e: MessageEvent<unknown>) {
         entries: filteredData.entries,
         emotions: filteredData.emotions,
         sensoryInputs: filteredData.sensoryInputs,
-        goals: (filteredData as any).goals ?? [],
+        goals: filteredData.goals ?? [],
       },
-      { config: currentConfig as any },
+      { config: currentConfig ?? undefined },
     );
 
     const results: AnalyticsResults = {
       ...unified,
-      suggestedInterventions: (unified as any).suggestedInterventions ?? [],
+      suggestedInterventions:
+        'suggestedInterventions' in unified &&
+        Array.isArray((unified as { suggestedInterventions?: unknown }).suggestedInterventions)
+          ? ((unified as { suggestedInterventions: string[] }).suggestedInterventions)
+          : [],
       cacheKey: filteredData.cacheKey,
       updatedCharts: ['insightList'],
     };
@@ -649,8 +652,7 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
   try {
     self.addEventListener('error', (e: ErrorEvent) => {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({
+        (postMessage as (message: unknown) => void)({
           type: 'error',
           error: e.message,
           cacheKey: undefined,
@@ -674,8 +676,7 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
           ? e.reason
           : (e?.reason?.message ?? 'Unhandled rejection in worker');
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({
+        (postMessage as (message: unknown) => void)({
           type: 'error',
           error: String(msg),
           cacheKey: undefined,
@@ -698,8 +699,7 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
 
   // Signal readiness so main thread can flush any queued tasks
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (postMessage as any)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
+    (postMessage as (message: unknown) => void)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
   } catch (e) {
     logger.warn('[analytics.worker] Failed to post ready signal', { error: e });
   }

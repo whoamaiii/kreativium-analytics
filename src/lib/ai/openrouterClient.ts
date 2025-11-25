@@ -3,6 +3,7 @@ import { errorHandler } from '@/lib/errorHandler';
 import { loadAiConfig, type AiConfig } from '@/lib/aiConfig';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
 import { SensoryCompassError, ErrorType } from '@/types/errors';
+import { safeCatch } from '@/lib/errors/safeExecute';
 
 import type {
   ChatMessage,
@@ -215,7 +216,7 @@ export class OpenRouterClient {
         clearTimeout(timeoutId);
 
         if (!res.ok) {
-          const text = await res.text().catch(() => '');
+          const text = await res.text().catch(safeCatch('openrouterClient.parseErrorResponse'));
 
           // Extract retry-after header if present
           const retryAfterHeader = res.headers.get('retry-after');

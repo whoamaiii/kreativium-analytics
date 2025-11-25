@@ -278,7 +278,16 @@ const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd }: EnvironmentalTrac
                   {event}
                   <X
                     className="h-3 w-3 cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Remove item"
                     onClick={() => handleRemoveSpecialEvent(event)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleRemoveSpecialEvent(event);
+                      }
+                    }}
                   />
                 </Badge>
               ))}
