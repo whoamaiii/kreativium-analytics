@@ -58,7 +58,9 @@ function readStorage<T>(key: string): T | null {
   } catch (e) {
     try {
       logger.debug('[AlertPolicies] Failed to read storage key', { key, error: e as Error });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
     return null;
   }
 }
@@ -70,7 +72,9 @@ function writeStorage<T>(key: string, value: T): void {
   } catch (e) {
     try {
       logger.debug('[AlertPolicies] Failed to write storage key', { key, error: e as Error });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
     // no-op
   }
 }
@@ -195,7 +199,7 @@ export class AlertPolicies {
         }
       }
     } catch {
-      // ignore read errors
+      // @silent-ok: read errors are non-critical, return default counts
     }
     return counts;
   }
@@ -563,7 +567,9 @@ export class AlertPolicies {
         logger.warn('[AlertPolicies] Invalid settings; using normalized defaults', {
           errors: validation.errors,
         });
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
     }
     const normalized = validation.normalized;
 
@@ -594,7 +600,9 @@ export class AlertPolicies {
       if (!allowed)
         logger.debug('[AlertPolicies] Alert blocked by policies', { alertId: alert.id, reasons });
       else logger.debug('[AlertPolicies] Alert allowed by policies', { alertId: alert.id });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
     this.auditPolicyDecision({ alert, dedupeKey, allowed, governance, reasons });
     return { allowed, status: governance };
   }
@@ -635,7 +643,9 @@ export class AlertPolicies {
     } catch (e) {
       try {
         logger.warn('[AlertPolicies] Failed to write policy audit entry', e as Error);
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
     }
   }
 
@@ -666,7 +676,9 @@ export class AlertPolicies {
     } catch (e) {
       try {
         logger.warn('[AlertPolicies] Failed to export audit trail', e as Error);
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
       return '[]';
     }
   }

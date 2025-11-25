@@ -48,9 +48,8 @@ export class OpenRouterClient {
       try {
         return typeof localStorage !== 'undefined' ? localStorage.getItem(k) || '' : '';
       } catch (e) {
-        try {
-          logger.warn('[OpenRouterClient] localStorage access failed', e as Error);
-        } catch {}
+        // @silent-ok: localStorage access may fail in SSR/worker contexts, return empty string
+        logger.warn('[OpenRouterClient] localStorage access failed', e as Error);
         return '';
       }
     };
@@ -65,7 +64,7 @@ export class OpenRouterClient {
     };
 
     // Precedence: explicit overrides > live env model > localStorage > aiConfig/defaults > hardcoded fallback
-    let liveModel = pickFirstNonEmpty(
+    const liveModel = pickFirstNonEmpty(
       overrides?.modelName,
       envAny.VITE_AI_MODEL_NAME,
       getLS(STORAGE_KEYS.AI_MODEL_NAME),
@@ -100,10 +99,8 @@ export class OpenRouterClient {
         hasKey: !!this.config.apiKey,
         model: this.config.modelName,
       });
-    } catch (e) {
-      try {
-        logger.warn('[OpenRouterClient] Constructor debug logging failed', e as Error);
-      } catch {}
+    } catch {
+      // @silent-ok: constructor debug logging is non-critical
     }
   }
 
@@ -147,10 +144,8 @@ export class OpenRouterClient {
     }
     try {
       logger.debug('[OpenRouterClient] buildHeaders hasKey', { hasKey: !!apiKey });
-    } catch (e) {
-      try {
-        logger.warn('[OpenRouterClient] Debug logging failed', e as Error);
-      } catch {}
+    } catch {
+      // @silent-ok: debug logging is non-critical
     }
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
@@ -186,7 +181,7 @@ export class OpenRouterClient {
     try {
       aiMetrics.recordRequestStart();
     } catch {
-      // Swallow metrics init errors to avoid noisy logs in production
+      // @silent-ok: metrics init errors are non-fatal, AI call proceeds
     }
     const started = performance.now();
     let attempts = 0;
@@ -231,13 +226,8 @@ export class OpenRouterClient {
           try {
             const parsed = JSON.parse(text) as OpenRouterErrorPayload;
             if (parsed?.error?.message) message = parsed.error.message;
-          } catch (e) {
-            try {
-              logger.debug('[OpenRouterClient] Failed to parse error payload as JSON', {
-                error: e instanceof Error ? { name: e.name, message: e.message } : String(e),
-                snippet: text.slice(0, 160),
-              });
-            } catch {}
+          } catch {
+            // @silent-ok: error payload parsing is best-effort, we still have the status code
           }
 
           if (res.status === 429) {
@@ -398,19 +388,15 @@ export class OpenRouterClient {
       try {
         aiMetrics.recordSuccess(durationMs);
         aiMetrics.recordRetries(attempts);
-      } catch (e) {
-        try {
-          logger.warn('[OpenRouterClient] Success metrics failed', e as Error);
-        } catch {}
+      } catch {
+        // @silent-ok: metrics recording errors are non-fatal
       }
       return resp as ChatResponse;
     } catch (error) {
       try {
         aiMetrics.recordFailure();
-      } catch (e) {
-        try {
-          logger.warn('[OpenRouterClient] Failure metrics failed', e as Error);
-        } catch {}
+      } catch {
+        // @silent-ok: failure metrics recording errors are non-fatal
       }
       // Delegate to global error handler and rethrow wrapped
       const wrapped =
@@ -483,7 +469,9 @@ export class OpenRouterClient {
               hasToolArgs = true;
               parsed = { ok: true, value: toolArgs } as any;
             }
-          } catch {}
+          } catch {
+            // @silent-ok: tool args extraction is best-effort fallback
+          }
 
           // 1) Fallback JSON extraction strategies on content text
           if (!parsed.ok) {
@@ -493,16 +481,16 @@ export class OpenRouterClient {
               if (attempt.ok) {
                 parsed = { ok: true, value: attempt.value } as any;
               }
-            } catch {}
+            } catch {
+              // @silent-ok: JSON extraction fallback is best-effort
+            }
           }
         }
         if (!parsed.ok) {
           try {
             aiMetrics.recordJsonParseError();
-          } catch (e) {
-            try {
-              logger.warn('[OpenRouterClient] JSON parse error metrics failed', e as Error);
-            } catch {}
+          } catch {
+            // @silent-ok: metrics recording errors are non-fatal
           }
           if (trimmedText.length === 0 && !hasToolArgs) {
             throw new SensoryCompassError(
@@ -531,18 +519,14 @@ export class OpenRouterClient {
             value = configOptions.refine(parsed.value);
             try {
               aiMetrics.recordJsonValid();
-            } catch (e) {
-              try {
-                logger.warn('[OpenRouterClient] JSON valid metrics failed', e as Error);
-              } catch {}
+            } catch {
+              // @silent-ok: metrics recording errors are non-fatal
             }
           } catch (err) {
             try {
               aiMetrics.recordJsonValidateError();
-            } catch (e) {
-              try {
-                logger.warn('[OpenRouterClient] JSON validate error metrics failed', e as Error);
-              } catch {}
+            } catch {
+              // @silent-ok: metrics recording errors are non-fatal
             }
             throw new SensoryCompassError(
               ErrorType.AI_INVALID_RESPONSE,
@@ -554,10 +538,8 @@ export class OpenRouterClient {
           value = parsed.value as TOut;
           try {
             aiMetrics.recordJsonValid();
-          } catch (e) {
-            try {
-              logger.warn('[OpenRouterClient] JSON valid metrics failed', e as Error);
-            } catch {}
+          } catch {
+            // @silent-ok: metrics recording errors are non-fatal
           }
         }
       }
@@ -581,19 +563,15 @@ export class OpenRouterClient {
       try {
         aiMetrics.recordSuccess(durationMs);
         aiMetrics.recordRetries(attempts);
-      } catch (e) {
-        try {
-          logger.warn('[OpenRouterClient] Success metrics failed', e as Error);
-        } catch {}
+      } catch {
+        // @silent-ok: metrics recording errors are non-fatal
       }
       return { data: value, response: resp };
     } catch (error) {
       try {
         aiMetrics.recordFailure();
-      } catch (e) {
-        try {
-          logger.warn('[OpenRouterClient] Failure metrics failed', e as Error);
-        } catch {}
+      } catch {
+        // @silent-ok: failure metrics recording errors are non-fatal
       }
       const wrapped =
         error instanceof SensoryCompassError

@@ -48,7 +48,9 @@ export function ExplanationChat({
   React.useEffect(() => {
     try {
       listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
-    } catch {}
+    } catch {
+      // @silent-ok: smooth scroll may fail in some browsers
+    }
   }, [messages, pending]);
 
   const onChangeRef = React.useRef(onMessagesChange);

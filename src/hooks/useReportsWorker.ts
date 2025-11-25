@@ -63,7 +63,9 @@ export function useReportsWorker() {
         } catch (e) {
           try {
             logger.warn('[useReportsWorker] Failed to reject promise on worker error', e as Error);
-          } catch {}
+          } catch {
+            // @silent-ok: logger failure is non-critical
+          }
         }
         pendingMap.delete(id);
       });
@@ -81,7 +83,9 @@ export function useReportsWorker() {
               '[useReportsWorker] Failed to reject promise on worker termination',
               e as Error,
             );
-          } catch {}
+          } catch {
+            // @silent-ok: logger failure is non-critical
+          }
         }
         pendingMap.delete(id);
       });

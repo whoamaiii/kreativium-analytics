@@ -27,7 +27,9 @@ export function LevelCompleteModal({
     if (!visible) return;
     try {
       playLevelUpFanfare(0.18);
-    } catch {}
+    } catch {
+      // @silent-ok: sound playback failure is non-critical
+    }
   }, [visible]);
 
   return (

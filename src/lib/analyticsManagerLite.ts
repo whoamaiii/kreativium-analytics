@@ -6,9 +6,17 @@
 import { logger } from '@/lib/logger';
 // Legacy storage no longer used directly in the lite manager
 import { initializeStudentProfile } from '@/lib/analyticsProfiles';
+import type { Student } from '@/types/student';
+
+// Type for the full manager (imported dynamically)
+interface FullAnalyticsManager {
+  triggerAnalyticsForStudent: (studentId: string) => Promise<void>;
+  getStudentAnalytics: (student: Student, options?: { useAI?: boolean }) => Promise<unknown>;
+  clearStudentCache: (studentId: string) => void;
+}
 
 // Lazy-loaded full manager
-let fullManager: any = null;
+let fullManager: FullAnalyticsManager | null = null;
 
 /**
  * Lightweight analytics manager that lazy-loads the full implementation
@@ -50,9 +58,9 @@ export const analyticsManagerLite = {
   /**
    * Get student analytics (deferred loading)
    */
-  async getStudentAnalytics(student: any) {
+  async getStudentAnalytics(student: Student, options?: { useAI?: boolean }) {
     const manager = await this.getFullManager();
-    return manager.getStudentAnalytics(student);
+    return manager.getStudentAnalytics(student, options);
   },
 
   /**

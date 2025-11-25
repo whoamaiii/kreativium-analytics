@@ -171,7 +171,9 @@ export class AlertDetectionEngine {
     if (!input.studentId) return [];
     try {
       logger.debug?.('[AlertEngine] runDetection:start', { studentId: input.studentId });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
 
     const thresholdOverrides = this.learner.getThresholdOverrides();
     const baseline = input.baseline ?? this.baselineService.getEmotionBaseline(input.studentId);
@@ -252,7 +254,9 @@ export class AlertDetectionEngine {
         studentId: input.studentId,
         alerts: deduped.length,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
     return deduped;
   }
 

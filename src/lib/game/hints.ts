@@ -22,6 +22,7 @@ export function loadHints(defaultPerDay: number = 5): HintsState {
     if (parsed.date !== t) return { date: t, remaining: defaultPerDay };
     return parsed;
   } catch {
+    // @silent-ok: localStorage/JSON parse errors return default hints
     return { date: today(), remaining: defaultPerDay };
   }
 }
@@ -31,7 +32,9 @@ export function useHint(): HintsState {
   const next = { date: current.date, remaining: Math.max(0, current.remaining - 1) };
   try {
     localStorage.setItem(STORAGE_KEYS.EMOTION_HINTS_DAILY, JSON.stringify(next));
-  } catch {}
+  } catch {
+    // @silent-ok: localStorage write failure is non-fatal
+  }
   return next;
 }
 
@@ -39,6 +42,8 @@ export function resetHints(defaultPerDay: number = 5): HintsState {
   const next = { date: today(), remaining: defaultPerDay };
   try {
     localStorage.setItem(STORAGE_KEYS.EMOTION_HINTS_DAILY, JSON.stringify(next));
-  } catch {}
+  } catch {
+    // @silent-ok: localStorage write failure is non-fatal
+  }
   return next;
 }

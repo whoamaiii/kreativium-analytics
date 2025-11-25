@@ -419,7 +419,9 @@ export async function handleMessage(e: MessageEvent<unknown>) {
   } catch (e) {
     try {
       logger.warn('[analytics.worker] Diagnostic logging failed', e as Error);
-    } catch {}
+    } catch {
+      // @silent-ok: nested logger failure is non-critical
+    }
   }
 
   // Update configuration if provided

@@ -40,7 +40,9 @@ export default function NameIt() {
       setFeedback('correct');
       try {
         incNameIt();
-      } catch {}
+      } catch {
+        // @silent-ok: progress tracking failure is non-critical
+      }
       setTimeout(() => nextRound(), 700);
     } else {
       setFeedback('hint');

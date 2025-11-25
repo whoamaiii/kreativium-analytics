@@ -70,6 +70,7 @@ function readStorage<T>(key: string): T | null {
     const raw = safeGet(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
+    // @silent-ok: JSON parse errors return null to signal invalid data
     return null;
   }
 }
@@ -79,7 +80,7 @@ function writeStorage<T>(key: string, value: T): void {
     const raw = JSON.stringify(value);
     safeSet(key, raw);
   } catch {
-    // no-op
+    // @silent-ok: storage write errors are non-fatal
   }
 }
 
@@ -181,7 +182,9 @@ export class AlertTelemetryService {
         alertId: alert.id,
         experiment: extras?.experimentKey,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: telemetry logging is non-critical
+    }
     try {
       logger.debug('alert_telemetry_captured', {
         alertId: alert.id,
@@ -189,7 +192,9 @@ export class AlertTelemetryService {
         variant: extras?.experimentVariant,
         detectors: extras?.detectorTypes,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: telemetry debug logging is non-critical
+    }
   }
 
   /** Mark an alert as acknowledged by a teacher or system actor. */
@@ -200,7 +205,9 @@ export class AlertTelemetryService {
     this.writeEntries(entries);
     try {
       logger.info('alert_acknowledged', { alertId });
-    } catch {}
+    } catch {
+      // @silent-ok: telemetry logging is non-critical
+    }
   }
 
   /**
@@ -222,7 +229,9 @@ export class AlertTelemetryService {
     this.writeEntries(entries);
     try {
       logger.info('alert_resolved', { alertId });
-    } catch {}
+    } catch {
+      // @silent-ok: telemetry logging is non-critical
+    }
   }
 
   /** Capture teacher feedback for an alert: relevance flag, rating, and comment. */
@@ -236,7 +245,9 @@ export class AlertTelemetryService {
     this.writeEntries(entries);
     try {
       logger.info('alert_feedback', { alertId, feedback });
-    } catch {}
+    } catch {
+      // @silent-ok: telemetry logging is non-critical
+    }
   }
 
   /** Snooze an alert until a future time with an optional reason. */
@@ -255,7 +266,9 @@ export class AlertTelemetryService {
         until: data?.until,
         reason: data?.reason,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: telemetry logging is non-critical
+    }
   }
 
   /** Return all telemetry entries. Prefer getEntriesBetween for larger datasets. */

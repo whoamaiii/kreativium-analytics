@@ -63,7 +63,9 @@ export default function ChooseRight() {
       setFeedback('correct');
       try {
         incCorrectChoice();
-      } catch {}
+      } catch {
+        // @silent-ok: progress tracking failure is non-critical
+      }
       // Respect quiet rewards
       playSuccessChime(quietRewards ? 0 : soundVolume);
       setTimeout(() => nextRound(), 700);

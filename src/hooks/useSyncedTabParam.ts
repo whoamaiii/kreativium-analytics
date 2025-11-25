@@ -52,7 +52,9 @@ function normalizeTab(
         to: finalTab,
         suggestedPreset,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
     return { tab: finalTab, legacyFrom: lower, suggestedPreset };
   }
   return { tab: finalTab };
@@ -115,7 +117,9 @@ export function useSyncedTabParam(options: UseSyncedTabParamOptions = {}): UseSy
               },
             };
             window.history.replaceState(nextState, '', url.toString());
-          } catch {}
+          } catch {
+            // @silent-ok: URL update failure is non-critical
+          }
           if (typeof onLegacyRedirect === 'function') {
             try {
               onLegacyRedirect({
@@ -123,7 +127,9 @@ export function useSyncedTabParam(options: UseSyncedTabParamOptions = {}): UseSy
                 to: tab,
                 suggestedPreset: normalized.suggestedPreset,
               });
-            } catch {}
+            } catch {
+              // @silent-ok: callback failure is non-critical
+            }
           }
         }
 

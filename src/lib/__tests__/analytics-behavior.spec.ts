@@ -475,7 +475,9 @@ const noop = () => {};
 afterEach(() => {
   try {
     analyticsConfig.resetToDefaults();
-  } catch {}
+  } catch {
+    // @silent-ok: test cleanup reset is best-effort
+  }
 });
 
 /**

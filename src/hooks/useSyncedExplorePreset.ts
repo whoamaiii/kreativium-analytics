@@ -48,7 +48,9 @@ function normalizePreset(value: string | null | undefined, fallback: ExplorePres
         mapped,
         to: finalPreset,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
   }
   return finalPreset;
 }
@@ -93,12 +95,20 @@ export function useSyncedExplorePreset(
         // Check for a legacy tab redirect intent carried via history state
         let suggestedFromLegacy: ExplorePreset | undefined;
         try {
-          const state: any = window.history.state || {};
+          interface LegacyRedirectState {
+            legacyRedirect?: {
+              toTab?: string;
+              suggestedPreset?: ExplorePreset;
+            };
+          }
+          const state = (window.history.state || {}) as LegacyRedirectState;
           const legacy = state?.legacyRedirect;
           if (legacy?.toTab === 'explore' && legacy?.suggestedPreset) {
-            suggestedFromLegacy = legacy.suggestedPreset as ExplorePreset;
+            suggestedFromLegacy = legacy.suggestedPreset;
           }
-        } catch {}
+        } catch (e) {
+          // @silent-ok: history state access may fail in some environments
+        }
 
         // Fallback: infer from current tab param (customizable) if present and legacy-like
         if (!suggestedFromLegacy) {
@@ -132,8 +142,12 @@ export function useSyncedExplorePreset(
                 preset,
                 paramKey,
               });
-            } catch {}
-          } catch {}
+            } catch {
+              // @silent-ok: logger failure is non-critical
+            }
+          } catch {
+            // @silent-ok: URL update failure is non-critical
+          }
         }
 
         return preset;

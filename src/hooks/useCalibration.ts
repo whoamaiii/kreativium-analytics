@@ -18,6 +18,7 @@ export function loadCalibration(): CalibrationResult | null {
     if (!raw) return null;
     return JSON.parse(raw) as CalibrationResult;
   } catch {
+    // @silent-ok: JSON parse errors return null as fallback
     return null;
   }
 }
@@ -28,7 +29,9 @@ export function loadCalibration(): CalibrationResult | null {
 export function saveCalibration(c: CalibrationResult): void {
   try {
     localStorage.setItem(STORAGE_KEYS.EMOTION_CALIBRATION, JSON.stringify(c));
-  } catch {}
+  } catch {
+    // @silent-ok: localStorage write failure is non-fatal
+  }
 }
 
 export function useCalibration() {

@@ -81,9 +81,9 @@ export function useWeeklyReports() {
       const stored = loadReportsFromStorage();
       if (!mounted.current) return;
       setReports(stored);
-    } catch (err: any) {
+    } catch (err) {
       if (!mounted.current) return;
-      setError(err?.message ?? 'Failed to load weekly reports');
+      setError(err instanceof Error ? err.message : 'Failed to load weekly reports');
     } finally {
       if (mounted.current) setLoading(false);
     }

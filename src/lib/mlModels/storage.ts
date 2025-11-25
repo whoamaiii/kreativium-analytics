@@ -20,7 +20,9 @@ export class ModelStorage {
     if (typeof indexedDB === 'undefined') {
       try {
         logger.warn('[mlModels] IndexedDB not available, ML models will not persist');
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
       return;
     }
 
@@ -31,7 +33,9 @@ export class ModelStorage {
         request.onerror = () => {
           try {
             logger.warn('[mlModels] Failed to open IndexedDB', request.error as any);
-          } catch {}
+          } catch {
+            // @silent-ok: logger failure is non-critical
+          }
           resolve(); // Don't reject, just continue without persistence
         };
 
@@ -49,7 +53,9 @@ export class ModelStorage {
       } catch (error) {
         try {
           logger.warn('[mlModels] IndexedDB initialization failed', error as Error);
-        } catch {}
+        } catch {
+          // @silent-ok: logger failure is non-critical
+        }
         resolve(); // Don't reject, just continue without persistence
       }
     });
@@ -68,7 +74,9 @@ export class ModelStorage {
     if (!this.db) {
       try {
         logger.warn('[mlModels] Cannot save model - IndexedDB not available');
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
       return;
     }
 
@@ -106,7 +114,9 @@ export class ModelStorage {
     if (!this.db) {
       try {
         logger.warn('[mlModels] Cannot load model - IndexedDB not available');
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
       return null;
     }
 
@@ -144,7 +154,9 @@ export class ModelStorage {
     if (!this.db) {
       try {
         logger.warn('[mlModels] Cannot delete model - IndexedDB not available');
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
       return;
     }
 
@@ -168,7 +180,9 @@ export class ModelStorage {
     if (!this.db) {
       try {
         logger.warn('[mlModels] Cannot list models - IndexedDB not available');
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
       return [];
     }
 

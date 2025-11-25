@@ -117,7 +117,8 @@ function updateNestedValue(
   value: unknown,
 ): AnalyticsConfiguration {
   const newConfig = { ...config };
-  let current: any = newConfig;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic path navigation requires any
+  let current: Record<string, any> = newConfig;
 
   // Navigate to parent object
   for (let i = 0; i < path.length - 1; i++) {

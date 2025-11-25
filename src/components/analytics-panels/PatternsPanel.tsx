@@ -217,7 +217,9 @@ export const PatternsPanel = memo(function PatternsPanel({
     } catch (err) {
       try {
         logger.warn('[PatternsPanel] explanation request failed', err as Error);
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical, continue with error handling
+      }
       const anyErr = err as any;
       const errMsg =
         typeof anyErr?.userMessage === 'string' && anyErr.userMessage.trim().length > 0
@@ -237,7 +239,9 @@ export const PatternsPanel = memo(function PatternsPanel({
     try {
       setPatternId(key);
       setExplain(true);
-    } catch {}
+    } catch {
+      // @silent-ok: URL param sync failure is non-critical for UX
+    }
     const st = explanations[key]?.status;
     if (!st || st === 'idle') {
       void requestExplanation(p);
@@ -248,7 +252,9 @@ export const PatternsPanel = memo(function PatternsPanel({
     } else {
       try {
         dockRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      } catch {}
+      } catch {
+        // @silent-ok: scrollIntoView may fail in some browsers, UX is unaffected
+      }
     }
   };
 
@@ -265,7 +271,9 @@ export const PatternsPanel = memo(function PatternsPanel({
     // Placeholder for integration with report builder
     try {
       toast.info('Lagt til i rapportutkast');
-    } catch {}
+    } catch {
+      // @silent-ok: toast failure is non-critical feedback
+    }
   };
 
   const current = selectedKey ? explanations[selectedKey] : undefined;
@@ -300,12 +308,15 @@ export const PatternsPanel = memo(function PatternsPanel({
     const allSensory = filteredData.sensoryInputs || [];
     const sensory = allSensory.slice(-160);
 
-    // Basic compactors
-    const fmtEntry = (e: any) =>
+    // Basic compactors - using intersection types to handle variations in entry shapes
+    type EntryLike = TrackingEntry & { time?: string; title?: string };
+    type EmotionLike = EmotionEntry & { emotion?: string; value?: number };
+    type SensoryLike = SensoryEntry & { kind?: string; level?: number };
+    const fmtEntry = (e: EntryLike) =>
       `${e.timestamp || e.time || ''} · ${e.activity || e.title || 'økt'}${e.note ? ` · ${String(e.note).slice(0, 80)}` : ''}`.trim();
-    const fmtEmotion = (e: any) =>
+    const fmtEmotion = (e: EmotionLike) =>
       `${e.type || e.emotion}:${e.intensity ?? e.value ?? ''}@${e.timestamp || ''}`;
-    const fmtSensory = (s: any) => `${s.type || s.kind}:${s.level ?? ''}@${s.timestamp || ''}`;
+    const fmtSensory = (s: SensoryLike) => `${s.type || s.kind}:${s.level ?? ''}@${s.timestamp || ''}`;
 
     const evidence = buildEvidenceForPattern({
       entries: filteredData.entries as any,
@@ -377,7 +388,7 @@ export const PatternsPanel = memo(function PatternsPanel({
         : 0;
 
     // Summaries of detected patterns/correlations (when available)
-    const detectedPatterns = (results?.patterns || []).slice(0, 8).map((p: any) => {
+    const detectedPatterns = (results?.patterns || []).slice(0, 8).map((p: PatternResult) => {
       const name = (p.pattern || p.name || '').toString();
       const pct = typeof p.confidence === 'number' ? `${Math.round(p.confidence * 100)}%` : '';
       const freq =
@@ -710,7 +721,9 @@ export const PatternsPanel = memo(function PatternsPanel({
         onClose={() => {
           try {
             clearPatternParams();
-          } catch {}
+          } catch {
+            // @silent-ok: URL param cleanup failure is non-critical
+          }
           setSelectedKey(null);
           setSelectedTitle('');
         }}
@@ -746,12 +759,18 @@ export const PatternsPanel = memo(function PatternsPanel({
               }),
             ),
           );
-        } catch {}
+        } catch {
+          // @silent-ok: toast failure is non-critical user feedback
+        }
         try {
           clearPatternParams();
-        } catch {}
+        } catch {
+          // @silent-ok: URL param cleanup failure is non-critical
+        }
       }
-    } catch {}
+    } catch {
+      // @silent-ok: effect errors are logged elsewhere, state cleanup continues
+    }
   }, [results?.patterns, explain, patternId, selectedKey, isSmallViewport, explanations]);
 
   return (
@@ -797,7 +816,9 @@ export const PatternsPanel = memo(function PatternsPanel({
                 // The desktop dock is typically persistent; if closed, also clear URL params
                 try {
                   clearPatternParams();
-                } catch {}
+                } catch {
+                  // @silent-ok: URL param cleanup failure is non-critical
+                }
                 setSelectedKey(null);
                 setSelectedTitle('');
               }}
@@ -814,7 +835,9 @@ export const PatternsPanel = memo(function PatternsPanel({
           if (!open) {
             try {
               clearPatternParams();
-            } catch {}
+            } catch {
+              // @silent-ok: URL param cleanup failure is non-critical
+            }
             setSelectedKey(null);
             setSelectedTitle('');
           }

@@ -13,7 +13,7 @@ export interface ConfigValidation {
 // Lightweight runtime validation for AnalyticsConfiguration shape and ranges
 function validateShape(cfg: unknown): cfg is AnalyticsConfiguration {
   if (!cfg || typeof cfg !== 'object') return false;
-  const c: any = cfg;
+  const c = cfg as Record<string, unknown>;
   const requiredRoots = [
     'patternAnalysis',
     'enhancedAnalysis',
@@ -30,19 +30,31 @@ function validateShape(cfg: unknown): cfg is AnalyticsConfiguration {
   for (const k of requiredRoots) {
     if (!(k in c)) return false;
   }
+  // Type helpers for nested property access
+  const getNestedValue = (obj: unknown, ...keys: string[]): unknown => {
+    let current = obj;
+    for (const key of keys) {
+      if (current && typeof current === 'object' && key in current) {
+        current = (current as Record<string, unknown>)[key];
+      } else {
+        return undefined;
+      }
+    }
+    return current;
+  };
   // Basic numeric range sanity checks (non-exhaustive, enough to prevent obvious breakage)
   const numbersOk = [
-    c.patternAnalysis?.minDataPoints,
-    c.patternAnalysis?.correlationThreshold,
-    c.enhancedAnalysis?.anomalyThreshold,
-    c.cache?.ttl,
-    c.cache?.maxSize,
-    c.insights?.MAX_PATTERNS_TO_SHOW,
-    c.confidence?.WEIGHTS?.EMOTION,
-  ].every((n: any) => typeof n === 'number' && Number.isFinite(n));
+    getNestedValue(c, 'patternAnalysis', 'minDataPoints'),
+    getNestedValue(c, 'patternAnalysis', 'correlationThreshold'),
+    getNestedValue(c, 'enhancedAnalysis', 'anomalyThreshold'),
+    getNestedValue(c, 'cache', 'ttl'),
+    getNestedValue(c, 'cache', 'maxSize'),
+    getNestedValue(c, 'insights', 'MAX_PATTERNS_TO_SHOW'),
+    getNestedValue(c, 'confidence', 'WEIGHTS', 'EMOTION'),
+  ].every((n) => typeof n === 'number' && Number.isFinite(n));
   if (!numbersOk) return false;
   // Precomputation numeric sanity checks
-  const pc = c.precomputation || {};
+  const pc = (c.precomputation as Record<string, unknown>) || {};
   const pcNumbersOk = [
     pc.maxQueueSize,
     pc.batchSize,
@@ -50,7 +62,7 @@ function validateShape(cfg: unknown): cfg is AnalyticsConfiguration {
     pc.maxConcurrentTasks,
     pc.taskStaggerDelay,
     pc.maxPrecomputeTime,
-  ].every((n: any) => typeof n === 'number' && Number.isFinite(n));
+  ].every((n) => typeof n === 'number' && Number.isFinite(n));
   if (!pcNumbersOk) return false;
   return true;
 }
@@ -66,11 +78,9 @@ export function validateAnalyticsRuntimeConfig(cfg: unknown): {
   } catch (err) {
     // fall through to default
   }
-  try {
-    logger.error(
-      '[analyticsConfigValidation] Invalid analytics configuration detected. Falling back to defaults.',
-    );
-  } catch {}
+  logger.error(
+    '[analyticsConfigValidation] Invalid analytics configuration detected. Falling back to defaults.',
+  );
   return {
     config: DEFAULT_ANALYTICS_CONFIG,
     meta: { isValid: false, errors: ['invalid-shape-or-values'] },

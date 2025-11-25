@@ -50,9 +50,9 @@ export interface RunAnalysisDeps {
   isCircuitOpen: () => boolean;
   workerDisabled: boolean;
   logger: {
-    debug: (...args: any[]) => void;
-    error: (...args: any[]) => void;
-    warn: (...args: any[]) => void;
+    debug: (message: string, context?: Record<string, unknown>) => void;
+    error: (message: string, context?: Record<string, unknown>) => void;
+    warn: (message: string, context?: Record<string, unknown>) => void;
   };
   diagnostics: { logWorkerTimeout: (worker: string, timeout: number) => void };
 }
@@ -76,9 +76,9 @@ const ensureStudent = (data: AnalyticsData, explicit?: Student): Student | undef
     } as Student;
   }
   const sensory = data.sensoryInputs?.[0];
-  if ((sensory as any)?.studentId) {
+  if (sensory?.studentId) {
     return {
-      id: (sensory as any).studentId,
+      id: sensory.studentId,
       name: 'Student',
       createdAt: new Date(),
     } as Student;
