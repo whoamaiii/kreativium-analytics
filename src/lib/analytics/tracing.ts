@@ -73,7 +73,7 @@ const generateId = (): string => {
   return `${timestamp}-${random}-${counter}`;
 };
 
-// Trace storage for active traces (weak map to avoid memory leaks)
+// Trace storage for active traces
 const activeTraces = new Map<string, TraceContext>();
 const completedTraces: TraceRecord[] = [];
 const MAX_COMPLETED_TRACES = 100;
@@ -124,10 +124,21 @@ export function createTraceSpan(
     ...options?.metadata,
   });
 
+  let ended = false;
+
   const span: TraceSpan = {
     context,
 
     end(result?: { success: boolean; error?: string; metadata?: Record<string, unknown> }) {
+      // Prevent double-ending a span
+      if (ended) {
+        logger.debug(`[Trace:${context.component}] Span already ended, ignoring duplicate end()`, {
+          requestId: context.requestId,
+        });
+        return;
+      }
+      ended = true;
+
       const endTime = performance.now();
       const durationMs = endTime - context.startTime;
 

@@ -143,7 +143,7 @@ class PersistentCacheService {
 
       const request = store.getAll();
 
-      await new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         request.onsuccess = () => {
           const entries = request.result as PersistentCacheEntry[];
           let loaded = 0;
@@ -311,9 +311,12 @@ class PersistentCacheService {
         const store = tx.objectStore(STORE_NAME);
         store.clear();
 
-        await new Promise<void>((resolve, reject) => {
+        await new Promise<void>((resolve) => {
           tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
+          tx.onerror = () => {
+            logger.warn('[PersistentCache] Transaction error during clear', { error: tx.error });
+            resolve(); // Continue despite error
+          };
         });
 
         logger.info('[PersistentCache] Cleared all entries', { count });

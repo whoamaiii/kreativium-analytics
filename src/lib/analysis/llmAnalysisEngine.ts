@@ -478,13 +478,13 @@ export class LLMAnalysisEngine implements AnalysisEngine {
       analyticsMetrics.recordAnalysisSuccess(span.elapsed(), 'llm');
 
       // Record pattern metrics
-      const patternCount = (merged.patterns ?? []).length;
-      const correlationCount = (merged.correlations ?? []).length;
+      const patterns = merged.patterns ?? [];
+      const correlations = merged.correlations ?? [];
       analyticsMetrics.recordPatterns(
-        (merged.patterns ?? []).filter((p: any) => p.type === 'emotion').length,
-        (merged.patterns ?? []).filter((p: any) => p.type === 'sensory').length
+        patterns.filter((p: any) => p.type === 'emotion').length,
+        patterns.filter((p: any) => p.type === 'sensory').length
       );
-      analyticsMetrics.recordCorrelations(correlationCount);
+      analyticsMetrics.recordCorrelations(correlations.length);
 
       return merged;
     } catch (error) {
