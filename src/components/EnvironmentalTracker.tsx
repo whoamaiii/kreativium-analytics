@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import type { EnvironmentalEntry as SessionEnvironmentalEntry, EmotionLevel } from '@/lib/storage/types';
 import { Thermometer, Sun, Volume2, Users, Cloud, Plus, X } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 
 interface EnvironmentalTrackerProps {
   onEnvironmentalAdd: (entry: Omit<SessionEnvironmentalEntry, 'id' | 'timestamp'>) => void;

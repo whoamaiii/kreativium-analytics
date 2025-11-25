@@ -28,7 +28,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { AnalyticsConfiguration, PRESET_CONFIGS } from '@/lib/analyticsConfig';
 import { ModelType } from '@/lib/mlModels';
 import { Progress } from '@/components/ui/progress';

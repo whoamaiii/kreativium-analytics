@@ -22,7 +22,7 @@ import { universalAnalyticsInitializer } from '@/lib/universalAnalyticsInitializ
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { usePerformanceCache } from '@/hooks/usePerformanceCache';
 import { AnalyticsConfigTest } from '@/components/AnalyticsConfigTest';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
 import { getStorageStats } from '@/lib/storage/storageStats';

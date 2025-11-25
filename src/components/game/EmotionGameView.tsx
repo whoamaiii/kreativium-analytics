@@ -8,6 +8,7 @@ import { GameHUD } from '@/components/game/GameHUD';
 import { ConfettiBurst } from '@/components/game/ConfettiBurst';
 import { RewardBanner } from '@/components/game/RewardBanner';
 import { LevelUpModal } from '@/components/game/LevelUpModal';
+import { LevelCompleteModal } from '@/components/game/LevelCompleteModal';
 import { StickerBook } from '@/components/game/StickerBook';
 import { ThemeSwitch } from '@/components/game/ThemeSwitch';
 import { ModeSelector } from '@/components/game/ModeSelector';
@@ -29,6 +30,8 @@ import type { ExpressionKey, World, GameRound } from '@/game/levels';
 import type { DetectorSnapshot } from '@/detector/types';
 import type { TodayEmotionProgress } from '@/hooks/useTodayEmotionProgress';
 import type { EffectParams } from '@/lib/effects/effect-engine';
+import type { EmotionGameState, ModalState } from '@/hooks/useEmotionGameState';
+import type { GameMode } from '@/lib/game/modes';
 import { useTranslation } from '@/hooks/useTranslation';
 import {
   GAME_SCORING,
@@ -50,9 +53,9 @@ export interface EmotionGameViewProps {
 
   // Game state controller (for modals and round state)
   gameState: {
-    state: any;
-    showModal: (modal: any) => void;
-    hideModal: (modal: any) => void;
+    state: EmotionGameState;
+    showModal: (modal: keyof ModalState) => void;
+    hideModal: (modal: keyof ModalState) => void;
     resetDifficultyStreak: () => void;
     useHint: () => void;
     canUseHint: boolean;
@@ -60,10 +63,10 @@ export interface EmotionGameViewProps {
 
   themeId: 'regnbueland' | 'rom';
   setThemeId: (id: 'regnbueland' | 'rom') => void;
-  mode: any;
-  setMode: (mode: any) => void;
-  practice: any;
-  setPractice: (practice: any) => void;
+  mode: GameMode;
+  setMode: (mode: GameMode) => void;
+  practice: ExpressionKey | 'mixed';
+  setPractice: (practice: ExpressionKey | 'mixed') => void;
 
   onStartCamera: () => void;
   onStopCamera: () => void;

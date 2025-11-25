@@ -21,7 +21,7 @@ import { exportSystem } from '@/lib/exportSystem';
 import { analyticsExport, type AnalyticsExportData } from '@/lib/analyticsExport';
 import { downloadBlob } from '@/lib/utils';
 import { ArrowLeft, Download, Save, FileText, Calendar, Loader } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LanguageSettings } from '@/components/LanguageSettings';
 import { GlobalMenu } from '@/components/GlobalMenu';

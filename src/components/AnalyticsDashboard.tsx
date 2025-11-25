@@ -26,7 +26,7 @@ import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ExportFormat } from '@/lib/analyticsExport';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { doOnce } from '@/lib/rateLimit';
 import { ErrorBoundary } from './ErrorBoundary';

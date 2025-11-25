@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import DOMPurify from 'dompurify';
 
 // Validation schemas
 export const studentSchema = z.object({
@@ -45,7 +46,15 @@ export function validateStudent(data: unknown) {
 
 // Input sanitization
 export function sanitizeInput(input: string): string {
-  return input.trim().replace(/[<>]/g, '').slice(0, 10000);
+  // Use DOMPurify to sanitize HTML and prevent XSS attacks
+  // RETURN_TRUSTED_TYPE: false ensures we get a string back
+  const sanitized = DOMPurify.sanitize(input, {
+    ALLOWED_TAGS: [], // Strip all HTML tags
+    ALLOWED_ATTR: [], // Strip all attributes
+    KEEP_CONTENT: true, // Keep text content
+    RETURN_TRUSTED_TYPE: false,
+  });
+  return sanitized.trim().slice(0, 10000);
 }
 
 // Removed unused function: sanitizeObject

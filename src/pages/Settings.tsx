@@ -9,7 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { useStorageState, useStorageFlag, useStorageRemove } from '@/lib/storage/useStorageState';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
 import { storageService } from '@/lib/storage/storageService';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { downloadBlob } from '@/lib/utils';
 
 interface SessionStats {

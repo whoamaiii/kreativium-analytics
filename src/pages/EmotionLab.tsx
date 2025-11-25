@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as faceapi from '@vladmandic/face-api';
+import { ensureFaceApiModels } from '@/lib/ml/faceApiLoader';
 // Optional: workerized detector toggle
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -42,9 +43,8 @@ export default function EmotionLab() {
     async function loadModels() {
       try {
         setModelStatus('loading');
-        // Load local models only to respect CSP connect-src 'self'
-        await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
-        await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
+        // Use singleton loader to prevent duplicate model loading
+        await ensureFaceApiModels(modelBaseUrl);
         setModelsOrigin('local');
         setModelStatus('ready');
       } catch (ee) {

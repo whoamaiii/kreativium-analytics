@@ -1,5 +1,6 @@
 import * as faceapi from '@vladmandic/face-api';
 import type { DetectorOptions, DetectorSnapshot, DetectionBox } from '@/detector/types';
+import { ensureFaceApiModels } from '@/lib/ml/faceApiLoader';
 
 export class FaceApiDetector {
   private video: HTMLVideoElement | null = null;
@@ -23,8 +24,7 @@ export class FaceApiDetector {
 
   async ensureModels(): Promise<void> {
     if (this.initialized) return;
-    await faceapi.nets.tinyFaceDetector.loadFromUri(this.modelBaseUrl);
-    await faceapi.nets.faceExpressionNet.loadFromUri(this.modelBaseUrl);
+    await ensureFaceApiModels(this.modelBaseUrl);
     this.initialized = true;
     this.snapshot.ready = true;
   }

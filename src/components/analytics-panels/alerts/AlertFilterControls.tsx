@@ -21,7 +21,7 @@ import {
   SelectItem,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { AlertSeverity, AlertKind, AlertWithGovernance } from '@/lib/alerts/types';
 import { useTranslation } from '@/hooks/useTranslation';
 

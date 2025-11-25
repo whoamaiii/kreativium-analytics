@@ -16,7 +16,7 @@ import {
 } from '@/lib/analytics/workerManager';
 import { POC_MODE, DISABLE_ANALYTICS_WORKER } from '@/lib/env';
 import { logger } from '@/lib/logger';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { doOnce } from '@/lib/rateLimit';
 import { createWorkerMessageHandlers } from '@/lib/analytics/workerMessageHandlers';
 import { AlertPolicies } from '@/lib/alerts/policies';

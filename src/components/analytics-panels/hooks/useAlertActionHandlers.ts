@@ -12,7 +12,7 @@
  */
 
 import { useCallback } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { AlertWithGovernance } from '@/lib/alerts/types';
 import InterventionTemplateManager from '@/lib/interventions/templateManager';

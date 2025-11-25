@@ -382,3 +382,76 @@ All colors MUST be HSL.
     outline-offset: 2px;
   }
 }
+
+/* Reduced motion preferences for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  /* Disable glow background animation */
+  .glow-bg {
+    animation: none;
+  }
+
+  /* Disable blob animations */
+  .animate-blob {
+    animation: none;
+  }
+
+  /* Disable gradient animations */
+  .animate-gradient-x {
+    animation: none;
+  }
+
+  /* Disable bounce animations */
+  .animate-bounce-slow {
+    animation: none;
+  }
+
+  /* Disable fade-in animations */
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Disable number pop animations */
+  .animate-number-pop {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Disable bounce-in animations */
+  .animate-bounce-in {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Disable hover lift effects */
+  .hover-lift {
+    @apply transition-none;
+  }
+
+  /* Disable press scale effects */
+  .press-scale {
+    @apply transition-none;
+  }
+
+  /* Disable glass card hover effects */
+  .glass-card:hover {
+    transform: none;
+  }
+
+  .glass-card:hover .icon-bg {
+    transform: none;
+  }
+
+  /* Reduce all animation and transition durations */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

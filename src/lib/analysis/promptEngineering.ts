@@ -15,6 +15,37 @@ export interface LlmPrompt {
   user: string;
 }
 
+/**
+ * Sanitizes user-controlled content before embedding in LLM prompts to prevent prompt injection.
+ * Removes or escapes potential control sequences, role indicators, and instruction patterns.
+ */
+function sanitizeUserContent(content: string, maxLength = 500): string {
+  if (!content) return '';
+
+  // Remove potential prompt injection patterns
+  let sanitized = content
+    // Remove control characters and zero-width characters
+    .replace(/[\u0000-\u001F\u007F-\u009F\u200B-\u200D\uFEFF]/g, '')
+    // Remove or escape common prompt control patterns
+    .replace(/\[INST\]|\[\/INST\]|<\|im_start\|>|<\|im_end\|>|<\|system\|>|<\|assistant\|>|<\|user\|>/gi, '')
+    // Remove XML-like tags that might be interpreted as instructions
+    .replace(/<\/?(?:system|user|assistant|instruction|role|context)[^>]*>/gi, '')
+    // Escape common role indicators
+    .replace(/(?:^|\n)\s*(?:system|user|assistant|instruction|role):/gi, (match) => match.replace(':', '\\:'))
+    // Remove excessive newlines that might break prompt structure
+    .replace(/\n{3,}/g, '\n\n')
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Truncate to max length with ellipsis
+  if (sanitized.length > maxLength) {
+    sanitized = sanitized.slice(0, maxLength) + '…';
+  }
+
+  return sanitized;
+}
+
 function formatEvidenceContext(sources?: EvidenceSource[]): string | undefined {
   const list = (sources || []).filter(Boolean);
   if (!list.length) return undefined;
@@ -108,8 +139,10 @@ function sampleSnapshot(ctx: StudentAnalysisContext, maxEntries = 12): string {
           .filter(Boolean)
           .join(' | ')
       : '';
+    // Sanitize user notes to prevent prompt injection
+    const sanitizedNotes = e.notes ? sanitizeUserContent(e.notes, 300) : '';
     lines.push(
-      `- ${fmtDate(e.timestamp)} | emotions: [${em}] | sensory: [${sn}]${env ? ` | env: ${env}` : ''}${e.notes ? ` | notes: ${e.notes}` : ''}`,
+      `- ${fmtDate(e.timestamp)} | emotions: [${em}] | sensory: [${sn}]${env ? ` | env: ${env}` : ''}${sanitizedNotes ? ` | notes: ${sanitizedNotes}` : ''}`,
     );
   }
   return lines.join('\n');

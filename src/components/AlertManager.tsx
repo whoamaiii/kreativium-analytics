@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { AlertTriangle, CheckCircle, Eye, TrendingUp } from 'lucide-react';
 import { alertSystem, AlertHistoryEntry } from '@/lib/alertSystem';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
 

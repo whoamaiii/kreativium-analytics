@@ -5,7 +5,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { downloadBlob } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { Download, FileText, Save } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { useNavigate } from 'react-router-dom';
 import { useReportsWorker } from '@/hooks/useReportsWorker';

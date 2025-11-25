@@ -20,7 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTranslation } from '@/hooks/useTranslation';
 import usePinnedAlerts from '@/hooks/usePinnedAlerts';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { useAlerts } from '@/hooks/useAlerts';
 import { TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';

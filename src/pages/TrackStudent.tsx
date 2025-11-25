@@ -9,7 +9,7 @@ import { SensoryTracker } from '@/components/SensoryTracker';
 import { EnvironmentalTracker } from '@/components/EnvironmentalTracker';
 import { SessionHub } from '@/components/tracking/SessionHub';
 import { LanguageSettings } from '@/components/LanguageSettings';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { logger } from '@/lib/logger';
 import { useSessionActions, useActiveSession, useSessions } from '@/hooks/useSessionTracking';

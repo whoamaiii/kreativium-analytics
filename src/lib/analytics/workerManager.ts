@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { doOnce } from '@/lib/rateLimit';
 import { POC_MODE, DISABLE_ANALYTICS_WORKER } from '@/lib/env';
 import type { AnalyticsWorkerMessage } from '@/types/analytics';

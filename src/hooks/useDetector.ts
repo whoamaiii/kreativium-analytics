@@ -5,6 +5,7 @@ import { MediaPipeDetector } from '@/detector/mediapipe.detector';
 import type { DetectorOptions, DetectorSnapshot } from '@/detector/types';
 import { useStorageState } from '@/lib/storage/useStorageState';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
+import { safeCatch } from '@/lib/errors/safeExecute';
 
 export function useDetector(
   videoRef: React.RefObject<HTMLVideoElement>,
@@ -113,7 +114,7 @@ export function useDetector(
     let raf = 0;
     let lastSet = 0;
     const loop = () => {
-      det.tick().catch(() => {});
+      det.tick().catch(safeCatch('useDetector.FaceApiDetector.tick'));
       const now = performance.now();
       if (now - lastSet >= updateIntervalMsRef.current) {
         setSnapshot(det.getSnapshot());
@@ -145,7 +146,7 @@ export function useDetector(
     let raf = 0;
     let lastSet = 0;
     const loop = () => {
-      det.tick().catch(() => {});
+      det.tick().catch(safeCatch('useDetector.MediaPipeDetector.tick'));
       const now = performance.now();
       if (now - lastSet >= updateIntervalMsRef.current) {
         setSnapshot(det.getSnapshot());

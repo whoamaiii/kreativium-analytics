@@ -643,57 +643,63 @@ export async function handleMessage(e: MessageEvent<unknown>) {
   }
 }
 
+// Guard to prevent duplicate error handler registration
+let errorHandlersRegistered = false;
+
 // Attach the handler to self.onmessage for the worker context
 if (typeof self !== 'undefined' && 'onmessage' in self) {
   // Global safety nets to surface runtime failures without crashing silently
-  try {
-    self.addEventListener('error', (e: ErrorEvent) => {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({
-          type: 'error',
-          error: e.message,
-          cacheKey: undefined,
-          payload: {
-            patterns: [],
-            correlations: [],
-            predictiveInsights: [],
-            anomalies: [],
-            insights: ['Worker runtime error encountered.'],
-            updatedCharts: ['insightList'],
-          },
-        });
-      } catch (err) {
-        logger.warn('[analytics.worker] Failed to post error message', { error: err });
-      }
-    });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    self.addEventListener('unhandledrejection', (e: any) => {
-      const msg =
-        typeof e?.reason === 'string'
-          ? e.reason
-          : (e?.reason?.message ?? 'Unhandled rejection in worker');
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (postMessage as any)({
-          type: 'error',
-          error: String(msg),
-          cacheKey: undefined,
-          payload: {
-            patterns: [],
-            correlations: [],
-            predictiveInsights: [],
-            anomalies: [],
-            insights: ['Worker unhandled rejection.'],
-            updatedCharts: ['insightList'],
-          },
-        });
-      } catch (err) {
-        logger.warn('[analytics.worker] Failed to post rejection message', { error: err });
-      }
-    });
-  } catch (e) {
-    logger.warn('[analytics.worker] Failed to setup error handlers', { error: e });
+  if (!errorHandlersRegistered) {
+    errorHandlersRegistered = true;
+    try {
+      self.addEventListener('error', (e: ErrorEvent) => {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (postMessage as any)({
+            type: 'error',
+            error: e.message,
+            cacheKey: undefined,
+            payload: {
+              patterns: [],
+              correlations: [],
+              predictiveInsights: [],
+              anomalies: [],
+              insights: ['Worker runtime error encountered.'],
+              updatedCharts: ['insightList'],
+            },
+          });
+        } catch (err) {
+          logger.warn('[analytics.worker] Failed to post error message', { error: err });
+        }
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      self.addEventListener('unhandledrejection', (e: any) => {
+        const msg =
+          typeof e?.reason === 'string'
+            ? e.reason
+            : (e?.reason?.message ?? 'Unhandled rejection in worker');
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (postMessage as any)({
+            type: 'error',
+            error: String(msg),
+            cacheKey: undefined,
+            payload: {
+              patterns: [],
+              correlations: [],
+              predictiveInsights: [],
+              anomalies: [],
+              insights: ['Worker unhandled rejection.'],
+              updatedCharts: ['insightList'],
+            },
+          });
+        } catch (err) {
+          logger.warn('[analytics.worker] Failed to post rejection message', { error: err });
+        }
+      });
+    } catch (e) {
+      logger.warn('[analytics.worker] Failed to setup error handlers', { error: e });
+    }
   }
 
   // Signal readiness so main thread can flush any queued tasks

@@ -10,6 +10,18 @@ interface TutorialOverlayProps {
 
 export function TutorialOverlay({ visible, onClose, steps }: TutorialOverlayProps) {
   const { tCommon } = useTranslation();
+
+  React.useEffect(() => {
+    if (!visible) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [visible, onClose]);
+
   const derived = steps ?? [
     {
       title: String(

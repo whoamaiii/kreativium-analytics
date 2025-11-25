@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Student, Goal, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
 import { FileText, Download, Printer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { downloadBlob } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 

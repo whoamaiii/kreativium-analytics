@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import type { AlertWithGovernance } from '@/lib/alerts/types';
 
 interface UseAlertBulkActionsArgs {

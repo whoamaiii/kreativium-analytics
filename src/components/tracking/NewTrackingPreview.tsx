@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSessionActions, useSessions } from '@/hooks/useSessionTracking';
 import type { UUID } from '@/lib/storage/types';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
 import { useTranslation } from '@/hooks/useTranslation';

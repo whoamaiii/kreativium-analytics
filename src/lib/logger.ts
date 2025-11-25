@@ -131,6 +131,9 @@ class Logger {
 
   private async sendToRemote(message: string, data: (LogData | ErrorData)[]): Promise<void> {
     try {
+      // Sanitize URL to prevent logging sensitive query parameters or hash fragments
+      const sanitizedUrl = `${window.location.origin}${window.location.pathname}`;
+
       await fetch(this.config.remoteEndpoint!, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -140,7 +143,7 @@ class Logger {
           message,
           data,
           userAgent: navigator.userAgent,
-          url: window.location.href,
+          url: sanitizedUrl,
         }),
       });
     } catch (error) {

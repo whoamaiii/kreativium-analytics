@@ -19,7 +19,7 @@ import { isToday } from 'date-fns';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Progress } from '@/components/ui/progress';
 import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { useState, useMemo, memo } from 'react';
 import { useStudentActions } from '@/hooks/useMutationActions';
 
