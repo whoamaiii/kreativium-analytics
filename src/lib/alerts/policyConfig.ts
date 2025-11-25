@@ -25,6 +25,7 @@ function readStorage<T>(key: string): T | null {
     const raw = safeGet(key);
     return raw ? (JSON.parse(raw) as T) : null;
   } catch {
+    // @silent-ok: storage/JSON parse errors return null as fallback
     return null;
   }
 }
@@ -34,7 +35,7 @@ function writeStorage<T>(key: string, value: T): void {
     const raw = JSON.stringify(value);
     safeSet(key, raw);
   } catch {
-    // no-op
+    // @silent-ok: storage write errors are non-fatal
   }
 }
 
@@ -91,7 +92,9 @@ export class PolicyConfigManager {
       this.audit('validateSettings', { errors: result.errors });
       try {
         logger.warn('[PolicyConfigManager] Validation produced errors', { errors: result.errors });
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
     }
     return result;
   }
@@ -114,7 +117,9 @@ export class PolicyConfigManager {
     } catch (e) {
       try {
         logger.error('[PolicyConfigManager] Failed to export settings', e as Error);
-      } catch {}
+      } catch {
+        // @silent-ok: logger failure is non-critical
+      }
       return '{}';
     }
   }
@@ -174,7 +179,9 @@ export class PolicyConfigManager {
     // Lightweight simulator intended for testing tools; implementation remains minimal here.
     try {
       this.audit('simulatePolicyDecisions', { count: alerts.length });
-    } catch {}
+    } catch {
+      // @silent-ok: audit failure is non-critical
+    }
     // Defer heavy simulations to dedicated tests
   }
 
@@ -189,7 +196,7 @@ export class PolicyConfigManager {
       const trimmed = entries.length > 200 ? entries.slice(entries.length - 200) : entries;
       writeStorage(key, trimmed);
     } catch {
-      // ignore
+      // @silent-ok: audit storage failure is non-critical
     }
   }
 }

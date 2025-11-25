@@ -38,7 +38,9 @@ function load(): AiMetricsData {
   } catch (e) {
     try {
       logger.warn('[aiMetrics] Failed to load metrics from localStorage', e as Error);
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
   }
   return {
     version: 1,
@@ -63,7 +65,9 @@ function save(d: AiMetricsData) {
   } catch (e) {
     try {
       logger.warn('[aiMetrics] Failed to save metrics to localStorage', e as Error);
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
   }
 }
 
@@ -74,7 +78,9 @@ function update(mutator: (d: AiMetricsData) => void) {
   } catch (e) {
     try {
       logger.warn('[aiMetrics] Failed to update metrics', e as Error);
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
   }
   d.lastUpdated = new Date().toISOString();
   save(d);
