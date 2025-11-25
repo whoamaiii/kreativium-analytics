@@ -20,6 +20,8 @@ import type {
   AnalyticsResultsAI,
 } from './analysisEngine';
 import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
+import { createTraceSpan } from '@/lib/analytics/tracing';
+import { analyticsMetrics } from '@/lib/analytics/metrics';
 
 /**
  * Safely converts a Date, string, or undefined input to a Date object.
@@ -141,9 +143,17 @@ export class HeuristicAnalysisEngine implements AnalysisEngine {
     timeframe?: TimeRange,
     options?: AnalysisOptions,
   ): Promise<AnalyticsResultsAI> {
+    // Create trace span for the analysis operation
+    const span = createTraceSpan('analyzeStudent', 'HeuristicAnalysisEngine', {
+      metadata: { studentId, hasTimeframe: !!timeframe },
+    });
+    analyticsMetrics.recordAnalysisStart();
+
     // Validate input early
     if (!studentId || typeof studentId !== 'string') {
       logger.error('[HeuristicAnalysisEngine] analyzeStudent: invalid studentId', { studentId });
+      span.end({ success: false, error: 'INVALID_STUDENT_ID' });
+      analyticsMetrics.recordAnalysisFailure();
       return buildSafeResults({ error: 'INVALID_STUDENT_ID' });
     }
 
@@ -220,6 +230,24 @@ export class HeuristicAnalysisEngine implements AnalysisEngine {
             }
           : undefined;
 
+      // Record successful analysis
+      span.end({
+        success: true,
+        metadata: {
+          entriesCount: trackingEntries.length,
+          emotionsCount: emotions.length,
+          sensoryCount: sensoryInputs.length,
+        }
+      });
+      analyticsMetrics.recordAnalysisSuccess(span.elapsed(), 'heuristic');
+
+      // Record pattern metrics
+      analyticsMetrics.recordPatterns(
+        (results.patterns ?? []).filter((p: any) => p.type === 'emotion').length,
+        (results.patterns ?? []).filter((p: any) => p.type === 'sensory').length
+      );
+      analyticsMetrics.recordCorrelations((results.correlations ?? []).length);
+
       return { ...(results as AnalyticsResults), ai: aiMeta } as AnalyticsResultsAI;
     } catch (error) {
       logger.error('[HeuristicAnalysisEngine] analyzeStudent failed', {
@@ -229,6 +257,11 @@ export class HeuristicAnalysisEngine implements AnalysisEngine {
             : error,
         studentId,
       });
+      span.end({
+        success: false,
+        error: error instanceof Error ? error.message : 'HEURISTIC_ENGINE_ERROR'
+      });
+      analyticsMetrics.recordAnalysisFailure();
       return buildSafeResults({ error: 'HEURISTIC_ENGINE_ERROR' });
     }
   }

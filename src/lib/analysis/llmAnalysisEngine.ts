@@ -41,6 +41,8 @@ import type { EvidenceSource } from '@/lib/evidence/types';
 import { DomainTag, GradeBand } from '@/lib/evidence/types';
 import { AI_EVIDENCE_DISABLED } from '@/lib/env';
 import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
+import { createTraceSpan, type TraceSpan } from '@/lib/analytics/tracing';
+import { analyticsMetrics } from '@/lib/analytics/metrics';
 
 type CacheEntry = { data: AnalyticsResultsAI; expires: number };
 
@@ -215,14 +217,26 @@ export class LLMAnalysisEngine implements AnalysisEngine {
     timeframe?: TimeRange,
     options?: AnalysisOptions,
   ): Promise<AnalyticsResultsAI> {
+    // Create trace span for the entire analysis operation
+    const span = createTraceSpan('analyzeStudent', 'LLMAnalysisEngine', {
+      metadata: { studentId, hasTimeframe: !!timeframe },
+    });
+    analyticsMetrics.recordAnalysisStart();
+
     if (!studentId || typeof studentId !== 'string') {
       logger.error('[LLMAnalysisEngine] analyzeStudent: invalid studentId', { studentId });
+      span.end({ success: false, error: 'INVALID_STUDENT_ID' });
+      analyticsMetrics.recordAnalysisFailure();
       return safeResults({ error: 'INVALID_STUDENT_ID' });
     }
 
     const aiCfg = loadAiConfig();
     if (!aiCfg.enabled) {
+      const heurSpan = span.child('heuristicFallback', { reason: 'ai_disabled' });
       const heur = await this.heuristic.analyzeStudent(studentId, timeframe, options);
+      heurSpan.end({ success: true });
+      span.end({ success: true, metadata: { engine: 'heuristic', reason: 'ai_disabled' } });
+      analyticsMetrics.recordAnalysisSuccess(span.elapsed(), 'heuristic');
       return heur;
     }
 
@@ -253,8 +267,13 @@ export class LLMAnalysisEngine implements AnalysisEngine {
             cacheReadTokens: (cached.ai.usage?.cacheReadTokens ?? 0) + 1,
           };
         }
+        // Record cache hit metrics
+        analyticsMetrics.recordCacheHit();
+        span.end({ success: true, metadata: { engine: 'cache', cacheHit: true } });
         return cached;
       }
+      // Cache miss
+      analyticsMetrics.recordCacheMiss();
 
       entriesAll = legacyAnalyticsAdapter.listTrackingEntriesForStudent(studentId) || [];
       goals = legacyAnalyticsAdapter.listGoalsForStudent(studentId) || [];
@@ -445,6 +464,28 @@ export class LLMAnalysisEngine implements AnalysisEngine {
           cacheWriteTokens: (merged.ai.usage?.cacheWriteTokens ?? 0) + 1,
         };
       cache.set(key, { data: merged, expires: now + MEMORY_TTL_MS });
+
+      // Record successful LLM analysis
+      span.end({
+        success: true,
+        metadata: {
+          engine: 'llm',
+          entriesCount: entries.length,
+          emotionsCount: emotions.length,
+          sensoryCount: sensoryInputs.length,
+        }
+      });
+      analyticsMetrics.recordAnalysisSuccess(span.elapsed(), 'llm');
+
+      // Record pattern metrics
+      const patternCount = (merged.patterns ?? []).length;
+      const correlationCount = (merged.correlations ?? []).length;
+      analyticsMetrics.recordPatterns(
+        (merged.patterns ?? []).filter((p: any) => p.type === 'emotion').length,
+        (merged.patterns ?? []).filter((p: any) => p.type === 'sensory').length
+      );
+      analyticsMetrics.recordCorrelations(correlationCount);
+
       return merged;
     } catch (error) {
       logger.error('[LLMAnalysisEngine] analyzeStudent failed', {
@@ -455,7 +496,10 @@ export class LLMAnalysisEngine implements AnalysisEngine {
         studentId,
       });
       try {
+        const heurFallbackSpan = span.child('heuristicFallback', { reason: 'llm_error' });
         const heur = await this.heuristic.analyzeStudent(studentId, timeframe, options);
+        heurFallbackSpan.end({ success: true });
+
         if (options?.includeAiMetadata) {
           // Ensure lineage is computed if not already done
           if (!lineage) {
@@ -473,10 +517,19 @@ export class LLMAnalysisEngine implements AnalysisEngine {
               true,
             ),
           };
+          span.end({ success: true, metadata: { engine: 'heuristic', reason: 'llm_fallback' } });
+          analyticsMetrics.recordAnalysisSuccess(span.elapsed(), 'heuristic');
           return { ...(heur as AnalyticsResults), ai: aiMeta } as AnalyticsResultsAI;
         }
+        span.end({ success: true, metadata: { engine: 'heuristic', reason: 'llm_fallback' } });
+        analyticsMetrics.recordAnalysisSuccess(span.elapsed(), 'heuristic');
         return heur;
-      } catch {
+      } catch (fallbackError) {
+        span.end({
+          success: false,
+          error: error instanceof Error ? error.message : 'LLM_ENGINE_ERROR'
+        });
+        analyticsMetrics.recordAnalysisFailure();
         return safeResults({ error: 'LLM_ENGINE_ERROR' });
       }
     }
