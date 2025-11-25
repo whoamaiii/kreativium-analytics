@@ -7,6 +7,7 @@ import { computeAllowedContexts } from '@/lib/evidence/evidenceBuilder';
 import type { SourceItem } from '@/types/analytics';
 import { logger } from '@/lib/logger';
 import { useStorageState } from '@/lib/storage/useStorageState';
+import { useBooleanStorageState } from '@/hooks/useBooleanStorageState';
 
 export interface ExplanationTabsProps {
   // Core explanation props
@@ -60,18 +61,9 @@ export function ExplanationTabs({
   const kilderShowAllKey = React.useMemo(() => `${storageBase}.kilder.showAll`, [storageBase]);
 
   const [tab, setTab] = useStorageState(tabStorageKey, 'chat');
-  const [kilderVisited, setKilderVisited] = useStorageState(kilderVisitedKey, false, {
-    serialize: (v) => (v ? '1' : '0'),
-    deserialize: (v) => v === '1',
-  });
-  const [blandVisited, setBlandVisited] = useStorageState(blandVisitedKey, false, {
-    serialize: (v) => (v ? '1' : '0'),
-    deserialize: (v) => v === '1',
-  });
-  const [showAllKilder, setShowAllKilder] = useStorageState(kilderShowAllKey, false, {
-    serialize: (v) => (v ? '1' : '0'),
-    deserialize: (v) => v === '1',
-  });
+  const [kilderVisited, setKilderVisited] = useBooleanStorageState(kilderVisitedKey, false);
+  const [blandVisited, setBlandVisited] = useBooleanStorageState(blandVisitedKey, false);
+  const [showAllKilder, setShowAllKilder] = useBooleanStorageState(kilderShowAllKey, false);
 
   const visited = React.useMemo(
     () => ({

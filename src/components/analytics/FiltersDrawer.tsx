@@ -34,6 +34,7 @@ import {
   TIME_OF_DAY,
   PATTERN_TYPES,
 } from '@/lib/filterOptions';
+import { clampRange } from '@/lib/utils/rangeUtils';
 
 interface FiltersDrawerProps {
   open: boolean;
@@ -133,16 +134,6 @@ export const FiltersDrawer = ({
                     size="sm"
                     className="h-auto p-3 text-left justify-start hover:bg-destructive/10 hover:border-destructive/50 transition-colors"
                     onClick={() => {
-                      const clampRange = (
-                        r?: [number, number],
-                        max = 5,
-                      ): [number, number] | undefined =>
-                        r
-                          ? ([
-                              Math.max(0, Math.min(r[0], max)),
-                              Math.max(0, Math.min(r[1], max)),
-                            ] as [number, number])
-                          : undefined;
                       setDraft(
                         () =>
                           ({
@@ -200,16 +191,6 @@ export const FiltersDrawer = ({
                     size="sm"
                     className="h-auto p-3 text-left justify-start hover:bg-green-500/10 hover:border-green-500/50 transition-colors"
                     onClick={() => {
-                      const clampRange = (
-                        r?: [number, number],
-                        max = 5,
-                      ): [number, number] | undefined =>
-                        r
-                          ? ([
-                              Math.max(0, Math.min(r[0], max)),
-                              Math.max(0, Math.min(r[1], max)),
-                            ] as [number, number])
-                          : undefined;
                       setDraft(
                         () =>
                           ({
@@ -267,16 +248,6 @@ export const FiltersDrawer = ({
                     size="sm"
                     className="h-auto p-3 text-left justify-start hover:bg-blue-500/10 hover:border-blue-500/50 transition-colors"
                     onClick={() => {
-                      const clampRange = (
-                        r?: [number, number],
-                        max = 5,
-                      ): [number, number] | undefined =>
-                        r
-                          ? ([
-                              Math.max(0, Math.min(r[0], max)),
-                              Math.max(0, Math.min(r[1], max)),
-                            ] as [number, number])
-                          : undefined;
                       setDraft(
                         () =>
                           ({

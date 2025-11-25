@@ -134,7 +134,9 @@ export default tseslint.config(
           allowTaggedTemplates: true,
         },
       ],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      // Upgraded from 'warn' to 'error' to enforce strict type safety
+      // See CODE_QUALITY_AUDIT.md Section 2 for rationale
+      '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-empty-object-type': 'warn',
       'react-hooks/rules-of-hooks': 'warn',
       'react-hooks/exhaustive-deps': 'warn',

@@ -16,6 +16,7 @@
  */
 
 import { logger } from '@/lib/logger';
+import { safeCatch } from '@/lib/errors/safeExecute';
 
 const DB_NAME = 'kreativium-analytics-cache';
 const DB_VERSION = 1;
@@ -156,7 +157,7 @@ class PersistentCacheService {
             } else {
               expired++;
               // Queue expired entry for deletion
-              this.deleteFromStorage(entry.key).catch(() => {});
+              this.deleteFromStorage(entry.key).catch(safeCatch('PersistentCache.loadFromStorage.deleteExpired'));
             }
           }
 
@@ -192,7 +193,7 @@ class PersistentCacheService {
       // Entry expired
       this.stats.misses++;
       this.memoryCache.delete(key);
-      this.deleteFromStorage(key).catch(() => {});
+      this.deleteFromStorage(key).catch(safeCatch('PersistentCache.get.deleteExpired'));
       return undefined;
     }
 
@@ -202,7 +203,7 @@ class PersistentCacheService {
     this.stats.hits++;
 
     // Update in storage (non-blocking)
-    this.saveToStorage(entry).catch(() => {});
+    this.saveToStorage(entry).catch(safeCatch('PersistentCache.get.updateAccessStats'));
 
     return entry.data as T;
   }
@@ -244,7 +245,7 @@ class PersistentCacheService {
 
     if (entry.expires <= Date.now()) {
       this.memoryCache.delete(key);
-      this.deleteFromStorage(key).catch(() => {});
+      this.deleteFromStorage(key).catch(safeCatch('PersistentCache.has.deleteExpired'));
       return false;
     }
 
@@ -259,7 +260,7 @@ class PersistentCacheService {
 
     const existed = this.memoryCache.has(key);
     this.memoryCache.delete(key);
-    this.deleteFromStorage(key).catch(() => {});
+    this.deleteFromStorage(key).catch(safeCatch('PersistentCache.delete'));
 
     if (existed) {
       this.stats.evictions++;
@@ -286,7 +287,7 @@ class PersistentCacheService {
 
     for (const key of keysToDelete) {
       this.memoryCache.delete(key);
-      this.deleteFromStorage(key).catch(() => {});
+      this.deleteFromStorage(key).catch(safeCatch('PersistentCache.invalidateByTag'));
     }
 
     this.stats.evictions += count;
@@ -342,7 +343,7 @@ class PersistentCacheService {
 
     for (const key of keysToDelete) {
       this.memoryCache.delete(key);
-      this.deleteFromStorage(key).catch(() => {});
+      this.deleteFromStorage(key).catch(safeCatch('PersistentCache.cleanup'));
     }
 
     this.stats.evictions += count;
