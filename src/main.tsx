@@ -29,6 +29,7 @@ if (import.meta.env.DEV) {
       try {
         return localStorage.getItem(k) || '';
       } catch {
+        // @silent-ok: localStorage may be unavailable in some contexts
         return '';
       }
     };
@@ -48,7 +49,7 @@ if (import.meta.env.DEV) {
       localStorage.setItem(STORAGE_KEYS.AI_MODEL_NAME, m);
     }
   } catch {
-    // ignore
+    // @silent-ok: localStorage seeding failure is non-critical
   }
 }
 
@@ -84,7 +85,9 @@ if (typeof window !== 'undefined') {
   if (win.__alertsWeeklyMetricsCleanup) {
     try {
       win.__alertsWeeklyMetricsCleanup();
-    } catch {}
+    } catch {
+      // @silent-ok: cleanup failure is non-critical during HMR
+    }
     win.__alertsWeeklyMetricsCleanup = undefined;
     win.__alertsWeeklyMetricsBootstrapped = false;
   }
@@ -113,7 +116,9 @@ if (typeof window !== 'undefined') {
     const beforeUnloadHandler = () => {
       try {
         stopTask?.();
-      } catch {}
+      } catch {
+        // @silent-ok: cleanup during page unload is best-effort
+      }
     };
 
     window.addEventListener('beforeunload', beforeUnloadHandler);
@@ -121,7 +126,9 @@ if (typeof window !== 'undefined') {
     win.__alertsWeeklyMetricsCleanup = () => {
       try {
         stopTask?.();
-      } catch {}
+      } catch {
+        // @silent-ok: scheduled task cleanup is best-effort
+      }
       window.removeEventListener('beforeunload', beforeUnloadHandler);
       win.__alertsWeeklyMetricsBootstrapped = false;
     };
@@ -131,7 +138,9 @@ if (typeof window !== 'undefined') {
       import.meta.hot.dispose(() => {
         try {
           win.__alertsWeeklyMetricsCleanup?.();
-        } catch {}
+        } catch {
+          // @silent-ok: HMR cleanup is best-effort
+        }
         win.__alertsWeeklyMetricsCleanup = undefined;
         win.__alertsWeeklyMetricsBootstrapped = false;
       });
@@ -141,7 +150,9 @@ if (typeof window !== 'undefined') {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
       }
-    } catch {}
+    } catch {
+      // @silent-ok: service worker registration is optional
+    }
   }
 }
 
