@@ -52,3 +52,11 @@ export {
 
 // TTL Cache - Deprecated API
 export { isManagerTtlCacheDisabled, getTtlMs, isCacheValid } from './ttlCache';
+
+// Persistent Cache - IndexedDB-backed caching
+export {
+  persistentCache,
+  createScopedCache,
+  type PersistentCacheEntry,
+  type PersistentCacheStats,
+} from '../persistentCache';
