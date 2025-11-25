@@ -17,10 +17,14 @@ async function ensureModels(): Promise<void> {
   // Use CPU backend in worker for maximum compatibility
   try {
     await tf.setBackend('cpu');
-  } catch {}
+  } catch {
+    // @silent-ok: backend setup may fail, fallback handled by TensorFlow
+  }
   try {
     await tf.ready();
-  } catch {}
+  } catch {
+    // @silent-ok: TensorFlow ready may fail in some environments
+  }
   await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
   await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
   initialized = true;
@@ -91,7 +95,9 @@ self.addEventListener('message', async (evt: MessageEvent<DetectorWorkerMessage>
       // Transfer ownership so GC can reclaim quickly
       try {
         bitmap.close?.();
-      } catch {}
+      } catch {
+        // @silent-ok: bitmap cleanup failure is non-critical
+      }
     }
   } catch (e) {
     // Swallow errors to keep worker alive

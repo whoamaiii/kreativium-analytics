@@ -56,6 +56,7 @@ export class WorkerDetector {
         this.imageCapture = new ImageCaptureCtor(track);
       }
     } catch {
+      // @silent-ok: ImageCapture setup failure falls back to canvas path
       this.imageCapture = null;
     }
   }
@@ -79,7 +80,9 @@ export class WorkerDetector {
         .then((ib: ImageBitmap) => {
           try {
             this.worker!.postMessage({ type: 'frame', frame: ib }, [ib as unknown as Transferable]);
-          } catch {}
+          } catch {
+            // @silent-ok: worker postMessage failure is non-critical
+          }
         })
         .catch(() => {
           // fall back to canvas path on failure
@@ -103,9 +106,13 @@ export class WorkerDetector {
         .then((ib: ImageBitmap) => {
           try {
             this.worker!.postMessage({ type: 'frame', frame: ib }, [ib as unknown as Transferable]);
-          } catch {}
+          } catch {
+            // @silent-ok: worker postMessage failure is non-critical
+          }
         })
-        .catch(() => {});
+        .catch(() => {
+          // @silent-ok: ImageBitmap creation failure is silently ignored
+        });
     } catch {
       // silently ignore frame errors
     }
@@ -114,7 +121,9 @@ export class WorkerDetector {
   dispose(): void {
     try {
       this.worker?.terminate();
-    } catch {}
+    } catch {
+      // @silent-ok: worker termination during cleanup is best-effort
+    }
     this.worker = null;
     this.video = null;
     this.scratchCanvas = null;
