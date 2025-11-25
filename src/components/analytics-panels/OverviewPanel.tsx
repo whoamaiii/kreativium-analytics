@@ -32,7 +32,9 @@ function determineOptimalChartType(filteredData: OverviewPanelProps['filteredDat
   for (const ts of timestamps) {
     try {
       dayKeys.add(ts.toISOString().split('T')[0]);
-    } catch {}
+    } catch {
+      // @silent-ok: invalid date conversion is skipped
+    }
   }
   if (dayKeys.size >= 3) return 'line';
 
@@ -76,7 +78,9 @@ export const OverviewPanel = memo(
     useEffect(() => {
       try {
         runAnalysis(filteredData, { useAI: false });
-      } catch {}
+      } catch {
+        // @silent-ok: analysis failure is handled by worker
+      }
     }, [filteredData, runAnalysis]);
 
     // Extract 2-3 most significant patterns
@@ -93,6 +97,7 @@ export const OverviewPanel = memo(
           .slice(0, 3);
         setTopPatterns(ranked);
       } catch {
+        // @silent-ok: pattern processing failure resets to empty list
         setTopPatterns([]);
       }
     }, [results?.patterns]);

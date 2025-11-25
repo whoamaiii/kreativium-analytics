@@ -45,6 +45,7 @@ export function ExplanationSheet({
     try {
       return !!analyticsConfig.getConfig().features?.explanationV2;
     } catch {
+      // @silent-ok: config access failure falls back to disabled
       return false;
     }
   }, []);
@@ -53,12 +54,16 @@ export function ExplanationSheet({
     function handleCollapseAll() {
       try {
         if (detailsRef.current) detailsRef.current.open = false;
-      } catch {}
+      } catch {
+        // @silent-ok: DOM manipulation failure is non-critical
+      }
     }
     function handleExpandAll() {
       try {
         if (detailsRef.current) detailsRef.current.open = true;
-      } catch {}
+      } catch {
+        // @silent-ok: DOM manipulation failure is non-critical
+      }
     }
     window.addEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
     window.addEventListener('explanationV2:expandAll', handleExpandAll as EventListener);
@@ -121,6 +126,7 @@ export function ExplanationSheet({
                         sensoryInputs: dataset.sensoryInputs as any,
                       });
                     } catch {
+                      // @silent-ok: context computation failure returns undefined
                       return undefined;
                     }
                   })()}
