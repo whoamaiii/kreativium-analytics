@@ -1,25 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { saveTrackingEntry } from '@/lib/tracking/saveTrackingEntry';
-import { dataStorage } from '@/lib/dataStorage';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
 import { analyticsManager } from '@/lib/analyticsManager';
+import { storageService } from '@/lib/storage/storageService';
 
 vi.mock('@/lib/logger', () => ({
   logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/lib/dataStorage', async (orig) => {
-  const mod: any = await orig();
-  return {
-    ...mod,
-    dataStorage: {
-      ...mod.dataStorage,
-      saveTrackingEntry: vi.fn(),
-      getStudentById: vi.fn(() => ({ id: 'stu-1', name: 'S', createdAt: new Date() })),
-      getGoalsForStudent: vi.fn(() => [{ id: 'g1' }]),
-    },
-  };
-});
+vi.mock('@/new/storage/storageService', () => ({
+  storageService: {
+    saveSession: vi.fn(),
+    listStudents: vi.fn(() => [
+      {
+        id: 'stu-1',
+        name: 'S',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]),
+  },
+}));
 
 vi.mock('@/lib/analyticsCoordinator', async (orig) => {
   const mod: any = await orig();
@@ -73,12 +74,12 @@ describe('saveTrackingEntry (unified helper)', () => {
   }
 
   it('runs validate → save → broadcast → trigger in order on success', async () => {
-    (dataStorage.saveTrackingEntry as any).mockResolvedValue(undefined);
+    (storageService.saveSession as any).mockResolvedValue(undefined);
     const entry = makeEntry();
     const res = await saveTrackingEntry(entry);
     expect(res.success).toBe(true);
-    expect(dataStorage.saveTrackingEntry).toHaveBeenCalledWith(entry);
-    expect(analyticsCoordinator.broadcastCacheClear).toHaveBeenCalledWith('stu-1');
+    expect(storageService.saveSession).toHaveBeenCalled();
+    expect(AnalyticsWorkerCoordinator.broadcastCacheClear).toHaveBeenCalledWith('stu-1');
     expect(analyticsManager.triggerAnalyticsForStudent).toHaveBeenCalledWith({
       id: 'stu-1',
       name: 'S',
@@ -97,11 +98,11 @@ describe('saveTrackingEntry (unified helper)', () => {
     const res = await saveTrackingEntry(entry);
     expect(res.success).toBe(false);
     expect(res.errors).toEqual(['bad']);
-    expect(dataStorage.saveTrackingEntry).not.toHaveBeenCalled();
+    expect(storageService.saveSession).not.toHaveBeenCalled();
   });
 
   it('handles save failure gracefully and returns error', async () => {
-    (dataStorage.saveTrackingEntry as any).mockRejectedValueOnce(new Error('db down'));
+    (storageService.saveSession as any).mockRejectedValueOnce(new Error('db down'));
     const entry = makeEntry();
     const res = await saveTrackingEntry(entry);
     expect(res.success).toBe(false);
@@ -109,8 +110,8 @@ describe('saveTrackingEntry (unified helper)', () => {
   });
 
   it('continues when broadcast throws (fail-soft)', async () => {
-    (dataStorage.saveTrackingEntry as any).mockResolvedValue(undefined);
-    (analyticsCoordinator.broadcastCacheClear as any).mockImplementation(() => {
+    (storageService.saveSession as any).mockResolvedValue(undefined);
+    (AnalyticsWorkerCoordinator.broadcastCacheClear as any).mockImplementation(() => {
       throw new Error('evt');
     });
     const entry = makeEntry();
@@ -120,7 +121,7 @@ describe('saveTrackingEntry (unified helper)', () => {
   });
 
   it('does not block on analytics trigger errors', async () => {
-    (dataStorage.saveTrackingEntry as any).mockResolvedValue(undefined);
+    (storageService.saveSession as any).mockResolvedValue(undefined);
     (analyticsManager.triggerAnalyticsForStudent as any).mockRejectedValueOnce(new Error('boom'));
     const entry = makeEntry();
     const res = await saveTrackingEntry(entry);
@@ -128,9 +129,9 @@ describe('saveTrackingEntry (unified helper)', () => {
   });
 
   it('extracts studentId for targeted invalidation', async () => {
-    (dataStorage.saveTrackingEntry as any).mockResolvedValue(undefined);
+    (storageService.saveSession as any).mockResolvedValue(undefined);
     const entry = makeEntry({ studentId: 'stu-xyz' });
     await saveTrackingEntry(entry);
-    expect(analyticsCoordinator.broadcastCacheClear).toHaveBeenCalledWith('stu-xyz');
+    expect(AnalyticsWorkerCoordinator.broadcastCacheClear).toHaveBeenCalledWith('stu-xyz');
   });
 });

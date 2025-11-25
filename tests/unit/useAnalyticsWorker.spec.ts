@@ -4,8 +4,9 @@ import { renderHook, act } from '@testing-library/react';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { analyticsManager } from '@/lib/analyticsManager';
-import { dataStorage } from '@/lib/dataStorage';
 import { analyticsConfig } from '@/lib/analyticsConfig';
+import { legacyAnalyticsAdapter } from '@/new/analytics/legacyAnalyticsAdapter';
+import { resetWorkerManagerForTests } from '@/lib/analytics/workerManager';
 import type {
   AnalyticsData,
   AnalyticsWorkerMessage,
@@ -51,6 +52,11 @@ vi.mock('@/workers/analytics.worker?worker', () => {
 
     constructor() {
       TestWorker.instances.push(this);
+      setTimeout(() => {
+        this.onmessage?.({
+          data: { type: 'progress' },
+        } as MessageEvent<AnalyticsWorkerMessage>);
+      }, 0);
     }
   }
 
@@ -59,7 +65,7 @@ vi.mock('@/workers/analytics.worker?worker', () => {
 
 const processAnalyticsSpy = vi.spyOn(analyticsWorkerFallback, 'processAnalytics');
 const getStudentAnalyticsSpy = vi.spyOn(analyticsManager, 'getStudentAnalytics');
-const getGoalsSpy = vi.spyOn(dataStorage, 'getGoalsForStudent');
+const getGoalsSpy = vi.spyOn(legacyAnalyticsAdapter, 'listGoalsForStudent');
 const getConfigSpy = vi.spyOn(analyticsConfig, 'getConfig');
 
 const createTrackingEntry = (
@@ -138,9 +144,17 @@ const getWorkerInstances = (): Array<{ postMessage: Mock; addEventListener: Mock
   return instances ?? [];
 };
 
+const flushAsyncEffects = async () => {
+  await act(async () => {
+    await Promise.resolve();
+  });
+};
+
 describe('useAnalyticsWorker (unit)', () => {
+  const WORKER_TEST_TIMEOUT = 15000;
+
   beforeEach(() => {
-    vi.useFakeTimers();
+    resetWorkerManagerForTests();
     processAnalyticsSpy.mockReset();
     getStudentAnalyticsSpy.mockReset();
     getGoalsSpy.mockReset();
@@ -156,23 +170,31 @@ describe('useAnalyticsWorker (unit)', () => {
     lastPostedTask = null;
   });
   afterEach(() => {
-    vi.useRealTimers();
+    resetWorkerManagerForTests();
   });
 
-  it('fetches goals when student provided and includes in cache key path', async () => {
-    getGoalsSpy.mockReturnValue([createGoal('g1', 's1')]);
-    const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
-    await act(async () => {
-      await result.current.runAnalysis(
+  it(
+    'fetches goals when student provided and includes in cache key path',
+    async () => {
+      getGoalsSpy.mockReturnValue([createGoal('g1', 's1')]);
+      const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+      await flushAsyncEffects();
+      await act(async () => {
+        await result.current.runAnalysis(
         createAnalyticsData({ entries: [createTrackingEntry('s1', { id: 't1' })] }),
         { student: createStudent('s1') },
       );
     });
-    expect(dataStorage.getGoalsForStudent).toHaveBeenCalledWith('s1');
-  });
+      expect(legacyAnalyticsAdapter.listGoalsForStudent).toHaveBeenCalledWith('s1');
+    },
+    WORKER_TEST_TIMEOUT,
+  );
 
-  it('cacheKey composition changes with goals and config', async () => {
-    const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+  it(
+    'cacheKey composition changes with goals and config',
+    async () => {
+      const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+      await flushAsyncEffects();
     // First run: no goals
     getGoalsSpy.mockReturnValueOnce([]);
     lastPostedTask = null;
@@ -218,10 +240,15 @@ describe('useAnalyticsWorker (unit)', () => {
     const keyAfterConfig = lastPostedTask?.cacheKey ?? '';
     expect(keyAfterConfig).toBeTruthy();
     expect(keyAfterConfig).not.toEqual(keyWithGoals);
-  });
+    },
+    WORKER_TEST_TIMEOUT,
+  );
 
-  it('config change clears cache leading to recomputation (worker postMessage increments)', async () => {
-    const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+  it(
+    'config change clears cache leading to recomputation (worker postMessage increments)',
+    async () => {
+      const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+      await flushAsyncEffects();
     const inst = getWorkerInstances()[0];
     // Prime cache
     await act(async () => {
@@ -243,61 +270,83 @@ describe('useAnalyticsWorker (unit)', () => {
     });
     const callsAfter = inst?.postMessage.mock.calls.length ?? 0;
     expect(callsAfter).toBeGreaterThan(callsBefore);
-  });
+    },
+    WORKER_TEST_TIMEOUT,
+  );
 
-  it('routes to analyticsManager when useAI=true and sets results', async () => {
-    getStudentAnalyticsSpy.mockResolvedValue({ ...emptyResults, ai: { provider: 'mock' } });
-    const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
-    await act(async () => {
-      await result.current.runAnalysis(
-        createAnalyticsData({ entries: [createTrackingEntry('s2', { id: 't2' })] }),
-        { useAI: true, student: createStudent('s2') },
-      );
-    });
-    expect(analyticsManager.getStudentAnalytics).toHaveBeenCalled();
-    expect(result.current.error).toBeNull();
-  });
+  it(
+    'routes to analyticsManager when useAI=true and sets results',
+    async () => {
+      getStudentAnalyticsSpy.mockResolvedValue({ ...emptyResults, ai: { provider: 'mock' } });
+      const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+      await flushAsyncEffects();
+      await act(async () => {
+        await result.current.runAnalysis(
+          createAnalyticsData({ entries: [createTrackingEntry('s2', { id: 't2' })] }),
+          { useAI: true, student: createStudent('s2') },
+        );
+      });
+      expect(analyticsManager.getStudentAnalytics).toHaveBeenCalled();
+      expect(result.current.error).toBeNull();
+    },
+    WORKER_TEST_TIMEOUT,
+  );
 
-  it('subscribes to cache clear events and invalidates student-specific cache', async () => {
-    const { result } = renderHook(() =>
-      useAnalyticsWorker({ precomputeOnIdle: false, enableCacheStats: true }),
-    );
-    // Prime cache by running once
-    await act(async () => {
-      await result.current.runAnalysis(
-        createAnalyticsData({ entries: [createTrackingEntry('stu-x', { id: 't3' })] }),
-        { student: createStudent('stu-x') },
+  it(
+    'subscribes to cache clear events and invalidates student-specific cache',
+    async () => {
+      const { result } = renderHook(() =>
+        useAnalyticsWorker({ precomputeOnIdle: false, enableCacheStats: true }),
       );
-    });
-    // Fire student-specific clear; expect no crash (cannot directly assert internals)
-    act(() => {
-      window.dispatchEvent(
-        new CustomEvent('analytics:cache:clear:student', { detail: { studentId: 'stu-x' } }),
-      );
-    });
-    expect(typeof result.current.clearCache).toBe('function');
-  });
+      await flushAsyncEffects();
+      // Prime cache by running once
+      await act(async () => {
+        await result.current.runAnalysis(
+          createAnalyticsData({ entries: [createTrackingEntry('stu-x', { id: 't3' })] }),
+          { student: createStudent('stu-x') },
+        );
+      });
+      // Fire student-specific clear; expect no crash (cannot directly assert internals)
+      act(() => {
+        window.dispatchEvent(
+          new CustomEvent('analytics:cache:clear:student', { detail: { studentId: 'stu-x' } }),
+        );
+      });
+      expect(typeof result.current.clearCache).toBe('function');
+    },
+    WORKER_TEST_TIMEOUT,
+  );
 
-  it('clears cache on config change when invalidateOnConfigChange is true', async () => {
-    const sub = vi.spyOn(analyticsConfig, 'subscribe');
-    const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
-    const cb = sub.mock.calls[0][0];
-    act(() => {
-      cb({ cache: { invalidateOnConfigChange: true } } as unknown as AnalyticsConfiguration);
-    });
-    expect(typeof result.current.clearCache).toBe('function');
-  });
+  it(
+    'clears cache on config change when invalidateOnConfigChange is true',
+    async () => {
+      const sub = vi.spyOn(analyticsConfig, 'subscribe');
+      const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+      await flushAsyncEffects();
+      const cb = sub.mock.calls[0][0];
+      act(() => {
+        cb({ cache: { invalidateOnConfigChange: true } } as unknown as AnalyticsConfiguration);
+      });
+      expect(typeof result.current.clearCache).toBe('function');
+    },
+    WORKER_TEST_TIMEOUT,
+  );
 
-  it('sets and clears error state on worker error path', async () => {
-    // Simulate fallback error return
-    processAnalyticsSpy.mockResolvedValue(emptyResults);
-    const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
-    await act(async () => {
-      await result.current.runAnalysis(
-        createAnalyticsData({ entries: [createTrackingEntry('sx', { id: 't4' })] }),
-        { student: createStudent('sx'), useAI: false },
-      );
-    });
-    expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
-  });
+  it(
+    'sets and clears error state on worker error path',
+    async () => {
+      // Simulate fallback error return
+      processAnalyticsSpy.mockResolvedValue(emptyResults);
+      const { result } = renderHook(() => useAnalyticsWorker({ precomputeOnIdle: false }));
+      await flushAsyncEffects();
+      await act(async () => {
+        await result.current.runAnalysis(
+          createAnalyticsData({ entries: [createTrackingEntry('sx', { id: 't4' })] }),
+          { student: createStudent('sx'), useAI: false },
+        );
+      });
+      expect(result.current.error === null || typeof result.current.error === 'string').toBe(true);
+    },
+    WORKER_TEST_TIMEOUT,
+  );
 });

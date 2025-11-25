@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useReducer } from 'r
 import { EmotionEntry, SensoryEntry, TrackingEntry, EnvironmentalEntry } from '@/types/student';
 import { differenceInMinutes, subMinutes } from 'date-fns';
 import { logger } from '@/lib/logger';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
 import { TEMPERATURE, HUMIDITY, NOISE_LEVEL, WEATHER, PROBABILITY } from '@/config/constants';
 import { MAX_REALTIME_DATA_POINTS } from '@/constants/analytics';
 
@@ -284,7 +284,7 @@ export const useRealtimeData = (
           const delay = Math.max(250, Math.min(1000, updateIntervalRef.current || 1000));
           const timer = setTimeout(() => {
             try {
-              analyticsCoordinator.broadcastCacheClear(derivedStudentId);
+              AnalyticsWorkerCoordinator.broadcastCacheClear(derivedStudentId);
             } catch {
               /* noop */
             }

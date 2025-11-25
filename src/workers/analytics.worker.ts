@@ -202,11 +202,8 @@ function runAlertDetection(data: AnalyticsData, opts?: { prewarm?: boolean }): A
         },
       }));
   } catch (error) {
-    try {
-      logger.warn('[analytics.worker] Alert detection failed', error as Error);
-    } catch {
-      /* noop */
-    }
+    // Log at warn level since alert detection failure is recoverable
+    logger.warn('[analytics.worker] Alert detection failed', { error });
     return [];
   }
 }
@@ -277,11 +274,7 @@ export async function handleMessage(e: MessageEvent<unknown>) {
 
   if (!msg) {
     // Invalid message structure - log and ignore
-    try {
-      logger.warn('[analytics.worker] Received invalid message', { data: e.data });
-    } catch {
-      /* noop */
-    }
+    logger.warn('[analytics.worker] Received invalid message', { data: e.data });
     return;
   }
 
@@ -292,8 +285,8 @@ export async function handleMessage(e: MessageEvent<unknown>) {
       const key = `game:event:count:${msg.payload.kind}`;
       const prev = (workerCache.get(key) as number | undefined) ?? 0;
       workerCache.set(key, prev + 1, ['game-events'], 300000);
-    } catch {
-      /* noop */
+    } catch (e) {
+      logger.debug('[analytics.worker] Failed to process game event', { error: e, kind: msg.payload.kind });
     }
     return;
   }
@@ -308,8 +301,8 @@ export async function handleMessage(e: MessageEvent<unknown>) {
         type: 'alerts',
         payload: { alerts: [], prewarm: true },
       } as unknown as AnalyticsWorkerMessage);
-    } catch {
-      /* noop */
+    } catch (e) {
+      logger.debug('[analytics.worker] Failed to process game session summary', { error: e });
     }
     return;
   }
@@ -317,13 +310,12 @@ export async function handleMessage(e: MessageEvent<unknown>) {
   // Handle cache control messages
   if (isCacheClearAllRequest(msg)) {
     try {
-      const patternsCleared = (() => {
-        try {
-          return cachedAnalysis.invalidateAllCache();
-        } catch {
-          return 0;
-        }
-      })();
+      let patternsCleared = 0;
+      try {
+        patternsCleared = cachedAnalysis.invalidateAllCache();
+      } catch (e) {
+        logger.warn('[analytics.worker] Pattern cache invalidation failed during clear all', { error: e });
+      }
       const cacheCleared = workerCache.clearAll();
       const response: CacheClearDoneResponse = {
         type: 'CACHE/CLEAR_DONE',
@@ -331,24 +323,19 @@ export async function handleMessage(e: MessageEvent<unknown>) {
       };
       enqueueMessage(response as unknown as AnalyticsWorkerMessage);
     } catch (err) {
-      try {
-        logger.error('[analytics.worker] Cache clear all failed', err as Error);
-      } catch {
-        /* noop */
-      }
+      logger.error('[analytics.worker] Cache clear all failed', { error: err });
     }
     return;
   }
 
   if (isCacheClearStudentRequest(msg)) {
     try {
-      const patternsCleared = (() => {
-        try {
-          return cachedAnalysis.invalidateStudentCache(msg.studentId);
-        } catch {
-          return 0;
-        }
-      })();
+      let patternsCleared = 0;
+      try {
+        patternsCleared = cachedAnalysis.invalidateStudentCache(msg.studentId);
+      } catch (e) {
+        logger.warn('[analytics.worker] Pattern cache invalidation failed for student', { error: e, studentId: msg.studentId });
+      }
       const cacheCleared = workerCache.clearByStudentId(msg.studentId);
       const response: CacheClearDoneResponse = {
         type: 'CACHE/CLEAR_DONE',
@@ -362,35 +349,26 @@ export async function handleMessage(e: MessageEvent<unknown>) {
       };
       enqueueMessage(response as unknown as AnalyticsWorkerMessage);
     } catch (err) {
-      try {
-        logger.error('[analytics.worker] Cache clear student failed', err as Error);
-      } catch {
-        /* noop */
-      }
+      logger.error('[analytics.worker] Cache clear student failed', { error: err, studentId: msg.studentId });
     }
     return;
   }
 
   if (isCacheClearPatternsRequest(msg)) {
     try {
-      const patternsCleared = (() => {
-        try {
-          return cachedAnalysis.invalidateAllCache();
-        } catch {
-          return 0;
-        }
-      })();
+      let patternsCleared = 0;
+      try {
+        patternsCleared = cachedAnalysis.invalidateAllCache();
+      } catch (e) {
+        logger.warn('[analytics.worker] Pattern cache invalidation failed during patterns clear', { error: e });
+      }
       const response: CacheClearDoneResponse = {
         type: 'CACHE/CLEAR_DONE',
         payload: { scope: 'patterns', patternsCleared, stats: workerCache.getStats() },
       };
       enqueueMessage(response as unknown as AnalyticsWorkerMessage);
     } catch (err) {
-      try {
-        logger.error('[analytics.worker] Cache clear patterns failed', err as Error);
-      } catch {
-        /* noop */
-      }
+      logger.error('[analytics.worker] Cache clear patterns failed', { error: err });
     }
     return;
   }
@@ -420,11 +398,7 @@ export async function handleMessage(e: MessageEvent<unknown>) {
     filteredData = msg;
   } else {
     // Unknown message type after validation - should not happen
-    try {
-      logger.warn('[analytics.worker] Unknown validated message type', { msg });
-    } catch {
-      /* noop */
-    }
+    logger.warn('[analytics.worker] Unknown validated message type', { msg });
     return;
   }
 
@@ -646,12 +620,7 @@ export async function handleMessage(e: MessageEvent<unknown>) {
       progress: { stage: 'complete', percent: 100 },
     });
   } catch (error) {
-    try {
-      logger.error('[analytics.worker] error', error);
-    } catch (e) {
-      /* ignore logging failure */
-    }
-    logger.error('Error in analytics worker:', error);
+    logger.error('[analytics.worker] Analysis failed', { error });
     // Post an error message back to the main thread for graceful error handling.
     // Include empty results to prevent UI errors
     enqueueMessage({
@@ -693,9 +662,7 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
           },
         });
       } catch (err) {
-        try {
-          logger.warn('[analytics.worker] Failed to post error message', err as Error);
-        } catch {}
+        logger.warn('[analytics.worker] Failed to post error message', { error: err });
       }
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -720,15 +687,11 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
           },
         });
       } catch (err) {
-        try {
-          logger.warn('[analytics.worker] Failed to post rejection message', err as Error);
-        } catch {}
+        logger.warn('[analytics.worker] Failed to post rejection message', { error: err });
       }
     });
   } catch (e) {
-    try {
-      logger.warn('[analytics.worker] Failed to setup error handlers', e as Error);
-    } catch {}
+    logger.warn('[analytics.worker] Failed to setup error handlers', { error: e });
   }
 
   // Signal readiness so main thread can flush any queued tasks
@@ -736,9 +699,7 @@ if (typeof self !== 'undefined' && 'onmessage' in self) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (postMessage as any)({ type: 'progress', progress: { stage: 'ready', percent: 1 } });
   } catch (e) {
-    try {
-      logger.warn('[analytics.worker] Failed to post ready signal', e as Error);
-    } catch {}
+    logger.warn('[analytics.worker] Failed to post ready signal', { error: e });
   }
 
   self.onmessage = handleMessage;

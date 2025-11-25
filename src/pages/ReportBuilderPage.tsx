@@ -10,22 +10,22 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useTranslation } from '@/hooks/useTranslation';
-import { dataStorage } from '@/lib/dataStorage';
 import { LazyReportBuilder } from '@/components/lazy/LazyReportBuilder';
 import type { Student, Goal, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
+import { useStudents, useGoalsByStudent } from '@/hooks/useStorageData';
+import { convertLocalStudentToLegacy, convertLocalGoalToLegacy } from '@/lib/adapters/legacyConverters';
+import { useLegacyTrackingEntries } from '@/hooks/useLegacyTrackingEntries';
 
 const ReportBuilderPage = (): JSX.Element => {
   const { tCommon } = useTranslation();
   const [params] = useSearchParams();
   const template = params.get('template') ?? 'progress-summary';
 
-  const students: Student[] = useMemo(() => {
-    try {
-      return dataStorage.getStudents();
-    } catch {
-      return [];
-    }
-  }, []);
+  const localStudents = useStudents();
+  const students: Student[] = useMemo(
+    () => localStudents.map((student) => convertLocalStudentToLegacy(student) as Student),
+    [localStudents],
+  );
 
   const [studentId, setStudentId] = useState<string>('');
 
@@ -33,24 +33,30 @@ const ReportBuilderPage = (): JSX.Element => {
     () => students.find((s) => s.id === studentId),
     [students, studentId],
   );
+  const rawGoals = useGoalsByStudent(selectedStudent?.id);
+  const goalsForStudent = useMemo<Goal[]>(
+    () => (rawGoals ?? []).map((goal) => convertLocalGoalToLegacy(goal) as Goal),
+    [rawGoals],
+  );
+  const rawEntries = useLegacyTrackingEntries(
+    selectedStudent?.id ? { studentId: selectedStudent.id } : undefined,
+  );
+  const entries = useMemo<TrackingEntry[]>(() => {
+    if (!rawEntries.length) return [];
+    return [...rawEntries].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [rawEntries]);
 
   const scopedData = useMemo(() => {
     if (!selectedStudent) return null;
-    let goals: Goal[] = [];
-    let entries: TrackingEntry[] = [];
-    try {
-      goals = (dataStorage.getGoals() as Goal[]).filter((g) => g.studentId === selectedStudent.id);
-      entries = (dataStorage.getTrackingEntries() as TrackingEntry[]).filter(
-        (e) => e.studentId === selectedStudent.id,
-      );
-    } catch {
-      goals = [];
-      entries = [];
-    }
     const emotions: EmotionEntry[] = entries.flatMap((e) => e.emotions);
     const sensoryInputs: SensoryEntry[] = entries.flatMap((e) => e.sensoryInputs);
-    return { goals, entries, emotions, sensoryInputs } as const;
-  }, [selectedStudent]);
+    return {
+      goals: goalsForStudent,
+      entries,
+      emotions,
+      sensoryInputs,
+    } as const;
+  }, [selectedStudent, entries, goalsForStudent]);
 
   return (
     <main className="min-h-screen px-4 py-8 sm:px-6 lg:px-8" role="main">

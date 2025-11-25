@@ -1,36 +1,50 @@
 /**
- * Utility functions for managing localStorage
+ * @file Utility functions for managing localStorage
+ *
+ * @deprecated This module is deprecated. Use storageService from '@/lib/storage' instead.
+ * Kept for backward compatibility during migration.
  */
 import { logger } from '@/lib/logger';
 import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
+import { STORAGE_NAMESPACE } from '@/lib/storage/storageKeys';
 
 export const storageUtils = {
   /**
    * Check available storage space
    */
   getStorageInfo(): { used: number; available: boolean } {
+    if (typeof window === 'undefined') {
+      return { used: 0, available: true };
+    }
     let used = 0;
-    for (const key in localStorage) {
-      if (localStorage.hasOwnProperty(key)) {
-        used += localStorage[key].length + key.length;
+    try {
+      for (const key in localStorage) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
+          used += localStorage[key].length + key.length;
+        }
       }
+    } catch (error) {
+      logger.warn('[storageUtils] Failed to calculate storage info', { error });
     }
     return {
       used,
-      available: used < MAX_LOCAL_STORAGE_BYTES, // 5MB approximate limit
+      available: used < MAX_LOCAL_STORAGE_BYTES,
     };
   },
 
   /**
-   * Clear old tracking data to free up space
+   * Clear old tracking data to free up space.
+   * Works with both legacy (sensoryTracker_*) and new (kreativium.local::*) keys.
    */
   clearOldTrackingData(daysToKeep: number = 30): void {
+    if (typeof window === 'undefined') return;
+
     try {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
 
-      // Clear old tracking entries
+      // Clear old tracking entries (legacy key)
       const entriesKey = STORAGE_KEYS.ENTRIES;
       const entriesData = localStorage.getItem(entriesKey);
       if (entriesData) {
@@ -42,19 +56,43 @@ export const storageUtils = {
         localStorage.setItem(entriesKey, JSON.stringify(filteredEntries));
       }
 
-      // Clear old alerts
+      // Clear old sessions (new key)
+      const sessionsKey = `${STORAGE_NAMESPACE}::sessions`;
+      const sessionsData = localStorage.getItem(sessionsKey);
+      if (sessionsData) {
+        const sessions = JSON.parse(sessionsData);
+        const filteredSessions = sessions.filter((session: { updatedAt: string | Date }) => {
+          const sessionDate = new Date(session.updatedAt);
+          return sessionDate > cutoffDate;
+        });
+        localStorage.setItem(sessionsKey, JSON.stringify(filteredSessions));
+      }
+
+      // Clear old alerts (legacy key)
       const alertsKey = STORAGE_KEYS.ALERTS;
       const alertsData = localStorage.getItem(alertsKey);
       if (alertsData) {
         const alerts = JSON.parse(alertsData);
-        const filteredAlerts = alerts.filter((alert: { timestamp: string | Date }) => {
-          const alertDate = new Date(alert.timestamp);
+        const filteredAlerts = alerts.filter((alert: { timestamp?: string | Date; createdAt?: string | Date }) => {
+          const alertDate = new Date(alert.createdAt || alert.timestamp || 0);
           return alertDate > cutoffDate;
         });
         localStorage.setItem(alertsKey, JSON.stringify(filteredAlerts));
       }
+
+      // Clear old alerts (new key)
+      const newAlertsKey = `${STORAGE_NAMESPACE}::alerts`;
+      const newAlertsData = localStorage.getItem(newAlertsKey);
+      if (newAlertsData) {
+        const alerts = JSON.parse(newAlertsData);
+        const filteredAlerts = alerts.filter((alert: { createdAt: string | Date }) => {
+          const alertDate = new Date(alert.createdAt);
+          return alertDate > cutoffDate;
+        });
+        localStorage.setItem(newAlertsKey, JSON.stringify(filteredAlerts));
+      }
     } catch (error) {
-      logger.error('Error clearing old data:', error);
+      logger.error('[storageUtils] Error clearing old data:', { error });
     }
   },
 
@@ -62,7 +100,6 @@ export const storageUtils = {
    * Compress data before storing
    */
   compressData(data: unknown): string {
-    // Remove unnecessary whitespace from JSON
     return JSON.stringify(data);
   },
 
@@ -70,23 +107,23 @@ export const storageUtils = {
    * Safe storage with quota handling
    */
   safeSetItem(key: string, value: string): void {
+    if (typeof window === 'undefined') return;
+
     try {
       localStorage.setItem(key, value);
     } catch (e) {
       if (
         e instanceof DOMException &&
-        (e.code === 22 || // Quota exceeded
-          e.code === 1014 || // NS_ERROR_DOM_QUOTA_REACHED (Firefox)
+        (e.code === 22 ||
+          e.code === 1014 ||
           e.name === 'QuotaExceededError' ||
           e.name === 'NS_ERROR_DOM_QUOTA_REACHED')
       ) {
-        // Try to clear old data and retry
         this.clearOldTrackingData();
 
         try {
           localStorage.setItem(key, value);
-        } catch (retryError) {
-          // If still failing, clear all non-essential data
+        } catch {
           this.clearNonEssentialData();
           localStorage.setItem(key, value);
         }
@@ -97,19 +134,33 @@ export const storageUtils = {
   },
 
   /**
-   * Clear non-essential data when storage is full
+   * Clear non-essential data when storage is full.
+   * Works with both legacy and new storage namespaces.
    */
   clearNonEssentialData(): void {
-    const essentialKeys = [STORAGE_KEYS.STUDENTS, STORAGE_KEYS.GOALS, STORAGE_KEYS.DATA_VERSION];
+    if (typeof window === 'undefined') return;
 
-    for (const key in localStorage) {
-      if (
-        localStorage.hasOwnProperty(key) &&
-        key.startsWith('sensoryTracker_') &&
-        !essentialKeys.includes(key)
-      ) {
-        localStorage.removeItem(key);
+    const essentialKeys = new Set([
+      STORAGE_KEYS.STUDENTS,
+      STORAGE_KEYS.GOALS,
+      STORAGE_KEYS.DATA_VERSION,
+      `${STORAGE_NAMESPACE}::students`,
+      `${STORAGE_NAMESPACE}::goals`,
+      `${STORAGE_NAMESPACE}::version`,
+    ]);
+
+    try {
+      for (const key in localStorage) {
+        if (
+          Object.prototype.hasOwnProperty.call(localStorage, key) &&
+          (key.startsWith('sensoryTracker_') || key.startsWith(STORAGE_NAMESPACE)) &&
+          !essentialKeys.has(key)
+        ) {
+          localStorage.removeItem(key);
+        }
       }
+    } catch (error) {
+      logger.warn('[storageUtils] Failed to clear non-essential data', { error });
     }
   },
 };

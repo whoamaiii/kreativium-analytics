@@ -3,16 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Student } from '@/types/student';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LanguageSettings } from '@/components/LanguageSettings';
 import { analyticsManager } from '@/lib/analyticsManager';
-import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
 import { validateStudent, sanitizeInput } from '@/lib/formValidation';
+import { useStudentActions } from '@/hooks/useMutationActions';
 
 const AddStudent = () => {
   const [name, setName] = useState('');
@@ -24,6 +23,7 @@ const AddStudent = () => {
 
   const navigate = useNavigate();
   const { tStudent, tCommon } = useTranslation();
+  const { upsertStudent } = useStudentActions();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,17 +55,12 @@ const AddStudent = () => {
       const sanitizedGrade = grade ? sanitizeInput(grade) : undefined;
       const sanitizedNotes = notes ? sanitizeInput(notes) : undefined;
 
-      const newStudent: Student = {
-        id: crypto.randomUUID(),
+      const newStudent = upsertStudent({
         name: sanitizedName,
-        grade: sanitizedGrade,
+        gradeLevel: sanitizedGrade,
         dateOfBirth: dateOfBirth || undefined,
         notes: sanitizedNotes,
-        createdAt: new Date(),
-      };
-
-      // Save student using proper dataStorage method
-      dataStorage.saveStudent(newStudent);
+      });
 
       // Initialize analytics infrastructure only (no mock data generation)
       analyticsManager.initializeStudentAnalytics(newStudent.id);

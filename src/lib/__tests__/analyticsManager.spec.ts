@@ -19,28 +19,39 @@ vi.mock('@/lib/alertSystem', () => ({
   alertSystem: { generateAlertsForStudent: vi.fn().mockResolvedValue(undefined) },
 }));
 
-// Provide a simple in-memory dataStorage mock
-vi.mock('@/lib/dataStorage', () => {
+vi.mock('@/new/analytics/localAnalyticsDataStorage', () => {
   const trackingByStudent = new Map<string, any[]>();
   const goalsByStudent = new Map<string, any[]>();
   const students: any[] = [
     { id: 's1', name: 'Alice' },
     { id: 's2', name: 'Bob' },
   ];
-  return {
-    dataStorage: {
-      getStudents: () => students.slice(),
-      getTrackingEntriesForStudent: (id: string) => trackingByStudent.get(id) ?? [],
-      getEntriesForStudent: (id: string) => trackingByStudent.get(id) ?? [],
-      getGoalsForStudent: (id: string) => goalsByStudent.get(id) ?? [],
-      saveTrackingEntry: (entry: any) => {
-        const list = trackingByStudent.get(entry.studentId) ?? [];
-        list.push(entry);
-        trackingByStudent.set(entry.studentId, list);
-      },
+  const api = {
+    getStudents: () => students.slice(),
+    getTrackingEntriesForStudent: (id: string) => trackingByStudent.get(id) ?? [],
+    getGoalsForStudent: (id: string) => goalsByStudent.get(id) ?? [],
+    saveTrackingEntry: (entry: any) => {
+      const list = trackingByStudent.get(entry.studentId) ?? [];
+      list.push(entry);
+      trackingByStudent.set(entry.studentId, list);
     },
-    IDataStorage: {} as any,
-    __reset: () => {
+    deleteTrackingEntry: (entryId: string) => {
+      for (const [studentId, entries] of trackingByStudent) {
+        trackingByStudent.set(
+          studentId,
+          entries.filter((entry) => entry.id !== entryId),
+        );
+      }
+    },
+    getGoals: () =>
+      Array.from(goalsByStudent.values()).reduce<readonly any[]>(
+        (acc, list) => acc.concat(list),
+        [],
+      ),
+  };
+  return {
+    localAnalyticsDataStorage: api,
+    __resetLocalAnalyticsStore: () => {
       trackingByStudent.clear();
       goalsByStudent.clear();
     },
@@ -104,8 +115,8 @@ describe('analyticsManager.getStudentAnalytics', () => {
     vi.setSystemTime(new Date('2025-01-01T00:00:00.000Z'));
     setupLocalStorage();
     vi.clearAllMocks();
-    const storageModule: any = await import('@/lib/dataStorage');
-    storageModule.__reset?.();
+    const storeModule: any = await import('@/new/analytics/localAnalyticsDataStorage');
+    storeModule.__resetLocalAnalyticsStore?.();
     analyticsManager.clearCache();
   });
   afterEach(() => {
@@ -115,8 +126,10 @@ describe('analyticsManager.getStudentAnalytics', () => {
   it('returns expected shape for getStudentAnalytics', async () => {
     const student = { id: 's1', name: 'Alice' } as any;
 
-    // Seed some simple tracking data via dataStorage mock
-    const { dataStorage }: any = await import('@/lib/dataStorage');
+    // Seed some simple tracking data via analytics data storage mock
+    const { localAnalyticsDataStorage }: any = await import(
+      '@/new/analytics/localAnalyticsDataStorage'
+    );
     const entry = {
       id: 't1',
       studentId: 's1',
@@ -124,7 +137,7 @@ describe('analyticsManager.getStudentAnalytics', () => {
       emotions: [],
       sensoryInputs: [],
     };
-    dataStorage.saveTrackingEntry(entry);
+    localAnalyticsDataStorage.saveTrackingEntry(entry);
 
     const result = await analyticsManager.getStudentAnalytics(student);
     expect(result).toMatchObject({

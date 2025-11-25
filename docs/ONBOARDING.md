@@ -154,7 +154,9 @@ src/
 ├── lib/                 # Utilities and business logic
 │   ├── analyticsConfig.ts       # Runtime configuration
 │   ├── logger.ts                # Central logging utility
-│   ├── dataStorage.ts           # LocalStorage abstraction
+│   ├── new/
+│   │   └── storage/
+│   │       └── storageService.ts  # Local storage abstraction + broadcast
 │   ├── dataValidation.ts        # Data validation utilities
 │   └── echartsCore.ts           # Optimized ECharts imports
 ├── pages/               # Route components
@@ -178,7 +180,7 @@ src/
 ### Key Modules
 
 - **Analytics System**: analyticsConfig.ts, useAnalyticsWorker.ts, analyticsManager.ts
-- **Data Management**: dataStorage.ts, dataValidation.ts, mockDataGenerator.ts
+- **Data Management**: new/storage/storageService.ts, dataValidation.ts, mockDataGenerator.ts
 - **Visualization**: ChartKit.ts, EChartContainer.tsx, InteractiveDataVisualization.tsx
 - **Performance**: VirtualScrollArea.tsx, useOptimizedMemo.ts, analyticsWorkerFallback.ts
 

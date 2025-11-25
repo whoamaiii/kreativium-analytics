@@ -71,7 +71,7 @@ function TrendPct({ value }: { value: number | null }) {
 function ComparisonSummaryComponent({
   current,
   baseline,
-  mode,
+  mode: _mode,
   currentLabel,
   baselineLabel,
   className,
@@ -211,7 +211,9 @@ function ComparisonSummaryComponent({
       );
       try {
         announceToScreenReader('CSV eksportert');
-      } catch {}
+      } catch {
+        // Ignore screen reader announcement errors
+      }
       setLastExport({ type: 'csv', at: Date.now() });
     };
     const onJson = async () => {
@@ -219,9 +221,13 @@ function ComparisonSummaryComponent({
         await navigator.clipboard.writeText(buildJSON());
         try {
           announceToScreenReader('JSON kopiert til utklippstavlen');
-        } catch {}
+        } catch {
+          // Ignore screen reader announcement errors
+        }
         setLastExport({ type: 'json', at: Date.now() });
-      } catch {}
+      } catch {
+        // Ignore clipboard write errors
+      }
     };
 
     csvBtn.addEventListener('click', onCsv);
@@ -575,7 +581,9 @@ function ComparisonSummaryComponent({
                         sessionStorage.removeItem(`cmp_limits_${s}_${c}_${b}`);
                         sessionStorage.removeItem(`cmp_lastExport_${s}_${c}_${b}`);
                         announceToScreenReader(String(tAnalytics('interface.resetViewAnnounce')));
-                      } catch {}
+                      } catch {
+                        // Ignore storage/announcement errors
+                      }
                     }}
                   >
                     {String(tAnalytics('interface.resetView'))}

@@ -5,10 +5,11 @@ import { computeComparisonRange, type ComparisonMode } from '@/lib/analysis/date
 import { loadAiConfig } from '@/lib/aiConfig';
 import { openRouterClient } from '@/lib/ai/openrouterClient';
 import { useDataQualitySummaries } from '@/hooks/useDataQualitySummaries';
-import { dataStorage } from '@/lib/dataStorage';
 import { resolveSources } from '@/lib/evidence';
 import type { EvidenceSource } from '@/lib/evidence';
 import { logger } from '@/lib/logger';
+import type { Student } from '@/types/student';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
 
 export type Preset = 'all' | '7d' | '30d' | '90d';
 
@@ -23,7 +24,7 @@ export interface ToolbarLastAction {
 }
 
 export interface KreativiumAiState {
-  students: ReturnType<typeof dataStorage.getStudents>;
+  students: Student[];
   studentId: string;
   setStudentId: (id: string) => void;
   preset: Preset;
@@ -93,7 +94,7 @@ const formatRangeCacheKey = (range: ConcreteTimeRange | undefined): string => {
 const formatDateForStorage = (date: Date): string => date.toLocaleDateString();
 
 const getToolbarStorageKey = (
-  students: ReturnType<typeof dataStorage.getStudents>,
+  students: Student[],
   studentId: string,
   range: ConcreteTimeRange | undefined,
 ): string => {
@@ -121,9 +122,9 @@ const isComparisonMode = (value: string): value is ComparisonMode =>
   value === 'previous' || value === 'lastMonth' || value === 'lastYear';
 
 export const useKreativiumAiState = (): KreativiumAiState => {
-  const [students, setStudents] = useState(() => {
+  const [students, setStudents] = useState<Student[]>(() => {
     try {
-      return dataStorage.getStudents();
+      return legacyAnalyticsAdapter.listStudents();
     } catch (error) {
       logger.error('[useKreativiumAiState] Failed to load students initially', error as Error);
       return [];
@@ -182,7 +183,7 @@ export const useKreativiumAiState = (): KreativiumAiState => {
 
   useEffect(() => {
     try {
-      const loaded = dataStorage.getStudents();
+      const loaded = legacyAnalyticsAdapter.listStudents();
       setStudents(loaded);
       if (loaded.length > 0) {
         setStudentId((prev) => prev || loaded[0].id);

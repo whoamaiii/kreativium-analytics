@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { dataStorage } from '@/lib/dataStorage';
 import { toast } from '@/hooks/use-toast';
+import { storageService } from '@/lib/storage/storageService';
+import { convertLegacyGoalToLocal } from '@/lib/adapters/legacyConverters';
 
 type Props = {
   open: boolean;
@@ -34,9 +35,9 @@ export const CreateGoalFromAlertDialog = ({ open, alert, onOpenChange }: Props) 
   const handleCreate = () => {
     if (!alert) return;
     const now = new Date();
-    const goal = {
-      id: `${alert.id}:goal:${now.getTime()}`,
-      studentId: alert.studentId,
+      const goal = {
+        id: `${alert.id}:goal:${now.getTime()}`,
+        studentId: alert.studentId,
       title: title || defaultTitle || 'New Goal',
       description: notes || (alert.metadata?.summary as string) || '',
       category: 'behavioral' as const,
@@ -52,7 +53,7 @@ export const CreateGoalFromAlertDialog = ({ open, alert, onOpenChange }: Props) 
       dataPoints: [],
     } as any;
     try {
-      dataStorage.saveGoal(goal);
+      storageService.upsertGoal(convertLegacyGoalToLocal(goal));
       toast.success('Goal created from alert');
       onOpenChange(false);
     } catch {

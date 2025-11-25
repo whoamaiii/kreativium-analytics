@@ -3,16 +3,24 @@ import { HeuristicAnalysisEngine } from '@/lib/analysis/heuristicAnalysisEngine'
 import { ZAiReport } from '@/lib/analysis/aiSchema';
 import type { TrackingEntry, Goal } from '@/types/student';
 
-vi.mock('@/lib/dataStorage', () => {
-  const getEntriesForStudent = vi.fn<(studentId: string) => TrackingEntry[]>(() => []);
-  const getGoalsForStudent = vi.fn<(studentId: string) => Goal[]>(() => []);
-  return {
-    dataStorage: {
-      getEntriesForStudent,
-      getGoalsForStudent,
-    },
-  };
-});
+const {
+  mockListTrackingEntriesForStudent,
+  mockListGoalsForStudent,
+} = vi.hoisted(() => ({
+  mockListTrackingEntriesForStudent: vi.fn<(studentId: string) => TrackingEntry[]>(() => []),
+  mockListGoalsForStudent: vi.fn<(studentId: string) => Goal[]>(() => []),
+}));
+
+vi.mock('@/new/analytics/legacyAnalyticsAdapter', () => ({
+  legacyAnalyticsAdapter: {
+    listTrackingEntriesForStudent: mockListTrackingEntriesForStudent,
+    listTrackingEntries: vi.fn(() => []),
+    listGoalsForStudent: mockListGoalsForStudent,
+    listGoals: vi.fn(() => []),
+    listStudents: vi.fn(() => []),
+    getStudentById: vi.fn(() => null),
+  },
+}));
 
 vi.mock('@/lib/analyticsConfig', async (orig) => {
   const mod = await (orig() as Promise<typeof import('@/lib/analyticsConfig')>);
@@ -32,6 +40,8 @@ vi.mock('@/lib/analyticsConfig', async (orig) => {
 describe('HeuristicAnalysisEngine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockListTrackingEntriesForStudent.mockReset();
+    mockListGoalsForStudent.mockReset();
   });
 
   it('returns safe results on invalid student id', async () => {
@@ -47,11 +57,8 @@ describe('HeuristicAnalysisEngine', () => {
 
   it('wraps unified analytics and returns AnalyticsResultsAI', async () => {
     const engine = new HeuristicAnalysisEngine();
-    const { dataStorage } = await import('@/lib/dataStorage');
-    const dataStorageMock = vi.mocked(dataStorage, true);
-
     const now = new Date();
-    dataStorageMock.getEntriesForStudent.mockReturnValue([
+    mockListTrackingEntriesForStudent.mockReturnValue([
       {
         id: 'e1',
         studentId: 's1',
@@ -60,7 +67,7 @@ describe('HeuristicAnalysisEngine', () => {
         sensoryInputs: [{ id: 'sens1', studentId: 's1', response: 'calm', timestamp: now }],
       },
     ]);
-    dataStorageMock.getGoalsForStudent.mockReturnValue([]);
+    mockListGoalsForStudent.mockReturnValue([]);
 
     const res = await engine.analyzeStudent('s1', undefined, { includeAiMetadata: true });
     expect(res).toBeDefined();
@@ -74,15 +81,13 @@ describe('HeuristicAnalysisEngine', () => {
 
   it('respects conservative preset via options', async () => {
     const engine = new HeuristicAnalysisEngine();
-    const { dataStorage } = await import('@/lib/dataStorage');
-    const dataStorageMock = vi.mocked(dataStorage, true);
     const now = new Date();
-    dataStorageMock.getEntriesForStudent.mockReturnValue([
+    mockListTrackingEntriesForStudent.mockReturnValue([
       { id: 'e1', studentId: 's1', timestamp: now, emotions: [], sensoryInputs: [] },
       { id: 'e2', studentId: 's1', timestamp: now, emotions: [], sensoryInputs: [] },
       { id: 'e3', studentId: 's1', timestamp: now, emotions: [], sensoryInputs: [] },
     ]);
-    dataStorageMock.getGoalsForStudent.mockReturnValue([]);
+    mockListGoalsForStudent.mockReturnValue([]);
 
     const res = await engine.analyzeStudent('s1', undefined, {
       profile: 'conservative',

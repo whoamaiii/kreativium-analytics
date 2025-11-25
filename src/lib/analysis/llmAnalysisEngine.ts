@@ -1,4 +1,3 @@
-import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
 import { openRouterClient } from '@/lib/ai/openrouterClient';
 import { loadAiConfig } from '@/lib/aiConfig';
@@ -41,6 +40,7 @@ import {
 import type { EvidenceSource } from '@/lib/evidence/types';
 import { DomainTag, GradeBand } from '@/lib/evidence/types';
 import { AI_EVIDENCE_DISABLED } from '@/lib/env';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
 
 type CacheEntry = { data: AnalyticsResultsAI; expires: number };
 
@@ -163,7 +163,7 @@ export class LLMAnalysisEngine implements AnalysisEngine {
         }
       }
 
-      const student = dataStorage.getStudentById(studentId);
+      const student = legacyAnalyticsAdapter.getStudentById(studentId);
       const domainCtx = this.buildDomainContext(goals, patterns, correlations, student?.grade);
       if (!domainCtx.tags.length && !domainCtx.text && !domainCtx.category) return undefined;
 
@@ -256,8 +256,8 @@ export class LLMAnalysisEngine implements AnalysisEngine {
         return cached;
       }
 
-      entriesAll = dataStorage.getEntriesForStudent(studentId) || [];
-      goals = dataStorage.getGoalsForStudent(studentId) || [];
+      entriesAll = legacyAnalyticsAdapter.listTrackingEntriesForStudent(studentId) || [];
+      goals = legacyAnalyticsAdapter.listGoalsForStudent(studentId) || [];
 
       const start = toDate(timeframe?.start);
       const end = toDate(timeframe?.end);

@@ -71,16 +71,21 @@ export function ExplanationChat({
     setInput('');
     try {
       textareaRef.current?.focus();
-    } catch {}
+    } catch {
+      // Ignore focus errors
+    }
     setPending(true);
     try {
       const chatMsgs: ChatMessage[] = [
         { role: 'system', content: systemPrompt },
         ...next.slice(-20),
       ];
-      const { content } = await openRouterClient.chat(chatMsgs, undefined, {
-        suppressToasts: true,
-      });
+      // Force gpt-5.1 for interactive chat; fall back handled by aiConfig if unavailable
+      const { content } = await openRouterClient.chat(
+        chatMsgs,
+        { modelName: 'openai/gpt-5.1' },
+        { suppressToasts: true },
+      );
       const base = String(content)
         .replace(/\*\*(.*?)\*\*/g, '$1')
         .replace(/__(.*?)__/g, '$1')
@@ -91,8 +96,10 @@ export function ExplanationChat({
       setMessages((prev) => [...prev, { role: 'assistant', content: cleaned }]);
       try {
         textareaRef.current?.focus();
-      } catch {}
-    } catch (e) {
+      } catch {
+        // Ignore focus errors
+      }
+    } catch (_e) {
       toast.error('Kunne ikke hente AI-svar');
     } finally {
       setPending(false);
@@ -158,7 +165,9 @@ export function ExplanationChat({
         const n = Number(m[1]);
         if (Number.isFinite(n) && n >= 1 && n <= sList.length) set.add(`S${n}`);
       }
-    } catch {}
+    } catch {
+      // Ignore regex errors
+    }
     return set;
   }, [messages, sList.length]);
 
@@ -323,7 +332,7 @@ export function ExplanationChat({
         <div className="mt-2 rounded border bg-muted/30 p-2 text-xs">
           <div className="mb-1 text-muted-foreground">Henvisninger</div>
           <div className="flex flex-wrap gap-1">
-            {sList.map(({ key, source }, idx) => (
+            {sList.map(({ key, source }, _idx) => (
               <button
                 key={key}
                 type="button"

@@ -15,6 +15,7 @@
 
 ### Added
 
+- `CV-01`: Created `crossValidation.ts` and defined core interfaces for the validation framework.
 - Documentation: docs/analytics.md with analyticsManager API examples, guidance on using
   useAnalyticsWorker with buildInsightsTask, and error handling/toast deduping expectations.
 

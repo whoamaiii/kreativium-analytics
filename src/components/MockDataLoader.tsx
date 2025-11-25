@@ -21,15 +21,15 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
-import { Database, Users, Trash2, CheckCircle } from 'lucide-react';
+import { Database, Users, Trash2 } from 'lucide-react';
 import {
   loadMockDataToStorage,
   clearMockDataFromStorage,
   generateMockStudents,
-  generateAllMockData,
   loadScenarioDataToStorage,
 } from '@/lib/mockDataGenerator';
-import { dataStorage } from '@/lib/dataStorage';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
+import { getStorageStats } from '@/lib/storage/storageStats';
 
 /**
  * MockDataLoader Component
@@ -99,7 +99,7 @@ export const MockDataLoader = () => {
       setLoadingProgress(100);
 
       // Get stats for success message
-      const stats = dataStorage.getStorageStats();
+      const stats = getStorageStats();
 
       const description =
         selectedScenario === 'all'
@@ -147,9 +147,9 @@ export const MockDataLoader = () => {
   }, []);
 
   const mockStudents = useMemo(() => generateMockStudents(), []);
-  const currentStats = useMemo(() => dataStorage.getStorageStats(), [isLoading]);
+  const currentStats = useMemo(() => getStorageStats(), [isLoading]);
   const hasMockData = useMemo(
-    () => dataStorage.getStudents().some((s) => s.id.startsWith('mock_')),
+    () => legacyAnalyticsAdapter.listStudents().some((s) => s.id.startsWith('mock_')),
     [isLoading],
   );
 

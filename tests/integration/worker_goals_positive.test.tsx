@@ -73,6 +73,10 @@ vi.mock('@/lib/env', async (orig) => {
 });
 
 vi.mock('@/workers/analytics.worker?worker', () => {
+  const runSoon = (cb: () => void) => {
+    void Promise.resolve().then(cb);
+  };
+
   class TestWorker {
     onmessage: ((ev: MessageEvent) => void) | null = null;
     onerror: ((ev: ErrorEvent) => void) | null = null;
@@ -83,7 +87,7 @@ vi.mock('@/workers/analytics.worker?worker', () => {
         payload: msg?.payload,
       });
       // Immediately echo back a complete message with same cacheKey and minimal payload
-      setTimeout(() => {
+      runSoon(() => {
         if (!this.onmessage) return;
         const message = {
           data: {
@@ -93,7 +97,7 @@ vi.mock('@/workers/analytics.worker?worker', () => {
           },
         };
         this.onmessage(message as unknown as MessageEvent<AnalyticsWorkerMessage>);
-      }, 0);
+      });
     });
     addEventListener = vi.fn((type: string, handler: any) => {
       if (type === 'message') {
@@ -104,12 +108,12 @@ vi.mock('@/workers/analytics.worker?worker', () => {
     terminate = vi.fn();
     constructor() {
       if (!globalThis.__WORKER_CAPTURED_MESSAGES__) globalThis.__WORKER_CAPTURED_MESSAGES__ = [];
-      setTimeout(() => {
+      runSoon(() => {
         if (!this.onmessage) return;
         this.onmessage({
           data: { type: 'progress', progress: { stage: 'ready', percent: 1 } },
         } as unknown as MessageEvent<AnalyticsWorkerMessage>);
-      }, 0);
+      });
     }
   }
   return { default: TestWorker };
@@ -131,12 +135,13 @@ vi.mock('@/lib/analyticsManager', async (orig) => {
 
 // Import modules that use the mocks AFTER mocks are declared
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
-import { dataStorage } from '@/lib/dataStorage';
 import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { enhancedPatternAnalysis } from '@/lib/enhancedPatternAnalysis';
 import * as analyticsManagerMod from '@/lib/analyticsManager';
+import { legacyAnalyticsAdapter } from '@/new/analytics/legacyAnalyticsAdapter';
+import { resetWorkerManagerForTests } from '@/lib/analytics/workerManager';
 
-const getGoalsSpy = vi.spyOn(dataStorage, 'getGoalsForStudent');
+const getGoalsSpy = vi.spyOn(legacyAnalyticsAdapter, 'listGoalsForStudent');
 const processAnalyticsSpy = vi.spyOn(analyticsWorkerFallback, 'processAnalytics');
 const predictiveInsightsSpy = vi.spyOn(enhancedPatternAnalysis, 'generatePredictiveInsights');
 
@@ -160,6 +165,7 @@ function Harness({ studentId }: { studentId?: string }) {
 describe('Integration: worker goals positive propagation', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    resetWorkerManagerForTests();
     getGoalsSpy.mockReset();
     processAnalyticsSpy.mockReset();
     predictiveInsightsSpy.mockReset();
@@ -168,13 +174,14 @@ describe('Integration: worker goals positive propagation', () => {
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+    resetWorkerManagerForTests();
   });
 
   it('includes goals in worker payload when student provided', async () => {
     getGoalsSpy.mockReturnValue([createGoal('g1', 'stu-1')]);
     render(<Harness studentId="stu-1" />);
     await act(async () => {
-      vi.runAllTimers();
+      vi.runOnlyPendingTimers();
     });
     const workerMsgs: any[] = (globalThis as any).__WORKER_CAPTURED_MESSAGES__ || [];
     const workerHasGoals = workerMsgs.some(
@@ -194,9 +201,9 @@ describe('Integration: worker goals positive propagation', () => {
     getGoalsSpy.mockReturnValue([createGoal('g2', 'stu-1')]);
     render(<Harness />);
     await act(async () => {
-      vi.runAllTimers();
+      vi.runOnlyPendingTimers();
     });
-    expect(dataStorage.getGoalsForStudent).toHaveBeenCalledWith('stu-1');
+    expect(legacyAnalyticsAdapter.listGoalsForStudent).toHaveBeenCalledWith('stu-1');
     const workerMsgs: any[] = (globalThis as any).__WORKER_CAPTURED_MESSAGES__ || [];
     const workerHasGoals = workerMsgs.some(
       (m) =>
@@ -265,7 +272,7 @@ describe('Integration: worker goals positive propagation', () => {
     getGoalsSpy.mockReturnValueOnce([createGoal('g1', 'stu-2')]);
     render(<Harness studentId="stu-2" />);
     await act(async () => {
-      vi.runAllTimers();
+      vi.runOnlyPendingTimers();
     });
     const msgs1: any[] = (globalThis as any).__WORKER_CAPTURED_MESSAGES__ || [];
     const key1 = msgs1.at(-1)?.cacheKey ?? '';
@@ -273,7 +280,7 @@ describe('Integration: worker goals positive propagation', () => {
     getGoalsSpy.mockReturnValueOnce([createGoal('g1', 'stu-2'), createGoal('g2', 'stu-2')]);
     render(<Harness studentId="stu-2" />);
     await act(async () => {
-      vi.runAllTimers();
+      vi.runOnlyPendingTimers();
     });
     const msgs2: any[] = (globalThis as any).__WORKER_CAPTURED_MESSAGES__ || [];
     const secondPayload = msgs2.at(-1)?.payload;

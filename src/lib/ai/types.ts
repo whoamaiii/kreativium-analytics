@@ -17,6 +17,12 @@ export interface OpenRouterChatRequest {
   temperature?: number;
   max_tokens?: number;
   top_p?: number;
+  // Optional reasoning settings for reasoning-capable models (e.g. openai/gpt-5.1)
+  reasoning?: {
+    // OpenRouter forwards this to providers such as OpenAI; accepted values include
+    // "low", "medium", "high". Use string to stay forward-compatible.
+    effort?: 'low' | 'medium' | 'high' | string;
+  };
   // Enable structured JSON responses where supported
   response_format?: { type: 'json_object' } | { type: 'text' };
   stream?: false;

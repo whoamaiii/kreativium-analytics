@@ -11,6 +11,8 @@
  * - Worker → Main Thread: WorkerResponseMessage (progress, partial, complete, error, alerts, cache status)
  */
 
+import { logger } from '@/lib/logger';
+
 import type {
   AnalyticsData,
   AnalyticsResults,
@@ -387,7 +389,7 @@ export function isCacheClearDoneResponse(
  * self.onmessage = (e: MessageEvent) => {
  *   const msg = parseWorkerRequest(e.data);
  *   if (!msg) {
- *     console.error('Invalid worker message received');
+ *     logger.error('Invalid worker message received');
  *     return;
  *   }
  *

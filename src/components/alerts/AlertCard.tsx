@@ -196,7 +196,7 @@ const BaseAlertCard = ({
 }: Props) => {
   const [sourcesOpen, setSourcesOpen] = useState(false);
   const listToggleRef = useRef<HTMLButtonElement | null>(null);
-  const theme = severityThemes[alert.severity];
+  const theme = severityThemes[alert.severity] || severityThemes[AlertSeverity.Low];
   const badge = useMemo(
     () => (
       <span

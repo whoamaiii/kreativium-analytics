@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -8,6 +8,16 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { Switch } from '@/components/ui/switch';
 import { useStorageState, useStorageFlag, useStorageRemove } from '@/lib/storage/useStorageState';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
+import { storageService } from '@/lib/storage/storageService';
+import { toast } from '@/hooks/use-toast';
+import { downloadBlob } from '@/lib/utils';
+
+interface SessionStats {
+  total: number;
+  active: number;
+  paused: number;
+  completed: number;
+}
 
 const Settings = (): JSX.Element => {
   const { tSettings, tCommon } = useTranslation();
@@ -39,10 +49,80 @@ const Settings = (): JSX.Element => {
     },
   );
 
-  // Note: persist() function removed - all state automatically persists via useStorageState
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [footprint, setFootprint] = useState<Array<{ key: string; bytes: number }>>([]);
+  const [isDataActionBusy, setIsDataActionBusy] = useState(false);
+  const [sessionStats, setSessionStats] = useState<SessionStats>(() =>
+    storageService.getSessionStats(),
+  );
 
-  // Utility for removing calibration data
   const removeCalibration = useStorageRemove(STORAGE_KEYS.EMOTION_CALIBRATION);
+
+  const handleExportSnapshot = async () => {
+    setIsDataActionBusy(true);
+    try {
+      const snapshot = storageService.exportSnapshot();
+      const blob = new Blob([JSON.stringify(snapshot, null, 2)], {
+        type: 'application/json',
+      });
+      const filename = `kreativium_snapshot_${new Date().toISOString().split('T')[0]}.json`;
+      downloadBlob(blob, filename);
+      toast.success('Lokal kopi eksportert');
+    } catch (error) {
+      toast.error('Kunne ikke eksportere snapshot');
+    } finally {
+      setIsDataActionBusy(false);
+    }
+  };
+
+  const handleSnapshotImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setIsDataActionBusy(true);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      storageService.importSnapshot(parsed);
+      toast.success('Data importert lokalt');
+      window.location.reload();
+    } catch (error) {
+      toast.error('Kunne ikke importere filen');
+    } finally {
+      setIsDataActionBusy(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleClearLocalData = () => {
+    const confirmed = window.confirm(
+      'Dette sletter all lokal lagring for Kreativium på denne enheten. Vil du fortsette?',
+    );
+    if (!confirmed) return;
+    storageService.clearAll();
+    toast.success('All lokal data er slettet');
+    window.location.reload();
+  };
+
+  const handleFootprintCheck = () => {
+    setFootprint(storageService.footprint());
+  };
+
+  const refreshSessionStats = () => {
+    setSessionStats(storageService.getSessionStats());
+  };
+
+  const handleWipeLocalSessions = () => {
+    const confirmed = window.confirm(
+      'Denne handlingen sletter alle lokale økter. Dataen beholdes i backup dersom du har eksportert det. Fortsette?',
+    );
+    if (!confirmed) return;
+    storageService.clearSessions();
+    refreshSessionStats();
+    setFootprint(storageService.footprint());
+    toast.success('Lokale økter fjernet');
+  };
+
+  const totalFootprint = footprint.reduce((sum, entry) => sum + entry.bytes, 0);
 
   return (
     <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
@@ -98,7 +178,6 @@ const Settings = (): JSX.Element => {
                     checked={motionReduced}
                     onCheckedChange={(v) => {
                       setMotionReduced(v);
-                      persist();
                     }}
                   />
                 </div>
@@ -124,7 +203,6 @@ const Settings = (): JSX.Element => {
                     value={soundVolume}
                     onChange={(e) => {
                       setSoundVolume(Number(e.target.value));
-                      persist();
                     }}
                     aria-label={String(tCommon('settings.sound'))}
                   />
@@ -147,7 +225,6 @@ const Settings = (): JSX.Element => {
                     checked={hintsEnabled}
                     onCheckedChange={(v) => {
                       setHintsEnabled(v);
-                      persist();
                     }}
                   />
                 </div>
@@ -169,7 +246,6 @@ const Settings = (): JSX.Element => {
                     checked={highContrast}
                     onCheckedChange={(v) => {
                       setHighContrast(v);
-                      persist();
                     }}
                   />
                 </div>
@@ -191,7 +267,6 @@ const Settings = (): JSX.Element => {
                     checked={quietRewards}
                     onCheckedChange={(v) => {
                       setQuietRewards(v);
-                      persist();
                     }}
                   />
                 </div>
@@ -213,7 +288,6 @@ const Settings = (): JSX.Element => {
                     value={detectorType}
                     onChange={(e) => {
                       setDetectorType(e.target.value);
-                      persist();
                     }}
                     className="rounded-md bg-white/10 px-2 py-1"
                     aria-label={String(tCommon('settings.detector'))}
@@ -300,11 +374,13 @@ const Settings = (): JSX.Element => {
               </CardContent>
             </Card>
             <Card className="bg-gradient-card border-0 shadow-soft">
-              <CardContent className="p-6 space-y-3">
-                <h2 className="text-xl font-semibold">{tSettings('data.title')}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {tSettings('dataExport.description')}
-                </p>
+              <CardContent className="p-6 space-y-4">
+                <div>
+                  <h2 className="text-xl font-semibold">{tSettings('data.title')}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {tSettings('dataExport.description')}
+                  </p>
+                </div>
                 <div>
                   <Button
                     variant="outline"
@@ -315,11 +391,115 @@ const Settings = (): JSX.Element => {
                     {String(tSettings('data.export'))}
                   </Button>
                 </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Button onClick={handleExportSnapshot} disabled={isDataActionBusy}>
+                    Eksporter lokalt
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isDataActionBusy}
+                  >
+                    Importer fil
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={handleClearLocalData}
+                    disabled={isDataActionBusy}
+                  >
+                    Tøm lokal data
+                  </Button>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium">Lokal lagringsfotavtrykk</p>
+                    <Button variant="ghost" size="sm" onClick={handleFootprintCheck}>
+                      Oppdater
+                    </Button>
+                  </div>
+                  {footprint.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Ingen nøkler å vise enda. Trykk «Oppdater» for å hente oversikt.
+                    </p>
+                  ) : (
+                    <div className="mt-2 max-h-32 overflow-auto rounded-lg border bg-background/70 text-xs divide-y">
+                      {footprint.map((entry) => (
+                        <div
+                          key={entry.key}
+                          className="flex items-center justify-between px-3 py-1"
+                        >
+                          <span className="truncate pr-2">{entry.key}</span>
+                          <span>{(entry.bytes / 1024).toFixed(1)} KB</span>
+                        </div>
+                      ))}
+                      <div className="flex items-center justify-between px-3 py-1 font-semibold">
+                        <span>Totalt</span>
+                        <span>{(totalFootprint / 1024).toFixed(1)} KB</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-card border-0 shadow-soft">
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold">Lokale økter & analytics</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Alle writer-operations går via `storageService` og emittes på storage events. Analytics caches
+                      invalidates automatisk via `ensureSessionAnalyticsBridge`.
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={refreshSessionStats}>
+                    Oppdater status
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="text-xs text-muted-foreground">Totale økter</p>
+                    <p className="text-xl font-semibold">{sessionStats.total}</p>
+                  </div>
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="text-xs text-muted-foreground">Aktive</p>
+                    <p className="text-xl font-semibold">{sessionStats.active}</p>
+                  </div>
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="text-xs text-muted-foreground">Utkast (pauset)</p>
+                    <p className="text-xl font-semibold">{sessionStats.paused}</p>
+                  </div>
+                  <div className="rounded-lg border bg-background/70 p-3">
+                    <p className="text-xs text-muted-foreground">Fullførte</p>
+                    <p className="text-xl font-semibold">{sessionStats.completed}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={refreshSessionStats}>Oppdater statistikk</Button>
+                  <Button variant="outline" onClick={handleFootprintCheck}>
+                    Oppdater foot-print
+                  </Button>
+                  <Button variant="destructive" onClick={handleWipeLocalSessions}>
+                    Slett lokale økter
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Bruk eksport/import til å fullføre backup. Hvis du trenger å fjerne kun sesjoner (for eksempel før
+                  demonstrasjoner), trykk «Slett lokale økter» – studentdata og analytics cache forblir intakt fordi
+                  `storageService` bare berører `sessions`-nøkkelen.
+                </p>
               </CardContent>
             </Card>
           </section>
         </div>
       </div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/json"
+        className="hidden"
+        onChange={handleSnapshotImport}
+      />
     </div>
   );
 };

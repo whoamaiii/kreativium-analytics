@@ -21,4 +21,10 @@ export class AnalyticsWorkerCoordinator {
   }
 }
 
-export const analyticsCoordinator = AnalyticsWorkerCoordinator;
+/**
+ * Backwards-compatible coordinator instance used across the app.
+ * Provides the same method signature expected by existing imports.
+ */
+export const analyticsCoordinator = {
+  broadcastCacheClear: AnalyticsWorkerCoordinator.broadcastCacheClear,
+};

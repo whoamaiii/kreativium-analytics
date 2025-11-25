@@ -101,6 +101,7 @@ export function useGameLoop(options: UseGameLoopOptions) {
         10 + Math.max(0, (stars - 1) * 3) + Math.min(streak * 2, 10) + comboBonus + perfectBonus;
       setXp((x) => x + gained);
       setStreak((s) => s + 1);
+      return gained;
     },
     [streak],
   );

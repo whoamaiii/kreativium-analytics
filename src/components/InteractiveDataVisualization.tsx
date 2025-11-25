@@ -152,7 +152,9 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
           } as any,
           { student: currentStudent },
         );
-      } catch {}
+      } catch {
+        // Ignore analysis errors
+      }
     }, [
       filteredData.trackingEntries,
       filteredData.emotions,
@@ -164,7 +166,7 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
     // Listen for cache invalidations
     useEffect(() => {
       if (typeof window === 'undefined') return;
-      const onClear = (ev: Event) => setHasNewInsights(true);
+      const onClear = (_ev: Event) => setHasNewInsights(true);
       const onClearStudent = (ev: Event) => {
         try {
           const ce = ev as CustomEvent<{ studentId?: string }>;
@@ -210,7 +212,9 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
       refreshTimeoutRef.current = setTimeout(() => {
         try {
           handleRefresh();
-        } catch {}
+        } catch {
+          // Ignore refresh errors
+        }
       }, 1000);
       return () => {
         if (refreshTimeoutRef.current) {
@@ -234,7 +238,9 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
       doOnce('analytics_ui_error_' + String(error), 60_000, () => {
         try {
           logger.error('[InteractiveDataVisualization] analytics error', { error });
-        } catch {}
+        } catch {
+          // Ignore logger errors
+        }
       });
     }, [error]);
 
@@ -249,7 +255,9 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
           } as any,
           { student: currentStudent },
         );
-      } catch {}
+      } catch {
+        // Ignore analysis errors
+      }
     }, [
       filteredData.trackingEntries,
       filteredData.emotions,
@@ -437,7 +445,7 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
             // Build a 2D scatter projection based on selected plane
             const plane = visualizationState.projectionPlane;
             const mapPoint = (p: (typeof chartData)[number]) => {
-              const x = p.date;
+              const _x = p.date;
               const y =
                 plane === 'xy'
                   ? p.avgEmotionIntensity
@@ -640,7 +648,9 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
                   onClick={() => {
                     try {
                       window?.location?.reload();
-                    } catch {}
+                    } catch {
+                      // Ignore reload errors
+                    }
                   }}
                 >
                   {String(tAnalytics('actions.tryAgain'))}
@@ -681,21 +691,27 @@ export const InteractiveDataVisualization = memo<InteractiveDataVisualizationPro
                   try {
                     visualizationState.setLayoutMode('focus');
                     visualizationState.setFocusedVisualization('patterns');
-                  } catch {}
+                  } catch {
+                    // Ignore state update errors
+                  }
                   try {
                     const url = new URL(window.location.href);
                     url.searchParams.set('tab', 'explore');
                     if (patternId) url.searchParams.set('patternId', patternId);
                     url.searchParams.set('explain', '1');
                     window.history.replaceState(window.history.state, '', url.toString());
-                  } catch {}
+                  } catch {
+                    // Ignore URL update errors
+                  }
                   // Smooth scroll to the panel area if present
                   try {
                     const el = document.querySelector(
                       '[data-analytics-panel="patterns"]',
                     ) as HTMLElement | null;
                     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  } catch {}
+                  } catch {
+                    // Ignore scroll errors
+                  }
                 }}
               />
             </div>

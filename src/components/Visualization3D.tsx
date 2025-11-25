@@ -1,6 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text, Html, Box, Sphere } from '@react-three/drei';
+import { OrbitControls, Text, Html } from '@react-three/drei';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Eye, RotateCcw, ZoomIn, ZoomOut, Move3d } from 'lucide-react';
+import { Eye, RotateCcw } from 'lucide-react';
 import * as THREE from 'three';
 import { colorForeground } from '@/lib/resolveCssColorVar';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -109,7 +109,7 @@ const DataPoint = ({
   const meshRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
-  useFrame((state) => {
+  useFrame((_state) => {
     if (meshRef.current) {
       const scale = hovered || isHighlighted ? 1.5 : 1;
 
@@ -225,7 +225,7 @@ export const Visualization3D = ({
   emotions,
   sensoryInputs,
   trackingEntries,
-  correlationData,
+  correlationData: _correlationData,
 }: Visualization3DProps) => {
   const prefersReducedMotion = useReducedMotion();
   const [hoveredPoint, setHoveredPoint] = useState<DataPoint3D | null>(null);

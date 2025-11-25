@@ -56,8 +56,8 @@ import type { InsightsOptions, AnalyticsResult } from '@/types/insights';
  *   tags: ["student-123"]
  * });
  *
- * console.log(`Found ${result.summary.patternsCount} patterns`);
- * console.log(`Cache key: ${result.cacheKey}`);
+ * logger.info(`Found ${result.summary.patternsCount} patterns`);
+ * logger.info(`Cache key: ${result.cacheKey}`);
  * ```
  */
 export async function getInsights(

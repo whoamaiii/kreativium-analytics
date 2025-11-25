@@ -12,19 +12,31 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { EnvironmentalEntry } from '@/types/student';
+import type { EnvironmentalEntry as SessionEnvironmentalEntry, EmotionLevel } from '@/lib/storage/types';
 import { Thermometer, Sun, Volume2, Users, Cloud, Plus, X } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
+import { toast } from '@/hooks/use-toast';
 
 interface EnvironmentalTrackerProps {
-  onEnvironmentalAdd: (entry: Omit<EnvironmentalEntry, 'id' | 'timestamp'>) => void;
-  studentId: string;
+  onEnvironmentalAdd: (entry: Omit<SessionEnvironmentalEntry, 'id' | 'timestamp'>) => void;
 }
 
-const EnvironmentalTrackerComponent = ({
-  onEnvironmentalAdd,
-  studentId,
-}: EnvironmentalTrackerProps) => {
+const clampNoiseLevel = (value: number): EmotionLevel => {
+  const next = Math.max(1, Math.min(5, Math.round(value)));
+  return next as EmotionLevel;
+};
+
+const normalizeLighting = (
+  lighting: string,
+): SessionEnvironmentalEntry['lighting'] | undefined => {
+  if (!lighting) return undefined;
+  if (lighting === 'bright') return 'bright';
+  if (lighting === 'dim') return 'dim';
+  if (lighting === 'normal') return 'natural';
+  return undefined;
+};
+
+const EnvironmentalTrackerComponent = ({ onEnvironmentalAdd }: EnvironmentalTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const specialEventInputId = useId();
   const [roomTemperature, setRoomTemperature] = useState<number>(22);
@@ -56,24 +68,20 @@ const EnvironmentalTrackerComponent = ({
       return;
     }
 
-    const entry: Omit<EnvironmentalEntry, 'id' | 'timestamp'> = {
-      roomConditions: {
-        temperature: roomTemperature,
-        lighting: lighting as 'bright' | 'normal' | 'dim',
-        noiseLevel: noiseLevel,
-      },
-      weather: {
-        condition: weather as 'sunny' | 'cloudy' | 'rainy' | 'snowy',
-        temperature: roomTemperature,
-      },
-      classroom: {
-        activity: classroomActivity as 'low' | 'moderate' | 'high',
-        timeOfDay: timeOfDay,
-      },
-      notes: notes.trim() || undefined,
-    };
+    const notePieces = [
+      notes.trim(),
+      weather ? `Vær: ${weather}` : undefined,
+      timeOfDay ? `Tid: ${timeOfDay}` : undefined,
+      specialEvents.length ? `Hendelser: ${specialEvents.join(', ')}` : undefined,
+    ].filter((piece): piece is string => Boolean(piece));
 
-    onEnvironmentalAdd(entry);
+    onEnvironmentalAdd({
+      temperatureC: roomTemperature,
+      lighting: normalizeLighting(lighting),
+      noiseLevel: clampNoiseLevel(noiseLevel),
+      socialContext: classroomActivity,
+      notes: notePieces.length ? notePieces.join(' | ') : undefined,
+    });
 
     // Reset form
     setRoomTemperature(22);

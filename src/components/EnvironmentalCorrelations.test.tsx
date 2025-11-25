@@ -1,10 +1,7 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { vi, describe, it, expect } from 'vitest';
-import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { Student, TrackingEntry } from '@/types/student';
-import { patternAnalysis, CorrelationResult } from '@/lib/patternAnalysis';
-import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
+import { patternAnalysis } from '@/lib/patternAnalysis';
 
 // Mock the EnhancedDataVisualization component
 vi.mock('./EnhancedDataVisualization', () => ({
@@ -35,7 +32,7 @@ vi.mock('@/hooks/useTranslation', () => ({
 // Mock the web worker
 vi.mock('@/hooks/useAnalyticsWorker');
 
-const mockStudent: Student = {
+const _mockStudent: Student = {
   id: '1',
   name: 'Test Student',
   createdAt: new Date(),

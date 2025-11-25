@@ -30,11 +30,13 @@ const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(
 
 // Canonical list of allowed models for validation (independent of runtime fallback behavior)
 export const CANONICAL_ALLOWED_MODELS = [
+  'gpt-5.1',
   'gpt-5',
   'gpt-4o-mini',
   'gpt-4o',
   'claude-3.5-sonnet',
   // Vendor-prefixed model IDs used by OpenRouter
+  'openai/gpt-5.1',
   'openai/gpt-5-mini',
   'openai/gpt-4o-mini',
 ] as const;
@@ -49,11 +51,13 @@ export const DEFAULT_AI_CONFIG: AiConfig = {
   allowedModels: Array.from(
     new Set([
       AI_MODEL_NAME,
+      'gpt-5.1',
       'gpt-5',
       'gpt-5-mini',
       'gpt-4o-mini',
       'gpt-4o',
       'claude-3.5-sonnet',
+      'openai/gpt-5.1',
       'openai/gpt-5-mini',
     ]),
   ),

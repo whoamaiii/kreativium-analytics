@@ -501,7 +501,7 @@ export class StudentAnalyticsOrchestrator {
  * import { getProfileMap, initializeStudentProfile, saveProfiles } from '@/lib/analyticsProfiles';
  *
  * const orchestrator = createStudentAnalyticsOrchestrator({
- *   runner: new AnalyticsRunner({ storage: dataStorage, createAnalysisEngine }),
+ *   runner: new AnalyticsRunner({ storage: localAnalyticsDataStorage, createAnalysisEngine }),
  *   profileManager: {
  *     initialize: initializeStudentProfile,
  *     get: (id) => getProfileMap().get(id),

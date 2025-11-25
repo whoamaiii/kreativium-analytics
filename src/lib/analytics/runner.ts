@@ -1,7 +1,7 @@
 import { analyticsConfig, ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
 import { alertSystem } from '@/lib/alertSystem';
 import { generateAnalyticsSummary } from '@/lib/analyticsSummary';
-import type { IDataStorage } from '@/lib/dataStorage';
+import type { IDataStorage } from '@/lib/storage/interfaces';
 import { logger } from '@/lib/logger';
 import type { Student, EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
 import type { AnalysisEngine, AnalysisOptions } from '@/lib/analysis';

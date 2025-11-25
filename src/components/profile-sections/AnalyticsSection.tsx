@@ -92,7 +92,7 @@ export function AnalyticsSection({
     return { enabledByConfig, available };
   }, [lsModelName, lsApiKeyOld, lsApiKeyNew]);
 
-  const [useAI, setUseAI] = useState<boolean>(() => defaults.enabledByConfig && defaults.available);
+  const [useAI, setUseAI] = useState<boolean>(() => false);
 
   useEffect(() => {
     logger.debug('[AnalyticsSection] Props received', {

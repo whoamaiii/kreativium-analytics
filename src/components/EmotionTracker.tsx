@@ -5,14 +5,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { IntensityScale } from '@/components/ui/intensity-scale';
 import { TagInput } from '@/components/ui/tag-input';
-import { EmotionEntry } from '@/types/student';
+import type { EmotionEntry as SessionEmotionEntry, EmotionLevel } from '@/lib/storage/types';
 import { Heart, Frown, Angry, Smile, Zap, Sun } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { logger } from '@/lib/logger';
 
 interface EmotionTrackerProps {
-  onEmotionAdd: (emotion: Omit<EmotionEntry, 'id' | 'timestamp'>) => void;
-  studentId: string;
+  onEmotionAdd: (emotion: Omit<SessionEmotionEntry, 'id' | 'timestamp'>) => void;
 }
 
 const emotions = [
@@ -43,9 +42,20 @@ const subEmotions: Record<string, string[]> = {
  * @component
  * @param {EmotionTrackerProps} props - Component props
  * @param {Function} props.onEmotionAdd - Callback when emotion is added
- * @param {string} props.studentId - ID of the student being tracked
  */
-const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProps) => {
+const clampEmotionLevel = (value: number): EmotionLevel => {
+  const next = Math.max(1, Math.min(5, Math.round(value)));
+  return next as EmotionLevel;
+};
+
+const minutesToSeconds = (minutes: number): number | undefined => {
+  if (!minutes || Number.isNaN(minutes)) return undefined;
+  return Math.max(1, Math.round(minutes)) * 60;
+};
+
+const isQuickAddMode = import.meta.env.MODE === 'poc';
+
+const EmotionTrackerComponent = ({ onEmotionAdd }: EmotionTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const [selectedEmotion, setSelectedEmotion] = useState<string>('');
   const [selectedSubEmotion, setSelectedSubEmotion] = useState<string>('');
@@ -57,21 +67,46 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
   const [notes, setNotes] = useState('');
   const [triggers, setTriggers] = useState<string[]>([]);
 
+  const handleEmotionQuickAdd = (emotionType: string) => {
+    if (!isQuickAddMode) {
+      return;
+    }
+
+    onEmotionAdd({
+      label: (selectedSubEmotion || emotionType).trim() || 'observasjon',
+      intensity: clampEmotionLevel(intensity || 3),
+      durationSeconds: minutesToSeconds(duration),
+      context: undefined,
+      trigger: undefined,
+    });
+  };
+
   const handleSubmit = () => {
     if (!selectedEmotion) {
       logger.warn('Attempted to submit emotion without selection');
       return;
     }
 
+    const trimmedNotes = notes.trim();
+    const trimmedTriggers = triggers.map((trigger) => trigger.trim()).filter(Boolean);
+    const contextPieces: string[] = [];
+    if (trimmedNotes) {
+      contextPieces.push(trimmedNotes);
+    }
+    if (trimmedTriggers.length > 1) {
+      contextPieces.push(`Øvrige triggere: ${trimmedTriggers.slice(1).join(', ')}`);
+    }
+    if (escalationPattern !== 'unknown') {
+      contextPieces.push(`Utvikling: ${escalationPattern}`);
+    }
+
+    const label = (selectedSubEmotion || selectedEmotion).trim() || 'observasjon';
     onEmotionAdd({
-      studentId,
-      emotion: selectedEmotion as EmotionEntry['emotion'],
-      subEmotion: selectedSubEmotion || undefined,
-      intensity: intensity as EmotionEntry['intensity'],
-      duration: duration > 0 ? duration : undefined,
-      escalationPattern: escalationPattern !== 'unknown' ? escalationPattern : undefined,
-      notes: notes.trim() || undefined,
-      triggers: triggers.length > 0 ? triggers : undefined,
+      label,
+      intensity: clampEmotionLevel(intensity),
+      durationSeconds: minutesToSeconds(duration),
+      context: contextPieces.length ? contextPieces.join(' | ') : undefined,
+      trigger: trimmedTriggers[0],
     });
 
     // Reset form
@@ -102,6 +137,7 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
               const Icon = emotion.icon;
               return (
                 <Button
+                  data-testid={`emotion-button-${emotion.type}`}
                   key={emotion.type}
                   variant={selectedEmotion === emotion.type ? 'default' : 'outline'}
                   className={`h-20 flex-col gap-2 font-dyslexia hover-lift press-scale transition-all duration-300 ${
@@ -109,7 +145,10 @@ const EmotionTrackerComponent = ({ onEmotionAdd, studentId }: EmotionTrackerProp
                       ? 'bg-gradient-primary shadow-glow animate-bounce-in'
                       : 'hover:scale-105 animate-fade-in hover:shadow-soft'
                   }`}
-                  onClick={() => setSelectedEmotion(emotion.type)}
+                  onClick={() => {
+                    setSelectedEmotion(emotion.type);
+                    handleEmotionQuickAdd(emotion.type);
+                  }}
                   aria-label={`Select ${String(tTracking(`emotions.types.${emotion.type}`))}`}
                   aria-pressed={selectedEmotion === emotion.type}
                 >

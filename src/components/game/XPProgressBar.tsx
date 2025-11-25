@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn, clamp01 } from '@/lib/utils';
 import { XPOrbsEmitter } from '@/components/game/XPOrbsEmitter';

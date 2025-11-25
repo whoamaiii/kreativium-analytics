@@ -47,10 +47,9 @@ import { toast } from '@/hooks/use-toast';
 import { diagnostics } from '@/lib/diagnostics';
 import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { POC_MODE, DISABLE_ANALYTICS_WORKER } from '@/lib/env';
-import type { Student, Goal } from '@/types/student';
+import type { Student, Goal, EmotionEntry, SensoryEntry } from '@/types/student';
 import type { AnalyticsResultsAI } from '@/lib/analysis';
 import { analyticsManager } from '@/lib/analyticsManager';
-import { dataStorage } from '@/lib/dataStorage';
 import { AnalyticsPrecomputationManager } from '@/lib/analyticsPrecomputation';
 import { deviceConstraints } from '@/lib/deviceConstraints';
 import { AlertPolicies } from '@/lib/alerts/policies';
@@ -70,11 +69,19 @@ import {
   retainWorker,
 } from '@/lib/analytics/workerManager';
 import { createWorkerMessageHandlers } from '@/lib/analytics/workerMessageHandlers';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
+import type { ComputeInsightsInputs } from '@/lib/insights/unified';
 
 // Shared once-per-key dedupe for user-facing notifications
 import { doOnce } from '@/lib/rateLimit';
 
 const telemetryService = new AlertTelemetryService();
+
+const hasAnalyticsEntries = (
+  payload: AnalyticsData | AnalyticsResults,
+): payload is AnalyticsData => {
+  return typeof payload === 'object' && payload !== null && 'entries' in payload;
+};
 
 interface CacheStats {
   hits: number;
@@ -194,8 +201,8 @@ export const useAnalyticsWorker = (
       const tags: string[] = ['analytics'];
 
       // Add student-specific tags if available
-      if ('entries' in data && (data as any).entries?.length > 0) {
-        const studentIds = Array.from(new Set((data as any).entries.map((e: any) => e.studentId)));
+      if (hasAnalyticsEntries(data) && data.entries.length > 0) {
+        const studentIds = Array.from(new Set(data.entries.map((entry) => entry.studentId)));
         tags.push(...studentIds.map((id) => `student-${id}`));
       }
 
@@ -221,13 +228,13 @@ export const useAnalyticsWorker = (
       studentId?: string | number;
       includeAiTag?: boolean;
     }): string[] => {
-      const tagsFromData = extractTagsFn({ ...data, goals } as AnalyticsData) ?? [];
+      const tagsFromData = extractTagsFn({ ...data, ...(goals ? { goals } : {}) }) ?? [];
       const tagSet = new Set<string>(tagsFromData);
 
       (goals ?? []).forEach((goal) => {
-        const goalId = (goal as Goal)?.id;
+        const goalId = goal.id;
         if (goalId) tagSet.add(`goal-${goalId}`);
-        const goalStudentId = (goal as Goal)?.studentId;
+        const goalStudentId = goal.studentId;
         if (goalStudentId) tagSet.add(`student-${goalStudentId}`);
       });
 
@@ -324,21 +331,22 @@ export const useAnalyticsWorker = (
         // Expose worker globally for lightweight event streaming from game UI
         try {
           (window as unknown as { __analyticsWorker?: Worker }).__analyticsWorker = worker;
-        } catch {
-          /* noop */
+        } catch (e) {
+          // @silent-ok: global assignment may fail in restricted contexts (iframes, extensions)
+          logger.debug('[useAnalyticsWorker] Could not expose worker globally', { error: e });
         }
 
         cleanupStackRef.current.push(() => {
           try {
-            try {
-              (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null;
-            } catch {
-              /* noop */
-            }
+            (window as unknown as { __analyticsWorker?: Worker | null }).__analyticsWorker = null;
+          } catch (e) {
+            logger.debug('[useAnalyticsWorker] Could not clear global worker reference', { error: e });
+          }
+          try {
             worker.removeEventListener('message', onMessage as EventListener);
             worker.removeEventListener('messageerror', onMessageError as EventListener);
-          } catch {
-            /* noop */
+          } catch (e) {
+            logger.warn('[useAnalyticsWorker] Failed to remove worker event listeners', { error: e });
           }
         });
       }
@@ -361,8 +369,8 @@ export const useAnalyticsWorker = (
       while (cleanupStackRef.current.length) {
         try {
           (cleanupStackRef.current.pop() as () => void)();
-        } catch {
-          /* noop */
+        } catch (e) {
+          logger.warn('[useAnalyticsWorker] Cleanup function failed', { error: e });
         }
       }
       if (alertsHealthTimerRef.current) {
@@ -377,8 +385,9 @@ export const useAnalyticsWorker = (
 
   // Periodic alerts integration health publication (lightweight)
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     try {
-      if (typeof window === 'undefined') return;
       if (alertsHealthTimerRef.current) {
         clearInterval(alertsHealthTimerRef.current);
         alertsHealthTimerRef.current = null;
@@ -397,19 +406,20 @@ export const useAnalyticsWorker = (
                 snapshot: (() => {
                   try {
                     return alertPerf.snapshot();
-                  } catch {
+                  } catch (e) {
+                    logger.debug('[useAnalyticsWorker] Failed to get alertPerf snapshot', { error: e });
                     return null;
                   }
                 })(),
               },
             }),
           );
-        } catch {
-          /* noop */
+        } catch (e) {
+          logger.debug('[useAnalyticsWorker] Failed to dispatch health event', { error: e });
         }
       }, 30_000);
-    } catch {
-      /* noop */
+    } catch (e) {
+      logger.warn('[useAnalyticsWorker] Failed to set up health timer', { error: e });
     }
     return () => {
       if (alertsHealthTimerRef.current) {
@@ -424,19 +434,17 @@ export const useAnalyticsWorker = (
    */
   const createCacheKey = useCallback((data: AnalyticsData, goals?: Goal[]): string => {
     // Map AnalyticsData to ComputeInsightsInputs structure expected by cache key builder
-    const inputs = {
+    const inputs: ComputeInsightsInputs = {
       entries: data.entries,
       emotions: data.emotions,
       sensoryInputs: data.sensoryInputs,
-      ...(goals && goals.length
-        ? { goals: goals.map((g) => ({ id: (g as any).id })) as unknown as Goal[] }
-        : {}),
-    } as unknown as { entries: unknown[]; emotions: unknown[]; sensoryInputs: unknown[] };
+      ...(goals && goals.length ? { goals } : {}),
+    };
 
     // Use live runtime config to ensure keys align across app and worker
     const cfg = getValidatedConfig();
 
-    return buildInsightsCacheKey(inputs as any, { config: cfg });
+    return buildInsightsCacheKey(inputs, { config: cfg });
   }, []);
 
   const runAnalysis = useMemo(
@@ -454,7 +462,7 @@ export const useAnalyticsWorker = (
         buildCacheTags,
         getGoalsForStudent: (studentId: string) => {
           try {
-            return dataStorage.getGoalsForStudent(studentId) ?? [];
+            return legacyAnalyticsAdapter.listGoalsForStudent(studentId) ?? [];
           } catch {
             return [];
           }
@@ -487,8 +495,8 @@ export const useAnalyticsWorker = (
         try {
           const allowed = await deviceConstraints.canPrecompute(pc);
           if (!allowed) return;
-        } catch {
-          /* noop */
+        } catch (e) {
+          logger.debug('[useAnalyticsWorker] Device constraint check failed, proceeding anyway', { error: e });
         }
 
         const dataSets = dataProvider();
@@ -497,8 +505,12 @@ export const useAnalyticsWorker = (
           setTimeout(
             () => {
               // Route through runAnalysis to ensure caching and goal inclusion; mark as prewarm
-              runAnalysis(data, { student, prewarm: true }).catch(() => {
-                /* noop */
+              runAnalysis(data, { student, prewarm: true }).catch((e) => {
+                logger.debug('[useAnalyticsWorker] Precomputation failed (non-fatal)', { 
+                  error: e, 
+                  studentId: student?.id,
+                  dataSize: data.entries?.length 
+                });
               });
             },
             index * (pc.taskStaggerDelay ?? 100),
@@ -547,7 +559,7 @@ export const useAnalyticsWorker = (
       }
       // Update precompute manager status on config changes
       try {
-        const pc = newConfig.precomputation as any;
+        const pc = newConfig.precomputation;
         if (pc && precompManagerRef.current) {
           if (pc.enabled) {
             precompManagerRef.current.resume();
@@ -556,8 +568,8 @@ export const useAnalyticsWorker = (
           }
           setPrecomputeStatus(precompManagerRef.current.getStatus());
         }
-      } catch {
-        /* noop */
+      } catch (e) {
+        logger.warn('[useAnalyticsWorker] Failed to update precompute manager on config change', { error: e });
       }
     });
 
@@ -572,8 +584,8 @@ export const useAnalyticsWorker = (
     const onClearAll = () => {
       try {
         clearCache();
-      } catch {
-        /* noop */
+      } catch (e) {
+        logger.warn('[useAnalyticsWorker] Failed to clear cache on global event', { error: e });
       }
     };
     const onClearStudent = (evt: Event) => {
@@ -584,13 +596,13 @@ export const useAnalyticsWorker = (
         } else {
           clearCache();
         }
-      } catch {
-        /* noop */
+      } catch (e) {
+        logger.warn('[useAnalyticsWorker] Failed to handle student cache clear event', { error: e });
       }
     };
 
-    try {
-      if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
+      try {
         window.addEventListener('analytics:cache:clear', onClearAll as EventListener);
         window.addEventListener('analytics:cache:clear:student', onClearStudent as EventListener);
         cleanupStackRef.current.push(() => {
@@ -600,26 +612,26 @@ export const useAnalyticsWorker = (
               'analytics:cache:clear:student',
               onClearStudent as EventListener,
             );
-          } catch {
-            /* noop */
+          } catch (e) {
+            logger.debug('[useAnalyticsWorker] Failed to remove cache event listeners', { error: e });
           }
         });
+      } catch (e) {
+        logger.warn('[useAnalyticsWorker] Failed to set up cache event listeners', { error: e });
       }
-    } catch {
-      /* noop */
     }
 
     return () => {
-      try {
-        if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined') {
+        try {
           window.removeEventListener('analytics:cache:clear', onClearAll as EventListener);
           window.removeEventListener(
             'analytics:cache:clear:student',
             onClearStudent as EventListener,
           );
+        } catch (e) {
+          logger.debug('[useAnalyticsWorker] Failed to remove cache event listeners on cleanup', { error: e });
         }
-      } catch {
-        /* noop */
       }
     };
   }, [clearCache, invalidateCacheForStudent]);
@@ -646,28 +658,30 @@ export const useAnalyticsWorker = (
 
     // Kick off scheduling based on current data
     try {
-      const entries = dataStorage.getTrackingEntries();
-      const emotions = entries.flatMap((e) =>
-        (e.emotions || []).map((em) => ({ ...em, studentId: em.studentId ?? e.studentId })),
+      const entries = legacyAnalyticsAdapter.listTrackingEntries();
+      const emotions: EmotionEntry[] = entries.flatMap((entry) =>
+        (entry.emotions ?? []).map<EmotionEntry>((emotion) => ({
+          ...emotion,
+          studentId: emotion.studentId ?? entry.studentId,
+        })),
       );
-      const sensoryInputs = entries.flatMap((e) =>
-        (e.sensoryInputs || []).map((s) => ({ ...s, studentId: s.studentId ?? e.studentId })),
+      const sensoryInputs: SensoryEntry[] = entries.flatMap((entry) =>
+        (entry.sensoryInputs ?? []).map<SensoryEntry>((sensory) => ({
+          ...sensory,
+          studentId: sensory.studentId ?? entry.studentId,
+        })),
       );
-      precompManagerRef.current.schedulePrecomputation(
-        entries,
-        emotions as any,
-        sensoryInputs as any,
-      );
+      precompManagerRef.current.schedulePrecomputation(entries, emotions, sensoryInputs);
       setPrecomputeStatus(precompManagerRef.current.getStatus());
-    } catch {
-      /* noop */
+    } catch (e) {
+      logger.warn('[useAnalyticsWorker] Failed to schedule initial precomputation', { error: e });
     }
 
     return () => {
       try {
         precompManagerRef.current?.stop();
-      } catch {
-        /* noop */
+      } catch (e) {
+        logger.debug('[useAnalyticsWorker] Failed to stop precompute manager on cleanup', { error: e });
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -696,16 +710,16 @@ export const useAnalyticsWorker = (
       try {
         precompManagerRef.current?.resume();
         setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null);
-      } catch {
-        /* noop */
+      } catch (e) {
+        logger.warn('[useAnalyticsWorker] Failed to start precomputation', { error: e });
       }
     },
     stopPrecomputation: () => {
       try {
         precompManagerRef.current?.stop();
         setPrecomputeStatus(precompManagerRef.current?.getStatus() ?? null);
-      } catch {
-        /* noop */
+      } catch (e) {
+        logger.warn('[useAnalyticsWorker] Failed to stop precomputation', { error: e });
       }
     },
   };

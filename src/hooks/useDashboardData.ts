@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isToday, startOfWeek, endOfWeek, subWeeks, isWithinInterval } from 'date-fns';
-import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
+import type { Student, TrackingEntry } from '@/types/student';
+import { useLegacyTrackingEntries } from '@/hooks/useLegacyTrackingEntries';
+import { useStudents } from '@/hooks/useStorageData';
+import { convertLocalStudentToLegacy } from '@/lib/adapters/legacyConverters';
 
 export interface WeeklyTrend {
   students: number;
@@ -23,57 +26,36 @@ export interface DashboardData {
  * Centralizes storage/analytics event subscriptions and locale-aware week math.
  */
 export const useDashboardData = (): DashboardData => {
-  const [students, setStudents] = useState<import('@/types/student').Student[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const localStudents = useStudents();
+  const students = useMemo(
+    () => localStudents.map((student) => convertLocalStudentToLegacy(student) as Student),
+    [localStudents],
+  );
   const { currentLanguage } = useTranslation();
-
-  const load = () => {
-    try {
-      const s = dataStorage.getStudents();
-      setStudents(s);
-    } catch (error) {
-      logger.error('Dashboard: Error loading students', { error });
-      setStudents([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [hydrated, setHydrated] = useState(false);
+  const trackingEntries = useLegacyTrackingEntries();
 
   useEffect(() => {
-    load();
+    if (!hydrated) {
+      setHydrated(true);
+    }
+  }, [hydrated, students, trackingEntries]);
 
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key?.startsWith('sensoryTracker_')) {
-        load();
-      }
-    };
-    const handleAnalyticsCacheClear = () => load();
-    const handleMockDataLoaded = () => load();
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('analytics:cache:clear', handleAnalyticsCacheClear as EventListener);
-    window.addEventListener('mockDataLoaded', handleMockDataLoaded as EventListener);
-    logger.debug('[EVENT_LISTENER] useDashboardData mounted listeners');
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener(
-        'analytics:cache:clear',
-        handleAnalyticsCacheClear as EventListener,
-      );
-      window.removeEventListener('mockDataLoaded', handleMockDataLoaded as EventListener);
-      logger.debug('[EVENT_LISTENER] useDashboardData removed listeners');
-    };
-  }, []);
+  const combinedEntries = useMemo(() => {
+    if (!trackingEntries.length) {
+      return [] as TrackingEntry[];
+    }
+    return [...trackingEntries];
+  }, [trackingEntries]);
 
   const { todayEntries, totalEntries, weeklyTrend } = useMemo(() => {
-    if (students.length === 0) {
+    if (students.length === 0 && combinedEntries.length === 0) {
       return { todayEntries: 0, totalEntries: 0, weeklyTrend: { students: 0, entries: 0 } };
     }
 
     try {
-      const allEntries = dataStorage.getTrackingEntries();
-      const todayCount = allEntries.filter((entry) => isToday(entry.timestamp)).length;
+      const dataset = combinedEntries;
+      const todayCount = dataset.filter((entry) => isToday(entry.timestamp)).length;
 
       const now = new Date();
       const weekOptions = {
@@ -83,10 +65,10 @@ export const useDashboardData = (): DashboardData => {
       const lastWeekEnd = endOfWeek(subWeeks(now, 1), weekOptions);
       const thisWeekStart = startOfWeek(now, weekOptions);
 
-      const lastWeekEntries = allEntries.filter((entry) =>
+      const lastWeekEntries = dataset.filter((entry) =>
         isWithinInterval(entry.timestamp, { start: lastWeekStart, end: lastWeekEnd }),
       ).length;
-      const thisWeekEntries = allEntries.filter((entry) =>
+      const thisWeekEntries = dataset.filter((entry) =>
         isWithinInterval(entry.timestamp, { start: thisWeekStart, end: now }),
       ).length;
 
@@ -112,21 +94,21 @@ export const useDashboardData = (): DashboardData => {
 
       return {
         todayEntries: todayCount,
-        totalEntries: allEntries.length,
+        totalEntries: dataset.length,
         weeklyTrend: { students: studentsTrend, entries: entriesTrend },
       };
     } catch (error) {
       logger.error('Dashboard: Error calculating statistics', { error });
       return { todayEntries: 0, totalEntries: 0, weeklyTrend: { students: 0, entries: 0 } };
     }
-  }, [students, currentLanguage]);
+  }, [students, currentLanguage, combinedEntries]);
 
   return {
     students,
-    isLoading,
+    isLoading: !hydrated,
     todayEntries,
     totalEntries,
     weeklyTrend,
-    refresh: load,
+    refresh: () => {},
   };
 };

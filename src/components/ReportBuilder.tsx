@@ -21,9 +21,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Student, Goal, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
-import { FileText, Download, Printer, Mail, Calendar, TrendingUp, Crosshair } from 'lucide-react';
+import { FileText, Download, Printer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
 import { downloadBlob } from '@/lib/utils';
@@ -114,7 +113,7 @@ export const ReportBuilder = ({
     reportingTeacher: '',
     schoolDistrict: '',
   });
-  const printRef = useRef<HTMLDivElement>(null);
+  const _printRef = useRef<HTMLDivElement>(null);
 
   const handleTemplateChange = (templateId: string) => {
     const template = reportTemplates.find((t) => t.id === templateId);

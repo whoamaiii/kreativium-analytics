@@ -5,14 +5,13 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Toggle } from '@/components/ui/toggle';
 import { EmotionEntry, SensoryEntry, TrackingEntry } from '@/types/student';
-import { format, subDays, addDays, differenceInMinutes, isWithinInterval } from 'date-fns';
+import { format, subDays, differenceInMinutes, isWithinInterval } from 'date-fns';
 import { STREAM_COLORS, SEVERITY_COLORS, UI_COLORS } from '@/lib/chartColors';
 import {
   Clock,
   ZoomIn,
   ZoomOut,
   RotateCcw,
-  Maximize2,
   Play,
   Pause,
   ChevronLeft,
@@ -60,7 +59,7 @@ interface DataStream {
 export const TimelineVisualization = ({
   emotions,
   sensoryInputs,
-  trackingEntries,
+  trackingEntries: _trackingEntries,
   anomalies = [],
   onTimeRangeChange,
   realtime = false,
@@ -476,7 +475,7 @@ export const TimelineVisualization = ({
       const x = timeScale(event.timestamp);
       if (x < 0 || x > dimensions.width) return null;
 
-      const getIcon = () => {
+      const _getIcon = () => {
         switch (event.type) {
           case 'emotion':
             return <Brain className="h-4 w-4" />;

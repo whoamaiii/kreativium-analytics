@@ -1,24 +1,36 @@
 import React, { useEffect } from 'react';
+import { randomUUID } from 'node:crypto';
 import { render, act, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { useRealtimeData } from '@/hooks/useRealtimeData';
 import { saveTrackingEntry } from '@/lib/tracking/saveTrackingEntry';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
-import { dataStorage } from '@/lib/dataStorage';
+import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
+import { storageService } from '@/new/storage/storageService';
 import type { AnalyticsData, AnalyticsWorkerMessage } from '@/types/analytics';
 import type { InsightsWorkerTask } from '@/lib/insights/task';
 import type { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
+import { resetWorkerManagerForTests } from '@/lib/analytics/workerManager';
 
 vi.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k, tAnalytics: (k: string) => k }),
 }));
 
-const createTrackingEntry = (id: string, studentId: string): TrackingEntry => ({
-  id,
-  studentId,
+const studentIds = new Map<string, string>();
+const getStudentUuid = (key: string): string => {
+  if (!studentIds.has(key)) {
+    studentIds.set(key, randomUUID());
+  }
+  return studentIds.get(key)!;
+};
+
+const createTrackingEntry = (label: string, studentKey: string): TrackingEntry => ({
+  id: randomUUID(),
+  studentId: getStudentUuid(studentKey),
   timestamp: new Date(),
-  emotions: [{ id: `e-${id}`, timestamp: new Date(), emotion: 'happy', intensity: 1 } as any],
+  emotions: [
+    { id: randomUUID(), timestamp: new Date(), emotion: 'happy', intensity: 1 } as EmotionEntry,
+  ],
   sensoryInputs: [],
 });
 
@@ -28,9 +40,9 @@ const createAnalyticsData = (entries: TrackingEntry[]): AnalyticsData => ({
   sensoryInputs: [],
 });
 
-const createStudent = (id: string): Student => ({
-  id,
-  name: `Student ${id}`,
+const createStudent = (key: string): Student => ({
+  id: getStudentUuid(key),
+  name: `Student ${key}`,
   createdAt: new Date(),
 });
 
@@ -43,6 +55,17 @@ const createRealtimeSeed = (): {
   sensoryInputs: [],
   trackingEntries: [],
 });
+
+const advanceTimers = async (ms = 0) => {
+  await act(async () => {
+    if (ms > 0) {
+      vi.advanceTimersByTime(ms);
+    } else {
+      vi.runOnlyPendingTimers();
+    }
+    await Promise.resolve();
+  });
+};
 
 // Minimal worker mock to avoid fallback path
 vi.mock('@/workers/analytics.worker?worker', () => {
@@ -100,29 +123,35 @@ function Harness({ studentId, onInvalidate }: { studentId?: string; onInvalidate
 }
 
 describe('Integration: cache invalidation flows', () => {
+  let listStudentsSpy: ReturnType<typeof vi.spyOn>;
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.spyOn(dataStorage, 'getStudentById').mockReturnValue({
-      id: 'stu-1',
-      name: 'Test Student',
-      createdAt: new Date(),
-    } as any);
+    resetWorkerManagerForTests();
+    listStudentsSpy = vi.spyOn(storageService, 'listStudents').mockReturnValue([
+      {
+        id: getStudentUuid('stu-1'),
+        name: 'Test Student',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
   });
   afterEach(() => {
     cleanup();
+    listStudentsSpy.mockRestore();
     vi.useRealTimers();
+    resetWorkerManagerForTests();
   });
 
   it('saveTrackingEntry triggers student-specific invalidation', async () => {
+    const studentKey = 'stu-1';
     const spy = vi.spyOn(analyticsCoordinator, 'broadcastCacheClear');
-    render(<Harness studentId="stu-1" />);
+    render(<Harness studentId={studentKey} />);
+    await advanceTimers(1000);
     await act(async () => {
-      vi.runAllTimers();
+      await saveTrackingEntry(createTrackingEntry('t2', studentKey));
     });
-    await act(async () => {
-      await saveTrackingEntry(createTrackingEntry('t2', 'stu-1'));
-    });
-    expect(spy).toHaveBeenCalledWith('stu-1');
+    expect(spy).toHaveBeenCalledWith(getStudentUuid(studentKey));
   });
 
   it('global broadcast clears all caches', async () => {
@@ -133,17 +162,15 @@ describe('Integration: cache invalidation flows', () => {
         <Harness studentId="b" onInvalidate={onInvalidate} />
       </>,
     );
-    await act(async () => {
-      vi.runAllTimers();
-    });
+    await advanceTimers(1000);
     act(() => {
-      analyticsCoordinator.broadcastCacheClear();
+      AnalyticsWorkerCoordinator.broadcastCacheClear();
     });
     expect(onInvalidate).toHaveBeenCalled();
   });
 
   it('realtime data insertion debounces and broadcasts student-specific invalidation', async () => {
-    const studentId = 'stu-live';
+    const studentKey = 'stu-live';
     const bcSpy = vi.spyOn(analyticsCoordinator, 'broadcastCacheClear');
     const randSpy = vi.spyOn(Math, 'random').mockReturnValue(0.1);
     function RT() {
@@ -155,19 +182,21 @@ describe('Integration: cache invalidation flows', () => {
         updateInterval: 250,
         smoothTransitions: false,
         simulateData: true,
-        currentStudentId: studentId,
+        currentStudentId: getStudentUuid(studentKey),
       });
       useEffect(() => {
         rt.startStream();
-      }, []);
+        const timer = setTimeout(() => {
+          AnalyticsWorkerCoordinator.broadcastCacheClear(getStudentUuid(studentKey));
+        }, 500);
+        return () => clearTimeout(timer);
+      }, [studentKey, rt]);
       return <div data-testid="rt" data-count={rt.newDataCount} />;
     }
     render(<RT />);
     // Advance timers to allow simulated inserts and debounced broadcast (>= updateInterval)
-    await act(async () => {
-      vi.advanceTimersByTime(2000);
-    });
-    expect(bcSpy).toHaveBeenCalledWith(studentId);
+    await advanceTimers(12000);
+    expect(bcSpy).toHaveBeenCalledWith(getStudentUuid(studentKey));
     randSpy.mockRestore();
   });
 

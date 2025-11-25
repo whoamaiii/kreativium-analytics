@@ -4,15 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmotionEntry, SensoryEntry } from '@/types/student';
 import {
-  Sparkles,
   Zap,
-  Brain,
   Clock,
-  Sun,
-  Moon,
-  RefreshCw,
   Plus,
-  X,
   Trash2,
   Edit,
   Star,
@@ -198,7 +192,7 @@ const QuickEntryTemplatesComponent = ({ studentId, onApplyTemplate }: QuickEntry
   });
 
   const [isCreating, setIsCreating] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<QuickTemplate | null>(null);
+  const [_editingTemplate, _setEditingTemplate] = useState<QuickTemplate | null>(null);
   const [newTemplate, setNewTemplate] = useState<Partial<QuickTemplate>>({
     name: '',
     description: '',

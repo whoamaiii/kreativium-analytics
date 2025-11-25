@@ -61,7 +61,7 @@ import type {
 } from '@/lib/alerts/types';
 import { safeGet, safeSet } from '@/lib/storage';
 import { hashStudentId } from '@/lib/alerts/utils/hash';
-import * as logger from '@/lib/logger';
+import { logger } from '@/lib/logger';
 import { ThresholdLearner } from '@/lib/alerts/learning/thresholdLearner';
 import { ABTestingService } from '@/lib/alerts/experiments/abTesting';
 
@@ -177,13 +177,13 @@ export class AlertTelemetryService {
     entries.push(this.toEntry(alert, extras));
     this.writeEntries(entries);
     try {
-      (logger as any)?.info?.('alert_created', {
+      logger.info('alert_created', {
         alertId: alert.id,
         experiment: extras?.experimentKey,
       });
     } catch {}
     try {
-      (logger as any)?.debug?.('alert_telemetry_captured', {
+      logger.debug('alert_telemetry_captured', {
         alertId: alert.id,
         experiment: extras?.experimentKey,
         variant: extras?.experimentVariant,
@@ -199,7 +199,7 @@ export class AlertTelemetryService {
     if (e) e.acknowledgedAt = new Date().toISOString();
     this.writeEntries(entries);
     try {
-      (logger as any)?.info?.('alert_acknowledged', { alertId });
+      logger.info('alert_acknowledged', { alertId });
     } catch {}
   }
 
@@ -221,7 +221,7 @@ export class AlertTelemetryService {
     }
     this.writeEntries(entries);
     try {
-      (logger as any)?.info?.('alert_resolved', { alertId });
+      logger.info('alert_resolved', { alertId });
     } catch {}
   }
 
@@ -235,7 +235,7 @@ export class AlertTelemetryService {
     if (e) e.feedback = feedback;
     this.writeEntries(entries);
     try {
-      (logger as any)?.info?.('alert_feedback', { alertId, feedback });
+      logger.info('alert_feedback', { alertId, feedback });
     } catch {}
   }
 
@@ -250,7 +250,7 @@ export class AlertTelemetryService {
     }
     this.writeEntries(entries);
     try {
-      (logger as any)?.info?.('alert_snoozed', {
+      logger.info('alert_snoozed', {
         alertId,
         until: data?.until,
         reason: data?.reason,

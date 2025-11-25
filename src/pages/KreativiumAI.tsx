@@ -559,7 +559,12 @@ export default function KreativiumAI(): JSX.Element {
                   <RefreshCw className="h-4 w-4 mr-2" />
                   {formTexts.testAi}
                 </Button>
-                <Button onClick={analyze} disabled={isAnalyzing || !studentId} className="w-1/2">
+                <Button
+                  data-testid="ai-analyze-button"
+                  onClick={analyze}
+                  disabled={isAnalyzing || !studentId}
+                  className="w-1/2"
+                >
                   <Play className="h-4 w-4 mr-2" />
                   {formTexts.analyze}
                 </Button>
@@ -598,7 +603,9 @@ export default function KreativiumAI(): JSX.Element {
                     <div className="text-xs text-muted-foreground">
                       {dataQualityTexts.dataPoints}
                     </div>
-                    <div className="font-medium">{dataQuality.total}</div>
+                    <div data-testid="ai-data-quality-total" className="font-medium">
+                      {dataQuality.total}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-muted-foreground">

@@ -13,9 +13,9 @@ import {
   Clock,
 } from 'lucide-react';
 import { analyticsManager } from '@/lib/analyticsManager';
-import { dataStorage } from '@/lib/dataStorage';
 import { formatDistanceToNow } from 'date-fns';
 import { logger } from '@/lib/logger';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
 
 /**
  * Represents the analytics status for a single student
@@ -105,7 +105,7 @@ const AnalyticsStatusIndicatorComponent = ({
     try {
       if (studentId) {
         // Get the full Student object from storage
-        const student = dataStorage.getStudentById(studentId);
+        const student = legacyAnalyticsAdapter.getStudentById(studentId);
         if (student) {
           await analyticsManager.triggerAnalyticsForStudent(student);
         } else {

@@ -35,7 +35,7 @@ const resetForm = () => {
 // Usage in handlers (e.g., line 138)
 createGoal() {
   // ... validation ...
-  dataStorage.saveGoal(goal);
+  storageService.upsertGoal(convertLegacyGoalToLocal(goal));
   loadGoals();
   resetForm();  // Manual reset
   setShowCreateDialog(false);
@@ -66,7 +66,7 @@ const createGoal = () => {
   if (!newGoal.title.trim() || !newGoal.description.trim() || !newGoal.measurableObjective.trim()) {
     // ... validation ...
   }
-  dataStorage.saveGoal(goal);
+  storageService.upsertGoal(convertLegacyGoalToLocal(goal));
   loadGoals();
   resetForm();  // Same function call
   setShowCreateDialog(false);

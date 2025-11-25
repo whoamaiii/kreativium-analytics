@@ -29,7 +29,7 @@
  */
 
 import { logger } from '@/lib/logger';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
 import { clearAnalyticsLocalStorage, type LocalStorageClearResult } from './localStorageCleaner';
 
 /**
@@ -153,7 +153,7 @@ export function clearManagerCache(analyticsCache: Map<string, any>, studentId?: 
  */
 export function notifyWorkers(studentId?: string): boolean {
   try {
-    analyticsCoordinator.broadcastCacheClear(studentId);
+    AnalyticsWorkerCoordinator.broadcastCacheClear(studentId);
     return true;
   } catch (e) {
     logger.warn('[cacheCoordinator] notifyWorkers failed', e as Error);

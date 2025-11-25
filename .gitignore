@@ -15,3 +15,13 @@ coverage/
 .cursor/
 .vscode/
 *.log
+
+# Work artifacts (should not be committed)
+*_REPORT.md
+*_REPORT_*.md
+*_PLAN.md
+*_SUMMARY.md
+*_ANALYSIS.md
+*_FIXES.md
+AGENT_*.md
+!AGENTS.md

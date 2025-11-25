@@ -4,13 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { IntensityScale } from '@/components/ui/intensity-scale';
-import { SensoryEntry } from '@/types/student';
+import type { SensoryEntry as SessionSensoryEntry, EmotionLevel } from '@/lib/storage/types';
 import { Eye, Ear, Hand, RotateCcw, Activity } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface SensoryTrackerProps {
-  onSensoryAdd: (sensory: Omit<SensoryEntry, 'id' | 'timestamp'>) => void;
-  studentId: string;
+  onSensoryAdd: (sensory: Omit<SessionSensoryEntry, 'id' | 'timestamp'>) => void;
 }
 
 const sensoryTypes = [
@@ -61,7 +60,20 @@ const copingStrategySuggestions = [
   'Water break',
 ];
 
-const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProps) => {
+const senseMap: Record<string, SessionSensoryEntry['sense']> = {
+  visual: 'sight',
+  auditory: 'sound',
+  tactile: 'touch',
+  vestibular: 'movement',
+  proprioceptive: 'movement',
+};
+
+const clampEmotionLevel = (value: number): EmotionLevel => {
+  const next = Math.max(1, Math.min(5, Math.round(value)));
+  return next as EmotionLevel;
+};
+
+const SensoryTrackerComponent = ({ onSensoryAdd }: SensoryTrackerProps) => {
   const { tTracking, tCommon } = useTranslation();
   const [selectedType, setSelectedType] = useState<string>('');
   const [selectedResponse, setSelectedResponse] = useState<string>('');
@@ -91,15 +103,25 @@ const SensoryTrackerComponent = ({ onSensoryAdd, studentId }: SensoryTrackerProp
   const handleSubmit = () => {
     if (!selectedType || !selectedResponse) return;
 
+    const trimmedNotes = notes.trim();
+    const trimmedEnvironment = environment.trim();
+    const trimmedLocation = location.trim();
+    const contextPieces: string[] = [];
+    if (trimmedNotes) contextPieces.push(trimmedNotes);
+    if (trimmedEnvironment) contextPieces.push(`Miljø: ${trimmedEnvironment}`);
+    if (trimmedLocation) contextPieces.push(`Lokasjon: ${trimmedLocation}`);
+    if (copingStrategies.length > 0) {
+      contextPieces.push(`Strategier: ${copingStrategies.join(', ')}`);
+    }
+
     onSensoryAdd({
-      studentId,
-      sensoryType: selectedType as SensoryEntry['sensoryType'],
-      response: selectedResponse as SensoryEntry['response'],
-      intensity: intensity as SensoryEntry['intensity'],
-      location: location || undefined,
-      notes: notes.trim() || undefined,
-      environment: environment.trim() || undefined,
-      copingStrategies: copingStrategies.length > 0 ? copingStrategies : undefined,
+      sense: senseMap[selectedType] ?? 'other',
+      description:
+        contextPieces.length > 0
+          ? contextPieces.join(' | ')
+          : `Sansestimulus (${String(tTracking(`sensory.types.${selectedType}`))})`,
+      response: selectedResponse,
+      intensity: clampEmotionLevel(intensity),
     });
 
     // Reset form

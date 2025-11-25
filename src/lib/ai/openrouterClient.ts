@@ -64,13 +64,14 @@ export class OpenRouterClient {
       return '';
     };
 
-    // Precedence: explicit overrides > validated ai.modelName > env/localStorage > default
-    let liveModel = overrides?.modelName ?? ai.modelName;
-    if (!liveModel || liveModel.trim().length === 0) {
-      liveModel =
-        pickFirstNonEmpty(envAny.VITE_AI_MODEL_NAME, getLS(STORAGE_KEYS.AI_MODEL_NAME)) ||
-        ai.modelName;
-    }
+    // Precedence: explicit overrides > live env model > localStorage > aiConfig/defaults > hardcoded fallback
+    let liveModel = pickFirstNonEmpty(
+      overrides?.modelName,
+      envAny.VITE_AI_MODEL_NAME,
+      getLS(STORAGE_KEYS.AI_MODEL_NAME),
+      ai.modelName,
+      'openai/gpt-5.1',
+    );
 
     const liveKey = pickFirstNonEmpty(
       overrides?.apiKey,

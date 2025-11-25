@@ -32,3 +32,37 @@ defineStorage('sessionStorage');
 if (!(globalThis as any).window) {
   (globalThis as any).window = globalThis as any;
 }
+
+// Mock SpeechSynthesisUtterance
+if (!(globalThis as any).SpeechSynthesisUtterance) {
+  (globalThis as any).SpeechSynthesisUtterance = class {
+    text = '';
+    lang = '';
+    volume = 1;
+    rate = 1;
+    pitch = 1;
+    voice = null;
+  };
+}
+
+// Mock window.speechSynthesis
+if (!(globalThis as any).speechSynthesis) {
+  (globalThis as any).speechSynthesis = {
+    speak: () => {},
+    cancel: () => {},
+    pause: () => {},
+    resume: () => {},
+    getVoices: () => [],
+  };
+}
+
+// Mock URL.createObjectURL
+if (!(globalThis as any).URL) {
+  (globalThis as any).URL = {};
+}
+if (!(globalThis as any).URL.createObjectURL) {
+  (globalThis as any).URL.createObjectURL = () => 'blob:mock-url';
+}
+if (!(globalThis as any).URL.revokeObjectURL) {
+  (globalThis as any).URL.revokeObjectURL = () => {};
+}

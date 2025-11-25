@@ -1,5 +1,5 @@
 import * as tf from '@tensorflow/tfjs';
-import { ValidationResults } from '../../types/ml';
+import type { ValidationResults } from '@/lib/validation/crossValidation';
 
 /**
  * Model versioning and metadata

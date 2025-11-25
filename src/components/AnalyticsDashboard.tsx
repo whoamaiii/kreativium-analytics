@@ -2,12 +2,6 @@ import { useState, useEffect, useMemo, useRef, useCallback, memo, Suspense, lazy
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 // Lazy-load settings to avoid pulling ML/TFJS code until needed
 const AnalyticsSettings = lazy(() =>
   import('@/components/AnalyticsSettings').then((m) => ({ default: m.AnalyticsSettings })),
@@ -23,11 +17,6 @@ import {
   Brain,
   Eye,
   BarChart3,
-  Download,
-  FileText,
-  FileSpreadsheet,
-  FileJson,
-  Settings,
   RefreshCw,
   Gauge,
   AlertTriangle,
@@ -43,7 +32,7 @@ import { doOnce } from '@/lib/rateLimit';
 import { ErrorBoundary } from './ErrorBoundary';
 import { useSyncedTabParam } from '@/hooks/useSyncedTabParam';
 import { Badge } from '@/components/ui/badge';
-import { ExportDialog, type ExportOptions } from '@/components/ExportDialog';
+import { ExportDialog } from '@/components/ExportDialog';
 import { FiltersDrawer } from '@/components/analytics/FiltersDrawer';
 import { QuickQuestions } from '@/components/analytics/QuickQuestions';
 import type { FilterCriteria } from '@/lib/filterUtils';
@@ -95,12 +84,12 @@ export const AnalyticsDashboard = memo(
     useAI = false,
   }: AnalyticsDashboardProps) => {
     // All hooks must be called at the top level, not inside try-catch
-    const { tStudent, tAnalytics, tCommon } = useTranslation();
+    const { tAnalytics } = useTranslation();
     const [exportDialogOpen, setExportDialogOpen] = useState<boolean>(false);
     const [showSettings, setShowSettings] = useState<boolean>(false);
-    const [isSeeding, setIsSeeding] = useState<boolean>(false);
+    const [_isSeeding, setIsSeeding] = useState<boolean>(false);
     const visualizationRef = useRef<HTMLDivElement>(null);
-    const [autoRefresh, setAutoRefresh] = useState<boolean>(() => false);
+    const [autoRefresh, _setAutoRefresh] = useState<boolean>(() => false);
     const [filtersOpen, setFiltersOpen] = useState<boolean>(false);
     const [filters, setFilters] = useState<FilterCriteria>(() => ({
       dateRange: { start: null, end: null },
@@ -134,7 +123,7 @@ export const AnalyticsDashboard = memo(
     const { normalizedData, dataSignature } = useAnalyticsData({ filteredData });
 
     // Dev-only guard
-    const isDevSeedEnabled = useMemo(() => {
+    const _isDevSeedEnabled = useMemo(() => {
       try {
         const meta = import.meta as unknown as { env?: Record<string, unknown> };
         const env = meta.env ?? {};
@@ -145,7 +134,7 @@ export const AnalyticsDashboard = memo(
       }
     }, []);
 
-    const handleSeedDemo = useCallback(async () => {
+    const _handleSeedDemo = useCallback(async () => {
       setIsSeeding(true);
       try {
         const mod = await import('@/lib/mock/mockSeeders');

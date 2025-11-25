@@ -3,12 +3,14 @@ import { render, screen, act, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TrendsChart } from '@/components/charts/TrendsChart';
 import { saveTrackingEntry } from '@/lib/tracking/saveTrackingEntry';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
-import { dataStorage } from '@/lib/dataStorage';
+import { storageService } from '@/new/storage/storageService';
+import { convertSessionToLegacyEntry } from '@/new/pipeline/legacyTransforms';
 import type { AnalyticsData, AnalyticsWorkerMessage } from '@/types/analytics';
 import type { InsightsWorkerTask } from '@/lib/insights/task';
 import type { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
+import { resetWorkerManagerForTests } from '@/lib/analytics/workerManager';
 
 vi.mock('@/hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (k: string) => k, tAnalytics: (k: string) => k }),
@@ -84,11 +86,15 @@ vi.mock('@/components/charts/EChartContainer', () => ({
 
 // Mock worker to immediately complete
 vi.mock('@/workers/analytics.worker?worker', () => {
+  const runSoon = (cb: () => void) => {
+    void Promise.resolve().then(cb);
+  };
+
   class TestWorker {
     onmessage: ((ev: MessageEvent) => void) | null = null;
     onerror: ((ev: ErrorEvent) => void) | null = null;
     postMessage = vi.fn((msg: Partial<InsightsWorkerTask>) => {
-      setTimeout(() => {
+      runSoon(() => {
         if (!this.onmessage) return;
         const payloadInputs = msg?.payload?.inputs ?? {};
         const message = {
@@ -99,18 +105,18 @@ vi.mock('@/workers/analytics.worker?worker', () => {
           },
         };
         this.onmessage(message as unknown as MessageEvent<AnalyticsWorkerMessage>);
-      }, 0);
+      });
     });
     addEventListener = vi.fn();
     removeEventListener = vi.fn();
     terminate = vi.fn();
     constructor() {
-      setTimeout(() => {
+      runSoon(() => {
         if (!this.onmessage) return;
         this.onmessage({
           data: { type: 'progress' },
         } as unknown as MessageEvent<AnalyticsWorkerMessage>);
-      }, 0);
+      });
     }
   }
   return { default: TestWorker };
@@ -176,7 +182,9 @@ function Dashboard({
       const det = (evt as CustomEvent<{ studentId?: string }>).detail;
       if (!det || det.studentId === studentId) {
         try {
-          const next = (dataStorage.getEntriesForStudent(studentId) || []) as TrackingEntry[];
+          const next = storageService
+            .listSessionsForStudent(studentId)
+            .map((session) => convertSessionToLegacyEntry(session));
           setEntries(next);
           runAnalysis(createAnalyticsData(next), {
             student: createStudent(studentId),
@@ -202,10 +210,12 @@ function Dashboard({
 describe('Integration: save → analytics → chart rerender', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    resetWorkerManagerForTests();
   });
   afterEach(() => {
     cleanup();
     vi.useRealTimers();
+    resetWorkerManagerForTests();
   });
 
   it('rerenders chart after save triggers invalidation', async () => {

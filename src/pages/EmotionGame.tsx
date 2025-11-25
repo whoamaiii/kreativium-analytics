@@ -1,3 +1,18 @@
+/**
+ * EmotionGame page ("Følelsesspill")
+ *
+ * High-level controller for the emotion game experience:
+ * - Orchestrates detector, camera, and hold-timer hooks
+ * - Delegates round/UX state to `useEmotionGameState` and `useGameLoop`
+ * - Wires XP/level metrics into HUD components and celebratory effects
+ *
+ * NOTE: Lower-level state machines and pure logic live in:
+ * - `hooks/useEmotionGameState.ts` (round + UI state)
+ * - `hooks/useGameLoop.ts` (phases, XP, streak, levels)
+ * - `lib/game/*` (difficulty, metrics, telemetry)
+ *
+ * This file should remain a thin composition layer over those primitives.
+ */
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Button } from '@/components/ui/button';
@@ -53,6 +68,16 @@ import {
 } from '@/config/gameConfig';
 import { useStorageState } from '@/lib/storage/useStorageState';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
+import { useTegnXP } from '@/contexts/TegnXPContext';
+import { incNeutralHold } from '@/lib/progress/progress-store';
+import {
+  endEmotionGameSession,
+  recordEmotionRoundSuccess,
+  startEmotionGameSession,
+} from '@/lib/game/sessionAdapter';
+import { useTodayEmotionProgress } from '@/hooks/useTodayEmotionProgress';
+import { TodayProgressStrip } from '@/components/game/TodayProgressStrip';
+import { EmotionGameView } from '@/components/game/EmotionGameView';
 
 type PracticeMode =
   | 'mixed'
@@ -81,6 +106,9 @@ export default function EmotionGame() {
   // Game state machine
   const gameState = useEmotionGameState();
 
+  // Global XP integration (TegnXP)
+  const { addXP } = useTegnXP();
+
   // Configuration state (not part of state machine) - now using storage hooks
   const [worldIndex, setWorldIndex] = useStorageState(STORAGE_KEYS.EMOTION_WORLD_INDEX, 0, {
     deserialize: (value) => {
@@ -91,6 +119,7 @@ export default function EmotionGame() {
   const baseWorld = DEFAULT_WORLDS[worldIndex] ?? DEFAULT_WORLDS[0];
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const fpsBucketsRef = useRef<Record<string, number>>({});
+  const [cameraStarting, setCameraStarting] = useState<boolean>(false);
 
   const [themeId, setThemeId] = useStorageState<'regnbueland' | 'rom'>(
     STORAGE_KEYS.EMOTION_THEME_ID,
@@ -119,7 +148,10 @@ export default function EmotionGame() {
   );
 
   // Capture studentId from URL if provided and persist for scoping progress (run once)
-  const [, setCurrentStudentId] = useStorageState(STORAGE_KEYS.CURRENT_STUDENT_ID, '');
+  const [currentStudentId, setCurrentStudentId] = useStorageState(
+    STORAGE_KEYS.CURRENT_STUDENT_ID,
+    '',
+  );
   useEffect(() => {
     const sid = new URLSearchParams(window.location.search).get('studentId');
     if (sid) {
@@ -198,6 +230,7 @@ export default function EmotionGame() {
   const fastPassFramesRef = useRef<number>(0);
   const lastLevelRef = useRef<number>(0);
   const metrics = useRef(createMetricsAccumulator(loadCalibration()?.threshold ?? 0.6));
+  const gameSessionIdRef = useRef<string | null>(null);
 
   // UI/Effect state (not part of state machine)
   const [effectParams, setEffectParams] = useState<EffectParams>({
@@ -302,7 +335,10 @@ export default function EmotionGame() {
     return () => window.removeEventListener('keydown', handleGlobalKey);
   }, [handleGlobalKey]);
 
-  // Track mode start/end in telemetry
+  // Today-level progress view model (shared with Achievements)
+  const todayProgress = useTodayEmotionProgress(currentStudentId || undefined);
+
+  // Track mode start/end in telemetry and mirror into the tracking SessionManager
   useEffect(() => {
     // Note: mode is automatically persisted via useStorageState
     if (modeStartRef.current != null) {
@@ -319,6 +355,12 @@ export default function EmotionGame() {
       } catch {
         /* noop */
       }
+      // End any active tracking session for the previous mode
+      try {
+        endEmotionGameSession(gameSessionIdRef.current, { save: true });
+      } catch {
+        /* noop */
+      }
     }
     modeStartRef.current = Date.now();
     try {
@@ -332,7 +374,13 @@ export default function EmotionGame() {
     } catch {
       /* noop */
     }
-  }, [mode, round?.target, roundIndex]);
+    // Start a new tracking session for this mode
+    try {
+      gameSessionIdRef.current = startEmotionGameSession(currentStudentId, mode);
+    } catch {
+      /* noop */
+    }
+  }, [mode, round?.target, roundIndex, currentStudentId]);
 
   // On unmount, close any open mode session for better analytics hygiene
   useEffect(() => {
@@ -348,6 +396,11 @@ export default function EmotionGame() {
             mode,
             durationMs: duration,
           });
+        } catch {
+          /* noop */
+        }
+        try {
+          endEmotionGameSession(gameSessionIdRef.current, { save: true });
         } catch {
           /* noop */
         }
@@ -506,10 +559,15 @@ export default function EmotionGame() {
             GAME_SCORING.PERFECT_THRESHOLD_ADDITION,
         );
       setLastPerfect(perfect);
-      registerScore(timeToSuccess, gameState.state.round.usedHint, {
+      const gainedXp = registerScore(timeToSuccess, gameState.state.round.usedHint, {
         combo: gameState.state.round.combo,
         perfect,
       });
+      try {
+        addXP(gainedXp);
+      } catch {
+        /* noop */
+      }
       try {
         setEffectParams(
           mapEffects({
@@ -564,6 +622,22 @@ export default function EmotionGame() {
         stabilityMs: snapshot.longestStabilityMs,
         intensity: snapshot.intensityScore,
       });
+      try {
+        recordEmotionRoundSuccess(gameSessionIdRef.current as any, {
+          target: targetExpression,
+          timeMs: timeToSuccess,
+          usedHint: gameState.state.round.usedHint,
+        });
+      } catch {
+        /* noop */
+      }
+      if (targetExpression === 'neutral') {
+        try {
+          incNeutralHold();
+        } catch {
+          /* noop */
+        }
+      }
       if (mode === 'confidence') {
         setShowSummary({
           visible: false,
@@ -632,10 +706,15 @@ export default function EmotionGame() {
     if (fastPassFramesRef.current >= GAME_DIFFICULTY.FAST_PASS_FRAMES) {
       setGamePhase('success');
       const timeToSuccess = round.holdMs;
-      registerScore(timeToSuccess, gameState.state.round.usedHint, {
+      const gainedXp = registerScore(timeToSuccess, gameState.state.round.usedHint, {
         combo: gameState.state.round.combo,
         perfect: false,
       });
+      try {
+        addXP(gainedXp);
+      } catch {
+        /* noop */
+      }
       gameState.registerSuccess(true);
       const adaptedDifficulty = refineDifficultyForEmotion(
         adaptDifficulty(
@@ -659,6 +738,22 @@ export default function EmotionGame() {
         streak: metricsSnapshot.streak,
         fpsBuckets: gameState.state.detector.fpsBuckets,
       });
+      try {
+        recordEmotionRoundSuccess(gameSessionIdRef.current as any, {
+          target: targetExpression,
+          timeMs: timeToSuccess,
+          usedHint: gameState.state.round.usedHint,
+        });
+      } catch {
+        /* noop */
+      }
+      if (targetExpression === 'neutral') {
+        try {
+          incNeutralHold();
+        } catch {
+          /* noop */
+        }
+      }
       if (mode === 'confidence') {
         const actualProb = probabilities[targetExpression] ?? 0;
         setShowSummary({ visible: false, timeMs: timeToSuccess, actualProb });
@@ -749,18 +844,43 @@ export default function EmotionGame() {
   }, [metricsSnapshot.level]);
 
   async function startCamera() {
+    if (cameraStarting || gameState.state.detector.cameraActive) return;
+    setCameraStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user' },
+        video: {
+          facingMode: 'user',
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+        },
         audio: false,
       });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        gameState.setCamera(true);
-        setGamePhase('prompt');
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        try {
+          // Some browsers require an explicit play() even with muted + playsInline
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          video.play();
+        } catch {
+          // ignore autoplay errors; we'll still get canplay when frames arrive
+        }
+        const handleCanPlay = () => {
+          gameState.setCamera(true);
+          setGamePhase('prompt');
+          setCameraStarting(false);
+          video.removeEventListener('canplay', handleCanPlay);
+        };
+        video.addEventListener('canplay', handleCanPlay);
+        if (video.readyState >= 2) {
+          // If metadata is already loaded, mark ready immediately
+          handleCanPlay();
+        }
+      } else {
+        setCameraStarting(false);
       }
     } catch {
+      setCameraStarting(false);
       gameState.setCamera(false);
     }
   }
@@ -789,325 +909,47 @@ export default function EmotionGame() {
     };
   }, []);
 
-  const targetLabel = roundTarget;
-  const targetText = tCommon(`emotionLab.expressions.${targetLabel}`);
-
   return (
-    <div className="main-container min-h-screen p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">
-            {String(tCommon('game.title', { defaultValue: 'Følelsesspill' }))}
-          </h1>
-          <div className="flex items-center gap-2">
-            {gameState.state.detector.cameraActive ? (
-              <Button variant="destructive" onClick={stopCamera}>
-                {String(tCommon('tegn.cameraDisable'))}
-              </Button>
-            ) : (
-              <Button variant="default" onClick={startCamera}>
-                {String(tCommon('tegn.cameraEnable'))}
-              </Button>
-            )}
-            <ThemeSwitch
+    <EmotionGameView
+      phase={phase}
+      roundTarget={roundTarget}
+      round={round}
+      roundIndex={roundIndex}
+      metricsSnapshot={metricsSnapshot}
+      effectiveWorld={effectiveWorld}
+      detector={detector}
+      videoRef={videoRef}
+      cameraStarting={cameraStarting}
+      gameState={gameState as any}
               themeId={themeId}
-              onChange={(id) => {
-                // Note: theme is automatically persisted via useStorageState
-                setThemeId(id);
-              }}
-            />
-            <Button
-              variant="outline"
-              onClick={() => {
-                gameState.showModal('showTutorial');
-              }}
-            >
-              {String(tCommon('buttons.help', { defaultValue: 'Help' }))}
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => {
-                gameState.resetDifficultyStreak();
-              }}
-            >
-              {String(tCommon('game.streakReset', { defaultValue: 'Reset streak' }))}
-            </Button>
-            {mode === 'confidence' && (
-              <>
-                <CalibrationErrorSparkline />
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    try {
-                      window.location.assign('/calibration/confidence');
-                    } catch {
-                      /* noop */
-                    }
-                  }}
-                >
-                  {String(tCommon('game.calibration.link'))}
-                </Button>
-              </>
-            )}
-            <ModeSelector value={mode} onChange={setMode} />
-            <PracticeSelector value={practice} onChange={setPractice} />
-          </div>
-        </div>
-
-        <Card className="p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <div className="space-y-4">
-              <div className="text-foreground/80 text-sm">{String(tCommon('game.target'))}</div>
-              <div className="text-5xl" aria-live="polite">
-                {targetText}
-              </div>
-              {mode === 'mirror' && (
-                <MatchMeter
-                  value={(detector.probabilities as Record<string, number>)[roundTarget] ?? 0}
-                />
-              )}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  disabled={!gameState.canUseHint}
-                  onClick={() => {
-                    if (!gameState.canUseHint) return;
-                    gameState.useHint();
-                    try {
-                      recordGameEvent({
-                        ts: Date.now(),
-                        kind: 'hint_used',
-                        roundIndex: roundIndex,
-                        target: round?.target ?? 'neutral',
-                      });
-                    } catch {
-                      /* noop */
-                    }
-                  }}
-                >
-                  {String(
-                    tCommon('game.hintCount', { count: gameState.state.round.hints.remaining }),
-                  )}
-                </Button>
-                <Button variant="outline" onClick={() => setGamePhase('paused')}>
-                  {String(tCommon('game.pause'))}
-                </Button>
-                <Button variant="outline" onClick={() => advanceRound()}>
-                  {String(tCommon('game.skip'))}
-                </Button>
-              </div>
-              {/* Timer and combo display */}
-              <div className="text-sm text-foreground/70">
-                {gameState.state.round.timerActive && (
-                  <span>
-                    {String(tCommon('roundSummary.time'))}:{' '}
-                    {Math.ceil(gameState.state.round.roundTimerMs / 1000)}
-                    {String(tCommon('game.secondsShort'))}
-                  </span>
-                )}{' '}
-                {gameState.state.round.combo > 1 && (
-                  <span className="ml-3">
-                    {String(tCommon('game.comboLabel', { count: gameState.state.round.combo }))}
-                  </span>
-                )}
-              </div>
-              <div id="round-live" className="sr-only" aria-live="polite" />
-            </div>
-            <PhaseGlow phase={phase} className="relative">
-              <div className="relative">
-                <video
-                  ref={videoRef}
-                  className="w-full h-auto rounded-lg"
-                  playsInline
-                  muted
-                  aria-label={String(tCommon('tegn.cameraAssistActive'))}
-                />
-                <ScanSweep active={!detector.ready || phase === 'prompt'} />
-                {mode === 'mirror' && (
-                  <HintHeatmapOverlay
-                    visible
-                    box={detector.box}
-                    target={roundTarget}
-                    sourceWidth={videoRef.current?.videoWidth ?? 0}
-                    sourceHeight={videoRef.current?.videoHeight ?? 0}
-                  />
-                )}
-                {/* Fixed progress ring in the corner for stable visuals */}
-                <div className="absolute right-4 bottom-4 pointer-events-none">
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{
-                      opacity: detector.ready && phase === 'detecting' ? 1 : 0,
-                      scale: detector.ready && phase === 'detecting' ? 1 : 0.98,
-                    }}
-                    transition={{ duration: 0.25, ease: 'easeOut' }}
-                  >
-                    <AnimatedProgressRing size={96} stroke={8} progress={holdState.progress} />
-                  </motion.div>
-                </div>
-                {/* Reward banner near camera */}
-                <RewardBanner
-                  visible={phase === 'reward'}
-                  stars={metricsSnapshot.stars || 1}
-                  xpGained={
-                    metricsSnapshot.stars
-                      ? GAME_SCORING.XP_BASE +
-                        Math.max(0, (metricsSnapshot.stars - 1) * GAME_SCORING.XP_STAR_MULTIPLIER) +
-                        Math.min(
-                          metricsSnapshot.streak * GAME_SCORING.XP_STREAK_MULTIPLIER,
-                          GAME_SCORING.XP_STREAK_MAX_BONUS,
-                        )
-                      : undefined
-                  }
-                />
-                <AlmostThereHint
-                  visible={
-                    phase === 'detecting' &&
-                    !!round &&
-                    ((detector.probabilities as Record<string, number>)[roundTarget] ?? 0) >=
-                      (round.threshold ?? GAME_DIFFICULTY.DEFAULT_THRESHOLD) * 0.8
-                  }
-                />
-                {/* Debug HUD removed in production to satisfy lint rules */}
-              </div>
-            </PhaseGlow>
-          </div>
-        </Card>
-
-        <GameHUD
-          roundIndex={roundIndex}
-          totalRounds={effectiveWorld.rounds.length}
-          streak={metricsSnapshot.streak}
-          xp={metricsSnapshot.xp}
-          level={metricsSnapshot.level}
-          xpToNext={metricsSnapshot.xpToNext}
-        />
-        <SessionSummary startTs={modeStartRef.current} />
-        <LevelUpModal
-          visible={levelUpVisible}
-          level={metricsSnapshot.level}
-          onClose={() => setLevelUpVisible(false)}
-        />
-      </div>
-      <StickerBook visible={gameState.state.modals.showStickerBook} />
-      <ConfidencePrompt
-        visible={gameState.state.modals.showConfidencePrompt && mode === 'confidence'}
-        value={confidenceValue}
-        onChange={setConfidenceValue}
-        onSubmit={() => {
-          gameState.hideModal('showConfidencePrompt');
-          // Compute calibration error vs last actual probability
-          const actualProb = showSummary?.actualProb ?? 0;
-          const calibrationError = Math.abs(confidenceValue - actualProb);
-          try {
-            recordGameEvent({
-              ts: Date.now(),
-              kind: 'confidence_reported',
-              roundIndex,
-              target: roundTarget,
-              confidence: confidenceValue,
-              actualProb,
-              calibrationError,
-            });
-          } catch {
-            /* noop */
-          }
-          setShowSummary((s) => (s ? { ...s, visible: true } : { visible: true, timeMs: 0 }));
-        }}
-      />
-      <RoundSummaryCard
-        visible={(showSummary?.visible ?? false) && mode === 'confidence'}
-        target={roundTarget}
-        timeMs={showSummary?.timeMs ?? 0}
-        stabilityMs={showSummary?.stabilityMs}
-        intensity={showSummary?.intensity}
-        confidence={confidenceValue}
-        actualProb={showSummary?.actualProb}
-        onContinue={() => {
-          setShowSummary(null);
-          setGamePhase('reward');
-        }}
-      />
-      <TutorialOverlay
-        visible={gameState.state.modals.showTutorial}
-        onClose={() => {
-          setTutorialSeen(true);
-          gameState.hideModal('showTutorial');
-        }}
-      />
-      <CalibrationOverlay
-        visible={gameState.state.modals.showCalibration}
-        neutralProb={(detector.probabilities as Record<string, number>)['neutral'] ?? 0}
-        onClose={() => gameState.hideModal('showCalibration')}
-      />
-      {/* Full-screen success confetti overlay */}
-      {/* Guard with reduced motion and only render once mounted to avoid strict-mode dev issues */}
-      {celebration.confetti && (
-        <ConfettiBurst
-          active
-          className="fixed inset-0 pointer-events-none z-40"
-          origin={{ x: 0.5, y: 0.5 }}
-          spreadDeg={360}
-          speed={1.0 + effectParams.glowStrength * EFFECT_CONFIG.CONFETTI_SPEED_MULTIPLIER}
-          particles={Math.max(particleMin, Math.min(particleMax, effectParams.particleCount))}
-          colors={theme.colors}
-        />
-      )}
-      {/* Temporarily disable corner celebrate to further reduce effect churn */}
-      {/* <CornerCelebrate active={celebration.confetti} themeColors={theme.colors} /> */}
-      {lastPerfect && (
-        <ConfettiBurst
-          active={celebration.confetti}
-          className="fixed inset-0 pointer-events-none z-40"
-          origin={{ x: 0.5, y: 0.5 }}
-          spreadDeg={360}
-          speed={EFFECT_CONFIG.PERFECT_CONFETTI_SPEED}
-          particles={Math.max(
-            particleMin + EFFECT_CONFIG.PERFECT_CONFETTI_PARTICLE_ADDITION,
-            Math.min(
-              particleMax,
-              Math.floor(
-                effectParams.particleCount * EFFECT_CONFIG.PERFECT_CONFETTI_PARTICLE_MULTIPLIER,
-              ),
-            ),
-          )}
-          colors={['#ff004c', '#ff7a00', '#ffd400', '#7dff00', '#00e0ff', '#5b5bff', '#d05bff']}
-        />
-      )}
-      <LevelCompleteModal
-        visible={gameState.state.modals.showLevelComplete}
-        onClose={() => gameState.hideModal('showLevelComplete')}
-        onNext={() => {
-          gameState.hideModal('showLevelComplete');
-          setWorldIndex((i) => Math.min(DEFAULT_WORLDS.length - 1, i + 1));
-          gameState.showModal('showWorldBanner');
-          startGame();
-        }}
-        onReplay={() => {
-          gameState.hideModal('showLevelComplete');
-          startGame();
-        }}
-        onFreePlay={() => {
-          gameState.hideModal('showLevelComplete');
-          gameState.showModal('showStickerBook');
-        }}
-        onPayout={(stickerId) => {
-          setStickers((prev) => [
-            ...prev,
-            {
-              id: stickerId,
-              x: Math.random() * STICKER_CONFIG.RANDOM_X_RANGE + STICKER_CONFIG.RANDOM_X_OFFSET,
-              y: Math.random() * STICKER_CONFIG.RANDOM_Y_RANGE + STICKER_CONFIG.RANDOM_Y_OFFSET,
-            },
-          ]);
-        }}
-      />
-      <WorldBanner
-        visible={gameState.state.modals.showWorldBanner}
-        worldName={String(tCommon(effectiveWorld.nameKey))}
-        colors={theme.colors}
-        onClose={() => gameState.hideModal('showWorldBanner')}
-      />
-    </div>
+      setThemeId={setThemeId}
+      mode={mode}
+      setMode={setMode}
+      practice={practice}
+      setPractice={setPractice}
+      onStartCamera={startCamera}
+      onStopCamera={stopCamera}
+      onAdvanceRound={advanceRound}
+      onSetGamePhase={setGamePhase}
+      holdProgress={holdState.progress}
+      todayProgress={todayProgress}
+      sessionStartTs={modeStartRef.current}
+      levelUpVisible={levelUpVisible}
+      setLevelUpVisible={setLevelUpVisible}
+      confidenceValue={confidenceValue}
+      setConfidenceValue={setConfidenceValue}
+      showSummary={showSummary}
+      setShowSummary={setShowSummary}
+      celebrationConfetti={celebration.confetti}
+      effectParams={effectParams}
+      particleMin={particleMin}
+      particleMax={particleMax}
+      themeColors={theme.colors}
+      lastPerfect={lastPerfect}
+      setTutorialSeen={setTutorialSeen}
+      setWorldIndex={setWorldIndex}
+      startGame={startGame}
+      setStickers={setStickers}
+    />
   );
 }

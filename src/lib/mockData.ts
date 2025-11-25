@@ -6,9 +6,11 @@ import {
   SensoryEntry,
   EnvironmentalEntry,
 } from '@/types/student';
-import { dataStorage } from './dataStorage';
 import { POC_MODE } from './env';
 import { logger } from './logger';
+import { storageService } from '@/lib/storage/storageService';
+import { convertLegacyStudentToLocal } from '@/lib/adapters/legacyConverters';
+import { convertLegacyEntryToSession } from '@/lib/adapters/legacyTransforms';
 
 type TimeOfDay = 'morning' | 'afternoon' | 'evening';
 
@@ -297,7 +299,7 @@ export const seedMinimalDemoData = async (
       lastUpdated: now,
       version: 1,
     };
-    dataStorage.saveStudent(student);
+    storageService.upsertStudent(convertLegacyStudentToLocal(student));
 
     let entryCounter = 0;
 
@@ -361,11 +363,12 @@ export const seedMinimalDemoData = async (
           version: 1,
         };
 
-        dataStorage.saveTrackingEntry(entry);
+        const session = convertLegacyEntryToSession(entry);
+        storageService.saveSession(session);
       }
     }
 
-    const totalEntries = dataStorage.getEntriesForStudent(studentId).length;
+    const totalEntries = storageService.listSessionsForStudent(studentId).length;
     logger.info('seedMinimalDemoData: seeded enhanced demo data', {
       studentId,
       studentName: student.name,

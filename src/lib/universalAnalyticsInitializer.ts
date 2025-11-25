@@ -1,10 +1,10 @@
 import { analyticsManager } from './analyticsManager';
-import { dataStorage } from './dataStorage';
 import { logger } from './logger';
 import {
   getValidatedConfig,
   validateAnalyticsRuntimeConfig,
 } from '@/lib/analyticsConfigValidation';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
 
 /**
  * Universal Analytics Initializer
@@ -37,7 +37,7 @@ export class UniversalAnalyticsInitializer {
         );
       }
       // Get all existing students
-      const students = dataStorage.getStudents();
+      const students = legacyAnalyticsAdapter.listStudents();
 
       // Initialize analytics for each student
       for (const student of students) {
@@ -77,7 +77,7 @@ export class UniversalAnalyticsInitializer {
     studentsWithAnalytics: number;
     totalStudents: number;
   } {
-    const students = dataStorage.getStudents();
+    const students = legacyAnalyticsAdapter.listStudents();
     const analyticsStatus = analyticsManager.getAnalyticsStatus();
 
     return {

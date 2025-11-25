@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Student, TrackingEntry, EmotionEntry, SensoryEntry, Goal } from '@/types/student';
-import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
+import { useGoalsByStudent, useStudent as useLocalStudent } from '@/hooks/useStorageData';
+import { convertLocalGoalToLegacy, convertLocalStudentToLegacy } from '@/lib/adapters/legacyConverters';
+import { useLegacyTrackingEntries } from '@/hooks/useLegacyTrackingEntries';
 
 /**
  * @hook useStudentData
@@ -24,74 +26,47 @@ import { logger } from '@/lib/logger';
  *  - `reloadData`: A function to refetch all of the student's data from storage.
  */
 export const useStudentData = (studentId: string | undefined) => {
-  const [student, setStudent] = useState<Student | null>(null);
-  const [trackingEntries, setTrackingEntries] = useState<TrackingEntry[]>([]);
-  const [allEmotions, setAllEmotions] = useState<EmotionEntry[]>([]);
-  const [allSensoryInputs, setAllSensoryInputs] = useState<SensoryEntry[]>([]);
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Fetches all data for the given studentId from the data storage.
-   * This function is wrapped in `useCallback` to ensure it is memoized and
-   * doesn't cause unnecessary re-renders when passed as a prop or dependency.
-   */
-  const loadData = useCallback(() => {
+  const localStudent = useLocalStudent(studentId);
+  const student = useMemo<Student | null>(
+    () => (localStudent ? (convertLocalStudentToLegacy(localStudent) as Student) : null),
+    [localStudent],
+  );
+  const error = useMemo(() => {
     if (!studentId) {
-      setIsLoading(false);
-      setError('No student ID provided.');
-      return;
+      return 'No student ID provided.';
     }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const studentData = dataStorage.getStudentById(studentId);
-
-      if (studentData) {
-        setStudent(studentData);
-
-        const entries = dataStorage.getEntriesForStudent(studentId);
-        setTrackingEntries(entries);
-
-        const emotions = entries.flatMap((entry) => entry.emotions);
-        const sensoryInputs = entries.flatMap((entry) => entry.sensoryInputs);
-
-        setAllEmotions(emotions);
-        setAllSensoryInputs(sensoryInputs);
-
-        const allGoals = dataStorage.getGoals();
-        const studentGoals = allGoals.filter((goal) => goal.studentId === studentId);
-        setGoals(studentGoals);
-      } else {
-        setError('Student not found.');
-      }
-    } catch (e) {
-      setError('Failed to load student data.');
-      logger.error('Failed to load student data:', e);
-    } finally {
-      setIsLoading(false);
+    if (!student) {
+      return 'Student not found.';
     }
-  }, [studentId]);
+    return null;
+  }, [studentId, student]);
+  const localGoals = useGoalsByStudent(studentId);
+  const goals = useMemo<Goal[]>(
+    () =>
+      (localGoals ?? []).map((goal) => convertLocalGoalToLegacy(goal) as Goal),
+    [localGoals],
+  );
+  const isLoading = Boolean(studentId) && !student;
+  const reloadGoals = useCallback(() => {}, []);
 
-  // Effect to load data when the component mounts or when the studentId changes.
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const legacyEntries = useLegacyTrackingEntries(studentId ? { studentId } : undefined);
 
-  /**
-   * Specifically reloads the goals for the current student.
-   * This is useful after a goal has been updated, added, or deleted.
-   */
-  const reloadGoals = useCallback(() => {
-    if (studentId) {
-      const allGoals = dataStorage.getGoals();
-      const studentGoals = allGoals.filter((goal) => goal.studentId === studentId);
-      setGoals(studentGoals);
+  const trackingEntries = useMemo<TrackingEntry[]>(() => {
+    if (!legacyEntries.length) {
+      return [];
     }
-  }, [studentId]);
+    return [...legacyEntries].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [legacyEntries]);
+
+  const allEmotions = useMemo<EmotionEntry[]>(
+    () => trackingEntries.flatMap((entry) => entry.emotions),
+    [trackingEntries],
+  );
+
+  const allSensoryInputs = useMemo<SensoryEntry[]>(
+    () => trackingEntries.flatMap((entry) => entry.sensoryInputs),
+    [trackingEntries],
+  );
 
   return {
     student,
@@ -102,6 +77,9 @@ export const useStudentData = (studentId: string | undefined) => {
     isLoading,
     error,
     reloadGoals,
-    reloadData: loadData,
+    reloadData: useCallback(() => {
+      if (!studentId) return;
+      logger.debug('[useStudentData] reloadData invoked', { studentId });
+    }, [studentId]),
   };
 };

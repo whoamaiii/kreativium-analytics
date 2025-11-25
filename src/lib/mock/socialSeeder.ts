@@ -1,6 +1,7 @@
 import { generateUUID } from '@/lib/uuid';
-import { dataStorage } from '@/lib/dataStorage';
 import type { TrackingEntry, EmotionEntry } from '@/types/student';
+import { storageService } from '@/lib/storage/storageService';
+import { convertLegacyEntryToSession } from '@/lib/adapters/legacyTransforms';
 
 /**
  * Seed a handful of social-trigger examples for a student.
@@ -27,7 +28,8 @@ export async function seedSocialDemoData(studentId: string, count = 6): Promise<
       sensoryInputs: [],
       generalNotes: 'Sosial situasjon: gruppeoppgave / friminutt',
     };
-    dataStorage.saveTrackingEntry(entry);
+    const session = convertLegacyEntryToSession(entry);
+    storageService.saveSession(session);
   }
   return count;
 }

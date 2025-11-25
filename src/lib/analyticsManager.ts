@@ -1,5 +1,5 @@
 import { Student } from '@/types/student';
-import { dataStorage, IDataStorage } from '@/lib/dataStorage';
+import type { IDataStorage } from '@/lib/storage/interfaces';
 import {
   ANALYTICS_CONFIG,
   DEFAULT_ANALYTICS_CONFIG,
@@ -13,7 +13,7 @@ import type { AnalysisEngine } from '@/lib/analysis';
 import { AnalyticsRunner } from '@/lib/analytics/runner';
 import type { AnalyticsResultsCompat } from '@/lib/analytics/types';
 import { getProfileMap, initializeStudentProfile, saveProfiles } from '@/lib/analyticsProfiles';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { localAnalyticsDataStorage } from '@/lib/adapters/localAnalyticsDataStorage';
 import type { StudentAnalyticsProfile } from '@/lib/analyticsProfiles';
 // Legacy task builders (to be deprecated)
 export {
@@ -65,7 +65,9 @@ import {
  * The function gracefully handles errors and treats cache warming as best-effort.
  * Configuration is loaded from live analytics config with fallback to defaults.
  */
-export const ensureUniversalAnalyticsInitialization = async (): Promise<void> => {
+export const ensureUniversalAnalyticsInitialization = async (
+  storage: IDataStorage = localAnalyticsDataStorage,
+): Promise<void> => {
   try {
     // Ensure profiles for existing students; no auto generation of mock data here
     const cfg = (() => {
@@ -90,13 +92,13 @@ export const ensureUniversalAnalyticsInitialization = async (): Promise<void> =>
       cfg?.confidence?.THRESHOLDS?.TRACKING_ENTRIES ??
       ANALYTICS_CONFIG.confidence.THRESHOLDS.TRACKING_ENTRIES;
 
-    const allStudents = dataStorage.getStudents();
+    const allStudents = storage.getStudents();
     for (const student of allStudents) {
       // Ensure profile exists (delegated to profiles module)
       initializeStudentProfile(student.id);
 
       // Optional: evaluate minimum data for future warming decisions
-      const tracking = dataStorage.getEntriesForStudent(student.id);
+      const tracking = storage.getTrackingEntriesForStudent(student.id);
       const emotions = tracking.flatMap((t) => t.emotions ?? []);
       const sensoryInputs = tracking.flatMap((t) => t.sensoryInputs ?? []);
 
@@ -223,12 +225,12 @@ class AnalyticsManagerService {
 
   /**
    * Retrieves the singleton instance of the AnalyticsManagerService.
-   * @param {IDataStorage} [storage=dataStorage] - The data storage dependency.
+   * @param {IDataStorage} [storage=localAnalyticsDataStorage] - The data storage dependency.
    * @param {AnalyticsProfileMap} [profiles] - Optional initial profiles to load.
    * @returns {AnalyticsManagerService} The singleton instance.
    */
   static getInstance(
-    storage: IDataStorage = dataStorage,
+    storage: IDataStorage = localAnalyticsDataStorage,
     profiles?: AnalyticsProfileMap,
   ): AnalyticsManagerService {
     if (!AnalyticsManagerService.instance) {
@@ -382,8 +384,8 @@ class AnalyticsManagerService {
               );
               __ttlDeprecationWarnWindow.set(key, nowMs);
             }
-          } catch {
-            /* noop */
+          } catch (e) {
+            logger.debug('[analyticsManager] Deprecation warning rate-limit failed', { error: e });
           }
 
           // When runtime explicitly requests heuristic (useAI=false) and cache holds AI, bypass cache
@@ -410,11 +412,7 @@ class AnalyticsManagerService {
     if (!this.isManagerTtlCacheDisabled()) {
       this.analyticsCache.set(student.id, { results, timestamp: new Date() });
     } else {
-      try {
-        logger.info('[analyticsManager] Manager TTL cache disabled; not storing results.');
-      } catch {
-        /* noop */
-      }
+      logger.debug('[analyticsManager] Manager TTL cache disabled; not storing results.');
     }
 
     const profile = this.analyticsProfiles.get(student.id);

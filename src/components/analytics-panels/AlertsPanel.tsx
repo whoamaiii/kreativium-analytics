@@ -51,7 +51,7 @@ export interface AlertsPanelProps {
 export const AlertsPanel = React.memo(
   ({ filteredData: _filteredData, studentId }: AlertsPanelProps) => {
     const { tAnalytics } = useTranslation();
-    const { pinnedIds, isPinned, togglePin, unpinAlert, clearPinnedAlerts } = usePinnedAlerts();
+    const { pinnedIds, isPinned: _isPinned, togglePin, unpinAlert, clearPinnedAlerts } = usePinnedAlerts();
 
     // Search input ref for keyboard shortcuts
     const searchRef = useRef<HTMLInputElement | null>(null);

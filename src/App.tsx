@@ -66,6 +66,7 @@ const AdultReports = lazy(() => import('./pages/adult/Reports'));
 const ConfidenceCalibration = lazy(() => import('./pages/ConfidenceCalibration'));
 const SessionFlow = lazy(() => import('./pages/session/Flow'));
 const Achievements = lazy(() => import('./pages/Achievements'));
+import { GameErrorBoundary } from '@/components/error-boundaries/GameErrorBoundary';
 
 const queryClient = new QueryClient();
 
@@ -90,7 +91,14 @@ const App = () => (
                     <Route path="/kreativium-ai" element={<KreativiumAI />} />
                     <Route path="/emotion-lab" element={<EmotionLab />} />
                     <Route path="/modules/choose-right" element={<ChooseRight />} />
-                    <Route path="/emotion-game" element={<EmotionGame />} />
+                    <Route
+                      path="/emotion-game"
+                      element={
+                        <GameErrorBoundary gameName="Følelsesspill">
+                          <EmotionGame />
+                        </GameErrorBoundary>
+                      }
+                    />
                     <Route path="/modules/name-it" element={<NameIt />} />
                     <Route path="/modules/calm-pause" element={<CalmPause />} />
                     <Route path="/modules/missions" element={<DailyMissions />} />

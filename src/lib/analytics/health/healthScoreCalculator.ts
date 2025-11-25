@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 import type { AnalyticsResultsCompat } from '@/lib/analytics/types';
 import type { AnalyticsConfiguration } from '@/types/analytics';
 import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
@@ -174,7 +176,7 @@ import { ANALYTICS_CONFIG } from '@/lib/analyticsConfig';
  * import { calculateHealthScore } from '@/lib/analytics/health/healthScoreCalculator';
  *
  * const score = calculateHealthScore(analyticsResults);
- * console.log(`Health Score: ${score}/100`);
+ * logger.info(`Health Score: ${score}/100`);
  * ```
  *
  * ### With Custom Configuration

@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { alertSystem, type AlertHistoryEntry } from './alertSystem';
-import { dataStorage } from './dataStorage';
 import { patternAnalysis, type TriggerAlert } from './patternAnalysis';
 import { Student } from '@/types/student';
 
@@ -10,10 +9,7 @@ describe('AlertSystem', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks();
-    // Stub dataStorage methods that are actually exported
-    vi.spyOn(dataStorage, 'getStudents').mockReturnValue([student]);
-    vi.spyOn(dataStorage, 'getTrackingEntriesForStudent').mockReturnValue([]);
-    // alertSystem persists alerts in localStorage itself; dataStorage.getAlerts* is unrelated here
+    // alertSystem persists alerts in localStorage itself; legacy getAlerts* is unrelated here
     // Clear persisted alerts before each test
     localStorage.removeItem('sensoryTracker_alerts');
   });

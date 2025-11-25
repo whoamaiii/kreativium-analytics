@@ -15,14 +15,91 @@
  */
 
 import * as tf from '@tensorflow/tfjs';
-import {
-  TrainingData,
-  ValidationResults,
-  ValidationMetrics,
-  TrainingFold,
-  CrossValidationConfig,
-  EarlyStoppingConfig,
-} from '../../types/ml';
+import { TrainingData } from '../../types/ml';
+
+/**
+ * Configuration for early stopping during model training.
+ */
+export interface EarlyStoppingConfig {
+  /** Whether to enable early stopping. Default: false. */
+  enabled?: boolean;
+  /** Number of epochs to wait before stopping when no improvement occurs. Default: 3. */
+  patience?: number;
+  /** Minimum change required to qualify as improvement. Default: 0. */
+  minDelta?: number;
+  /** Metric to monitor. Prefer validation metrics when available. */
+  monitor?:
+    | 'loss'
+    | 'val_loss'
+    | 'accuracy'
+    | 'val_accuracy'
+    | 'mae'
+    | 'val_mae'
+    | 'mse'
+    | 'val_mse';
+}
+
+/**
+ * Metrics calculated for each validation fold.
+ */
+export interface ValidationMetrics {
+  /** Overall accuracy for the predictions. */
+  accuracy?: number;
+  /** Precision of positive predictions. */
+  precision?: number;
+  /** Recall (sensitivity) for the positive class. */
+  recall?: number;
+  /** Harmonic mean of precision and recall. */
+  f1Score?: number;
+  /** Mean squared error, useful for regression tasks. */
+  meanSquaredError?: number;
+  /** Optional confusion matrix for binary classification. */
+  confusionMatrix?: { tp: number; tn: number; fp: number; fn: number };
+}
+
+/**
+ * Index sets for a single training/validation fold.
+ */
+export interface TrainingFold {
+  /** Indices included in the training portion of the fold. */
+  trainIndices: number[];
+  /** Indices included in the validation portion of the fold. */
+  validationIndices: number[];
+}
+
+/**
+ * Aggregated results across an entire cross-validation run.
+ */
+export interface ValidationResults {
+  /** Metrics captured for each fold. */
+  foldMetrics: ValidationMetrics[];
+  /** Average metric values across folds. */
+  averageMetrics: ValidationMetrics;
+  /** Standard deviation for each metric across folds. */
+  stdDeviationMetrics: ValidationMetrics;
+  /** Summed confusion matrix across folds (binary classification only). */
+  overallConfusionMatrix?: { tp: number; tn: number; fp: number; fn: number };
+  /** Derived precision/recall/F1/accuracy computed from the aggregated matrix. */
+  overallPRF1?: { precision: number; recall: number; f1Score: number; accuracy: number };
+}
+
+/**
+ * Configuration describing how cross-validation should execute.
+ */
+export interface CrossValidationConfig {
+  /** Number of folds (k). Default expectation: 5. */
+  folds: number;
+  /** Whether to preserve class distribution per fold. */
+  stratified: boolean;
+  /** Random seed for deterministic shuffling. */
+  randomState: number;
+  /** Metric identifiers to compute/track while validating. */
+  validationMetrics: string[];
+  /** Optional overrides passed to `model.fit` for each fold. */
+  fitArgs?: Partial<Pick<tf.ModelFitArgs, 'epochs' | 'batchSize' | 'shuffle' | 'verbose'>>;
+  /** Optional early stopping configuration applied during training. */
+  earlyStopping?: EarlyStoppingConfig;
+}
 
 /**
  * Strategy for time-series cross-validation.

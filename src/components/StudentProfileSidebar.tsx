@@ -26,7 +26,7 @@ export function StudentProfileSidebar({
   onSectionChange,
 }: StudentProfileSidebarProps) {
   const { state, isMobile, setOpenMobile } = useSidebar();
-  const { tStudent, tCommon } = useTranslation();
+  const { tStudent: _tStudent, tCommon } = useTranslation();
 
   // Consolidated navigation - reduced from 8 to 4 main sections
   const menuItems = [
@@ -59,7 +59,7 @@ export function StudentProfileSidebar({
   // Tools are now integrated into main sections:
   // - Search/Templates -> Available in Reports section
   // - Compare -> Available in Analytics section
-  const toolItems: typeof menuItems = [];
+  const _toolItems: typeof menuItems = [];
 
   const isActive = (section: string) => activeSection === section;
 
@@ -102,13 +102,17 @@ export function StudentProfileSidebar({
                     onClick={() => {
                       try {
                         logger.debug('[UI] Sidebar nav click', { section: item.section });
-                      } catch {}
+                      } catch {
+                        // Ignore logger errors
+                      }
                       onSectionChange(item.section);
                       // Close mobile drawer after selection to reveal content
                       if (isMobile) {
                         try {
                           setOpenMobile(false);
-                        } catch {}
+                        } catch {
+                          // Ignore state update errors
+                        }
                       }
                     }}
                     className={`group cursor-pointer mx-2 rounded-lg transition-all duration-200 hover:scale-[1.02] ${

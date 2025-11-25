@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head><title>Clear Storage</title></head>
+<body>
+<h1>Storage Cleaner</h1>
+<button onclick="clearBadKeys()">Clear All Bad Keys</button>
+<pre id="output"></pre>
+<script>
+function clearBadKeys() {
+  const keys = ['VITE_AI_MODEL_NAME','OPENROUTER_API_KEY','VITE_OPENROUTER_API_KEY','sensory-compass-analytics-config'];
+  const out = document.getElementById('output');
+  keys.forEach(k => {
+    const before = localStorage.getItem(k);
+    localStorage.removeItem(k);
+    const after = localStorage.getItem(k);
+    out.textContent += `${k}: "${before}" -> "${after}"\n`;
+  });
+  out.textContent += '\n✅ Done! Close this tab and refresh your app now.';
+}
+</script>
+</body>
+</html>
+
+
+

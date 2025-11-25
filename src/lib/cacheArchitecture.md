@@ -26,7 +26,7 @@ All data mutations must broadcast an invalidation event:
 - Call `analyticsCoordinator.broadcastCacheClear(studentId?)` after successful mutations.
 - The following now do this by design:
   - `saveTrackingEntry` unified helper (`src/lib/tracking/saveTrackingEntry.ts`)
-  - `dataStorage.saveTrackingEntry` (direct path, legacy/tests/mocks)
+  - `storageService.saveSession` (direct path, legacy/tests/mocks)
   - Realtime inserts in `useRealtimeData` (debounced)
 
 Listeners:
@@ -40,7 +40,7 @@ Listeners:
 - UI components: use `useAnalyticsWorker` for analysis and cached results.
 - Manager (`analyticsManager`): orchestration, profiles, and analytics triggering; avoid storing
   TTL-cached results. The TTL cache is deprecated.
-- Storage (`dataStorage`): persist data and broadcast invalidation on write.
+- Storage (`storageService`): persist data and broadcast invalidation on write.
 - Coordinator (`analyticsCoordinator`): centralized broadcast of invalidation events.
 
 ### Migration Path
@@ -59,6 +59,6 @@ Listeners:
 ### Common Pitfalls
 
 - Writing directly via storage without broadcasting: fixed by broadcasting in
-  `dataStorage.saveTrackingEntry`.
+  `storageService.saveSession`.
 - Multiple cache layers diverging: treat `useAnalyticsWorker` + worker as the single source of
   truth.

@@ -74,6 +74,19 @@ export function saveProgress(map: Record<string, DailyProgress>): void {
   } catch {}
 }
 
+/**
+ * Convenience helper to load only today's progress for a given student.
+ *
+ * Falls back to the current student when no id is provided and returns `null`
+ * if no data has been stored for the current day.
+ */
+export function loadTodayProgress(studentId?: string): DailyProgress | null {
+  const sid = studentId || getCurrentStudentId();
+  const map = loadStudentProgress(sid);
+  const key = todayKey();
+  return map[key] ?? null;
+}
+
 function ensureToday(map: Record<string, DailyProgress>): DailyProgress {
   const key = todayKey();
   if (!map[key]) {

@@ -27,8 +27,6 @@ import type { SourceItem } from '@/types/analytics';
 import { ResizableSplitLayout } from '@/components/layouts/ResizableSplitLayout';
 import { analyticsConfig } from '@/lib/analyticsConfig';
 import { useSyncedPatternParams } from '@/hooks/useSyncedPatternParams';
-import { useStorageState } from '@/lib/storage/useStorageState';
-import { STORAGE_KEYS } from '@/lib/storage/keys';
 
 export interface PatternsPanelProps {
   filteredData: {
@@ -93,16 +91,6 @@ export const PatternsPanel = memo(function PatternsPanel({
       else mq.removeListener(onChange);
     };
   }, []);
-  // Determine AI availability (guard explanation feature when key is missing)
-  const aiConfig = loadAiConfig();
-  const [lsKeyOld] = useStorageState(STORAGE_KEYS.OPENROUTER_API_KEY, '');
-  const [lsKeyNew] = useStorageState(STORAGE_KEYS.VITE_OPENROUTER_API_KEY, '');
-  const aiKeyPresent = React.useMemo(() => {
-    if (aiConfig?.apiKey && String(aiConfig.apiKey).trim().length > 0) return true;
-    const ls = (lsKeyOld || lsKeyNew || '').trim();
-    return ls.length > 0;
-  }, [aiConfig?.apiKey, lsKeyOld, lsKeyNew]);
-
   useEffect(() => {
     runAnalysis(filteredData, { useAI, student });
     return () => {
@@ -157,167 +145,87 @@ export const PatternsPanel = memo(function PatternsPanel({
   const requestExplanation = async (p: PatternResult) => {
     const key = explainKey(p);
     setExplanations((prev) => ({ ...prev, [key]: { status: 'loading' } }));
-    try {
-      // Guard: if no API key is present, short-circuit with a friendly message
-      if (!aiKeyPresent) {
-        try {
-          logger.warn('[PatternsPanel] AI explanation unavailable: missing API key');
-        } catch {}
-        setExplanations((prev) => ({
-          ...prev,
-          [key]: {
-            status: 'error',
-            error: String(
-              tAnalytics('ai.toggle.unavailable', {
-                defaultValue: 'AI er ikke tilgjengelig (mangler API-nøkkel).',
-              }),
-            ),
-          },
-        }));
-        return;
-      }
+    let allowedContexts:
+      | ReturnType<typeof computeAllowedContexts>
+      | undefined;
+    const buildPromptFor = () => {
       const evidence = buildEvidenceForPattern({
         entries: filteredData.entries as any,
         emotions: filteredData.emotions as any,
         sensoryInputs: filteredData.sensoryInputs as any,
       });
-      const allowed = computeAllowedContexts({
+      allowedContexts = computeAllowedContexts({
         entries: filteredData.entries as any,
         emotions: filteredData.emotions as any,
         sensoryInputs: filteredData.sensoryInputs as any,
       });
-      const prompt = [
-        buildPrompt(p),
-        '',
-        'Tillatte kontekster (bruk bare disse hvis relevant):',
-        `Steder: ${allowed.places.length ? allowed.places.join(', ') : 'ikke logget'}`,
-        `Aktiviteter: ${allowed.activities.length ? allowed.activities.join(', ') : 'ikke logget'}`,
-        `Triggere: ${allowed.triggers.length ? allowed.triggers.join(', ') : 'ikke logget'}`,
-        '',
-        'Eksempler (referer til dem med ID):',
-        ...evidence.map((e) => `- [${e.id}] ${e.timestamp} · ${e.description}`),
-        '',
-        'Regler:',
-        '- Ikke nevne sted/aktivitet/årsak som ikke finnes i listen over.',
-        '- Bruk ID-er fra eksempler når du viser til konkrete hendelser.',
-      ].join('\n');
+      return {
+        prompt: [
+          buildPrompt(p),
+          '',
+          'Tillatte kontekster (bruk bare disse hvis relevant):',
+          `Steder: ${allowedContexts.places.length ? allowedContexts.places.join(', ') : 'ikke logget'}`,
+          `Aktiviteter: ${
+            allowedContexts.activities.length ? allowedContexts.activities.join(', ') : 'ikke logget'
+          }`,
+          `Triggere: ${allowedContexts.triggers.length ? allowedContexts.triggers.join(', ') : 'ikke logget'}`,
+          '',
+          'Eksempler (bruk disse som grunnlag for forklaringen):',
+          ...evidence.map((e) => `- ${e.timestamp} · ${e.description}`),
+          '',
+          'Lag en kort, strukturert forklaring på norsk (bokmål) med:',
+          '- 2–3 setninger som oppsummerer mønsteret.',
+          '- 2–4 mulige årsaker.',
+          '- 2–4 konkrete forslag til tiltak.',
+          '- 2–3 korte eksempler som du formulerer med enkle, menneskelige navn (ikke tekniske ID-er).',
+          '',
+          'Bruk kun fakta fra listen over. Ikke finn opp nye steder, aktiviteter eller triggere.',
+          'Ingen Markdown eller stjerner; kun ren tekst og korte punkter.',
+        ].join('\n'),
+        allowed: allowedContexts,
+      };
+    };
+
+    const runOnce = async (modelName: string) => {
+      const { prompt, allowed } = buildPromptFor();
       const aiCfg = loadAiConfig();
-      // Use centralized validation
-      const { data } = await openRouterClient.chatJSON(
+      const { content } = await openRouterClient.chat(
         [
           {
             role: 'system',
             content:
-              'Du svarer alltid på norsk (bokmål). Ingen Markdown eller stjerner; ren tekst. Bruk kun fakta fra evidence og tillatte kontekster. Referer til eksempler via ID der det passer.',
+              'Du svarer alltid på norsk (bokmål). Ingen Markdown eller stjerner; ren tekst. Bruk kun fakta fra evidence og tillatte kontekster.',
           },
-          {
-            role: 'user',
-            content: `${prompt}\n\nReturner JSON i formatet: { summary, causes[], interventions[], examples[] } hvor examples bruker id-ene over.`,
-          },
+          { role: 'user', content: prompt },
         ],
         {
-          modelName: aiCfg.modelName,
+          modelName,
           baseUrl: aiCfg.baseUrl,
           temperature: 0.2,
           maxTokens: 550,
           localOnly: (aiCfg as any).localOnly,
-          ensureJson: true,
-          refine: (val: unknown) => validateAIResponse(val),
         },
+        { suppressToasts: true },
       );
-
-      // Human-friendly example rendering (map IDs to names based on evidence)
-      const friendlyExamples = (data.examples || [])
-        .map((ex: any) => {
-          const ev = evidence.find((e) => e.id === ex.id);
-          if (!ev) {
-            return ex.whyRelevant ? `- ${ex.whyRelevant}` : '';
-          }
-          let name = '';
-          try {
-            const ts = new Date(ev.timestamp).toISOString().replace('T', ' ').slice(0, 16);
-            if (ev.kind === 'tracking') {
-              // Prefer first part before separator as short name
-              const base = (ev.description || '').split('·')[0].trim();
-              name = base || 'Registrering';
-              return `- ${name} (${ts})${ex.whyRelevant ? ' – ' + ex.whyRelevant : ''}`;
-            }
-            if (ev.kind === 'emotion') {
-              const m = (ev.description || '').match(/^(.+?)\s+intensitet\s+(\d+)/i);
-              name = m ? `Følelse: ${m[1]} (${m[2]})` : `Følelse`;
-              return `- ${name} (${ts})${ex.whyRelevant ? ' – ' + ex.whyRelevant : ''}`;
-            }
-            if (ev.kind === 'sensory') {
-              name = `Sensorikk: ${ev.description}`;
-              return `- ${name} (${ts})${ex.whyRelevant ? ' – ' + ex.whyRelevant : ''}`;
-            }
-          } catch {}
-          return ex.whyRelevant ? `- ${ex.whyRelevant}` : '';
-        })
-        .filter(Boolean);
-
-      const render = [
-        data.summary,
-        '',
-        data.causes?.length ? 'Mulige årsaker:' : '',
-        ...(data.causes || []).map((c: any) => `- ${c.text}`),
-        data.interventions?.length ? '\nForslag til tiltak:' : '',
-        ...(data.interventions || []).map((i: any) => `- ${i.text}`),
-        friendlyExamples.length ? '\nEksempler:' : '',
-        ...friendlyExamples,
-      ]
-        .filter(Boolean)
-        .join('\n');
-
-      const cleaned = sanitizePlainNorwegian(render, allowed);
+      const cleaned = sanitizePlainNorwegian(String(content), allowed);
       setExplanations((prev) => ({ ...prev, [key]: { status: 'ok', text: cleaned } }));
-    } catch (e) {
-      // Non-fatal: explanation may fail; try a plain-text fallback, then show nice error
+    };
+
+    try {
+      // Always and only use GPT‑5.1 for explanations; no model fallback.
+      await runOnce('openai/gpt-5.1');
+    } catch (err) {
       try {
-        logger.warn('[PatternsPanel] explanation request failed', e as Error);
+        logger.warn('[PatternsPanel] explanation request failed', err as Error);
       } catch {}
-      try {
-        const aiCfg = loadAiConfig();
-        const fallbackPrompt = [
-          buildPrompt(p),
-          '',
-          'Returner kun ren tekst uten Markdown. Lag korte punkter. Inkluder 2–3 konkrete tiltak og 2–3 korte eksempler (med enkle, menneskelige navn – ikke tekniske ID-er).',
-        ].join('\n');
-        const { content } = await openRouterClient.chat(
-          [
-            {
-              role: 'system',
-              content:
-                'Svar på norsk (bokmål). Ingen Markdown – kun ren tekst. Hold det kort og bruk enkle navn på eksempler.',
-            },
-            { role: 'user', content: fallbackPrompt },
-          ],
-          { modelName: aiCfg.modelName, baseUrl: aiCfg.baseUrl, temperature: 0.2, maxTokens: 550 },
-          { suppressToasts: true },
-        );
-        const cleaned = sanitizePlainNorwegian(
-          String(content),
-          computeAllowedContexts({
-            entries: filteredData.entries as any,
-            emotions: filteredData.emotions as any,
-            sensoryInputs: filteredData.sensoryInputs as any,
-          }),
-        );
-        setExplanations((prev) => ({ ...prev, [key]: { status: 'ok', text: cleaned } }));
-        return;
-      } catch (fallbackErr) {
-        try {
-          logger.warn('[PatternsPanel] fallback explanation also failed', fallbackErr as Error);
-        } catch {}
-        const anyErr = e as any;
-        const errMsg =
-          typeof anyErr?.userMessage === 'string' && anyErr.userMessage.trim().length > 0
-            ? anyErr.userMessage
-            : typeof anyErr?.message === 'string' && anyErr.message.trim().length > 0
-              ? anyErr.message
-              : 'Klarte ikke hente forklaring. Prøv igjen.';
-        setExplanations((prev) => ({ ...prev, [key]: { status: 'error', error: errMsg } }));
-      }
+      const anyErr = err as any;
+      const errMsg =
+        typeof anyErr?.userMessage === 'string' && anyErr.userMessage.trim().length > 0
+          ? anyErr.userMessage
+          : typeof anyErr?.message === 'string' && anyErr.message.trim().length > 0
+            ? anyErr.message
+            : 'Klarte ikke hente forklaring. Prøv igjen.';
+      setExplanations((prev) => ({ ...prev, [key]: { status: 'error', error: errMsg } }));
     }
   };
 
@@ -720,17 +628,6 @@ export const PatternsPanel = memo(function PatternsPanel({
                               aria-label={String(tAnalytics('insights.explainPattern'))}
                               className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] leading-none text-muted-foreground hover:bg-accent/40"
                               onClick={() => handleExplainClick(pattern)}
-                              disabled={!aiKeyPresent}
-                              title={
-                                !aiKeyPresent
-                                  ? String(
-                                      tAnalytics('ai.toggle.unavailable', {
-                                        defaultValue:
-                                          'AI er ikke tilgjengelig (mangler API-nøkkel).',
-                                      }),
-                                    )
-                                  : undefined
-                              }
                             >
                               <Info className="h-3 w-3" />
                               {String(tAnalytics('insights.explainPattern'))}
@@ -792,7 +689,7 @@ export const PatternsPanel = memo(function PatternsPanel({
         error={currentError}
         onCopy={handleCopy}
         onAddToReport={handleAddToReport}
-        aiEnabled={aiKeyPresent}
+        aiEnabled={true}
         systemPrompt={[
           buildSystemPrompt(),
           '',
@@ -878,7 +775,7 @@ export const PatternsPanel = memo(function PatternsPanel({
               error={currentError}
               onCopy={handleCopy}
               onAddToReport={handleAddToReport}
-              aiEnabled={aiKeyPresent}
+              aiEnabled={true}
               systemPrompt={[
                 buildSystemPrompt(),
                 '',
@@ -928,7 +825,7 @@ export const PatternsPanel = memo(function PatternsPanel({
         error={currentError}
         onCopy={handleCopy}
         onAddToReport={handleAddToReport}
-        aiEnabled={aiKeyPresent}
+        aiEnabled={true}
         systemPrompt={[
           buildSystemPrompt(),
           '',

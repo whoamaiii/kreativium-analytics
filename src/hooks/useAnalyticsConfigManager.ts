@@ -157,8 +157,8 @@ function detectPreset(config: AnalyticsConfiguration): PresetKey | 'custom' {
  * @example
  * ```typescript
  * const { state, actions } = useAnalyticsConfigManager({
- *   onConfigChange: (config) => console.log('Config changed:', config),
- *   onSave: () => console.log('Config saved'),
+ *   onConfigChange: (config) => logger.info('Config changed:', config),
+ *   onSave: () => logger.info('Config saved'),
  * });
  *
  * // Update a value

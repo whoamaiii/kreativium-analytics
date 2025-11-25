@@ -19,11 +19,45 @@ interface ImportMetaEnv {
   readonly VITE_DEBUG?: string;
 }
 
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+interface ImportMetaWithEnv {
+  readonly env?: ImportMetaEnv;
 }
 
-const env = (import.meta as ImportMeta).env;
+const resolveEnv = (): ImportMetaEnv => {
+  try {
+    const meta = import.meta as ImportMetaWithEnv;
+    if (meta && meta.env) {
+      return meta.env;
+    }
+  } catch {
+    // ignore
+  }
+
+  if (typeof process !== 'undefined' && process.env) {
+    const nodeEnv = process.env.NODE_ENV ?? 'development';
+    return {
+      MODE: nodeEnv,
+      PROD: nodeEnv === 'production',
+      VITE_POC_MODE: process.env.VITE_POC_MODE,
+      VITE_DISABLE_ANALYTICS_WORKER: process.env.VITE_DISABLE_ANALYTICS_WORKER,
+      VITE_AI_ANALYSIS_ENABLED: process.env.VITE_AI_ANALYSIS_ENABLED,
+      VITE_OPENROUTER_API_KEY: process.env.VITE_OPENROUTER_API_KEY,
+      VITE_AI_MODEL_NAME: process.env.VITE_AI_MODEL_NAME,
+      VITE_AI_BASE_URL: process.env.VITE_AI_BASE_URL,
+      VITE_AI_TEMPERATURE: process.env.VITE_AI_TEMPERATURE,
+      VITE_AI_MAX_TOKENS: process.env.VITE_AI_MAX_TOKENS,
+      VITE_AI_LOCAL_ONLY: process.env.VITE_AI_LOCAL_ONLY,
+      VITE_EXPLANATION_V2: process.env.VITE_EXPLANATION_V2,
+      VITE_AI_EVIDENCE_DISABLED: process.env.VITE_AI_EVIDENCE_DISABLED,
+      VITE_LOG_LEVEL: process.env.VITE_LOG_LEVEL,
+      VITE_DEBUG: process.env.VITE_DEBUG,
+    };
+  }
+
+  return {};
+};
+
+const env = resolveEnv();
 
 export const POC_MODE: boolean = env.MODE === 'poc' || env.VITE_POC_MODE === 'true';
 

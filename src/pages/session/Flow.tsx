@@ -4,10 +4,20 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LevelCompleteModal } from '@/components/game/LevelCompleteModal';
+import { SessionHub } from '@/components/tracking/SessionHub';
+import { LocalSessionsPanel } from '@/components/tracking/LocalSessionsPanel';
+import { NewTrackingPreview } from '@/components/tracking/NewTrackingPreview';
+import { useStudents } from '@/hooks/useStorageData';
+import type { UUID } from '@/lib/storage/types';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export default function SessionFlow() {
   const { tCommon } = useTranslation();
   const navigate = useNavigate();
+  const students = useStudents();
+  const primaryStudent = students[0];
+  const primaryStudentId = primaryStudent?.id as UUID | undefined;
+  const isOnline = useOnlineStatus();
   const [index, setIndex] = useState(0);
   const [showChoices, setShowChoices] = useState(false);
   const [, setIsResting] = useState(false);
@@ -103,6 +113,24 @@ export default function SessionFlow() {
             </div>
           </div>
         </Card>
+
+        <div className="space-y-4">
+          {primaryStudentId ? (
+            <>
+              <SessionHub
+                studentId={primaryStudentId}
+                isOnline={isOnline}
+                className="border border-border"
+              />
+              <LocalSessionsPanel studentId={primaryStudentId} />
+              <NewTrackingPreview studentId={primaryStudentId} />
+            </>
+          ) : (
+            <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-sm text-muted-foreground">
+              {String(tCommon('sessionFlow.noStudent'))}
+            </div>
+          )}
+        </div>
 
         {showChoices && (
           <div className="grid gap-3">

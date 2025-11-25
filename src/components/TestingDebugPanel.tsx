@@ -19,12 +19,13 @@ import {
 } from 'lucide-react';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { universalAnalyticsInitializer } from '@/lib/universalAnalyticsInitializer';
-import { dataStorage } from '@/lib/dataStorage';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { usePerformanceCache } from '@/hooks/usePerformanceCache';
 import { AnalyticsConfigTest } from '@/components/AnalyticsConfigTest';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
+import { getStorageStats } from '@/lib/storage/storageStats';
 
 interface TestingDebugPanelProps {
   className?: string;
@@ -87,9 +88,9 @@ export const TestingDebugPanel = ({ className = '' }: TestingDebugPanelProps) =>
       });
       setTestResults([...results]);
 
-      const students = dataStorage.getStudents();
-      const entries = dataStorage.getTrackingEntries();
-      const storageStats = dataStorage.getStorageStats();
+      const students = legacyAnalyticsAdapter.listStudents();
+      const entries = legacyAnalyticsAdapter.listTrackingEntries();
+      const storageStats = getStorageStats();
 
       results[0] = {
         name: 'Data Storage',

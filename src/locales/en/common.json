@@ -415,6 +415,10 @@
     "sensoryInputsLabel": "sensory inputs",
     "goalsLabel": "goals"
   },
+  "status": {
+    "online": "Online",
+    "offline": "Offline"
+  },
   "accessibility": {
     "skipToContent": "Skip to main content",
     "headerControls": "Primary header controls"
@@ -461,6 +465,7 @@
     "next": "Next",
     "replay": "Replay",
     "freePlay": "Free play",
-    "pickActivity": "Pick an activity"
+    "pickActivity": "Pick an activity",
+    "noStudent": "Add a student to use the new local tracking tools."
   }
 }

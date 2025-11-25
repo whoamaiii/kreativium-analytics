@@ -130,16 +130,9 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
   return async (data: AnalyticsData, options?: RunAnalysisOptions): Promise<void> => {
     const prewarm = options?.prewarm === true;
     const aiRequested = options?.useAI === true;
-    const resolvedStudentId = (() => {
-      if (options?.student?.id) return options.student.id;
-      return (
-        data.entries?.[0]?.studentId ||
-        (data.emotions?.[0]?.studentId as string | undefined) ||
-        ((data.sensoryInputs?.[0] as Record<string, unknown> | undefined)?.studentId as
-          | string
-          | undefined)
-      );
-    })();
+    const resolvedStudent = ensureStudent(data, options?.student);
+    const resolvedStudentId = resolvedStudent?.id;
+    const fallbackStudent = resolvedStudent ?? options?.student;
 
     const goals = resolvedStudentId ? (getGoalsForStudent(resolvedStudentId) ?? []) : undefined;
     const cacheKey = `${createCacheKey({ ...data, goals } as AnalyticsData, goals)}|ai=${aiRequested ? '1' : '0'}`;
@@ -173,11 +166,10 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
       setIsAnalyzing(true);
       setError(null);
       try {
-        const studentObj = ensureStudent(data, options?.student);
-        if (!studentObj) {
+        if (!resolvedStudent) {
           throw new Error('Missing student context for AI analysis');
         }
-        const res = await analyticsManager.getStudentAnalytics(studentObj, { useAI: true });
+        const res = await analyticsManager.getStudentAnalytics(resolvedStudent, { useAI: true });
         if (!prewarm) setResults(res as AnalyticsResultsAI);
         cache.set(cacheKey, res as AnalyticsResultsAI, cacheTags);
       } catch (err) {
@@ -186,7 +178,7 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
         try {
           const res = await analyticsWorkerFallback.processAnalytics(
             { ...(data as any), goals } as any,
-            { useAI: false, student: options?.student },
+            { useAI: false, student: fallbackStudent },
           );
           if (!prewarm) setResults(res as AnalyticsResultsAI);
           cache.set(cacheKey, res as AnalyticsResultsAI, cacheTags);
@@ -212,7 +204,7 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
       try {
         const results = await analyticsWorkerFallback.processAnalytics(
           { ...(data as any), goals } as any,
-          { useAI: options?.useAI, student: options?.student },
+          { useAI: options?.useAI, student: fallbackStudent },
         );
         if (!prewarm) setResults(results as AnalyticsResultsAI);
         cache.set(cacheKey, results as AnalyticsResultsAI, cacheTags);
@@ -257,6 +249,7 @@ export const createRunAnalysis = (deps: RunAnalysisDeps) => {
       }
 
       try {
+        setError('Worker timeout - running fallback mode.');
         const fallbackResults = await analyticsWorkerFallback.processAnalytics(
           { ...data, goals } as AnalyticsData,
           { useAI: options?.useAI, student: options?.student },

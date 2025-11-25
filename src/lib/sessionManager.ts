@@ -1,5 +1,4 @@
 import { TrackingEntry, EmotionEntry, SensoryEntry, EnvironmentalEntry } from '@/types/student';
-import { dataStorage } from '@/lib/dataStorage';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/saveTrackingEntry';
 import { assessSessionQuality } from '@/lib/tracking/dataQuality';

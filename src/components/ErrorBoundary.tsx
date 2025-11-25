@@ -23,7 +23,7 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, Home, HelpCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
-import { handleErrorBoundaryError, errorHandler } from '@/lib/errorHandler';
+import { handleErrorBoundaryError } from '@/lib/errorHandler';
 import { getErrorSuggestions, formatErrorForDisplay } from '@/lib/errorRecovery';
 
 /**

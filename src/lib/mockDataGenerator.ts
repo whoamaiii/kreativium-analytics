@@ -6,7 +6,6 @@ import {
   EnvironmentalEntry,
   Goal,
 } from '@/types/student';
-import { dataStorage } from './dataStorage';
 import { saveTrackingEntry as saveTrackingEntryUnified } from '@/lib/tracking/saveTrackingEntry';
 import { logger } from './logger';
 import { generateId } from './uuid';
@@ -16,6 +15,9 @@ import {
   validateTrackingEntry,
   validateStudent,
 } from './dataValidation';
+import { storageService } from '@/lib/storage/storageService';
+import { convertLegacyEntryToSession } from '@/lib/adapters/legacyTransforms';
+import { convertLegacyStudentToLocal } from '@/lib/adapters/legacyConverters';
 import {
   TEMPERATURE,
   HUMIDITY,
@@ -787,7 +789,7 @@ export function loadScenarioDataToStorage(scenario: 'emma' | 'lars' | 'astrid'):
     }
 
     // Save the selected student first
-    dataStorage.saveStudent(selected);
+    storageService.upsertStudent(convertLegacyStudentToLocal(selected));
 
     // Generate and persist tracking entries for this scenario
     const entries = generateTrackingDataForStudent(selected, scenario);
@@ -806,7 +808,8 @@ export function loadScenarioDataToStorage(scenario: 'emma' | 'lars' | 'astrid'):
       try {
         void saveTrackingEntryUnified(entry);
       } catch {
-        dataStorage.saveTrackingEntry(entry);
+        const session = convertLegacyEntryToSession(entry);
+        storageService.saveSession(session);
       }
     }
   } catch (error) {
@@ -829,7 +832,7 @@ export function loadMockDataToStorage(): void {
         logger.warn('Skipping invalid student in mock load', { student });
         return;
       }
-      dataStorage.saveStudent(student);
+      storageService.upsertStudent(convertLegacyStudentToLocal(student));
     });
 
     // Save tracking entries
@@ -846,7 +849,8 @@ export function loadMockDataToStorage(): void {
       try {
         void saveTrackingEntryUnified(entry);
       } catch {
-        dataStorage.saveTrackingEntry(entry);
+        const session = convertLegacyEntryToSession(entry);
+        storageService.saveSession(session);
       }
     });
   } catch (error) {
@@ -857,19 +861,17 @@ export function loadMockDataToStorage(): void {
 
 export function clearMockDataFromStorage(): void {
   try {
-    const allStudents = dataStorage.getStudents();
-    const allEntries = dataStorage.getTrackingEntries();
+    const students = storageService.listStudents();
+    students
+      .filter((student) => student.id.startsWith('mock_'))
+      .forEach((student) => storageService.deleteStudent(student.id));
 
-    // Filter out mock data
-    const nonMockStudents = allStudents.filter((student) => !student.id.startsWith('mock_'));
-    const nonMockEntries = allEntries.filter((entry) => !entry.studentId.startsWith('mock_'));
-
-    // Clear all data and re-save only non-mock data
-    dataStorage.clearAllData();
-
-    // Restore non-mock data
-    nonMockStudents.forEach((student) => dataStorage.saveStudent(student));
-    nonMockEntries.forEach((entry) => dataStorage.saveTrackingEntry(entry));
+    const sessions = storageService.listSessions();
+    sessions
+      .filter(
+        (session) => session.id.startsWith('mock_') || session.studentId.startsWith('mock_'),
+      )
+      .forEach((session) => storageService.deleteSession(session.id));
   } catch (error) {
     logger.error('Failed to clear mock data:', error);
     throw new Error('Failed to clear mock data');

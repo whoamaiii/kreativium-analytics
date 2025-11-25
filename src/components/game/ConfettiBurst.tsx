@@ -61,18 +61,28 @@ export function ConfettiBurst({
     const dpr = Math.max(DPR.MIN, Math.floor(window.devicePixelRatio || DPR.MIN));
     let width = canvas.clientWidth;
     let height = canvas.clientHeight;
-    canvas.width = Math.max(1, Math.floor(width * dpr));
-    canvas.height = Math.max(1, Math.floor(height * dpr));
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const onResize = () => {
-      width = canvas.clientWidth;
-      height = canvas.clientHeight;
-      canvas.width = Math.max(1, Math.floor(width * dpr));
-      canvas.height = Math.max(1, Math.floor(height * dpr));
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const syncSize = () => {
+      const nextWidth = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+      const nextHeight = Math.max(1, Math.floor(canvas.clientHeight * dpr));
+      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+        canvas.width = nextWidth;
+        canvas.height = nextHeight;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        width = canvas.clientWidth;
+        height = canvas.clientHeight;
+      }
     };
-    const ro = new ResizeObserver(onResize);
+
+    syncSize();
+    let resizeRaf: number | null = null;
+    const scheduleResize = () => {
+      if (resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = null;
+        syncSize();
+      });
+    };
+    const ro = new ResizeObserver(scheduleResize);
     ro.observe(canvas);
 
     const groups =
@@ -156,6 +166,7 @@ export function ConfettiBurst({
 
     return () => {
       cancelAnimationFrame(raf);
+      if (resizeRaf) cancelAnimationFrame(resizeRaf);
       ro.disconnect();
     };
     // Intentionally exclude `colors` array to avoid effect restarts from referential changes

@@ -128,7 +128,7 @@ const DEFAULT_MODEL_STATUS: ModelStatus = {
  * // Check status
  * const emotionModel = actions.getModelStatus('emotion');
  * if (emotionModel?.isTraining) {
- *   console.log('Model is training...');
+ *   logger.info('Model is training...');
  * }
  * ```
  */

@@ -18,10 +18,10 @@ import { User, Trash2, Eye, TrendingUp, School } from 'lucide-react';
 import { isToday } from 'date-fns';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Progress } from '@/components/ui/progress';
-import { dataStorage } from '@/lib/dataStorage';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
 import { toast } from '@/hooks/use-toast';
 import { useState, useMemo, memo } from 'react';
+import { useStudentActions } from '@/hooks/useMutationActions';
 
 interface PremiumStudentCardProps {
   student: Student;
@@ -40,15 +40,16 @@ const PremiumStudentCardComponent = ({
 }: PremiumStudentCardProps) => {
   const { tDashboard, tCommon, tStudent, formatDate } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
+  const { deleteStudent } = useStudentActions();
 
   const handleDeleteStudent = async () => {
     try {
-      dataStorage.deleteStudent(student.id);
+      deleteStudent(student.id);
       toast.success(tStudent('profile.deleteSuccess', { name: student.name }));
 
       // Broadcast cache clear to refresh dashboard and analytics views
       try {
-        analyticsCoordinator.broadcastCacheClear();
+        AnalyticsWorkerCoordinator.broadcastCacheClear();
       } catch {
         /* noop */
       }

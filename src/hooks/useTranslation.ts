@@ -1,5 +1,6 @@
 import { useTranslation as useI18nTranslation } from 'react-i18next';
 import { useCallback, useMemo } from 'react';
+import { i18n as I18nType } from 'i18next';
 import { logger } from '@/lib/logger';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
 
@@ -21,7 +22,7 @@ interface TranslationHookReturn {
   formatDateTime: (date: Date) => string;
   formatNumber: (value: number, options?: Intl.NumberFormatOptions) => string;
   formatCurrency: (value: number, currency?: 'NOK' | 'USD') => string;
-  i18n: any;
+  i18n: I18nType;
 }
 
 // Type-safe translation hook with Norwegian context

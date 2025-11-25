@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import { dataStorage } from '@/lib/dataStorage';
 import {
   computeDataQualitySummary,
   type DataQualitySummary,
   type DateRange,
 } from '@/lib/analytics/dataQuality';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
 
 const DEFAULT_BASELINE_MINIMUM = 5;
 
@@ -29,7 +29,7 @@ export const useDataQualitySummaries = (
   const entries = useMemo(() => {
     if (!studentId) return [];
     try {
-      return dataStorage.getEntriesForStudent(studentId) ?? [];
+      return legacyAnalyticsAdapter.listTrackingEntriesForStudent(studentId) ?? [];
     } catch {
       return [];
     }

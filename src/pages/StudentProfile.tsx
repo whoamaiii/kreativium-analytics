@@ -27,10 +27,15 @@ import { LanguageSettings } from '@/components/LanguageSettings';
 import { GlobalMenu } from '@/components/GlobalMenu';
 import { analyticsManager } from '@/lib/analyticsManager';
 import { logger } from '@/lib/logger';
-import { dataStorage } from '@/lib/dataStorage';
+import { storageService } from '@/lib/storage/storageService';
 import { seedMinimalDemoData } from '@/lib/mockData';
 import { useStorageState } from '@/lib/storage/useStorageState';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
+import { LocalSessionsPanel } from '@/components/tracking/LocalSessionsPanel';
+import { SessionHub } from '@/components/tracking/SessionHub';
+import { NewTrackingPreview } from '@/components/tracking/NewTrackingPreview';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import type { UUID } from '@/lib/storage/types';
 
 // Centralized className constants to satisfy react/jsx-no-literals for attribute strings
 const fullScreenCenterCls = 'h-screen w-full flex items-center justify-center';
@@ -50,7 +55,6 @@ const iconSmCls = 'h-4 w-4 mr-2';
 const containerPaddingCls = 'p-6';
 const spaceY6Cls = 'space-y-6';
 const titleCls = 'text-2xl font-bold';
-const centerMutedCls = 'text-center py-8 text-muted-foreground';
 const loaderIconCls = 'h-5 w-5 animate-spin';
 const reportsActionsCls =
   'flex flex-wrap gap-3 p-4 bg-gradient-card rounded-lg border-0 shadow-soft';
@@ -84,7 +88,8 @@ const MemoizedLazyReportBuilder = memo(LazyReportBuilder);
 const StudentProfile = () => {
   const { studentId } = useParams<{ studentId: string }>();
   const navigate = useNavigate();
-  const { tCommon, t } = useTranslation();
+  const { tCommon, t, tTracking } = useTranslation();
+  const isOnline = useOnlineStatus();
 
   // DIAGNOSTIC: Mount parameters
   if (import.meta.env.DEV) {
@@ -184,10 +189,12 @@ const StudentProfile = () => {
       // Only auto-seed when:
       // 1) storage is empty, OR
       // 2) this specific mock student already exists but lacks sufficient data
-      const existingStudents = dataStorage.getStudents();
+      const existingStudents = storageService.listStudents();
       const hasAnyStudents = existingStudents.length > 0;
-      const mockStudentExists = !!dataStorage.getStudentById(studentId);
-      const existingEntriesForMock = dataStorage.getEntriesForStudent(studentId) || [];
+      const mockStudentExists = existingStudents.some((student) => student.id === studentId);
+      const existingEntriesForMock = studentId
+        ? storageService.listSessionsForStudent(studentId)
+        : [];
       const needsSeeding =
         !hasAnyStudents || (mockStudentExists && existingEntriesForMock.length < 8);
       if (!needsSeeding) {
@@ -496,6 +503,8 @@ const StudentProfile = () => {
     );
   }
 
+  const studentUuid = student.id as UUID;
+
   return (
     <SidebarProvider>
       <div className={pageRootCls}>
@@ -533,15 +542,21 @@ const StudentProfile = () => {
                 Each section is a memoized component, ensuring it only re-renders when its specific props change.
               */}
               {activeSection === 'dashboard' && (
-                <MemoizedDashboardSection
-                  student={student}
-                  trackingEntries={trackingEntries}
-                  filteredData={filteredData}
-                  selectedRange={selectedRange}
-                  onRangeChange={handleRangeChange}
-                  insights={insights}
-                  isLoadingInsights={isLoadingInsights}
-                />
+                <div className={spaceY6Cls}>
+                  <MemoizedDashboardSection
+                    student={student}
+                    trackingEntries={trackingEntries}
+                    filteredData={filteredData}
+                    selectedRange={selectedRange}
+                    onRangeChange={handleRangeChange}
+                    insights={insights}
+                    isLoadingInsights={isLoadingInsights}
+                  />
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <SessionHub studentId={studentUuid} isOnline={isOnline} />
+                    <LocalSessionsPanel studentId={studentUuid} />
+                  </div>
+                </div>
               )}
               {activeSection === 'analytics' && (
                 <ErrorBoundary showToast={true}>
@@ -633,8 +648,33 @@ const StudentProfile = () => {
                       {t('enhanced_tracking_description', { name: student.name })}
                     </p>
                   </div>
-                  <div className={centerMutedCls}>
-                    <p>{t('enhanced_tracking_coming_soon')}</p>
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <NewTrackingPreview studentId={studentUuid} />
+                    <div className="rounded-xl border bg-card p-6 space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        {tTracking('enhanced.info')}
+                      </p>
+                      <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+                        <li>{tTracking('enhanced.bullets.cards')}</li>
+                        <li>{tTracking('enhanced.bullets.offline')}</li>
+                        <li>{tTracking('enhanced.bullets.recovery')}</li>
+                      </ul>
+                      <div className="flex flex-wrap gap-3">
+                        <Button
+                          data-testid="enhanced-tracking-start"
+                          onClick={() => navigate(`/track/${student.id}`)}
+                        >
+                          {tTracking('enhanced.start')}
+                        </Button>
+                        <Button
+                          variant={BTN_VARIANT_OUTLINE}
+                          data-testid="enhanced-tracking-flow"
+                          onClick={() => navigate('/session/flow')}
+                        >
+                          {tTracking('enhanced.flow')}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}

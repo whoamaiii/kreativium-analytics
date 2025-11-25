@@ -212,6 +212,7 @@
         "celebrateBody": "Tjen stjerner og XP; serier gir bonus."
       }
     },
+    "cameraStarting": "Starter kamera…",
     "calibration": {
       "title": "Kalibrering",
       "description": "Hold et nøytralt uttrykk i 10–15 sekunder mens vi kalibrerer kamera og lys.",
@@ -286,7 +287,14 @@
     "timeToSuccess": "Snitt tid til suksess",
     "hintRate": "Hint-rate",
     "calibrationError": "Snitt kalibreringsfeil",
-    "noData": "Ingen data for denne økten ennå"
+    "noData": "Ingen data for denne økten ennå",
+    "todayHeading": "I dag",
+    "todayHint": "Fra alle moduler",
+    "todayEmpty": "Ingen registrert fremgang ennå.",
+    "neutralHoldsLabel": "Nøytrale hold",
+    "correctChoicesLabel": "Riktige valg",
+    "nameItLabel": "Navngi følelser",
+    "streakLabel": "Streak"
   },
   "chooseRight": {
     "prompt": "Trykk på riktig følelse",
@@ -397,7 +405,9 @@
     "error": "Feil",
     "success": "Suksess",
     "empty": "Ingen data tilgjengelig",
-    "resolving": "Løser..."
+    "resolving": "Løser...",
+    "online": "Online",
+    "offline": "Offline"
   },
   "language": {
     "norwegian": "Norsk bokmål",
@@ -480,6 +490,7 @@
     "next": "Neste",
     "replay": "Spill igjen",
     "freePlay": "Fri lek",
-    "pickActivity": "Velg aktivitet"
+    "pickActivity": "Velg aktivitet",
+    "noStudent": "Legg til en elev for å bruke de nye lokale sporingsverktøyene."
   }
 }

@@ -54,12 +54,16 @@ export function ExplanationDock({
     function handleCollapseAll() {
       try {
         if (readinessDetailsRef.current) readinessDetailsRef.current.open = false;
-      } catch {}
+      } catch {
+        // Ignore ref errors
+      }
     }
     function handleExpandAll() {
       try {
         if (readinessDetailsRef.current) readinessDetailsRef.current.open = true;
-      } catch {}
+      } catch {
+        // Ignore ref errors
+      }
     }
     window.addEventListener('explanationV2:collapseAll', handleCollapseAll as EventListener);
     window.addEventListener('explanationV2:expandAll', handleExpandAll as EventListener);

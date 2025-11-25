@@ -1,10 +1,12 @@
 import { TrackingEntry, Student } from '@/types/student';
-import { dataStorage } from '@/lib/dataStorage';
 import { analyticsManager } from '@/lib/analyticsManager';
-import { analyticsCoordinator } from '@/lib/analyticsCoordinator';
+import { AnalyticsWorkerCoordinator } from '@/lib/analyticsCoordinator';
 import { logger } from '@/lib/logger';
 import { validateTrackingEntry } from '@/lib/tracking/validation';
 import type { TrackingValidationRules } from '@/lib/tracking/validation';
+import { storageService } from '@/lib/storage/storageService';
+import { convertLegacyEntryToSession } from '@/lib/adapters/legacyTransforms';
+import { convertLocalStudentToLegacy } from '@/lib/adapters/legacyConverters';
 
 export type SaveTrackingValidationRules = Partial<TrackingValidationRules>;
 
@@ -29,9 +31,10 @@ export async function saveTrackingEntry(
       return { success: false, errors: validation.errors };
     }
 
-    // 2) Save via DataStorageManager (handles indexing and versioning)
+    // 2) Save via storageService (handles indexing and versioning)
     try {
-      await Promise.resolve(dataStorage.saveTrackingEntry(entry));
+      const session = convertLegacyEntryToSession(entry);
+      await Promise.resolve(storageService.saveSession(session));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       logger.error('[saveTrackingEntry] Failed to save entry', {
@@ -44,7 +47,7 @@ export async function saveTrackingEntry(
 
     // 3) Broadcast cache invalidation (non-throwing)
     try {
-      analyticsCoordinator.broadcastCacheClear(entry.studentId);
+      AnalyticsWorkerCoordinator.broadcastCacheClear(entry.studentId);
     } catch (e) {
       // fail-soft
       logger.warn('[saveTrackingEntry] Cache clear broadcast failed', e as Error);
@@ -52,7 +55,10 @@ export async function saveTrackingEntry(
 
     // 4) Trigger analytics computation (fire-and-forget; do not block UI)
     try {
-      const student: Student | null = dataStorage.getStudentById(entry.studentId);
+      const localStudent = storageService.listStudents().find((s) => s.id === entry.studentId);
+      const student: Student | null = localStudent
+        ? (convertLocalStudentToLegacy(localStudent) as Student)
+        : null;
       if (student) {
         // Intentionally not awaited to avoid blocking callers
         Promise.resolve(analyticsManager.triggerAnalyticsForStudent(student)).catch(() => {

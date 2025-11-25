@@ -171,3 +171,18 @@ export const writeStoredAlerts = (studentId: string, alerts: unknown[]): void =>
     logger.warn?.('[analyticsWorkerManager] Failed to persist alerts', error as Error);
   }
 };
+
+export const resetWorkerManagerForTests = (): void => {
+  if (workerState.worker) {
+    try {
+      workerState.worker.terminate();
+    } catch {
+      /* noop */
+    }
+  }
+  workerState.worker = null;
+  workerState.refs = 0;
+  workerState.ready = false;
+  workerState.circuitUntil = 0;
+  pendingTasks.length = 0;
+};

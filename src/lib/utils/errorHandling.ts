@@ -236,9 +236,9 @@ export function safeNumberParse(
  * );
  *
  * if (result.success) {
- *   console.log('User data:', result.value);
+ *   logger.info('User data:', result.value);
  * } else {
- *   console.error('Failed to fetch:', result.error);
+ *   logger.error('Failed to fetch:', result.error);
  * }
  * ```
  */
@@ -276,9 +276,9 @@ export async function tryCatch<T>(
  * );
  *
  * if (result.success) {
- *   console.log('Parsed:', result.value);
+ *   logger.info('Parsed:', result.value);
  * } else {
- *   console.error('Parse failed:', result.error);
+ *   logger.error('Parse failed:', result.error);
  * }
  * ```
  */
@@ -393,7 +393,7 @@ export function assertCondition(
  * ```ts
  * if (isDefined(user, 'UserCheck')) {
  *   // user is definitely not null or undefined here
- *   console.log(user.name);
+ *   logger.info(user.name);
  * }
  * ```
  */

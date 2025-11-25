@@ -4,7 +4,7 @@
  */
 
 import { logger } from '@/lib/logger';
-// dataStorage no longer used directly in the lite manager
+// Legacy storage no longer used directly in the lite manager
 import { initializeStudentProfile } from '@/lib/analyticsProfiles';
 
 // Lazy-loaded full manager

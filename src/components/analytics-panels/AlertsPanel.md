@@ -25,7 +25,7 @@ system and the new `AlertEvent` domain model via the alert bridge.
 ### One-Click Actions
 
 - Implemented in `src/components/analytics-panels/AlertsPanel.tsx`:
-  - Create Goal from alert context (stored via `dataStorage.saveGoal`)
+- Create Goal from alert context (stored via `storageService.upsertGoal`)
   - Add Intervention Template using `InterventionTemplateManager`
   - Schedule Check-in (stores review date via intervention customization)
   - Add to Report (saved to `reports:drafts:{studentId}`)

@@ -5,22 +5,6 @@ i18n, and performance practices.
 
 ---
 
-## How to Run
-
-To run the `main.py` script, execute:
-
-```bash
-python main.py
-```
-
-## How to Test
-
-To run the tests for this project with pytest:
-
-```bash
-pytest test_main.py
-```
-
 ## Quickstart
 
 1. Install dependencies
@@ -29,13 +13,13 @@ pytest test_main.py
 npm install
 ```
 
-1. Start the dev server (Vite on port 5173)
+2. Start the dev server (Vite on port 5173)
 
 ```bash
 npm run dev
 ```
 
-1. Build and preview locally
+3. Build and preview locally
 
 ```bash
 npm run build
@@ -49,6 +33,8 @@ npm run preview
 - Tailwind CSS + shadcn/ui patterns
 - Testing: Vitest + Testing Library + Playwright
 - i18n: i18next + resource bundles in `src/locales`
+- Web Workers for heavy computations (analytics, ML)
+- AI Integration: Gemma 3 270M model via OpenRouter
 
 ## Scripts
 
@@ -67,14 +53,39 @@ npm run preview
 src/
   components/     # Reusable UI components
   pages/          # Routed views
-  lib/, utils/    # Shared logic and helpers
+  hooks/          # React hooks (session tracking, storage, analytics)
+  lib/            # Core business logic
+    adapters/     # Legacy/new type converters
+    alerts/       # Alert detection engine
+    analytics/    # Analytics worker management
+    storage/      # Unified storage service (kreativium.local:: namespace)
+    tracking/     # Session management
   config/         # Analytics and app config
   locales/        # i18n bundles
+  workers/        # Web Workers (analytics.worker.ts)
 tests/
   e2e, unit, integration, performance
 docs/             # Contributor and user docs
 dist/             # Production build output
 ```
+
+## Architecture Highlights
+
+### Storage System
+
+The app uses a unified storage service (`src/lib/storage/`) with:
+- Zod schema validation for all entities
+- Event-driven updates via custom DOM events
+- Namespace-based keys (`kreativium.local::*`)
+- Automatic migration from legacy `sensoryTracker_*` keys
+
+### Analytics Pipeline
+
+Heavy analytics computations run in a Web Worker (`src/workers/analytics.worker.ts`):
+- Pattern analysis, correlation detection, predictive insights
+- TTL-based caching for performance
+- Circuit breaker pattern for resilience
+- Alert detection engine with baseline tracking
 
 ## Quality & CI Hints
 

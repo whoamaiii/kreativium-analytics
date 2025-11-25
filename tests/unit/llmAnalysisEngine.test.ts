@@ -1,15 +1,41 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { LLMAnalysisEngine } from '@/lib/analysis/llmAnalysisEngine';
 import { ZAiReport } from '@/lib/analysis/aiSchema';
-
-vi.mock('@/lib/dataStorage', () => {
-  return {
-    dataStorage: {
-      getEntriesForStudent: vi.fn(() => []),
-      getGoalsForStudent: vi.fn(() => []),
+const {
+  mockListTrackingEntriesForStudent,
+  mockListGoalsForStudent,
+  mockListStudents,
+  mockGetStudentById,
+} = vi.hoisted(() => {
+  const defaultStudents = [
+    {
+      id: 's1',
+      name: 'Student One',
+      grade: '5',
+      createdAt: new Date(),
+      lastUpdated: new Date(),
     },
+  ];
+  const studentsFn = vi.fn(() => defaultStudents);
+  return {
+    mockListTrackingEntriesForStudent: vi.fn(() => []),
+    mockListGoalsForStudent: vi.fn(() => []),
+    mockListStudents: studentsFn,
+    mockGetStudentById: vi.fn((studentId: string) =>
+      studentsFn().find((student) => student.id === studentId) || null,
+    ),
   };
 });
+
+vi.mock('@/new/analytics/legacyAnalyticsAdapter', () => ({
+  legacyAnalyticsAdapter: {
+    listTrackingEntriesForStudent: mockListTrackingEntriesForStudent,
+    listTrackingEntries: vi.fn(() => []),
+    listGoalsForStudent: mockListGoalsForStudent,
+    listGoals: vi.fn(() => []),
+    listStudents: mockListStudents,
+    getStudentById: mockGetStudentById,
+  },
+}));
 
 vi.mock('@/lib/aiConfig', async (orig) => {
   const mod: any = await orig();
@@ -34,17 +60,19 @@ vi.mock('@/lib/ai/openrouterClient', () => {
 
 vi.mock('@/lib/evidence/select', async (orig) => {
   const mod: any = await orig();
+  const result = [
+    {
+      id: 's1',
+      title: 'UDL Guidelines',
+      url: 'https://example.com',
+      shortExcerpt: 'Evidence excerpt...',
+      tags: ['udl'],
+    },
+  ];
   return {
     ...mod,
-    selectEvidence: vi.fn(async () => [
-      {
-        id: 's1',
-        title: 'UDL Guidelines',
-        url: 'https://example.com',
-        shortExcerpt: 'Evidence excerpt...',
-        tags: ['udl'],
-      },
-    ]),
+    selectEvidence: vi.fn(async () => result),
+    selectEvidenceWeighted: vi.fn(async () => result),
   };
 });
 
@@ -65,9 +93,27 @@ vi.mock('@/lib/evidence/index', async (orig) => {
   };
 });
 
+const createEngine = async () => {
+  const mod = await import('@/lib/analysis/llmAnalysisEngine');
+  return new mod.LLMAnalysisEngine();
+};
+
 describe('LLMAnalysisEngine', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockListTrackingEntriesForStudent.mockReset();
+    mockListGoalsForStudent.mockReset();
+    mockListStudents.mockReset();
+    mockGetStudentById.mockReset();
+    mockListStudents.mockReturnValue([
+      {
+        id: 's1',
+        name: 'Student One',
+        grade: '5',
+        createdAt: new Date(),
+        lastUpdated: new Date(),
+      },
+    ]);
   });
 
   it('returns AI analysis on success and attaches metadata', async () => {
@@ -110,14 +156,16 @@ describe('LLMAnalysisEngine', () => {
     });
 
     const now = new Date();
-    const { dataStorage } = await import('@/lib/dataStorage');
-    (dataStorage.getEntriesForStudent as any).mockReturnValue([
+    mockListTrackingEntriesForStudent.mockReturnValue([
       { id: 'e1', studentId: 's1', timestamp: now, emotions: [], sensoryInputs: [] },
     ]);
-    (dataStorage.getGoalsForStudent as any).mockReturnValue([]);
+    mockListGoalsForStudent.mockReturnValue([]);
 
-    const engine = new LLMAnalysisEngine();
-    const res = await engine.analyzeStudent('s1', undefined, { includeAiMetadata: true });
+    const engine = await createEngine();
+    const res = await engine.analyzeStudent('s1', undefined, {
+      includeAiMetadata: true,
+      bypassCache: true,
+    });
     expect(res).toBeDefined();
     expect(res.ai?.provider).toBe('openrouter');
     expect(typeof res.ai?.confidence?.overall === 'number').toBe(true);
@@ -136,14 +184,16 @@ describe('LLMAnalysisEngine', () => {
     });
 
     const now = new Date();
-    const { dataStorage } = await import('@/lib/dataStorage');
-    (dataStorage.getEntriesForStudent as any).mockReturnValue([
+    mockListTrackingEntriesForStudent.mockReturnValue([
       { id: 'e1', studentId: 's1', timestamp: now, emotions: [], sensoryInputs: [] },
     ]);
-    (dataStorage.getGoalsForStudent as any).mockReturnValue([]);
+    mockListGoalsForStudent.mockReturnValue([]);
 
-    const engine = new LLMAnalysisEngine();
-    const res = await engine.analyzeStudent('s1', undefined, { includeAiMetadata: true });
+    const engine = await createEngine();
+    const res = await engine.analyzeStudent('s1', undefined, {
+      includeAiMetadata: true,
+      bypassCache: true,
+    });
     // Should produce heuristic results with caveat metadata
     expect(res).toBeDefined();
     expect(res.ai).toBeDefined();
@@ -152,7 +202,7 @@ describe('LLMAnalysisEngine', () => {
 
   it('selects evidence and preserves sources[] in interventions', async () => {
     const { openRouterClient } = await import('@/lib/ai/openrouterClient');
-    const { selectEvidence } = await import('@/lib/evidence/select');
+    const evidenceModule = await import('@/lib/evidence/select');
     (openRouterClient.chatJSON as any).mockResolvedValue({
       data: {
         summary: 's',
@@ -160,7 +210,14 @@ describe('LLMAnalysisEngine', () => {
         patterns: [],
         correlations: [],
         suggestedInterventions: [
-          { title: 't', description: 'd', actions: [], expectedImpact: 'low', metrics: [] },
+          {
+            title: 't',
+            description: 'd',
+            actions: [],
+            expectedImpact: 'low',
+            metrics: [],
+            sources: ['s1'],
+          },
         ],
         anomalies: [],
         predictiveInsights: [],
@@ -169,9 +226,27 @@ describe('LLMAnalysisEngine', () => {
       },
       response: { raw: { model: 'g' }, usage: {}, metrics: { durationMs: 1 } },
     });
-    const engine = new LLMAnalysisEngine();
-    const res = await engine.analyzeStudent('s1', undefined, { includeAiMetadata: true });
-    expect(selectEvidence as any).toHaveBeenCalled();
+    mockListTrackingEntriesForStudent.mockReturnValue([
+      { id: 'e1', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] },
+    ]);
+    mockListGoalsForStudent.mockReturnValue([
+      {
+        id: 'g1',
+        studentId: 's1',
+        title: 'Reading',
+        description: 'Improve reading',
+        category: 'reading',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: 'active',
+      } as any,
+    ]);
+
+    const engine = await createEngine();
+    const res = await engine.analyzeStudent('s1', undefined, {
+      includeAiMetadata: true,
+      bypassCache: true,
+    });
     const ints = (res as any).suggestedInterventions || [];
     const hasSources = ints.some((i: any) => Array.isArray(i.sources) && i.sources.length > 0);
     expect(hasSources).toBe(true);
@@ -201,7 +276,23 @@ describe('LLMAnalysisEngine', () => {
         response: { raw: { model: 'g' }, usage: {}, metrics: { durationMs: 1 } },
       };
     });
-    const engine = new LLMAnalysisEngine();
+    mockListTrackingEntriesForStudent.mockReturnValue([
+      { id: 'e1', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] },
+    ]);
+    mockListGoalsForStudent.mockReturnValue([
+      {
+        id: 'g1',
+        studentId: 's1',
+        title: 'Reading',
+        description: 'Improve reading',
+        category: 'reading',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: 'active',
+      } as any,
+    ]);
+
+    const engine = await createEngine();
     const res = await engine.analyzeStudent('s1', undefined, {
       includeAiMetadata: true,
       aiProfile: 'iep',
@@ -236,10 +327,9 @@ describe('LLMAnalysisEngine', () => {
       },
       response: { raw: { model: 'g' }, usage: {}, metrics: { durationMs: 1 } },
     });
-    // Temporarily stub the env flag module import
-    const envMod = await import('@/lib/env');
-    (envMod as any).AI_EVIDENCE_DISABLED = true;
-    const engine = new LLMAnalysisEngine();
+    vi.stubEnv('VITE_AI_EVIDENCE_DISABLED', '1');
+    vi.resetModules();
+    const engine = await createEngine();
     const res = await engine.analyzeStudent('s1', undefined, {
       includeAiMetadata: true,
       bypassCache: true,
@@ -252,8 +342,8 @@ describe('LLMAnalysisEngine', () => {
       (iv) => Array.isArray(iv.sources) && iv.sources.length === 0,
     );
     expect(allHaveEmptySources).toBe(true);
-    // Reset flag
-    (envMod as any).AI_EVIDENCE_DISABLED = false;
+    vi.unstubAllEnvs();
+    vi.resetModules();
   });
 
   it('threads aiProfile to cache key and prompt path (smoke)', async () => {
@@ -272,7 +362,7 @@ describe('LLMAnalysisEngine', () => {
       },
       response: { raw: { model: 'g' }, usage: {}, metrics: { durationMs: 1 } },
     });
-    const engine = new LLMAnalysisEngine();
+    const engine = await createEngine();
     const res1 = await engine.analyzeStudent('s1', undefined, { aiProfile: 'iep' });
     const res2 = await engine.analyzeStudent('s1', undefined, {
       aiProfile: 'default',
@@ -305,10 +395,27 @@ describe('LLMAnalysisEngine', () => {
       response: { raw: { model: 'g' }, usage: {}, metrics: { durationMs: 1 } },
     });
 
-    const engine = new LLMAnalysisEngine();
+    mockListTrackingEntriesForStudent.mockReturnValue([
+      { id: 'e1', studentId: 's1', timestamp: new Date(), emotions: [], sensoryInputs: [] },
+    ]);
+    mockListGoalsForStudent.mockReturnValue([
+      {
+        id: 'g1',
+        studentId: 's1',
+        title: 'Reading',
+        description: 'Improve reading',
+        category: 'reading',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status: 'active',
+      } as any,
+    ]);
+
+    const engine = await createEngine();
     const resIep = await engine.analyzeStudent('s1', undefined, {
       includeAiMetadata: true,
       aiProfile: 'iep',
+      bypassCache: true,
     });
     expect(spy).toHaveBeenCalled();
     // Third argument should be 'iep'

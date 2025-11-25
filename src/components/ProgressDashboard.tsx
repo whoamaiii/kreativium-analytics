@@ -14,7 +14,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Goal, Student } from '@/types/student';
 import type { EChartsOption } from 'echarts';
@@ -26,7 +25,6 @@ import { TrendingUp, Crosshair, Award, Clock, CheckCircle } from 'lucide-react';
 import {
   format,
   differenceInDays,
-  startOfWeek,
   endOfWeek,
   eachWeekOfInterval,
   startOfMonth,
@@ -56,7 +54,7 @@ interface ProgressDashboardProps {
  * ```
  */
 export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'quarter'>('month');
+  const [_selectedTimeframe, _setSelectedTimeframe] = useState<'week' | 'month' | 'quarter'>('month');
   const [isAnalyzingTrends, setIsAnalyzingTrends] = useState(false);
 
   /**
@@ -209,7 +207,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
       .filter((item) => item.count > 0);
   }, [goals]);
 
-  const COLORS = [
+  const _COLORS = [
     'hsl(var(--primary))',
     'hsl(var(--secondary))',
     'hsl(var(--accent))',
@@ -535,7 +533,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {categoryData.map((category, index) => (
+                  {categoryData.map((category, _index) => (
                     <div key={category.category} className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">{category.category}</span>
@@ -561,7 +559,7 @@ export const ProgressDashboard = ({ student, goals }: ProgressDashboardProps) =>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {getPriorityGoals().map((goal, index) => (
+                {getPriorityGoals().map((goal, _index) => (
                   <div key={goal.id} className="p-4 border border-border rounded-lg space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">

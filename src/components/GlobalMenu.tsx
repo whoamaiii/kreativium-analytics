@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button-variants';
 import {
   DropdownMenu,
@@ -7,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Wrench, FileText, Hand, Gauge } from 'lucide-react';
+import { MoreHorizontal, Wrench, FileText, Hand, Gauge, Gamepad2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { IS_PROD, POC_MODE } from '@/lib/env';
@@ -21,6 +20,7 @@ export const GlobalMenu = (): JSX.Element => {
   const goSettings = useCallback(() => navigate('/settings'), [navigate]);
   const goTegn = useCallback(() => navigate('/tegn'), [navigate]);
   const goMonitoring = useCallback(() => navigate('/monitoring'), [navigate]);
+  const goEmotionGame = useCallback(() => navigate('/emotion-game'), [navigate]);
 
   return (
     <DropdownMenu>
@@ -41,6 +41,13 @@ export const GlobalMenu = (): JSX.Element => {
       >
         <DropdownMenuItem onClick={goTegn} className="cursor-pointer" data-testid="menu-tegn">
           <Hand className="h-4 w-4 mr-2" /> {String(tCommon('navigation.tegnTilTale'))}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={goEmotionGame}
+          className="cursor-pointer"
+          data-testid="menu-emotion-game"
+        >
+          <Gamepad2 className="h-4 w-4 mr-2" /> {String(tCommon('navigation.emotionGame'))}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={goReports} className="cursor-pointer" data-testid="menu-reports">
           <FileText className="h-4 w-4 mr-2" /> {String(tCommon('navigation.reports'))}

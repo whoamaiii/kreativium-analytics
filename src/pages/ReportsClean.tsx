@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, useId } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/hooks/useTranslation';
-import { dataStorage } from '@/lib/dataStorage';
 import { downloadBlob } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { Download, FileText, Save } from 'lucide-react';
@@ -21,6 +20,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useStorageState } from '@/lib/storage/useStorageState';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
+import { useStudents, useGoals } from '@/hooks/useStorageData';
+import { convertLocalStudentToLegacy, convertLocalGoalToLegacy } from '@/lib/adapters/legacyConverters';
+import { useLegacyTrackingEntries } from '@/hooks/useLegacyTrackingEntries';
 
 type DatePreset = '7d' | '30d' | '90d' | 'qtd' | 'all' | 'custom';
 
@@ -112,18 +114,22 @@ const Reports = () => {
   }, [preset, customStart, customEnd]);
 
   const [pdfStudentId, setPdfStudentId] = useState<string>('');
+  const localStudents = useStudents();
+  const students = useMemo<Student[]>(
+    () => localStudents.map((student) => convertLocalStudentToLegacy(student) as Student),
+    [localStudents],
+  );
+  const localGoals = useGoals();
+  const goals = useMemo<Goal[]>(
+    () => localGoals.map((goal) => convertLocalGoalToLegacy(goal) as Goal),
+    [localGoals],
+  );
+  const trackingEntries = useLegacyTrackingEntries();
 
-  const loadAllData = useCallback(() => {
-    try {
-      const students = dataStorage.getStudents();
-      const trackingEntries = dataStorage.getTrackingEntries();
-      const goals = dataStorage.getGoals();
-      return { students, trackingEntries, goals } as const;
-    } catch (error) {
-      logger.error('Reports: failed to load data for export', { error });
-      return { students: [], trackingEntries: [], goals: [] } as const;
-    }
-  }, []);
+  const loadAllData = useCallback(
+    () => ({ students, trackingEntries, goals }) as const,
+    [students, trackingEntries, goals],
+  );
 
   const handleExportCSV = useCallback(async () => {
     setIsExporting(true);
@@ -392,7 +398,7 @@ const Reports = () => {
                     <SelectValue placeholder={tCommon('reports.analyticsPdf.selectStudent')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {loadAllData().students.map((s) => (
+                    {students.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
                       </SelectItem>

@@ -5,13 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Database, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
 import { storageUtils } from '@/lib/storageUtils';
-import { dataStorage } from '@/lib/dataStorage';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toError } from '@/lib/errors';
 import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
+import { storageService } from '@/lib/storage/storageService';
+import { getStorageStats, type StorageStats } from '@/lib/storage/storageStats';
+
+interface StorageInfo {
+  used: number;
+  available: boolean;
+}
 
 /**
  * StorageManager Component
@@ -24,12 +30,12 @@ import { MAX_LOCAL_STORAGE_BYTES } from '@/config/storage';
  */
 const StorageManagerComponent = () => {
   const { tCommon } = useTranslation();
-  const [storageInfo, setStorageInfo] = useState(storageUtils.getStorageInfo());
-  const [stats, setStats] = useState(dataStorage.getStorageStats());
+  const [storageInfo, setStorageInfo] = useState<StorageInfo>(() => storageUtils.getStorageInfo());
+  const [stats, setStats] = useState<StorageStats>(() => getStorageStats());
 
   const refreshStats = () => {
     setStorageInfo(storageUtils.getStorageInfo());
-    setStats(dataStorage.getStorageStats());
+    setStats(getStorageStats());
   };
 
   const handleClearOldData = () => {
@@ -89,7 +95,7 @@ const StorageManagerComponent = () => {
       );
       if (confirmed) {
         try {
-          dataStorage.clearAllData();
+          storageService.clearAll();
           toast.success(
             String(tCommon('storage.clearAll.success', { defaultValue: 'All data cleared' })),
           );

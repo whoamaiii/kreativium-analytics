@@ -1,22 +1,21 @@
 {
-  "totalSrcFiles": 359,
-  "totalSrcLoc": 66504,
-  "unusedFilesCount": 4,
-  "unusedFilesLoc": 1304,
-  "deadCodePercentByFiles": 1.11,
-  "unusedExportsCount": 81,
-  "unusedExportsFiles": 48,
+  "totalSrcFiles": 648,
+  "totalSrcLoc": 126027,
+  "unusedFilesCount": 18,
+  "unusedFilesLoc": 3401,
+  "deadCodePercentByFiles": 2.78,
+  "unusedExportsCount": 403,
+  "unusedExportsFiles": 152,
   "unusedDependencies": [
-    "@types/three",
-    "tailwindcss-animate",
-    "xxhashjs"
+    "@tensorflow/tfjs-backend-wasm",
+    "tailwindcss-animate"
   ],
   "unusedDevDependencies": [
-    "@browser-echo/vite",
-    "@types/jest",
     "@types/node",
     "@types/react",
     "@types/react-dom",
+    "@types/three",
+    "depcheck",
     "husky",
     "lint-staged",
     "markdownlint",
@@ -24,20 +23,76 @@
   ],
   "unusedFiles": [
     {
-      "file": "src/pages/EnhancedTrackStudent.tsx",
-      "loc": 359
+      "file": "src/components/AlertManager.tsx",
+      "loc": 325
     },
     {
-      "file": "src/pages/ReportsHub.tsx",
-      "loc": 87
+      "file": "src/components/SmartDataEntry.tsx",
+      "loc": 435
     },
     {
-      "file": "src/pages/StudentProfile.original.tsx",
-      "loc": 556
+      "file": "src/components/analysis/PatternAnalysisView.tsx",
+      "loc": 298
     },
     {
-      "file": "src/pages/StudentProfileOptimized.tsx",
-      "loc": 302
+      "file": "src/components/error-boundaries/ChartErrorBoundary.tsx",
+      "loc": 185
+    },
+    {
+      "file": "src/components/error-boundaries/GameErrorBoundary.tsx",
+      "loc": 293
+    },
+    {
+      "file": "src/components/game/CornerCelebrate.tsx",
+      "loc": 65
+    },
+    {
+      "file": "src/components/game/IntensityRing.tsx",
+      "loc": 57
+    },
+    {
+      "file": "src/components/game/ProgressRing.tsx",
+      "loc": 52
+    },
+    {
+      "file": "src/lib/alerts/engineExamples.ts",
+      "loc": 178
+    },
+    {
+      "file": "src/lib/alerts/policyExamples.ts",
+      "loc": 60
+    },
+    {
+      "file": "src/lib/alerts/telemetryExamples.ts",
+      "loc": 113
+    },
+    {
+      "file": "src/lib/analytics/cache/ttlCache.ts",
+      "loc": 172
+    },
+    {
+      "file": "src/lib/analytics/engine/engineFactory.ts",
+      "loc": 142
+    },
+    {
+      "file": "src/lib/analytics/insights/insightsOrchestrator.ts",
+      "loc": 142
+    },
+    {
+      "file": "src/lib/analyticsManagerLite.ts",
+      "loc": 69
+    },
+    {
+      "file": "src/lib/export/common/USAGE_EXAMPLES.ts",
+      "loc": 448
+    },
+    {
+      "file": "src/lib/export/csv/examples.ts",
+      "loc": 343
+    },
+    {
+      "file": "src/lib/rewards/achievements.ts",
+      "loc": 24
     }
   ]
 }

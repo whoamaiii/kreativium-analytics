@@ -9,9 +9,16 @@ import { I18nextProvider } from 'react-i18next';
 import { validateStartupConfiguration } from '@/lib/startupValidation';
 import { WeeklyAlertMetrics, scheduleWeeklyTask } from '@/lib/monitoring/weeklyAlertMetrics';
 import { STORAGE_KEYS } from '@/lib/storage/keys';
+import { ensureSessionAnalyticsBridge } from '@/lib/adapters/sessionCacheBridge';
+import { runStorageMigration } from '@/lib/storage/migration';
 
 // Seed a stable runtime env snapshot for all modules/routes
 setRuntimeEnvFromVite();
+ensureSessionAnalyticsBridge();
+
+// Run storage migration (sensoryTracker_* -> kreativium.local::*)
+// This is idempotent and only runs once
+runStorageMigration();
 
 // Dev-only: seed localStorage fallbacks so AI works even if Vite env is missing
 if (import.meta.env.DEV) {

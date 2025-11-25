@@ -5,6 +5,8 @@
  * Orchestrates content building and HTML formatting.
  */
 
+import { logger } from '@/lib/logger';
+
 import type { Student } from '@/types/student';
 import type { ReportDataCollection, PDFReportOptions } from './types';
 import { buildReportContent } from './reportBuilder';
@@ -51,7 +53,7 @@ export interface PDFGenerationResult {
  * const result = await generatePDFReport(student, data, {
  *   includeCharts: true,
  *   dateRange: { start: new Date('2024-01-01'), end: new Date('2024-12-31') },
- *   onProgress: (stage, percent) => console.log(`${stage}: ${percent}%`)
+ *   onProgress: (stage, percent) => logger.info(`${stage}: ${percent}%`)
  * });
  *
  * // Download the report

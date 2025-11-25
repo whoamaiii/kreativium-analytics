@@ -1,4 +1,3 @@
-import { dataStorage } from '@/lib/dataStorage';
 import {
   analyticsConfig,
   PRESET_CONFIGS,
@@ -20,6 +19,7 @@ import type {
   AnalysisOptions,
   AnalyticsResultsAI,
 } from './analysisEngine';
+import { legacyAnalyticsAdapter } from '@/lib/adapters/legacyAnalyticsAdapter';
 
 /**
  * Safely converts a Date, string, or undefined input to a Date object.
@@ -149,8 +149,9 @@ export class HeuristicAnalysisEngine implements AnalysisEngine {
 
     try {
       // Fetch data using getEntriesForStudent for consistent date parsing and ordering
-      const trackingEntriesAll: TrackingEntry[] = dataStorage.getEntriesForStudent(studentId) || [];
-      const goals: Goal[] = dataStorage.getGoalsForStudent(studentId) || [];
+      const trackingEntriesAll: TrackingEntry[] =
+        legacyAnalyticsAdapter.listTrackingEntriesForStudent(studentId) || [];
+      const goals: Goal[] = legacyAnalyticsAdapter.listGoalsForStudent(studentId) || [];
 
       // Safe timeframe handling with NaN protection
       const start = toDate(timeframe?.start);

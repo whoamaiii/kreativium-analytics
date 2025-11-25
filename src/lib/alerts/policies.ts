@@ -166,7 +166,7 @@ export class AlertPolicies {
    * @returns A map of `AlertSeverity` to number of alerts created today
    * @example
    * const counts = new AlertPolicies().getTodayCounts('s1');
-   * console.log(counts.critical);
+   * logger.info(counts.critical);
    */
   getTodayCounts(studentId: string): Record<AlertSeverity, number> {
     const counts: Record<AlertSeverity, number> = {

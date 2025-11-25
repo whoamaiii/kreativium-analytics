@@ -7,7 +7,7 @@
  * @module components/GoalManager
  */
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useCallback, memo, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +31,6 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Goal, Student, GoalDataPoint, Milestone } from '@/types/student';
-import { dataStorage } from '@/lib/dataStorage';
 import {
   Plus,
   Crosshair,
@@ -47,6 +46,9 @@ import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';
 import { toError } from '@/lib/errors';
 import { generateId } from '@/lib/uuid';
+import { useGoalActions } from '@/hooks/useMutationActions';
+import { useGoalsByStudent } from '@/hooks/useStorageData';
+import { convertLegacyGoalToLocal, convertLocalGoalToLegacy } from '@/lib/adapters/legacyConverters';
 
 interface GoalManagerProps {
   student: Student;
@@ -66,7 +68,12 @@ interface GoalManagerProps {
  */
 const GoalManagerComponent = ({ student, onGoalUpdate }: GoalManagerProps) => {
   const { tCommon } = useTranslation();
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const { upsertGoal } = useGoalActions();
+  const localGoals = useGoalsByStudent(student.id);
+  const goals = useMemo<Goal[]>(
+    () => localGoals.map((goal) => convertLocalGoalToLegacy(goal) as Goal),
+    [localGoals],
+  );
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newGoal, setNewGoal] = useState({
     title: '',
@@ -78,22 +85,12 @@ const GoalManagerComponent = ({ student, onGoalUpdate }: GoalManagerProps) => {
     baselineValue: 0,
   });
 
-  /**
-   * Load goals for the current student.
-   * Memoized to prevent recreation on every render.
-   */
-  const loadGoals = useCallback(() => {
-    const allGoals = dataStorage.getGoals();
-    const studentGoals = allGoals.filter((goal) => goal.studentId === student.id);
-    setGoals(studentGoals);
-  }, [student.id]);
-
-  /**
-   * Effect to load goals when student changes.
-   */
-  useEffect(() => {
-    loadGoals();
-  }, [loadGoals]);
+  const persistGoal = useCallback(
+    (goal: Goal) => {
+      upsertGoal(convertLegacyGoalToLocal(goal));
+    },
+    [upsertGoal],
+  );
 
   const createGoal = () => {
     // Validate required fields
@@ -190,8 +187,7 @@ const GoalManagerComponent = ({ student, onGoalUpdate }: GoalManagerProps) => {
       ],
     };
 
-    dataStorage.saveGoal(goal);
-    loadGoals();
+    persistGoal(goal);
     resetForm();
     setShowCreateDialog(false);
     toast.success(String(tCommon('goals.created', { defaultValue: 'Goal created successfully!' })));
@@ -207,8 +203,7 @@ const GoalManagerComponent = ({ student, onGoalUpdate }: GoalManagerProps) => {
 
     try {
       const updatedGoal = { ...goalToUpdate, ...updates, updatedAt: new Date() };
-      dataStorage.saveGoal(updatedGoal);
-      loadGoals();
+      persistGoal(updatedGoal);
       onGoalUpdate?.();
       toast.success(
         String(tCommon('goals.updated', { defaultValue: 'Goal updated successfully!' })),
@@ -305,8 +300,7 @@ const GoalManagerComponent = ({ student, onGoalUpdate }: GoalManagerProps) => {
           status: 'discontinued' as Goal['status'],
           deletedAt: new Date(),
         };
-        dataStorage.saveGoal(updatedGoal);
-        loadGoals();
+        persistGoal(updatedGoal);
         toast.success(String(tCommon('goals.deleted', { defaultValue: 'Goal deleted' })));
         onGoalUpdate?.();
       }

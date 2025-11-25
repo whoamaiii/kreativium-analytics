@@ -3,10 +3,11 @@
  * Optional demo data seeders. These are never invoked automatically.
  * Use explicitly from dev tooling, tests, or a one-off script.
  */
-import { dataStorage } from '@/lib/dataStorage';
 import { logger } from '@/lib/logger';
 import { generateUUID } from '@/lib/uuid';
 import { generateUniversalMockDataForStudent as generateMockData } from '@/lib/universalDataGenerator';
+import { storageService } from '@/lib/storage/storageService';
+import { convertLegacyEntryToSession } from '@/lib/adapters/legacyTransforms';
 
 export interface SeedDemoOptions {
   // Seed for existing students in storage
@@ -35,25 +36,22 @@ export async function seedDemoData(
       for (let i = 0; i < createNewStudents; i++) {
         const id = `demo-${generateUUID()}`;
         // Minimal student object; adapt to your domain model if needed
-        const student = { id, name: `Demo Student ${i + 1}` } as any;
+        const nowIso = new Date().toISOString();
+        const student = {
+          id,
+          name: `Demo Student ${i + 1}`,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        };
         try {
-          // Persist via storage API if available
-          if ((dataStorage as any).saveStudent) {
-            (dataStorage as any).saveStudent(student);
-          } else {
-            // Fallback: push into existing list if your storage supports it
-            const students = dataStorage.getStudents();
-            if (!students.find((s) => s.id === id) && (dataStorage as any).setStudents) {
-              (dataStorage as any).setStudents([...students, student]);
-            }
-          }
+          storageService.upsertStudent(student);
         } catch (e) {
           logger.warn('[seedDemoData] Unable to save new demo student', { id, error: e });
         }
       }
     }
 
-    const students = dataStorage.getStudents();
+    const students = storageService.listStudents();
     const targetStudents = forExistingStudents ? students : students.slice(-createNewStudents);
 
     for (const student of targetStudents) {
@@ -63,7 +61,8 @@ export async function seedDemoData(
         const batch = generateMockData(student.id);
         for (const entry of batch) {
           try {
-            dataStorage.saveTrackingEntry(entry);
+            const session = convertLegacyEntryToSession(entry);
+            storageService.saveSession(session);
             totalEntriesCreated++;
           } catch (e) {
             logger.error('[seedDemoData] Failed to save tracking entry', {

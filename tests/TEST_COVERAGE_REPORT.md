@@ -67,7 +67,7 @@ tests are passing with @testing-library/react properly integrated.
 - ✅ Mock data generator (`src/lib/mockDataGenerator.test.ts`)
 - ✅ Logger functionality (`src/lib/logger.test.ts`)
 - ✅ Form validation (`src/lib/formValidation.test.ts`)
-- ✅ Data storage (`src/lib/dataStorage.test.ts`)
+- ✅ Storage service (`src/new/storage/storageService.ts` via integration tests)
 - ✅ Analytics configuration (`src/lib/analyticsConfig.test.ts`)
 - ✅ UUID generation (`src/lib/uuid.test.ts`)
 - ✅ Analytics behavior (`src/lib/__tests__/analytics-behavior.spec.ts`)

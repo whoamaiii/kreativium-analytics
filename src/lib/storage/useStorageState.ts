@@ -85,7 +85,7 @@ export interface StorageOptions<T> {
  *
  * @example
  * const [user, setUser] = useStorageState('user', null, {
- *   onError: (error) => console.error('Storage failed:', error)
+ *   onError: (error) => logger.error('Storage failed:', error)
  * })
  */
 export function useStorageState<T>(

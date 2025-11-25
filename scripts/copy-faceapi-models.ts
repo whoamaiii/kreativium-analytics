@@ -24,7 +24,9 @@ try {
   if (!existsSync(readme)) {
     copyFileSync(join(__dirname, 'placeholder.README.txt'), readme);
   }
-} catch {}
+} catch {
+  // Ignore errors when creating README placeholder
+}
 
 for (const f of files) {
   const from = join(srcDir, f);

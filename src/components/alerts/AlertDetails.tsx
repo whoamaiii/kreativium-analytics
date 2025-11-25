@@ -71,15 +71,15 @@ const WideSparkline = ({
   const linePath = positions
     .map((point, idx) => `${idx === 0 ? 'M' : 'L'}${point.x.toFixed(2)},${point.y.toFixed(2)}`)
     .join(' ');
-  const areaPath = `${linePath} L${positions[positions.length - 1].x.toFixed(2)},${height - 10} L${positions[0].x.toFixed(2)},${height - 10} Z`;
+  const _areaPath = `${linePath} L${positions[positions.length - 1].x.toFixed(2)},${height - 10} L${positions[0].x.toFixed(2)},${height - 10} Z`;
 
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
-  const [zoom, setZoom] = useState<{ start: number; end: number } | null>(null);
+  const [_zoom, _setZoom] = useState<{ start: number; end: number } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  const startIndex = zoom ? Math.max(0, Math.min(zoom.start, zoom.end)) : 0;
-  const endIndex = zoom
-    ? Math.min(data.values.length - 1, Math.max(zoom.start, zoom.end))
+  const startIndex = _zoom ? Math.max(0, Math.min(_zoom.start, _zoom.end)) : 0;
+  const endIndex = _zoom
+    ? Math.min(data.values.length - 1, Math.max(_zoom.start, _zoom.end))
     : data.values.length - 1;
   const visiblePositions = positions.slice(startIndex, endIndex + 1);
   const visLinePath = visiblePositions
@@ -111,7 +111,9 @@ const WideSparkline = ({
                   }
                 }
                 setHoverIdx(closest);
-              } catch {}
+              } catch {
+                // Ignore mouse move errors
+              }
             }
           : undefined
       }

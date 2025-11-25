@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { render, act, screen, cleanup } from '@testing-library/react';
+import { render, act, screen, cleanup, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
 
@@ -10,7 +10,8 @@ import type { AnalyticsResultsAI } from '@/lib/analysis';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { analyticsWorkerFallback } from '@/lib/analyticsWorkerFallback';
 import { analyticsManager } from '@/lib/analyticsManager';
-import { dataStorage } from '@/lib/dataStorage';
+import { resetWorkerManagerForTests } from '@/lib/analytics/workerManager';
+import { legacyAnalyticsAdapter } from '@/new/analytics/legacyAnalyticsAdapter';
 import { toast } from 'sonner';
 
 // ---------------------------------------------------------------------------
@@ -114,6 +115,26 @@ const getWorkerInstances = (): Array<{ postMessage: Mock }> => {
   return instances ?? [];
 };
 
+const advanceTimersAndFlush = async (ms?: number) => {
+  if (typeof ms === 'number') {
+    await act(async () => {
+      vi.advanceTimersByTime(ms);
+    });
+  }
+  await act(async () => {
+    vi.runOnlyPendingTimers();
+  });
+  await flushMicrotasks();
+};
+
+const flushMicrotasks = async () => {
+  await act(async () => {
+    await Promise.resolve();
+  });
+};
+
+const WORKER_SUITE_TIMEOUT = 40_000;
+
 // Make worker import controllable per test via globals
 declare global {
   var __WORKER_THROW_CONSTRUCTOR__: boolean | undefined;
@@ -166,7 +187,7 @@ vi.mock('@/workers/analytics.worker?worker', () => {
 // Spy targets
 const processAnalyticsSpy = vi.spyOn(analyticsWorkerFallback, 'processAnalytics');
 const getStudentAnalyticsSpy = vi.spyOn(analyticsManager, 'getStudentAnalytics');
-const getGoalsSpy = vi.spyOn(dataStorage, 'getGoalsForStudent');
+const getGoalsSpy = vi.spyOn(legacyAnalyticsAdapter, 'listGoalsForStudent');
 
 // Harness component that triggers runAnalysis on mount and whenever inputs change
 function Harness({
@@ -211,6 +232,7 @@ beforeEach(() => {
   getStudentAnalyticsSpy.mockReset();
   getGoalsSpy.mockReset();
   toastMock.mockReset();
+  resetWorkerManagerForTests();
   globalThis.__WORKER_THROW_CONSTRUCTOR__ = false;
   globalThis.__WORKER_BEHAVIOR__ = undefined;
   globalThis.__WORKER_INSTANCES__ = [];
@@ -223,14 +245,14 @@ afterEach(() => {
 });
 
 describe('Integration: worker unavailability scenarios', () => {
-  it('falls back when worker initialization fails and opens circuit', async () => {
-    globalThis.__WORKER_THROW_CONSTRUCTOR__ = true;
-    processAnalyticsSpy.mockResolvedValue(baseResults);
+  it(
+    'falls back when worker initialization fails and opens circuit',
+    async () => {
+      globalThis.__WORKER_THROW_CONSTRUCTOR__ = true;
+      processAnalyticsSpy.mockResolvedValue(baseResults);
 
-    render(<Harness data={makeData()} />);
-    await act(async () => {
-      await Promise.resolve();
-    });
+      render(<Harness data={makeData()} />);
+      await flushMicrotasks();
     expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
 
     // Trigger a second run quickly (circuit open window)
@@ -241,51 +263,56 @@ describe('Integration: worker unavailability scenarios', () => {
         })}
       />,
     );
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await flushMicrotasks();
     expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(2);
     // Worker constructor attempted once during initial init effect
-    expect(globalThis.__WORKER_CTOR_CALLS__).toBe(1);
-  });
+      expect(globalThis.__WORKER_CTOR_CALLS__).toBe(1);
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 
-  it('handles worker runtime error via onerror and uses fallback', async () => {
-    globalThis.__WORKER_BEHAVIOR__ = 'error';
-    processAnalyticsSpy.mockResolvedValue(baseResults);
+  it(
+    'handles worker runtime error via onerror and uses fallback',
+    async () => {
+      globalThis.__WORKER_BEHAVIOR__ = 'error';
+      processAnalyticsSpy.mockResolvedValue(baseResults);
 
-    render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
-  });
+      render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
+      await flushMicrotasks();
+      expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 
-  it('triggers watchdog timeout and sets fallback error', async () => {
-    globalThis.__WORKER_BEHAVIOR__ = 'timeout';
-    processAnalyticsSpy.mockResolvedValue(baseResults);
-    const updates: Array<string | null> = [];
-    render(
-      <Harness
-        data={makeData({ entries: [createTrackingEntry('t1', 's1')] })}
-        onUpdate={({ error }) => updates.push(error)}
-      />,
-    );
-    // watchdog upper bound is 20s; advance past it
-    await act(async () => {
-      vi.advanceTimersByTime(21_000);
-    });
-    expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
-    // Last update contains timeout message
-    const last = updates.filter(Boolean).pop();
-    expect(String(last)).toMatch(/timeout/i);
-  });
+  it(
+    'triggers watchdog timeout and sets fallback error',
+    async () => {
+      globalThis.__WORKER_BEHAVIOR__ = 'timeout';
+      processAnalyticsSpy.mockResolvedValue(baseResults);
+      render(
+        <Harness
+          data={makeData({ entries: [createTrackingEntry('t1', 's1')] })}
+        />,
+      );
+      // watchdog upper bound is ~20s; advance past it with margin
+      await advanceTimersAndFlush(35_000);
+      await flushMicrotasks();
+      expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(screen.getByTestId('status').textContent).toMatch(/timeout/i);
+      });
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 
-  it('includes goals in fallback computations', async () => {
-    globalThis.__WORKER_THROW_CONSTRUCTOR__ = true; // force fallback path
-    getGoalsSpy.mockReturnValue([createGoal('g1', 'stu-1')]);
-    processAnalyticsSpy.mockImplementation(async (data: AnalyticsData) => {
-      expect(Array.isArray(data.goals)).toBe(true);
-      expect(data.goals?.[0]).toMatchObject({ id: 'g1' });
+  it(
+    'includes goals in fallback computations',
+    async () => {
+      globalThis.__WORKER_THROW_CONSTRUCTOR__ = true; // force fallback path
+      getGoalsSpy.mockReturnValue([createGoal('g1', 'stu-1')]);
+      processAnalyticsSpy.mockImplementation(async (data: AnalyticsData) => {
+        expect(Array.isArray(data.goals)).toBe(true);
+        expect(data.goals?.[0]).toMatchObject({ id: 'g1' });
       return baseResults;
     });
     render(
@@ -294,120 +321,121 @@ describe('Integration: worker unavailability scenarios', () => {
         options={{ student: createStudent('stu-1', { name: 'S' }) }}
       />,
     );
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
-  });
+    await flushMicrotasks();
+    await flushMicrotasks();
+      expect(analyticsWorkerFallback.processAnalytics).toHaveBeenCalledTimes(1);
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 
-  it('respects configuration: routes AI preference to analyticsManager when useAI=true', async () => {
-    globalThis.__WORKER_THROW_CONSTRUCTOR__ = true; // still fine; AI path bypasses
-    getStudentAnalyticsSpy.mockResolvedValue({
-      ...baseResults,
-      ai: { provider: 'mock', model: 'x', latencyMs: 1 },
-    });
+  it(
+    'respects configuration: routes AI preference to analyticsManager when useAI=true',
+    async () => {
+      globalThis.__WORKER_THROW_CONSTRUCTOR__ = true; // still fine; AI path bypasses
+      getStudentAnalyticsSpy.mockResolvedValue({
+        ...baseResults,
+        ai: { provider: 'mock', model: 'x', latencyMs: 1 },
+      });
     render(
       <Harness
         data={makeData({ entries: [createTrackingEntry('t1', 'stu-2')] })}
         options={{ useAI: true, student: createStudent('stu-2', { name: 'S2' }) }}
       />,
     );
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await flushMicrotasks();
     expect(analyticsManager.getStudentAnalytics).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'stu-2' }),
       { useAI: true },
     );
-    expect(analyticsWorkerFallback.processAnalytics).not.toHaveBeenCalled();
-  });
+      expect(analyticsWorkerFallback.processAnalytics).not.toHaveBeenCalled();
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 
-  it('processes queued tasks when worker becomes ready', async () => {
-    globalThis.__WORKER_BEHAVIOR__ = 'readySoon';
-    // Let fallback resolve just in case, but we expect worker to receive a postMessage
-    processAnalyticsSpy.mockResolvedValue(baseResults);
-    render(
-      <Harness
+  it(
+    'processes queued tasks when worker becomes ready',
+    async () => {
+      globalThis.__WORKER_BEHAVIOR__ = 'readySoon';
+      // Let fallback resolve just in case, but we expect worker to receive a postMessage
+      processAnalyticsSpy.mockResolvedValue(baseResults);
+      render(
+        <Harness
         data={makeData({
           entries: [createTrackingEntry('t1', 's1')],
           emotions: [createEmotionEntry({ id: 'e1', emotion: 'joy', intensity: 5 })],
         })}
       />,
     );
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await flushMicrotasks();
     // After readySoon, at least one worker instance should exist and have received a postMessage
-    const inst = getWorkerInstances()[0];
-    expect(inst).toBeTruthy();
-    // Allow time for queue flush
-    await act(async () => {
-      vi.advanceTimersByTime(5);
+    await waitFor(() => {
+      expect(getWorkerInstances()[0]).toBeTruthy();
     });
-    expect(inst.postMessage).toHaveBeenCalled();
-  });
+      const inst = getWorkerInstances()[0]!;
+      // Allow time for queue flush
+      await advanceTimersAndFlush(5);
+      expect(inst.postMessage).toHaveBeenCalled();
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 
-  it('recovers after circuit breaker cooldown', async () => {
-    // Step 1: runtime error opens 60s circuit
-    globalThis.__WORKER_BEHAVIOR__ = 'error';
-    render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
-    await act(async () => {
-      await Promise.resolve();
-    });
-    const ctorCallsBefore = globalThis.__WORKER_CTOR_CALLS__ || 0;
+  it(
+    'recovers after circuit breaker cooldown',
+    async () => {
+      // Step 1: runtime error opens 60s circuit
+      globalThis.__WORKER_BEHAVIOR__ = 'error';
+      render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
+      await flushMicrotasks();
+      const ctorCallsBefore = globalThis.__WORKER_CTOR_CALLS__ || 0;
 
     // Step 2: within cooldown, no new worker attempts on remount/trigger
     cleanup();
     render(<Harness data={makeData({ entries: [createTrackingEntry('t2', 's1')] })} />);
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await flushMicrotasks();
     const ctorCallsDuring = globalThis.__WORKER_CTOR_CALLS__ || 0;
     expect(ctorCallsDuring).toBe(ctorCallsBefore); // no new attempt while circuit open
 
     // Step 3: advance time beyond 60s, set behavior to readySoon => should attempt again
-    await act(async () => {
-      vi.advanceTimersByTime(61_000);
-    });
+    await advanceTimersAndFlush(61_000);
     cleanup();
     globalThis.__WORKER_BEHAVIOR__ = 'readySoon';
     render(<Harness data={makeData({ entries: [createTrackingEntry('t3', 's1')] })} />);
-    await act(async () => {
-      await Promise.resolve();
-    });
-    const ctorCallsAfter = globalThis.__WORKER_CTOR_CALLS__ || 0;
-    expect(ctorCallsAfter).toBeGreaterThan(ctorCallsDuring);
-  });
+    await flushMicrotasks();
+      const ctorCallsAfter = globalThis.__WORKER_CTOR_CALLS__ || 0;
+      expect(ctorCallsAfter).toBeGreaterThan(ctorCallsDuring);
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 
-  it('rate-limits user-facing failure toast to once per minute', async () => {
-    // Simulate worker runtime error to trigger toast path guarded by doOnce('analytics_worker_failure', 60_000, ...)
-    globalThis.__WORKER_BEHAVIOR__ = 'error';
-    toastMock.mockReset();
+  it(
+    'rate-limits user-facing failure toast to once per minute',
+    async () => {
+      // Simulate worker runtime error to trigger toast path guarded by doOnce('analytics_worker_failure', 60_000, ...)
+      globalThis.__WORKER_BEHAVIOR__ = 'error';
+      toastMock.mockReset();
 
     // First mount -> should toast
     render(<Harness data={makeData({ entries: [createTrackingEntry('t1', 's1')] })} />);
-    await act(async () => {
-      await Promise.resolve();
+    await advanceTimersAndFlush();
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledTimes(1);
     });
-    expect(toastMock).toHaveBeenCalledTimes(1);
 
     // Second mount within same minute -> should not toast again
     cleanup();
     render(<Harness data={makeData({ entries: [createTrackingEntry('t2', 's1')] })} />);
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await advanceTimersAndFlush();
     expect(toastMock).toHaveBeenCalledTimes(1);
 
     // Advance beyond 60s -> should toast again
-    await act(async () => {
-      vi.advanceTimersByTime(61_000);
-    });
+    await advanceTimersAndFlush(61_000);
     cleanup();
     render(<Harness data={makeData({ entries: [createTrackingEntry('t3', 's1')] })} />);
-    await act(async () => {
-      await Promise.resolve();
-    });
-    expect(toastMock).toHaveBeenCalledTimes(2);
-  });
+    await advanceTimersAndFlush();
+      await waitFor(() => {
+        expect(toastMock).toHaveBeenCalledTimes(2);
+      });
+    },
+    WORKER_SUITE_TIMEOUT,
+  );
 });

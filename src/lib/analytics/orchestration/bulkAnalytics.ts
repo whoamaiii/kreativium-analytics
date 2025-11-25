@@ -26,17 +26,17 @@
  *
  * // Batch re-analysis
  * const results = await triggerAnalyticsForAll(students, storage, analyticsManager);
- * console.log(`Processed: ${results.processed}, Succeeded: ${results.succeeded}, Failed: ${results.failed}`);
+ * logger.info(`Processed: ${results.processed}, Succeeded: ${results.succeeded}, Failed: ${results.failed}`);
  *
  * // Aggregate status reporting
  * const statuses = getStatusForAll(students, profiles, cache);
- * console.log(`Total students: ${statuses.length}`);
+ * logger.info(`Total students: ${statuses.length}`);
  * ```
  */
 
 import { logger } from '@/lib/logger';
 import type { Student } from '@/types/student';
-import type { IDataStorage } from '@/lib/dataStorage';
+import type { IDataStorage } from '@/lib/storage/interfaces';
 import type { StudentAnalyticsProfile } from '@/lib/analyticsProfiles';
 import type { AnalyticsResultsCompat } from '@/lib/analytics/types';
 
@@ -183,13 +183,13 @@ function applyFilters(students: Student[], options?: BulkAnalyticsOptions): Stud
  * const students = storage.getStudents();
  * const result = await triggerAnalyticsForAll(students, storage, analyticsManager, {
  *   minHealthScore: 50,
- *   onProgress: (completed, total) => console.log(`${completed}/${total}`)
+ *   onProgress: (completed, total) => logger.info(`${completed}/${total}`)
  * });
  *
  * if (result.failed > 0) {
- *   console.warn(`Failed to process ${result.failed} students`);
+ *   logger.warn(`Failed to process ${result.failed} students`);
  *   result.errors.forEach(err => {
- *     console.error(`Student ${err.studentName}: ${err.error}`);
+ *     logger.error(`Student ${err.studentName}: ${err.error}`);
  *   });
  * }
  * ```
@@ -363,11 +363,11 @@ export async function triggerAnalyticsForAll(
  *
  * // Students needing analysis
  * const needsAnalysis = statuses.filter(s => !s.isInitialized || !s.hasMinimumData);
- * console.log(`${needsAnalysis.length} students need analysis`);
+ * logger.info(`${needsAnalysis.length} students need analysis`);
  *
  * // Low health scores
  * const lowHealth = statuses.filter(s => s.healthScore < 50);
- * console.log(`${lowHealth.length} students have low health scores`);
+ * logger.info(`${lowHealth.length} students have low health scores`);
  * ```
  */
 export function getStatusForAll(
@@ -458,8 +458,8 @@ export function getStatusForAll(
  * const statuses = getStatusForAll(students, profiles, cache);
  * const partitions = partitionStudentsByStatus(statuses);
  *
- * console.log(`High health: ${partitions.highHealth.length}`);
- * console.log(`Needs analysis: ${partitions.needsAnalysis.length}`);
+ * logger.info(`High health: ${partitions.highHealth.length}`);
+ * logger.info(`Needs analysis: ${partitions.needsAnalysis.length}`);
  * ```
  */
 export function partitionStudentsByStatus(statuses: StudentAnalyticsStatus[]) {

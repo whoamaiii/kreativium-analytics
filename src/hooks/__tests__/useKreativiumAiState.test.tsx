@@ -13,6 +13,21 @@ const analyzeStudentMock = vi.fn().mockResolvedValue({
   insights: [],
   suggestedInterventions: [],
 });
+const {
+  listStudentsMock,
+  listTrackingEntriesForStudentMock,
+  listTrackingEntriesMock,
+  listGoalsForStudentMock,
+  listGoalsMock,
+  getStudentByIdMock,
+} = vi.hoisted(() => ({
+  listStudentsMock: vi.fn(() => [...mockStudents]),
+  listTrackingEntriesForStudentMock: vi.fn(() => []),
+  listTrackingEntriesMock: vi.fn(() => []),
+  listGoalsForStudentMock: vi.fn(() => []),
+  listGoalsMock: vi.fn(() => []),
+  getStudentByIdMock: vi.fn(() => mockStudents[0]),
+}));
 
 vi.mock('@/lib/analysis/llmAnalysisEngine', () => ({
   LLMAnalysisEngine: vi.fn(() => ({
@@ -46,17 +61,21 @@ vi.mock('@/lib/ai/openrouterClient', () => ({
   },
 }));
 
-vi.mock('@/lib/dataStorage', () => ({
-  dataStorage: {
-    getStudents: vi.fn(() => [...mockStudents]),
-    getEntriesForStudent: vi.fn(() => []),
-    getGoalsForStudent: vi.fn(() => []),
+vi.mock('@/new/analytics/legacyAnalyticsAdapter', () => ({
+  legacyAnalyticsAdapter: {
+    listStudents: listStudentsMock,
+    listTrackingEntriesForStudent: listTrackingEntriesForStudentMock,
+    listTrackingEntries: listTrackingEntriesMock,
+    listGoalsForStudent: listGoalsForStudentMock,
+    listGoals: listGoalsMock,
+    getStudentById: getStudentByIdMock,
   },
 }));
 
 describe('useKreativiumAiState', () => {
   beforeEach(() => {
     analyzeStudentMock.mockClear();
+    listStudentsMock.mockClear();
   });
 
   it('initializes student selection from data storage', async () => {
