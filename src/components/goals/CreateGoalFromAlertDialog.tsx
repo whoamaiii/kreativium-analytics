@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { storageService } from '@/lib/storage/storageService';
 import { convertLegacyGoalToLocal } from '@/lib/adapters/legacyConverters';
 

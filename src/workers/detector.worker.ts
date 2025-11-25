@@ -7,6 +7,7 @@ import type {
   DetectorWorkerReady,
   DetectionBox,
 } from '@/detector/types';
+import { ensureFaceApiModels } from '@/lib/ml/faceApiLoader';
 
 let initialized = false;
 let scoreThreshold = 0.5;
@@ -25,8 +26,7 @@ async function ensureModels(): Promise<void> {
   } catch {
     // @silent-ok: TensorFlow ready may fail in some environments
   }
-  await faceapi.nets.tinyFaceDetector.loadFromUri(modelBaseUrl);
-  await faceapi.nets.faceExpressionNet.loadFromUri(modelBaseUrl);
+  await ensureFaceApiModels(modelBaseUrl);
   initialized = true;
 }
 

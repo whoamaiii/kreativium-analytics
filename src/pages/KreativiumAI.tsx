@@ -80,26 +80,20 @@ export default function KreativiumAI(): JSX.Element {
     displayModelName,
   } = useKreativiumAiState();
 
-  const toolbarLabels = React.useMemo(
-    () => ({
-      copy: String(tAnalytics('interface.toolbarCopy')),
-      copyTooltip: String(tAnalytics('interface.toolbarCopyTooltip')),
-      copyAria: String(tAnalytics('interface.toolbarCopyAria')),
-      pdf: String(tAnalytics('interface.toolbarPdf')),
-      pdfTooltip: String(tAnalytics('interface.toolbarPdfTooltip')),
-      pdfAria: String(tAnalytics('interface.toolbarPdfAria')),
-      share: String(tAnalytics('interface.toolbarShare')),
-      shareTooltip: String(tAnalytics('interface.toolbarShareTooltip')),
-      shareAria: String(tAnalytics('interface.toolbarShareAria')),
-      lastExportShort: String(tAnalytics('interface.lastExportShort')),
-    }),
-    [tAnalytics],
-  );
+  const toolbarLabels = {
+    copy: String(tAnalytics('interface.toolbarCopy')),
+    copyTooltip: String(tAnalytics('interface.toolbarCopyTooltip')),
+    copyAria: String(tAnalytics('interface.toolbarCopyAria')),
+    pdf: String(tAnalytics('interface.toolbarPdf')),
+    pdfTooltip: String(tAnalytics('interface.toolbarPdfTooltip')),
+    pdfAria: String(tAnalytics('interface.toolbarPdfAria')),
+    share: String(tAnalytics('interface.toolbarShare')),
+    shareTooltip: String(tAnalytics('interface.toolbarShareTooltip')),
+    shareAria: String(tAnalytics('interface.toolbarShareAria')),
+    lastExportShort: String(tAnalytics('interface.lastExportShort')),
+  };
 
-  const fromCacheLabel = React.useMemo(
-    () => String(tAnalytics('interface.fromCache')),
-    [tAnalytics],
-  );
+  const fromCacheLabel = String(tAnalytics('interface.fromCache'));
 
   const globalJsonValidity = React.useMemo(() => {
     try {
@@ -116,30 +110,23 @@ export default function KreativiumAI(): JSX.Element {
     }
   }, [tAnalytics]);
 
-  const caveatsLabel = React.useMemo(
-    () => String(tAnalytics('interface.metadataCaveatsLabel', { defaultValue: 'Forbehold:' })),
-    [tAnalytics],
-  );
+  const caveatsLabel = String(tAnalytics('interface.metadataCaveatsLabel', { defaultValue: 'Forbehold:' }));
 
-  const headerTexts = React.useMemo(
-    () => ({
-      title: String(tAnalytics('interface.aiHeader.title', { defaultValue: 'Kreativium‑AI' })),
-      subtitle: String(
-        tAnalytics('interface.aiHeader.subtitle', {
-          defaultValue: 'Lokal LLM for mønstre, korrelasjoner og tiltak',
-        }),
-      ),
-      modelLabel: String(tAnalytics('interface.aiHeader.modelLabel', { defaultValue: 'Modell:' })),
-      localBadge: String(
-        tAnalytics('interface.aiHeader.localBadge', { defaultValue: 'Local model' }),
-      ),
-      remoteBadge: String(tAnalytics('interface.aiHeader.remoteBadge', { defaultValue: 'Remote' })),
-    }),
-    [tAnalytics],
-  );
+  const headerTexts = {
+    title: String(tAnalytics('interface.aiHeader.title', { defaultValue: 'Kreativium‑AI' })),
+    subtitle: String(
+      tAnalytics('interface.aiHeader.subtitle', {
+        defaultValue: 'Lokal LLM for mønstre, korrelasjoner og tiltak',
+      }),
+    ),
+    modelLabel: String(tAnalytics('interface.aiHeader.modelLabel', { defaultValue: 'Modell:' })),
+    localBadge: String(
+      tAnalytics('interface.aiHeader.localBadge', { defaultValue: 'Local model' }),
+    ),
+    remoteBadge: String(tAnalytics('interface.aiHeader.remoteBadge', { defaultValue: 'Remote' })),
+  };
 
-  const dataQualityTexts = React.useMemo(
-    () => ({
+  const dataQualityTexts = {
       cardTitle: String(
         tAnalytics('interface.dataQuality.cardTitle', { defaultValue: 'Datakvalitet' }),
       ),
@@ -169,12 +156,9 @@ export default function KreativiumAI(): JSX.Element {
           defaultValue: 'Ingen data funnet for valgt periode.',
         }),
       ),
-    }),
-    [tAnalytics],
-  );
+    };
 
-  const interventionsTexts = React.useMemo(
-    () => ({
+  const interventionsTexts = {
       title: String(
         tAnalytics('interface.interventions.title', { defaultValue: 'Tiltak og anbefalinger' }),
       ),
@@ -186,33 +170,24 @@ export default function KreativiumAI(): JSX.Element {
           defaultValue: 'Ingen anbefalinger rapportert.',
         }),
       ),
-    }),
-    [tAnalytics],
-  );
+    };
 
-  const keyFindingsTexts = React.useMemo(
-    () => ({
+  const keyFindingsTexts = {
       title: String(tAnalytics('interface.keyFindings.title', { defaultValue: 'Nøkkelfunn' })),
       empty: String(
         tAnalytics('interface.keyFindings.empty', { defaultValue: 'Ingen nøkkelfunn rapportert.' }),
       ),
-    }),
-    [tAnalytics],
-  );
+    };
 
-  const patternsTexts = React.useMemo(
-    () => ({
+  const patternsTexts = {
       title: String(tAnalytics('interface.patterns.title', { defaultValue: 'Mønstre' })),
       empty: String(
         tAnalytics('interface.patterns.empty', { defaultValue: 'Ingen mønstre identifisert.' }),
       ),
       fallback: String(tAnalytics('interface.patterns.fallback', { defaultValue: 'Mønster' })),
-    }),
-    [tAnalytics],
-  );
+    };
 
-  const formTexts = React.useMemo(
-    () => ({
+  const formTexts = {
       studentLabel: String(tAnalytics('interface.form.studentLabel', { defaultValue: 'Elev' })),
       studentPlaceholder: String(
         tAnalytics('interface.form.studentPlaceholder', { defaultValue: 'Velg elev' }),
@@ -248,9 +223,7 @@ export default function KreativiumAI(): JSX.Element {
       compareLoading: String(
         tAnalytics('interface.compare.loading', { defaultValue: 'Sammenligning...' }),
       ),
-    }),
-    [tAnalytics],
-  );
+    };
 
   async function handleCopyReport() {
     clearError();

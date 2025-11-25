@@ -67,7 +67,7 @@ export interface SessionValidationResult {
   issues: string[];
 }
 
-export class SessionManager {
+export class TrackingSessionManager {
   constructor(private readonly storage: StorageService = storageService) {}
 
   listSessions(status?: TrackingSession['status']): TrackingSession[] {
@@ -227,7 +227,7 @@ export class SessionManager {
   }
 }
 
-export const sessionManager = new SessionManager();
+export const sessionManager = new TrackingSessionManager();
 
 
 

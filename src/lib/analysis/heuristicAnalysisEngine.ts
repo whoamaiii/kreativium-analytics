@@ -243,8 +243,8 @@ export class HeuristicAnalysisEngine implements AnalysisEngine {
 
       // Record pattern metrics
       analyticsMetrics.recordPatterns(
-        (results.patterns ?? []).filter((p: any) => p.type === 'emotion').length,
-        (results.patterns ?? []).filter((p: any) => p.type === 'sensory').length
+        (results.patterns ?? []).filter((p) => p.type === 'emotion').length,
+        (results.patterns ?? []).filter((p) => p.type === 'sensory').length
       );
       analyticsMetrics.recordCorrelations((results.correlations ?? []).length);
 

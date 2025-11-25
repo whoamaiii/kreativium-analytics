@@ -40,7 +40,7 @@ import {
   Trash2,
   Calendar as CalendarIcon,
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { format } from 'date-fns';
 import { logger } from '@/lib/logger';
 import { useTranslation } from '@/hooks/useTranslation';

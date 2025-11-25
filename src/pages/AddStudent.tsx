@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { LanguageSettings } from '@/components/LanguageSettings';
 import { analyticsManager } from '@/lib/analyticsManager';

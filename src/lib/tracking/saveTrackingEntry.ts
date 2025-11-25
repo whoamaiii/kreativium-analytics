@@ -7,6 +7,7 @@ import type { TrackingValidationRules } from '@/lib/tracking/validation';
 import { storageService } from '@/lib/storage/storageService';
 import { convertLegacyEntryToSession } from '@/lib/adapters/legacyTransforms';
 import { convertLocalStudentToLegacy } from '@/lib/adapters/legacyConverters';
+import { safeCatch } from '@/lib/errors/safeExecute';
 
 export type SaveTrackingValidationRules = Partial<TrackingValidationRules>;
 
@@ -61,9 +62,9 @@ export async function saveTrackingEntry(
         : null;
       if (student) {
         // Intentionally not awaited to avoid blocking callers
-        Promise.resolve(analyticsManager.triggerAnalyticsForStudent(student)).catch(() => {
-          /* swallow to avoid uncaught warnings */
-        });
+        Promise.resolve(analyticsManager.triggerAnalyticsForStudent(student)).catch(
+          safeCatch('saveTrackingEntry.triggerAnalytics'),
+        );
       }
     } catch (e) {
       // fail-soft: analytics trigger should not affect save result

@@ -22,7 +22,7 @@ vi.mock('@/hooks/use-toast', () => ({
 }));
 
 import { getMlModels } from '@/lib/mlModels';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 
 describe('useModelManagement', () => {
   // Mock ML models interface

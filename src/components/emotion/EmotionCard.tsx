@@ -23,7 +23,7 @@ export function EmotionCard({ emotion, selected, onClick }: EmotionCardProps) {
         selected ? 'bg-gradient-primary shadow-glow' : 'bg-card hover:shadow-soft'
       }`}
     >
-      {emotion.iconPath && <img src={emotion.iconPath} alt="" className="h-8 w-8" />}
+      {emotion.iconPath && <img src={emotion.iconPath} alt={label} className="h-8 w-8" />}
       <span className="text-sm font-medium">{label}</span>
     </button>
   );

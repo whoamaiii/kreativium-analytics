@@ -20,7 +20,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Progress } from '@/components/ui/progress';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { Database, Users, Trash2 } from 'lucide-react';
 import {
   loadMockDataToStorage,

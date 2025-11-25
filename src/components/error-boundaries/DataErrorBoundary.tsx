@@ -19,7 +19,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, Wifi, WifiOff, HardDrive, Clock } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { classifyError, getErrorSuggestions, logErrorForReporting } from '@/lib/errorRecovery';
 import { clearStorageKeys } from '@/lib/storage/useStorageState';

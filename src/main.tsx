@@ -11,6 +11,7 @@ import { WeeklyAlertMetrics, scheduleWeeklyTask } from '@/lib/monitoring/weeklyA
 import { STORAGE_KEYS } from '@/lib/storage/keys';
 import { ensureSessionAnalyticsBridge } from '@/lib/adapters/sessionCacheBridge';
 import { runStorageMigration } from '@/lib/storage/migration';
+import { safeCatch } from '@/lib/errors/safeExecute';
 
 // Seed a stable runtime env snapshot for all modules/routes
 setRuntimeEnvFromVite();
@@ -148,7 +149,7 @@ if (typeof window !== 'undefined') {
     // Register Service Worker for offline caching of models/static assets
     try {
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+        navigator.serviceWorker.register('/sw.js').catch(safeCatch('main.serviceWorker.register'));
       }
     } catch {
       // @silent-ok: service worker registration is optional

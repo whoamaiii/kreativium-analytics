@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getMlModels, type ModelMetadata, type ModelType } from '@/lib/mlModels';
 import { logger } from '@/lib/logger';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 
 // ============================================================================
 // Types

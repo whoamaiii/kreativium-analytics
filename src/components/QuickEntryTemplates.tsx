@@ -11,7 +11,7 @@ import {
   Edit,
   Star,
 } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import {
   Select,

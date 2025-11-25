@@ -4,7 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useTranslation } from '@/hooks/useTranslation';
 import { openRouterClient } from '@/lib/ai/openrouterClient';
 import type { ChatMessage } from '@/lib/ai/types';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { Copy, ChevronDown } from 'lucide-react';
 import type { SourceItem } from '@/types/analytics';
 import { buildCitationList, type CitationListItem } from './citation-utils';

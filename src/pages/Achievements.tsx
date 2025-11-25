@@ -54,7 +54,7 @@ export default function Achievements() {
             return (
               <Card key={id} className="p-4 text-center">
                 <div className="grid place-items-center gap-2">
-                  <img src={meta.icon} alt="" className="h-10 w-10" />
+                  <img src={meta.icon} alt={meta.label} className="h-10 w-10" />
                   <div className="text-sm font-medium">{meta.label}</div>
                   <div
                     className="w-full h-2 rounded bg-muted overflow-hidden"

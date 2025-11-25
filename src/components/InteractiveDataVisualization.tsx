@@ -26,7 +26,7 @@ const EChartContainerLazy = lazy(() =>
 );
 import { analyticsExport, ExportFormat } from '@/lib/analyticsExport';
 import type { AnalyticsExportData } from '@/lib/analyticsExport';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { useAnalyticsWorker } from '@/hooks/useAnalyticsWorker';
 import { Badge } from '@/components/ui/badge';

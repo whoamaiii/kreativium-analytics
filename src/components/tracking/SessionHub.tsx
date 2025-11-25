@@ -6,7 +6,7 @@ import { Pause, Play, Save, Trash2, Wifi, WifiOff, Clock } from 'lucide-react';
 import { useSessionActions, useSessions } from '@/hooks/useSessionTracking';
 import type { UUID } from '@/lib/storage/types';
 import { formatDistanceToNow } from 'date-fns';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/hooks/useTranslation';
 

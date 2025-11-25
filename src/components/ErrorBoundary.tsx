@@ -21,7 +21,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, RefreshCw, Home, HelpCircle } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 import { handleErrorBoundaryError } from '@/lib/errorHandler';
 import { getErrorSuggestions, formatErrorForDisplay } from '@/lib/errorRecovery';

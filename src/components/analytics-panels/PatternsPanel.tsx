@@ -20,7 +20,7 @@ import { loadAiConfig } from '@/lib/aiConfig';
 import { validateAIResponse } from '@/lib/evidence/validation';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { ExplanationDock } from './ExplanationDock';
 import { ExplanationSheet } from './ExplanationSheet';
 import type { SourceItem } from '@/types/analytics';

@@ -17,7 +17,7 @@ import { useState, useCallback, useRef } from 'react';
 import { analyticsExport, type ExportFormat } from '@/lib/analyticsExport';
 import type { ExportOptions } from '@/components/ExportDialog';
 import type { Student, TrackingEntry, EmotionEntry, SensoryEntry } from '@/types/student';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { logger } from '@/lib/logger';
 
 // ============================================================================

@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Student, EmotionEntry, SensoryEntry } from '@/types/student';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Heart, Eye, Ear, Hand, Sparkles, Plus, TrendingUp, Clock, Info } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/useToast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SmartDataEntryProps {
