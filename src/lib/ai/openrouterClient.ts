@@ -65,7 +65,7 @@ export class OpenRouterClient {
     };
 
     // Precedence: explicit overrides > live env model > localStorage > aiConfig/defaults > hardcoded fallback
-    let liveModel = pickFirstNonEmpty(
+    const liveModel = pickFirstNonEmpty(
       overrides?.modelName,
       envAny.VITE_AI_MODEL_NAME,
       getLS(STORAGE_KEYS.AI_MODEL_NAME),
