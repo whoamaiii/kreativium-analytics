@@ -175,6 +175,7 @@ export default function EmotionGame() {
         const parsed = JSON.parse(value);
         return parsed === '1' || parsed === true;
       } catch {
+        // @silent-ok: deserialization errors return safe default
         return false;
       }
     },
@@ -190,6 +191,7 @@ export default function EmotionGame() {
           const parsed = JSON.parse(value);
           return Array.isArray(parsed) ? parsed : [];
         } catch {
+          // @silent-ok: stickers deserialization errors return safe default
           return [];
         }
       },
@@ -301,7 +303,7 @@ export default function EmotionGame() {
             const live = document.getElementById('round-live');
             if (live) live.textContent = String(tCommon('game.announcements.resumed'));
           } catch {
-            /* noop */
+            // @silent-ok: accessibility announcement is non-critical
           }
         } else if (phase === 'detecting') {
           setGamePhase('paused');
@@ -309,7 +311,7 @@ export default function EmotionGame() {
             const live = document.getElementById('round-live');
             if (live) live.textContent = String(tCommon('game.announcements.paused'));
           } catch {
-            /* noop */
+            // @silent-ok: accessibility announcement is non-critical
           }
         }
       } else if (e.key.toLowerCase() === 'h' && gameState.canUseHint) {
@@ -322,7 +324,7 @@ export default function EmotionGame() {
             target: round?.target ?? 'neutral',
           });
         } catch {
-          /* noop */
+          // @silent-ok: telemetry recording is non-critical
         }
       }
     },
@@ -353,13 +355,13 @@ export default function EmotionGame() {
           durationMs: duration,
         });
       } catch {
-        /* noop */
+        // @silent-ok: telemetry recording is non-critical
       }
       // End any active tracking session for the previous mode
       try {
         endEmotionGameSession(gameSessionIdRef.current, { save: true });
       } catch {
-        /* noop */
+        // @silent-ok: session end is non-critical
       }
     }
     modeStartRef.current = Date.now();
@@ -372,13 +374,13 @@ export default function EmotionGame() {
         mode,
       });
     } catch {
-      /* noop */
+      // @silent-ok: telemetry recording is non-critical
     }
     // Start a new tracking session for this mode
     try {
       gameSessionIdRef.current = startEmotionGameSession(currentStudentId, mode);
     } catch {
-      /* noop */
+      // @silent-ok: session start is non-critical
     }
   }, [mode, round?.target, roundIndex, currentStudentId]);
 
@@ -397,17 +399,17 @@ export default function EmotionGame() {
             durationMs: duration,
           });
         } catch {
-          /* noop */
+          // @silent-ok: telemetry recording is non-critical
         }
         try {
           endEmotionGameSession(gameSessionIdRef.current, { save: true });
         } catch {
-          /* noop */
+          // @silent-ok: session end is non-critical
         }
         try {
           streamSessionSummary(modeStartRef.current, { mode });
         } catch {
-          /* noop */
+          // @silent-ok: session summary is non-critical
         }
       }
     };
@@ -420,7 +422,7 @@ export default function EmotionGame() {
       try {
         metrics.current.reset();
       } catch {
-        /* noop */
+        // @silent-ok: metrics reset is non-critical
       }
       gameState.resetHintFlag();
       setGamePhase('detecting');
@@ -456,7 +458,7 @@ export default function EmotionGame() {
         const live = document.getElementById('round-live');
         if (live) live.textContent = String(tCommon('game.announcements.roundStart'));
       } catch {
-        /* noop */
+        // @silent-ok: accessibility announcement is non-critical
       }
     }
   }, [phase, gameState, detector.ready, round, resetHold, setGamePhase, mode, roundIndex, tCommon]);
@@ -487,20 +489,20 @@ export default function EmotionGame() {
             fpsBuckets: gameState.state.detector.fpsBuckets,
           });
         } catch {
-          /* noop */
+          // @silent-ok: telemetry recording is non-critical
         }
         gameState.registerFail();
         try {
           registerFail();
         } catch {
-          /* noop */
+          // @silent-ok: score registration is non-critical
         }
         setGamePhase('paused');
         const resumeId = window.setTimeout(() => {
           try {
             advanceRound();
           } catch {
-            /* noop */
+            // @silent-ok: round advance is non-critical
           }
         }, 600);
         timeoutId = resumeId as unknown as number;
@@ -527,7 +529,7 @@ export default function EmotionGame() {
     try {
       metrics.current.push(targetProb);
     } catch {
-      /* noop */
+      // @silent-ok: metrics push is non-critical
     }
     const result = updateHold(targetProb);
     const fps = typeof detector.fps === 'number' ? detector.fps : 0;
@@ -566,7 +568,7 @@ export default function EmotionGame() {
       try {
         addXP(gainedXp);
       } catch {
-        /* noop */
+        // @silent-ok: XP tracking is non-critical
       }
       try {
         setEffectParams(
@@ -577,7 +579,7 @@ export default function EmotionGame() {
           }),
         );
       } catch {
-        /* noop */
+        // @silent-ok: effect params mapping is non-critical
       }
       gameState.registerSuccess(true);
       try {
@@ -608,7 +610,7 @@ export default function EmotionGame() {
           adaptedDifficulty.holdMs,
         );
       } catch {
-        /* noop */
+        // @silent-ok: difficulty adaptation is non-critical
       }
       recordGameEvent({
         ts: Date.now(),
@@ -629,13 +631,13 @@ export default function EmotionGame() {
           usedHint: gameState.state.round.usedHint,
         });
       } catch {
-        /* noop */
+        // @silent-ok: session recording is non-critical
       }
       if (targetExpression === 'neutral') {
         try {
           incNeutralHold();
         } catch {
-          /* noop */
+          // @silent-ok: progress tracking is non-critical
         }
       }
       if (mode === 'confidence') {
@@ -713,7 +715,7 @@ export default function EmotionGame() {
       try {
         addXP(gainedXp);
       } catch {
-        /* noop */
+        // @silent-ok: XP tracking is non-critical
       }
       gameState.registerSuccess(true);
       const adaptedDifficulty = refineDifficultyForEmotion(
@@ -745,13 +747,13 @@ export default function EmotionGame() {
           usedHint: gameState.state.round.usedHint,
         });
       } catch {
-        /* noop */
+        // @silent-ok: session recording is non-critical
       }
       if (targetExpression === 'neutral') {
         try {
           incNeutralHold();
         } catch {
-          /* noop */
+          // @silent-ok: progress tracking is non-critical
         }
       }
       if (mode === 'confidence') {
@@ -791,7 +793,7 @@ export default function EmotionGame() {
     try {
       playSuccessChime(SOUND_CONFIG.SUCCESS_CHIME_GAIN);
     } catch {
-      /* noop */
+      // @silent-ok: sound effect is non-critical
     }
     // eslint-disable-next-line no-restricted-syntax
     const toReward = setTimeout(
@@ -810,7 +812,7 @@ export default function EmotionGame() {
       const live = document.getElementById('round-live');
       if (live) live.textContent = String(tCommon('game.announcements.nextRound'));
     } catch {
-      /* noop */
+      // @silent-ok: accessibility announcement is non-critical
     }
     return () => clearTimeout(toNext);
   }, [phase, advanceRound, tCommon]);
@@ -863,7 +865,7 @@ export default function EmotionGame() {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           video.play();
         } catch {
-          // ignore autoplay errors; we'll still get canplay when frames arrive
+          // @silent-ok: autoplay may fail; canplay event still fires when frames arrive
         }
         const handleCanPlay = () => {
           gameState.setCamera(true);
@@ -880,6 +882,7 @@ export default function EmotionGame() {
         setCameraStarting(false);
       }
     } catch {
+      // @silent-ok: camera access may fail; UI reflects the failure state
       setCameraStarting(false);
       gameState.setCamera(false);
     }
