@@ -85,7 +85,9 @@ export function ExplanationTabs({
     setTab(val);
     try {
       logger.info('[UI] explanationV2.tabChange', { tab: val, pattern: patternTitle });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
     if (val === 'kilder' && !visited.kilder) {
       setKilderVisited(true);
     }
@@ -102,6 +104,7 @@ export function ExplanationTabs({
         sensoryInputs: dataset.sensoryInputs as any,
       });
     } catch {
+      // @silent-ok: context computation failure returns undefined as fallback
       return undefined;
     }
   }, [dataset]);
@@ -123,7 +126,9 @@ export function ExplanationTabs({
         const n = Number(m[1]);
         if (Number.isFinite(n) && n >= 1 && n <= sourcesList.length) set.add(`S${n}`);
       }
-    } catch {}
+    } catch {
+      // @silent-ok: regex parsing failure returns empty set
+    }
     return set;
   }, [chatMessages, sourcesList.length]);
 
@@ -163,7 +168,9 @@ export function ExplanationTabs({
                 try {
                   window.dispatchEvent(new CustomEvent('explanationV2:collapseAll'));
                   logger.info('[UI] explanationV2.collapseAll');
-                } catch {}
+                } catch {
+                  // @silent-ok: event dispatch/logger failure is non-critical
+                }
                 setShowAllKilder(false);
               }}
             >
@@ -177,7 +184,9 @@ export function ExplanationTabs({
                 try {
                   window.dispatchEvent(new CustomEvent('explanationV2:expandAll'));
                   logger.info('[UI] explanationV2.expandAll');
-                } catch {}
+                } catch {
+                  // @silent-ok: event dispatch/logger failure is non-critical
+                }
                 setShowAllKilder(true);
               }}
             >

@@ -69,7 +69,9 @@ export function ResizableSplitLayout({
     try {
       onCollapsedChange?.(v);
       logger.info('[UI] split.collapse.change', { collapsed: v });
-    } catch {}
+    } catch {
+      // @silent-ok: callback/logger failure is non-critical
+    }
   };
 
   const clampRatio = (r: number, containerWidth: number) => {
@@ -88,7 +90,9 @@ export function ResizableSplitLayout({
     try {
       onResizeStart?.();
       logger.info('[UI] split.drag.start');
-    } catch {}
+    } catch {
+      // @silent-ok: callback/logger failure is non-critical
+    }
 
     const move = (clientX: number) => {
       const containerWidth = bounds.width;
@@ -108,7 +112,9 @@ export function ResizableSplitLayout({
       try {
         onResizeEnd?.(ratio);
         logger.info('[UI] split.drag.end', { ratio });
-      } catch {}
+      } catch {
+        // @silent-ok: callback/logger failure is non-critical
+      }
       // No need to persist - storage hook handles it automatically
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);

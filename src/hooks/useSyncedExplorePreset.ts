@@ -48,7 +48,9 @@ function normalizePreset(value: string | null | undefined, fallback: ExplorePres
         mapped,
         to: finalPreset,
       });
-    } catch {}
+    } catch {
+      // @silent-ok: logger failure is non-critical
+    }
   }
   return finalPreset;
 }
@@ -140,8 +142,12 @@ export function useSyncedExplorePreset(
                 preset,
                 paramKey,
               });
-            } catch {}
-          } catch {}
+            } catch {
+              // @silent-ok: logger failure is non-critical
+            }
+          } catch {
+            // @silent-ok: URL update failure is non-critical
+          }
         }
 
         return preset;
