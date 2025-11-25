@@ -26,6 +26,8 @@ import { SessionSummary } from '@/components/game/SessionSummary';
 import { TodayProgressStrip } from '@/components/game/TodayProgressStrip';
 import type { GamePhase, GameMetrics } from '@/hooks/useGameLoop';
 import type { ExpressionKey, World, GameRound } from '@/game/levels';
+import type { EmotionGameState, ModalState } from '@/hooks/useEmotionGameState';
+import type { GameMode } from '@/lib/game/modes';
 import type { DetectorSnapshot } from '@/detector/types';
 import type { TodayEmotionProgress } from '@/hooks/useTodayEmotionProgress';
 import type { EffectParams } from '@/lib/effects/effect-engine';
@@ -50,9 +52,9 @@ export interface EmotionGameViewProps {
 
   // Game state controller (for modals and round state)
   gameState: {
-    state: any;
-    showModal: (modal: any) => void;
-    hideModal: (modal: any) => void;
+    state: EmotionGameState;
+    showModal: (modal: keyof ModalState) => void;
+    hideModal: (modal: keyof ModalState) => void;
     resetDifficultyStreak: () => void;
     useHint: () => void;
     canUseHint: boolean;
@@ -60,10 +62,10 @@ export interface EmotionGameViewProps {
 
   themeId: 'regnbueland' | 'rom';
   setThemeId: (id: 'regnbueland' | 'rom') => void;
-  mode: any;
-  setMode: (mode: any) => void;
-  practice: any;
-  setPractice: (practice: any) => void;
+  mode: GameMode;
+  setMode: (mode: GameMode) => void;
+  practice: ExpressionKey | null;
+  setPractice: (practice: ExpressionKey | null) => void;
 
   onStartCamera: () => void;
   onStopCamera: () => void;
