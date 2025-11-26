@@ -43,7 +43,7 @@ export interface SerializedTrainingData {
 
 export interface OptimizationRequest {
   id: string;
-  strategy: 'gridSearch' | 'bayesian';
+  strategy: 'gridSearch' | 'randomSearch' | 'bayesian';
   modelType: 'emotion' | 'sensory' | string;
   data: SerializedTrainingData;
   grid?: HyperparameterGrid;
@@ -65,6 +65,10 @@ export interface OptimizationRequest {
    * Optional base fit args applied before hyperparameter overrides.
    */
   baseFitArgs?: Partial<Pick<tf.ModelFitArgs, 'epochs' | 'batchSize' | 'shuffle' | 'verbose'>>;
+  /**
+   * Number of iterations for random search. Defaults to 10.
+   */
+  nIterations?: number;
 }
 
 export interface OptimizationEvaluation {
@@ -112,13 +116,26 @@ ctx.onmessage = async (event: MessageEvent<OptimizationWorkerMessage>) => {
   }
 
   try {
-    const response =
-      message.payload.strategy === 'gridSearch'
-        ? await runGridSearch(message.payload)
-        : buildErrorResult(
-            message.payload.id,
-            `Strategy "${message.payload.strategy}" is not implemented yet.`,
-          );
+    let response: OptimizationResult;
+    switch (message.payload.strategy) {
+      case 'gridSearch':
+        response = await runGridSearch(message.payload);
+        break;
+      case 'randomSearch':
+        response = await runRandomSearch(message.payload);
+        break;
+      case 'bayesian':
+        response = buildErrorResult(
+          message.payload.id,
+          'Bayesian optimization is not implemented yet. Use gridSearch or randomSearch.',
+        );
+        break;
+      default:
+        response = buildErrorResult(
+          message.payload.id,
+          `Unknown strategy "${message.payload.strategy}".`,
+        );
+    }
     ctx.postMessage(response satisfies OptimizationWorkerResponse);
   } catch (error) {
     ctx.postMessage(
@@ -200,6 +217,98 @@ async function runGridSearch(request: OptimizationRequest): Promise<Optimization
       : bestScore,
     evaluations,
   };
+}
+
+/**
+ * Randomly samples `nIterations` combinations from the parameter grid and
+ * evaluates each using k-fold cross validation. More efficient than grid
+ * search when the search space is large.
+ */
+async function runRandomSearch(request: OptimizationRequest): Promise<OptimizationResult> {
+  const allCombinations = expandGrid(request.grid);
+  if (allCombinations.length === 0) {
+    return buildErrorResult(request.id, 'Hyperparameter grid is empty.');
+  }
+
+  const nIterations = Math.min(request.nIterations ?? 10, allCombinations.length);
+  const combinations = sampleWithoutReplacement(allCombinations, nIterations);
+
+  const metric = request.metric ?? DEFAULT_METRIC;
+  const optimize: 'max' | 'min' = request.optimize ?? inferOptimizeDirection(metric);
+
+  const trainingData = deserializeTrainingData(request.data);
+  const evaluations: OptimizationEvaluation[] = [];
+
+  let bestScore =
+    optimize === 'max' ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
+  let bestParams: HyperparameterCombination | undefined;
+
+  try {
+    for (const params of combinations) {
+      try {
+        const modelFactory = getModelFactory(request.modelType, params);
+        const cvConfig = buildCrossValidationConfig(request, params);
+        const results = await validator.validateModel(modelFactory, trainingData, cvConfig);
+        const score = extractScore(results, metric);
+
+        evaluations.push({
+          params: { ...params },
+          averageMetrics: results.averageMetrics,
+          score,
+        });
+
+        if (
+          typeof score === 'number' &&
+          isBetterScore(score, bestScore, optimize)
+        ) {
+          bestScore = score;
+          bestParams = { ...params };
+        }
+      } catch (error) {
+        evaluations.push({
+          params: { ...params },
+          error: error instanceof Error ? error.message : 'Evaluation failed',
+        });
+      } finally {
+        tf.disposeVariables();
+      }
+    }
+  } finally {
+    trainingData.features.dispose();
+    trainingData.labels.dispose();
+  }
+
+  if (!bestParams) {
+    return {
+      id: request.id,
+      status: 'error',
+      evaluations,
+      error: 'Unable to compute score for any parameter combination.',
+    };
+  }
+
+  return {
+    id: request.id,
+    status: 'success',
+    bestParams,
+    bestScore: bestScore === Number.NEGATIVE_INFINITY || bestScore === Number.POSITIVE_INFINITY
+      ? undefined
+      : bestScore,
+    evaluations,
+  };
+}
+
+/**
+ * Fisher-Yates shuffle to sample k items without replacement from an array.
+ */
+function sampleWithoutReplacement<T>(arr: T[], k: number): T[] {
+  const result = [...arr];
+  const n = result.length;
+  for (let i = 0; i < Math.min(k, n - 1); i++) {
+    const j = i + Math.floor(Math.random() * (n - i));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result.slice(0, k);
 }
 
 function getModelFactory(
