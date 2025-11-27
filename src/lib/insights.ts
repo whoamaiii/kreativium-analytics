@@ -305,28 +305,53 @@ function renderStructuredInsight(insight: StructuredInsight): string {
   return template(insight.params);
 }
 
-export function generateInsights(...args: any[]): InsightOutput {
+/** Results-first signature for new code */
+interface AnalysisResults {
+  patterns: PatternResult[];
+  correlations: CorrelationResult[];
+  predictiveInsights: Array<{ description: string; confidence: number }>;
+}
+
+// Function overloads for type-safe usage
+export function generateInsights(
+  results: AnalysisResults,
+  emotions: readonly EmotionEntry[],
+  trackingEntries: readonly TrackingEntry[],
+  config?: InsightConfig,
+): InsightOutput;
+export function generateInsights(
+  emotions: ReadonlyArray<EmotionEntry>,
+  sensoryInputs: ReadonlyArray<SensoryEntry>,
+  trackingEntries: ReadonlyArray<TrackingEntry>,
+  patterns: ReadonlyArray<PatternResult>,
+  correlations: ReadonlyArray<CorrelationResult>,
+  config?: InsightConfig,
+): InsightOutput;
+export function generateInsights(
+  arg0: AnalysisResults | ReadonlyArray<EmotionEntry>,
+  arg1: readonly EmotionEntry[] | ReadonlyArray<SensoryEntry>,
+  arg2: readonly TrackingEntry[] | ReadonlyArray<TrackingEntry>,
+  arg3?: InsightConfig | ReadonlyArray<PatternResult>,
+  arg4?: ReadonlyArray<CorrelationResult>,
+  arg5?: InsightConfig,
+): InsightOutput {
   // Branch 1: New signature with results object first
-  if (args.length >= 3 && args[0] && typeof args[0] === 'object' && 'patterns' in args[0]) {
-    const results = args[0] as {
-      patterns: PatternResult[];
-      correlations: CorrelationResult[];
-      predictiveInsights: Array<{ description: string; confidence: number }>;
-    };
-    const emotions = args[1] as readonly EmotionEntry[];
-    const trackingEntries = args[2] as readonly TrackingEntry[];
-    const cfg = getEffectiveInsightsConfig(args[3] as InsightConfig | undefined);
+  if (arg0 && typeof arg0 === 'object' && 'patterns' in arg0) {
+    const results = arg0 as AnalysisResults;
+    const emotions = arg1 as readonly EmotionEntry[];
+    const trackingEntries = arg2 as readonly TrackingEntry[];
+    const cfg = getEffectiveInsightsConfig(arg3 as InsightConfig | undefined);
     const structured = generateInsightsStructured(results, emotions, trackingEntries, cfg);
     return structured.map(renderStructuredInsight);
   }
 
   // Branch 2: Legacy signature implementation (preserve existing behavior)
-  const emotions = args[0] as ReadonlyArray<EmotionEntry>;
-  const sensoryInputs = args[1] as ReadonlyArray<SensoryEntry>;
-  const trackingEntries = args[2] as ReadonlyArray<TrackingEntry>;
-  const patterns = args[3] as ReadonlyArray<PatternResult>;
-  const correlations = args[4] as ReadonlyArray<CorrelationResult>;
-  const cfg = (args[5] as InsightConfig | undefined) ?? analyticsConfig.getConfig().insights;
+  const emotions = arg0 as ReadonlyArray<EmotionEntry>;
+  const sensoryInputs = arg1 as ReadonlyArray<SensoryEntry>;
+  const trackingEntries = arg2 as ReadonlyArray<TrackingEntry>;
+  const patterns = arg3 as ReadonlyArray<PatternResult>;
+  const correlations = arg4 as ReadonlyArray<CorrelationResult>;
+  const cfg = (arg5 as InsightConfig | undefined) ?? analyticsConfig.getConfig().insights;
 
   const insights: string[] = [];
 
@@ -345,19 +370,19 @@ export function generateInsights(...args: any[]): InsightOutput {
   significantPatterns.forEach((p) => {
     const pct = Math.round(p.confidence * 100);
     insights.push(
-      `Pattern detected (${(p as any).type}): ${(p as any).pattern} (${pct}% confidence). ${p.description}`,
+      `Pattern detected (${p.type}): ${p.pattern} (${pct}% confidence). ${p.description}`,
     );
   });
 
   // Summarize strongest correlations
   const strongCorrelations = correlations
     .slice()
-    .sort((a: any, b: any) => Math.abs((b.correlation as number) - (a.correlation as number)))
+    .sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation))
     .slice(0, cfg.MAX_CORRELATIONS_TO_SHOW);
 
-  strongCorrelations.forEach((c: any) => {
+  strongCorrelations.forEach((c) => {
     insights.push(
-      `Correlation: ${c.factor1} <-> ${c.factor2} (r=${typeof c.correlation === 'number' ? c.correlation.toFixed(2) : '0.00'}, ${c.significance}). ${c.description}`,
+      `Correlation: ${c.factor1} <-> ${c.factor2} (r=${c.correlation.toFixed(2)}, ${c.significance}). ${c.description}`,
     );
   });
 

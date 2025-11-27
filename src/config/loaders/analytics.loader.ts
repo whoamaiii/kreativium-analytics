@@ -156,11 +156,12 @@ function readEnvOverrides(): Partial<SchemaAnalyticsConfig> | null {
 
   // Clean undefined leaves to respect deep-merge semantics later
   function prune<T extends object>(obj: T): T {
-    const out: any = Array.isArray(obj) ? [...(obj as any)] : { ...(obj as any) };
+    const objRecord = obj as Record<string, unknown>;
+    const out: Record<string, unknown> = Array.isArray(obj) ? [...obj] : { ...objRecord };
     for (const k of Object.keys(out)) {
       const v = out[k];
       if (v && typeof v === 'object' && !Array.isArray(v)) {
-        out[k] = prune(v);
+        out[k] = prune(v as object);
       }
       if (out[k] === undefined) delete out[k];
     }
@@ -176,11 +177,13 @@ let cacheStamp = 0;
 
 function deepMerge<T extends object>(base: T, overrides?: Partial<T> | null): T {
   if (!overrides) return base;
-  const output: any = Array.isArray(base) ? [...(base as any)] : { ...(base as any) };
-  for (const key of Object.keys(overrides) as Array<keyof T>) {
-    const ov: any = (overrides as any)[key];
+  const baseRecord = base as Record<string, unknown>;
+  const overridesRecord = overrides as Record<string, unknown>;
+  const output: Record<string, unknown> = Array.isArray(base) ? [...base] : { ...baseRecord };
+  for (const key of Object.keys(overridesRecord)) {
+    const ov = overridesRecord[key];
     if (ov === undefined) continue;
-    const bv: any = (base as any)[key];
+    const bv = baseRecord[key];
     if (
       bv &&
       typeof bv === 'object' &&
@@ -189,7 +192,7 @@ function deepMerge<T extends object>(base: T, overrides?: Partial<T> | null): T 
       typeof ov === 'object' &&
       !Array.isArray(ov)
     ) {
-      output[key] = deepMerge(bv, ov);
+      output[key] = deepMerge(bv as object, ov as Partial<object>);
     } else {
       output[key] = ov;
     }
