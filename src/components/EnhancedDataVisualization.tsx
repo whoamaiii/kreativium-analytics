@@ -58,6 +58,7 @@ export const EnhancedDataVisualization = ({
   studentName,
 }: EnhancedDataVisualizationProps) => {
   const [dataType, setDataType] = useState<'emotions' | 'sensory'>('emotions');
+  const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
 
   const emotionData = useMemo(() => processChartData(emotions, 'emotions'), [emotions]);
   const sensoryData = useMemo(() => processChartData(sensoryInputs, 'sensory'), [sensoryInputs]);

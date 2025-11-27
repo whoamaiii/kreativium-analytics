@@ -5,6 +5,13 @@ import type {
   WeeklyEvaluationReport,
 } from '@/lib/alerts/types';
 
+/** Simplified ECharts tooltip formatter param shape for axis trigger */
+interface EChartsTooltipParam {
+  axisValue?: string | number;
+  seriesName?: string;
+  data?: number | null;
+}
+
 export interface SparklinePoint {
   timestamp: number;
   value: number;
@@ -157,10 +164,10 @@ export function generateCalibrationCurve(
   return {
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
+      formatter: (params: EChartsTooltipParam[]) => {
         const [actualPoint, predictedPoint, countPoint] = params;
         return [
-          `Bucket ${(predictedPoint?.axisValue ?? 0).toFixed(2)}`,
+          `Bucket ${predictedPoint?.axisValue ?? '0.00'}`,
           `Predicted: ${(predictedPoint?.data ?? 0).toFixed(2)}`,
           `Actual: ${(actualPoint?.data ?? 0).toFixed(2)}`,
           `Count: ${countPoint?.data ?? 0}`,
@@ -227,9 +234,9 @@ export function createBrierScoreChart(reports: WeeklyEvaluationReport[]): EChart
   return {
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
+      formatter: (params: EChartsTooltipParam[]) => {
         const point = params?.[0];
-        const date = point ? new Date(point.axisValue).toLocaleDateString() : '';
+        const date = point?.axisValue ? new Date(String(point.axisValue)).toLocaleDateString() : '';
         return `${date}<br/>Brier score: ${(point?.data ?? 0).toFixed(3)}`;
       },
     },
@@ -330,9 +337,9 @@ export function createThresholdTrendChart(reports: WeeklyEvaluationReport[]): EC
   return {
     tooltip: {
       trigger: 'axis',
-      formatter: (params: any) => {
+      formatter: (params: EChartsTooltipParam[]) => {
         const lines = params.map(
-          (entry: any) => `${entry.seriesName}: ${(entry.data ?? 0) * 100}%`,
+          (entry: EChartsTooltipParam) => `${entry.seriesName}: ${((entry.data ?? 0) * 100).toFixed(0)}%`,
         );
         return [params[0]?.axisValue, ...lines].join('<br/>');
       },

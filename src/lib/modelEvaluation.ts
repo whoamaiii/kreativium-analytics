@@ -294,8 +294,14 @@ function computeStableSignature(namespace: string, input: unknown, version?: str
       const hash = stableHash(input);
       return [namespace, version ? `v${version}` : undefined, hash].filter(Boolean).join(':');
     } catch (err) {
-      logger.warn('[modelEvaluation] computeStableSignature failed; returning placeholder', err);
-      return `${namespace}:unknown`;
+      // Last resort: generate a unique ID to prevent signature collisions
+      const uniqueId = `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+      logger.warn('[modelEvaluation] computeStableSignature failed; using unique fallback', {
+        namespace,
+        uniqueId,
+        error: err,
+      });
+      return `${namespace}:fallback:${uniqueId}`;
     }
   }
 }
@@ -311,22 +317,22 @@ export function recordEvaluation(run: EvaluationRun): void {
     return;
   }
 
-  // Ensure signatures are present; attempt to construct placeholders if missing
+  // Ensure signatures are present; compute from available data if missing
   if (!run.dataSignature) {
-    const placeholder = computeStableSignature(
+    const computedSignature = computeStableSignature(
       'model-eval:data',
       { id: run.id, ts: run.timestamp, mt: run.modelType },
       run.schemaVersion,
     );
-    run = { ...run, dataSignature: placeholder };
+    run = { ...run, dataSignature: computedSignature };
   }
   if (!run.configSignature) {
-    const placeholder = computeStableSignature(
+    const computedSignature = computeStableSignature(
       'model-eval:config',
       { id: run.id, task: run.taskType, mt: run.modelType },
       run.schemaVersion,
     );
-    run = { ...run, configSignature: placeholder };
+    run = { ...run, configSignature: computedSignature };
   }
 
   // Optional de-duplication: skip if an equivalent evaluation was just recorded within TTL

@@ -99,14 +99,23 @@ export function getChartConfig(quality: ChartQuality, scheme: ColorScheme): Char
   return base;
 }
 
+/** Shape of data used for chart accessibility descriptions */
+interface ChartA11yData {
+  title?: string;
+  maxValue?: number | string;
+  minValue?: number | string;
+  trend?: string;
+  strongestCorr?: string;
+}
+
 /**
  * Get accessible text alternatives for charts
  */
-export function getChartA11yDescription(chartType: string, data: any): string {
+export function getChartA11yDescription(chartType: string, data: ChartA11yData): string {
   try {
     switch (chartType) {
       case 'bar':
-        return `Bar chart showing ${data.title || 'data distribution'}. Highest value: ${data.maxValue}, lowest value: ${data.minValue}.`;
+        return `Bar chart showing ${data.title || 'data distribution'}. Highest value: ${data.maxValue ?? 'N/A'}, lowest value: ${data.minValue ?? 'N/A'}.`;
       case 'line':
         return `Line chart displaying ${data.title || 'trend over time'}. Trend: ${data.trend || 'varies'}.`;
       case 'heatmap':

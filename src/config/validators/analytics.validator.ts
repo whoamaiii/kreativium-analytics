@@ -49,11 +49,13 @@ export function validateAndMergeAnalyticsConfig(
   // Deep merge helper that preserves object structure
   const deepMerge = <T extends object>(a: T, b?: Partial<T> | null): T => {
     if (!b) return a;
-    const out: any = Array.isArray(a) ? [...(a as any)] : { ...(a as any) };
-    for (const key of Object.keys(b) as Array<keyof T>) {
-      const bv: any = (b as any)[key];
+    const aRecord = a as Record<string, unknown>;
+    const bRecord = b as Record<string, unknown>;
+    const out: Record<string, unknown> = Array.isArray(a) ? [...a] : { ...aRecord };
+    for (const key of Object.keys(bRecord)) {
+      const bv = bRecord[key];
       if (bv === undefined) continue;
-      const av: any = (a as any)[key];
+      const av = aRecord[key];
       if (
         av &&
         typeof av === 'object' &&
@@ -61,7 +63,7 @@ export function validateAndMergeAnalyticsConfig(
         typeof bv === 'object' &&
         !Array.isArray(bv)
       ) {
-        out[key] = deepMerge(av, bv);
+        out[key] = deepMerge(av as object, bv as Partial<object>);
       } else {
         out[key] = bv;
       }
